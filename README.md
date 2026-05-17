@@ -103,6 +103,34 @@ katabridge fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if an
 `fmt` has no flags besides `--check` on purpose — see
 [`product/decisions.md`](product/decisions.md) D4.
 
+### Filesystem-style operations
+
+The CLI also supports shell-like operations for local workflows:
+
+```bash
+katabridge mkdir -p notes/archive
+katabridge cp notes/a.md notes/archive/a.md
+katabridge mv notes/archive/a.md notes/archive/a-renamed.md
+katabridge set notes/archive/a-renamed.md title="New title" year=2026
+katabridge rm notes/archive/a-renamed.md
+```
+
+Implemented commands:
+
+- `katabridge cp <src> <dst>`
+- `katabridge mkdir <dir> [dir...]`
+- `katabridge mv <src> <dst>`
+- `katabridge rm <path> [path...]`
+- `katabridge set <path> key=value [key=value...]`
+
+Validation behavior for write-affecting commands:
+
+- Default is strict validation before write.
+- `cp` validates markdown destination files (`*.md`) before writing.
+- `set` validates the resulting markdown document before writing.
+- `--no-validate` bypasses this check.
+- `--schema` overrides config-based schema resolution (same precedence rules as `validate`).
+
 ### `katabridge schema list` / `katabridge schema show <name>`
 
 ```
@@ -145,7 +173,7 @@ make all     # vet, test, build
 Layout:
 
 ```
-cmd/                  cobra commands (root, init, validate, schema, fmt)
+cmd/                  cobra commands (root, init, validate, schema, fmt, cp/mkdir/mv/rm/set)
 internal/config       katabridge.yaml loader + glob-based schema resolution
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
