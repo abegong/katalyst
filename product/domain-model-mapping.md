@@ -1,7 +1,7 @@
 # Domain model mapping
 
 A bridge between the general data-systems model in
-[`future-domain-model.md`](future-domain-model.md) and the concrete
+[`general-model.md`](general-model.md) and the concrete
 model in [`domain-model.md`](domain-model.md). Katabridge is one
 instantiation of the general model — many others are valid
 (databases, document stores, REST APIs); this document is only about
