@@ -1,0 +1,6 @@
+schemas:
+  book:        ./schemas/book.json
+  strict-book: ./schemas/strict-book.json
+rules:
+  - paths: "notes/**/*.md"
+    schema: book

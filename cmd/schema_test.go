@@ -11,25 +11,9 @@ import (
 func writeConfigDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	cfg := `schemas:
-  book:   ./schemas/book.json
-  person: ./schemas/person.json
-rules:
-  - paths: "notes/books/**/*.md"
-    schema: book
-`
-	if err := os.WriteFile(filepath.Join(dir, "katabridge.yaml"), []byte(cfg), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(dir, "schemas"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, s := range []string{"book", "person"} {
-		body := `{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","title":"` + s + `"}`
-		if err := os.WriteFile(filepath.Join(dir, "schemas", s+".json"), []byte(body), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
+	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), bookAndPersonConfigFixture)
+	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
+	mustWrite(t, filepath.Join(dir, "schemas/person.json"), personSchemaFixture)
 	return dir
 }
 

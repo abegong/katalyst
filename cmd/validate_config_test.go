@@ -33,24 +33,8 @@ func TestValidate_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 
 	// Add a second schema and a doc that asks for it inline. The config
 	// rules (`notes/**` -> book) would otherwise apply.
-	strict := `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["title", "year", "isbn"],
-  "properties": {
-    "title": { "type": "string" },
-    "year":  { "type": "integer" },
-    "isbn":  { "type": "string", "pattern": "^[0-9-]+$" }
-  }
-}`
-	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strict)
-	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), `schemas:
-  book:        ./schemas/book.json
-  strict-book: ./schemas/strict-book.json
-rules:
-  - paths: "notes/**/*.md"
-    schema: book
-`)
+	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
+	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), strictBookConfigFixture)
 
 	docPath := filepath.Join(dir, "notes/strict.md")
 	mustWrite(t, docPath, `---

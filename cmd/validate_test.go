@@ -11,16 +11,6 @@ import (
 	"github.com/katabase-ai/katabridge/cmd"
 )
 
-const testSchema = `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["title", "year"],
-  "properties": {
-    "title": { "type": "string" },
-    "year":  { "type": "integer" }
-  }
-}`
-
 func writeFile(t *testing.T, dir, name, content string) string {
 	t.Helper()
 	p := filepath.Join(dir, name)
@@ -43,7 +33,7 @@ func runValidate(t *testing.T, args ...string) (stdout, stderr string, err error
 
 func TestValidateCmd_validFile(t *testing.T) {
 	dir := t.TempDir()
-	schemaPath := writeFile(t, dir, "schema.json", testSchema)
+	schemaPath := writeFile(t, dir, "schema.json", bookSchemaFixture)
 	mdPath := writeFile(t, dir, "good.md",
 		"---\ntitle: Dune\nyear: 1965\n---\n# Body\n")
 
@@ -58,7 +48,7 @@ func TestValidateCmd_validFile(t *testing.T) {
 
 func TestValidateCmd_invalidFile_returnsExitCode1(t *testing.T) {
 	dir := t.TempDir()
-	schemaPath := writeFile(t, dir, "schema.json", testSchema)
+	schemaPath := writeFile(t, dir, "schema.json", bookSchemaFixture)
 	mdPath := writeFile(t, dir, "bad.md",
 		"---\ntitle: Dune\n---\n# Body\n") // missing year
 
@@ -78,7 +68,7 @@ func TestValidateCmd_invalidFile_returnsExitCode1(t *testing.T) {
 
 func TestValidateCmd_includesLineNumberWhenAvailable(t *testing.T) {
 	dir := t.TempDir()
-	schemaPath := writeFile(t, dir, "schema.json", testSchema)
+	schemaPath := writeFile(t, dir, "schema.json", bookSchemaFixture)
 	// year is on line 3 (line 1 = "---", line 2 = "title: Dune",
 	// line 3 = "year: not-a-number", line 4 = "---")
 	mdPath := writeFile(t, dir, "bad.md",
@@ -111,7 +101,7 @@ func TestValidateCmd_missingSchemaFlag(t *testing.T) {
 
 func TestValidateCmd_fileWithoutFrontmatter(t *testing.T) {
 	dir := t.TempDir()
-	schemaPath := writeFile(t, dir, "schema.json", testSchema)
+	schemaPath := writeFile(t, dir, "schema.json", bookSchemaFixture)
 	mdPath := writeFile(t, dir, "no-fm.md", "# Just a heading\n")
 
 	_, stderr, err := runValidate(t, "--schema", schemaPath, mdPath)

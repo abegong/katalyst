@@ -151,3 +151,5 @@ internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions
 ```
+
+See [`AGENTS.md`](AGENTS.md) for conventions on tests, fixtures, and code style.

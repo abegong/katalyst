@@ -1,23 +1,15 @@
 package validator_test
 
 import (
+	_ "embed"
 	"strings"
 	"testing"
 
 	"github.com/katabase-ai/katabridge/internal/validator"
 )
 
-const bookSchema = `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["title", "year"],
-  "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "year":  { "type": "integer", "minimum": 0 },
-    "tags":  { "type": "array", "items": { "type": "string" } }
-  },
-  "additionalProperties": false
-}`
+//go:embed testdata/schemas/book.json
+var bookSchema string
 
 func mustLoad(t *testing.T, src string) *validator.Schema {
 	t.Helper()
