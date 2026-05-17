@@ -1,0 +1,120 @@
+package validator_test
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/katabase-ai/katabridge/internal/validator"
+)
+
+const bookSchema = `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title", "year"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "year":  { "type": "integer", "minimum": 0 },
+    "tags":  { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}`
+
+func mustLoad(t *testing.T, src string) *validator.Schema {
+	t.Helper()
+	s, err := validator.Load("book.json", strings.NewReader(src))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	return s
+}
+
+func TestLoad_invalidSchema(t *testing.T) {
+	_, err := validator.Load("bad.json", strings.NewReader(`{ "type": 123 }`))
+	if err == nil {
+		t.Fatalf("expected error loading invalid schema")
+	}
+}
+
+func TestValidate_valid(t *testing.T) {
+	s := mustLoad(t, bookSchema)
+
+	doc := map[string]any{
+		"title": "Dune",
+		"year":  1965,
+		"tags":  []any{"sci-fi"},
+	}
+
+	result := s.Validate(doc)
+	if !result.Valid {
+		t.Fatalf("expected valid, got errors: %+v", result.Errors)
+	}
+	if len(result.Errors) != 0 {
+		t.Errorf("expected no errors, got %d", len(result.Errors))
+	}
+}
+
+func TestValidate_missingRequired(t *testing.T) {
+	s := mustLoad(t, bookSchema)
+
+	doc := map[string]any{
+		"title": "Dune",
+	}
+
+	result := s.Validate(doc)
+	if result.Valid {
+		t.Fatalf("expected invalid")
+	}
+	if !hasErrorMentioning(result.Errors, "year") {
+		t.Errorf("expected an error mentioning 'year', got: %+v", result.Errors)
+	}
+}
+
+func TestValidate_wrongType(t *testing.T) {
+	s := mustLoad(t, bookSchema)
+
+	doc := map[string]any{
+		"title": "Dune",
+		"year":  "not a number",
+	}
+
+	result := s.Validate(doc)
+	if result.Valid {
+		t.Fatalf("expected invalid")
+	}
+	if !hasErrorWithPath(result.Errors, "/year") {
+		t.Errorf("expected an error at /year, got: %+v", result.Errors)
+	}
+}
+
+func TestValidate_additionalProperty(t *testing.T) {
+	s := mustLoad(t, bookSchema)
+
+	doc := map[string]any{
+		"title":   "Dune",
+		"year":    1965,
+		"unknown": "field",
+	}
+
+	result := s.Validate(doc)
+	if result.Valid {
+		t.Fatalf("expected invalid due to additionalProperties: false")
+	}
+}
+
+func hasErrorMentioning(errs []validator.Error, needle string) bool {
+	for _, e := range errs {
+		if strings.Contains(e.Message, needle) || strings.Contains(e.Path, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasErrorWithPath(errs []validator.Error, path string) bool {
+	for _, e := range errs {
+		if e.Path == path {
+			return true
+		}
+	}
+	return false
+}
