@@ -136,6 +136,49 @@ func TestParse_leadingBOM(t *testing.T) {
 	}
 }
 
+func TestParse_lineNumbers(t *testing.T) {
+	// Line 1: "---"
+	// Line 2: "title: Dune"
+	// Line 3: "year: 1965"
+	// Line 4: "tags:"
+	// Line 5: "  - sci-fi"
+	// Line 6: "  - classic"
+	// Line 7: "---"
+	src := strings.Join([]string{
+		"---",
+		"title: Dune",
+		"year: 1965",
+		"tags:",
+		"  - sci-fi",
+		"  - classic",
+		"---",
+		"body",
+	}, "\n")
+
+	doc, err := frontmatter.Parse([]byte(src))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	cases := map[string]int{
+		"/title":  2,
+		"/year":   3,
+		"/tags":   4,
+		"/tags/0": 5,
+		"/tags/1": 6,
+	}
+	for path, want := range cases {
+		got, ok := doc.Lines[path]
+		if !ok {
+			t.Errorf("Lines[%q] missing", path)
+			continue
+		}
+		if got != want {
+			t.Errorf("Lines[%q] = %d, want %d", path, got, want)
+		}
+	}
+}
+
 // The opening "---" fence is only meaningful at the very top of the file.
 // A "---" later in the body is a thematic break, not frontmatter.
 func TestParse_fenceMustBeAtTop(t *testing.T) {

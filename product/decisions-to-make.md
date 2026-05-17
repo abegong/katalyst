@@ -1,96 +1,65 @@
 # Decisions to make
 
-Open design questions. Each one should eventually move to a "Decisions" log
-(or just disappear into the code) once resolved.
+Open design questions. Resolved decisions move to `decisions.md`.
 
-## Schema ↔ file association
+## v1 command surface — beyond what's already implemented
 
-How does `katabridge` know which schema applies to which markdown file?
-The likely answer is "a combination," but we need to decide precedence and
-defaults.
+Implemented so far: `init`, `validate`, `schema list`, `schema show`,
+`fmt`. Candidates for the rest of v1, roughly in order of usefulness:
 
-Candidate mechanisms:
-
-1. **Global config with glob → schema map.** A `katabridge.yaml` at the repo
-   root lists rules like:
-   ```yaml
-   schemas:
-     book:   ./schemas/book.json
-     person: ./schemas/person.json
-   rules:
-     - paths: "notes/books/**/*.md"
-       schema: book
-     - paths: "notes/people/**/*.md"
-       schema: person
-   ```
-2. **Inline `schema:` key in frontmatter.** Each file names its own schema:
-   ```yaml
-   ---
-   schema: book
-   title: Dune
-   ---
-   ```
-3. **Directory-local config.** A `.katabridge.yaml` per directory, with
-   nearest-ancestor wins (like `.editorconfig`).
-4. **Schema-side path declarations.** The schema itself declares which paths
-   it applies to (inverted from #1).
-
-Open questions:
-- What wins when multiple mechanisms disagree? Proposal: inline `schema:` >
-  directory-local > global glob rules.
-- Should an unmatched file be an error, a warning, or silently skipped?
-  Proposal: configurable, default = warning.
-- Can a single file match multiple schemas (composed validation)? Proposal:
-  yes, all must pass; this is useful for "base + specialization" schemas.
-
-## v1 command surface — beyond the core three
-
-In addition to `init`, `validate`, `schema list`, what belongs in v1?
-
-Candidates, roughly in order of usefulness:
-
-- `katabridge schema show <name>` — print a schema.
 - `katabridge schema check` — sanity-check the schema files themselves
   (valid JSON Schema, no dangling `$ref`s, etc.).
-- `katabridge check` — alias for `validate` with a friendlier name? Or
-  reserve `check` for "schema files are well-formed" and `validate` for
-  "documents conform to schemas"? Mongo uses `validator`/`validate`.
 - `katabridge ls` — list files and the schema each one matched against
   (great for debugging association rules).
 - `katabridge explain <path>` — show, for one file, which schema matched,
   why, and what the validation result was.
 - `katabridge infer <paths...>` — synthesize a starter schema from existing
-  files. (Probably v0.4 — see roadmap.)
-- `katabridge fmt` — normalize frontmatter. (Probably v0.2.)
+  files. (See roadmap v0.4.)
 - `katabridge watch` — re-validate on save.
 
-## Naming / vocabulary
+Naming question: do we keep `validate` or rename to `check`? `check`
+reads more like "is this OK?", `validate` is the Mongo term. Currently
+keeping `validate`; reopen if we find a cleaner partition (e.g.
+`check` for schema-files-are-sane, `validate` for documents-conform).
 
-- Do we say "schema" or "validator" (Mongo's term)? Proposal: "schema" in
-  user-facing copy, "validator" only when referring to the runtime check.
-- Do we say "frontmatter" or "metadata"? Proposal: "frontmatter" when
-  talking about the on-disk YAML/TOML/JSON block; "metadata" when talking
-  about the parsed structure.
+## Schema-on-schema validation
+
+Should we validate user-supplied schemas against the JSON Schema
+meta-schema at load time? The `santhosh-tekuri/jsonschema/v6` library
+does some of this implicitly during compile, but we may want a louder
+"your schema is malformed" message. Probably belongs in a future
+`schema check` subcommand.
+
+## `--allow-unmatched` and friends
+
+D2 in `decisions.md` says unmatched files are errors. We'll likely want
+escape hatches:
+
+- `--allow-unmatched` on `validate` to downgrade to warning.
+- A config-level `unmatched: error | warn | skip` knob.
+- A way to mark whole directories as "metadata-free" (probably via a
+  rule with `schema: null`).
+
+Defer until we see real usage.
 
 ## Config file format
 
-`katabridge.yaml` vs `katabridge.json` vs `katabridge.toml` vs `.katabridgerc`?
-Proposal: YAML by default, accept JSON as a fallback. Revisit if we add
-schemas-in-config (where JSON Schema authoring inline might be nicer in
-JSON).
+YAML is locked in for v0.1 (see D1). Open question: do we ever support
+JSON as a fallback (for users who want to author the config from
+another tool)? Probably yes, eventually, but not until someone asks.
 
 ## JSON Schema draft
 
-Which draft do we target? Proposal: draft 2020-12 (latest), but allow
-schemas to declare `$schema` explicitly and validate against the declared
-draft. `santhosh-tekuri/jsonschema/v6` supports drafts 4 through 2020-12.
+Which draft do we target by default? Proposal: draft 2020-12 (latest),
+but allow schemas to declare `$schema` explicitly and validate against
+the declared draft. `santhosh-tekuri/jsonschema/v6` already supports
+drafts 4 through 2020-12, so this is just a question of what we put in
+the `init` template and what we document.
 
-## Exit codes
+## Vocabulary
 
-What should `validate` exit with on partial failure?
-- `0` — all valid
-- `1` — one or more validation failures (expected, machine-readable)
-- `2` — usage error / unreadable input
-- `>=3` — internal error
+- "schema" vs "validator": settled on "schema" in user-facing copy.
+- "frontmatter" vs "metadata": settled on "frontmatter" for the on-disk
+  block, "metadata" for the parsed structure.
 
-This matches conventions of linters like `shellcheck`. Worth confirming.
+(These can move to `decisions.md` next time we touch it.)

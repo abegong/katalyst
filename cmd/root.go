@@ -26,6 +26,7 @@ markdown files against JSON Schema documents.`,
 		newInitCmd(),
 		newValidateCmd(),
 		newSchemaCmd(),
+		newFmtCmd(),
 	)
 
 	return root

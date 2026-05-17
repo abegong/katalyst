@@ -6,10 +6,10 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 [js]: https://json-schema.org/
 [mv]: https://www.mongodb.com/docs/manual/core/schema-validation/
 
-> **Status:** early v0.1 scaffolding. Only `validate` is wired up, and it
-> requires an explicit `--schema` flag. See [`product/roadmap.md`](product/roadmap.md)
-> for what's planned and [`product/decisions-to-make.md`](product/decisions-to-make.md)
-> for open design questions.
+> **Status:** v0.2. `init`, `validate`, `schema list/show`, and `fmt` are
+> implemented. See [`product/roadmap.md`](product/roadmap.md) for what's
+> next and [`product/decisions.md`](product/decisions.md) for what's
+> already locked in.
 
 ## Install
 
@@ -27,40 +27,60 @@ make build  # produces ./bin/katabridge
 
 ## Quickstart
 
-Given a schema `schemas/book.json`:
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": ["title", "year"],
-  "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "year":  { "type": "integer", "minimum": 0 },
-    "tags":  { "type": "array", "items": { "type": "string" } }
-  }
-}
+```bash
+mkdir my-notes && cd my-notes
+katabridge init                  # scaffolds katabridge.yaml, schemas/, notes/
+katabridge validate notes/example.md
 ```
 
-And a markdown file `notes/dune.md`:
+Both files are picked up automatically: `validate` discovers the nearest
+`katabridge.yaml` walking up from the working directory, then matches the
+file against the config's glob rules.
 
-```markdown
----
-title: Dune
-year: 1965
-tags: [sci-fi, classic]
----
+## Configuring
 
-# Dune
+A `katabridge.yaml` at your repo root maps schemas to globs:
 
-A story about spice.
+```yaml
+schemas:
+  book:   ./schemas/book.json
+  person: ./schemas/person.json
+
+rules:
+  - paths: "notes/books/**/*.md"
+    schema: book
+  - paths: "notes/people/**/*.md"
+    schema: person
 ```
 
-Run:
+Schema resolution precedence, highest first:
+
+1. `--schema <path>` on the command line (overrides everything).
+2. An inline `schema: <name>` key inside a file's frontmatter (the name
+   refers to an entry in `schemas:` above; the directive itself is
+   stripped before validation, so you can have strict
+   `additionalProperties: false` schemas without listing it).
+3. The first matching entry in `rules`.
+
+Files that don't resolve to any schema are reported as errors.
+
+## Commands
+
+### `katabridge validate [paths...]`
+
+Validate each file's frontmatter against its resolved schema.
 
 ```
-katabridge validate --schema schemas/book.json notes/dune.md
+$ katabridge validate notes/dune.md
+notes/dune.md: OK
+
+$ katabridge validate notes/bad.md
+notes/bad.md:3: /year: got string, want integer
+notes/bad.md: /: missing property 'isbn'
 ```
+
+Errors include `:line` when the source position is known. Missing-required
+errors fall back to the nearest known ancestor line.
 
 Exit codes:
 
@@ -69,6 +89,47 @@ Exit codes:
 | `0`  | All files valid                      |
 | `1`  | One or more validation failures      |
 | `2`  | Usage error or unreadable input      |
+
+### `katabridge fmt [paths...]`
+
+Normalize frontmatter: top-level keys sorted alphabetically, default
+block style, exactly one trailing newline. Body preserved verbatim.
+
+```
+katabridge fmt notes/**/*.md                  # rewrites in place
+katabridge fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if any change
+```
+
+`fmt` has no flags besides `--check` on purpose — see
+[`product/decisions.md`](product/decisions.md) D4.
+
+### `katabridge schema list` / `katabridge schema show <name>`
+
+```
+$ katabridge schema list
+book    schemas/book.json
+person  schemas/person.json
+
+$ katabridge schema show book
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  ...
+}
+```
+
+### `katabridge init [--dir <path>]`
+
+Scaffold a minimal working repo: `katabridge.yaml`, one schema, one
+example document. Refuses to overwrite anything that already exists.
+
+### Shell completion
+
+Cobra provides scripts for bash, zsh, fish, and powershell:
+
+```bash
+source <(katabridge completion zsh)
+katabridge completion zsh > "${fpath[1]}/_katabridge"   # persistent
+```
 
 ## Development
 
@@ -84,8 +145,9 @@ make all     # vet, test, build
 Layout:
 
 ```
-cmd/                  cobra commands (root, init, validate, schema)
-internal/frontmatter  YAML frontmatter extraction from markdown
+cmd/                  cobra commands (root, init, validate, schema, fmt)
+internal/config       katabridge.yaml loader + glob-based schema resolution
+internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
-product/              roadmap and open design questions
+product/              roadmap, resolved decisions, open questions
 ```

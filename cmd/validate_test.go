@@ -76,6 +76,24 @@ func TestValidateCmd_invalidFile_returnsExitCode1(t *testing.T) {
 	}
 }
 
+func TestValidateCmd_includesLineNumberWhenAvailable(t *testing.T) {
+	dir := t.TempDir()
+	schemaPath := writeFile(t, dir, "schema.json", testSchema)
+	// year is on line 3 (line 1 = "---", line 2 = "title: Dune",
+	// line 3 = "year: not-a-number", line 4 = "---")
+	mdPath := writeFile(t, dir, "bad.md",
+		"---\ntitle: Dune\nyear: \"not a number\"\n---\n# Body\n")
+
+	_, stderr, err := runValidate(t, "--schema", schemaPath, mdPath)
+	if err == nil {
+		t.Fatalf("expected validation failure")
+	}
+	// Format: <path>:<line>: <pointer>: <message>
+	if !strings.Contains(stderr, mdPath+":3:") {
+		t.Errorf("expected stderr to contain %q with line number 3, got: %q", mdPath, stderr)
+	}
+}
+
 func TestValidateCmd_missingSchemaFlag(t *testing.T) {
 	dir := t.TempDir()
 	mdPath := writeFile(t, dir, "x.md", "---\ntitle: x\n---\n")
