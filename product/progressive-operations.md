@@ -1,8 +1,8 @@
 # Progressive Operations
 
-_How storage systems evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn't._
+_How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn't._
 
-The core thesis: knowledge systems naturally start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary — each tier is driven by a class of operations that can't be satisfied at the previous level.
+The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary — each tier is driven by a class of operations that can't be satisfied at the previous level.
 
 ---
 
@@ -21,8 +21,6 @@ The core thesis: knowledge systems naturally start as filesystems and progressiv
 - No structured fields to filter on
 - No relationships between files
 
-**Where BrainPal is today:** mostly here. Vault is a git repo of markdown files.
-
 ---
 
 ## Tier 2 — Document Store
@@ -40,8 +38,6 @@ The core thesis: knowledge systems naturally start as filesystems and progressiv
 - Aggregations are fragile (depend on field consistency)
 - Many-to-many relationships require awkward denormalization
 
-**Where BrainPal needs to get to:** for people KB, meeting notes, blog posts.
-
 ---
 
 ## Tier 3 — Relational
@@ -58,8 +54,6 @@ The core thesis: knowledge systems naturally start as filesystems and progressiv
 - Many-to-many relationships require join tables (that's Tier 4)
 - Schema migrations have real cost
 
-**Target for:** health metrics (Withings, Concept2), action items, goal tracking, post history.
-
 ---
 
 ## Tier 4 — Join Tables
@@ -71,8 +65,6 @@ The core thesis: knowledge systems naturally start as filesystems and progressiv
 - Proper intersection entities (a meeting_attendee row can carry its own fields: role, spoke_time, etc.)
 - More complex relational queries without denormalization
 
-**Target for:** people ↔ meetings, posts ↔ feedback_reviewers, goals ↔ metrics.
-
 ---
 
 ## Tier 5 — Graph
@@ -83,5 +75,3 @@ The core thesis: knowledge systems naturally start as filesystems and progressiv
 - Multi-hop traversal ("who introduced me to someone who works at [firm]?")
 - Relationship-typed queries ("what projects is this person a collaborator on vs. a contact for?")
 - Path queries ("how am I connected to X?")
-
-**Open question:** Is this a real tier for kb-backend, or an over-engineering risk? Relational + join tables handles most cases. Graph adds value when relationship attributes and traversal depth matter.
