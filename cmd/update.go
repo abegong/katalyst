@@ -8,17 +8,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSetCmd() *cobra.Command {
+func newUpdateCmd() *cobra.Command {
 	var noValidate bool
 	var schemaFlag string
 
 	c := &cobra.Command{
-		Use:   "set <path> key=value [key=value...]",
-		Short: "Set frontmatter attributes on a markdown file.",
-		Long: `set updates top-level frontmatter attributes in-place.
+		Use:   "update <path> key=value [key=value...]",
+		Short: "Update frontmatter attributes on a markdown item.",
+		Long: `update modifies top-level frontmatter attributes in-place.
 
 Values are YAML-decoded, so numbers/booleans/arrays are supported:
-  katabridge set notes/dune.md year=1965 published=true tags='[sci-fi,classic]'`,
+  katabridge update notes/dune.md year=1965 published=true tags='[sci-fi,classic]'`,
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := args[0]

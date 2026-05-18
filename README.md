@@ -103,31 +103,29 @@ katabridge fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if an
 `fmt` has no flags besides `--check` on purpose — see
 [`product/decisions.md`](product/decisions.md) D4.
 
-### Filesystem-style operations
+### CRUD operations
 
-The CLI also supports shell-like operations for local workflows:
+The CLI supports basic item-level CRUD operations:
 
 ```bash
-katabridge mkdir -p notes/archive
-katabridge cp notes/a.md notes/archive/a.md
-katabridge mv notes/archive/a.md notes/archive/a-renamed.md
-katabridge set notes/archive/a-renamed.md title="New title" year=2026
-katabridge rm notes/archive/a-renamed.md
+katabridge create notes/a.md title="New title" year=2026
+katabridge read notes/a.md
+katabridge update notes/a.md title="Updated title"
+katabridge delete notes/a.md
 ```
 
 Implemented commands:
 
-- `katabridge cp <src> <dst>`
-- `katabridge mkdir <dir> [dir...]`
-- `katabridge mv <src> <dst>`
-- `katabridge rm <path> [path...]`
-- `katabridge set <path> key=value [key=value...]`
+- `katabridge create <path> [key=value ...]`
+- `katabridge read <path>`
+- `katabridge update <path> key=value [key=value...]`
+- `katabridge delete <path> [path...]`
 
-Validation behavior for write-affecting commands:
+Validation behavior for write-affecting commands (`create`, `update`):
 
 - Default is strict validation before write.
-- `cp` validates markdown destination files (`*.md`) before writing.
-- `set` validates the resulting markdown document before writing.
+- `create` validates markdown destination files (`*.md`) before writing.
+- `update` validates the resulting markdown document before writing.
 - `--no-validate` bypasses this check.
 - `--schema` overrides config-based schema resolution (same precedence rules as `validate`).
 
@@ -173,7 +171,7 @@ make all     # vet, test, build
 Layout:
 
 ```
-cmd/                  cobra commands (root, init, validate, schema, fmt, cp/mkdir/mv/rm/set)
+cmd/                  cobra commands (root, init, validate, schema, fmt, create/read/update/delete)
 internal/config       katabridge.yaml loader + glob-based schema resolution
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)

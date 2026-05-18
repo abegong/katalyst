@@ -27,11 +27,10 @@ markdown files against JSON Schema documents.`,
 		newValidateCmd(),
 		newSchemaCmd(),
 		newFmtCmd(),
-		newCpCmd(),
-		newMkdirCmd(),
-		newMvCmd(),
-		newRmCmd(),
-		newSetCmd(),
+		newCreateCmd(),
+		newReadCmd(),
+		newUpdateCmd(),
+		newDeleteCmd(),
 	)
 
 	return root

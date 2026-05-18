@@ -14,7 +14,7 @@ import (
 )
 
 // validateWrite validates src as a markdown document for write-affecting
-// commands (cp/set). When strict is false, it returns nil immediately.
+// commands (create/update). When strict is false, it returns nil immediately.
 //
 // Validation uses the same schema-resolution precedence as `validate`:
 // --schema override, then inline schema key, then config rules.
