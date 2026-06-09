@@ -30,6 +30,7 @@ go.work.sum
 # Build output
 /bin/
 /public/
+/resources/_gen/
 /.hugo_build.lock
 
 # Editor/IDE

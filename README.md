@@ -160,12 +160,16 @@ katalyst completion zsh > "${fpath[1]}/_katalyst"   # persistent
 ## Documentation site (Hugo)
 
 User-facing docs live under `docs/` and are served/built by Hugo.
+The site uses the [Hugo Book theme](https://github.com/alex-shpak/hugo-book)
+as a Hugo Module (no npm toolchain required).
 
-If `hugo` is on your `PATH`, `make` will use it directly. Otherwise the docs
-targets automatically fall back to:
+Hugo Book requires the Hugo **extended** build for SCSS support.
+
+If an extended `hugo` is on your `PATH`, `make` will use it directly.
+Otherwise the docs targets automatically fall back to:
 
 ```bash
-go run github.com/gohugoio/hugo@latest
+go run -tags extended github.com/gohugoio/hugo@latest
 ```
 
 Optional local install:
@@ -179,6 +183,8 @@ Run docs locally:
 ```bash
 make docs-serve
 ```
+
+On first run, Hugo may download/update the theme module dependency.
 
 Build static docs:
 
