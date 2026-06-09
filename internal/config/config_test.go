@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/internal/config"
+	"github.com/katabase-ai/katalyst/internal/config"
 )
 
 func writeConfig(t *testing.T, dir, content string) string {
 	t.Helper()
-	p := filepath.Join(dir, "katabridge.yaml")
+	p := filepath.Join(dir, "katalyst.yaml")
 	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
@@ -65,6 +65,12 @@ rules:
 	if cfg.Rules[0].Schema != "book" {
 		t.Errorf("rule[0].Schema = %q, want book", cfg.Rules[0].Schema)
 	}
+	if len(cfg.Rules[0].Checks) != 1 {
+		t.Fatalf("expected legacy schema rule to produce one check, got %d", len(cfg.Rules[0].Checks))
+	}
+	if cfg.Rules[0].Checks[0].Kind != config.CheckObject {
+		t.Fatalf("legacy schema should map to object check, got %q", cfg.Rules[0].Checks[0].Kind)
+	}
 }
 
 func TestLoad_ascendsToFindConfig(t *testing.T) {
@@ -107,6 +113,76 @@ rules:
 	}
 	if !strings.Contains(err.Error(), "nonexistent") {
 		t.Errorf("error should mention the bad name: %v", err)
+	}
+}
+
+func TestLoad_parsesChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `schemas:
+  book: ./schemas/book.json
+rules:
+  - paths: "notes/**/*.md"
+    checks:
+      - kind: object
+        schema: book
+      - kind: markdown_title_matches_h1
+      - kind: filesystem_filename_matches_slug
+`)
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if len(cfg.Rules) != 1 {
+		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
+	}
+	got := cfg.Rules[0].Checks
+	if len(got) != 3 {
+		t.Fatalf("expected 3 checks, got %d", len(got))
+	}
+	if got[0].Kind != config.CheckObject || got[0].Schema != "book" {
+		t.Fatalf("check[0] = %+v, want object schema=book", got[0])
+	}
+	if got[1].Kind != config.CheckMarkdownTitleMatchesH1 || got[1].Field != "title" {
+		t.Fatalf("check[1] = %+v, want markdown default field title", got[1])
+	}
+	if got[2].Kind != config.CheckFilesystemFilenameMatchesSlug || got[2].Field != "slug" {
+		t.Fatalf("check[2] = %+v, want filesystem default field slug", got[2])
+	}
+}
+
+func TestLoad_rejectsUnknownCheckKind(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `schemas:
+  book: ./schemas/book.json
+rules:
+  - paths: "**/*.md"
+    checks:
+      - kind: not-real
+`)
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for unknown check kind")
+	}
+	if !strings.Contains(err.Error(), "unknown check kind") {
+		t.Fatalf("expected unknown check kind message, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsMalformedCheckPayload(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `schemas:
+  book: ./schemas/book.json
+rules:
+  - paths: "**/*.md"
+    checks:
+      - kind: object
+`)
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for missing object schema")
+	}
+	if !strings.Contains(err.Error(), "requires") {
+		t.Fatalf("expected malformed payload error, got: %v", err)
 	}
 }
 

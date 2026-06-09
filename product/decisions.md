@@ -6,9 +6,9 @@ and *when* (by commit or version). Open questions live in
 
 ## D1 — Config file format and location (v0.1)
 
-**Decision.** The config file is `katabridge.yaml` at the repo root.
+**Decision.** The config file is `katalyst.yaml` at the repo root.
 Discovery: walk up from the working directory looking for the nearest
-ancestor that contains a `katabridge.yaml`. That directory becomes the
+ancestor that contains a `katalyst.yaml`. That directory becomes the
 "repo root" for path resolution.
 
 **Shape.**
@@ -76,7 +76,7 @@ constrained to specific operations like "fill default from schema's
 
 ## D4 — `fmt` is opinionated (v0.2)
 
-**Decision.** `katabridge fmt` normalizes frontmatter aggressively:
+**Decision.** `katalyst fmt` normalizes frontmatter aggressively:
 
 - Keys sorted alphabetically.
 - yaml.v3 default block style (no flow-style maps/sequences in output).

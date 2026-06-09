@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/cmd"
+	"github.com/katabase-ai/katalyst/cmd"
 )
 
 func runRoot(t *testing.T, args ...string) (stdout, stderr string, err error) {
@@ -29,7 +29,7 @@ func TestInit_scaffoldsConfigSchemaAndExample(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		"katabridge.yaml",
+		"katalyst.yaml",
 		"schemas/book.json",
 		"notes/example.md",
 	} {
@@ -42,7 +42,7 @@ func TestInit_scaffoldsConfigSchemaAndExample(t *testing.T) {
 
 func TestInit_refusesToOverwrite(t *testing.T) {
 	dir := t.TempDir()
-	cfg := filepath.Join(dir, "katabridge.yaml")
+	cfg := filepath.Join(dir, "katalyst.yaml")
 	if err := os.WriteFile(cfg, []byte("existing: true\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func TestInit_refusesToOverwrite(t *testing.T) {
 	}
 }
 
-// The scaffold must already be in `katabridge fmt` canonical form,
+// The scaffold must already be in `katalyst fmt` canonical form,
 // otherwise a brand-new repo fails `fmt --check` in CI, which is a
 // nasty first-impression.
 func TestInit_scaffoldIsCanonical(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 func writeConfigDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), bookAndPersonConfigFixture)
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), bookAndPersonConfigFixture)
 	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
 	mustWrite(t, filepath.Join(dir, "schemas/person.json"), personSchemaFixture)
 	return dir

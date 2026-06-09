@@ -26,6 +26,9 @@ which exists to exercise the validator itself.
 |----------------------------|----------------------------------|--------------------------------------------------------------------|
 | `book-and-person.yaml`     | `schema_test.go`                 | Two-schema config with one `books/**` rule. Drives `schema list`/`schema show` tests. |
 | `strict-book.yaml`         | `validate_config_test.go`        | Two-schema config (`book` + `strict-book`) with a single rule pointing all `notes/**/*.md` at `book`, so an inline `schema: strict-book` key has something to override. |
+| `object-check.yaml`        | `validate_config_test.go`        | Rule using `checks:` with `kind: object` for object-level validation examples. |
+| `markdown-check.yaml`      | `validate_config_test.go`        | Rule using `checks:` with `kind: markdown_title_matches_h1`. |
+| `filesystem-check.yaml`    | `validate_config_test.go`        | Rule using `checks:` with `kind: filesystem_filename_matches_slug`. |
 
 ## Adding a fixture
 

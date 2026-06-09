@@ -109,7 +109,7 @@ func TestCreate_rejectsExistingPathByDefault(t *testing.T) {
 func TestCreate_schemaResolutionPrecedenceForWriteValidation(t *testing.T) {
 	dir := setupScaffoldRepo(t)
 	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), strictBookConfigFixture)
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), strictBookConfigFixture)
 
 	// Config defaults notes/** -> book. Inline schema in create args should win.
 	path := filepath.Join(dir, "notes", "new.md")

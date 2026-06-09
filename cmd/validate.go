@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/katabase-ai/katabridge/internal/config"
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
-	"github.com/katabase-ai/katabridge/internal/validator"
+	"github.com/katabase-ai/katalyst/internal/checks"
+	"github.com/katabase-ai/katalyst/internal/config"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -26,16 +27,19 @@ func newValidateCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "validate [paths...]",
-		Short: "Validate markdown frontmatter against a JSON Schema.",
+		Short: "Run configured checks against markdown files.",
 		Long: `Validate parses YAML frontmatter from each markdown file and
-checks it against a JSON Schema. Schema resolution, highest precedence first:
+runs the checks configured in katalyst.yaml.
+
+Object-schema resolution, highest precedence first:
 
   1. --schema <path>      (applies to every file in the invocation)
   2. inline "schema:" key in the file's frontmatter (a schema name from
-     katabridge.yaml)
-  3. the first matching rule in katabridge.yaml
+     katalyst.yaml)
+  3. object checks in the first matching rule in katalyst.yaml
 
-Files that don't resolve to any schema are reported as errors.`,
+Markdown and filesystem checks come from the first matching rule and run
+even when --schema is used.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r, err := newResolver(schemaFlag)
@@ -68,17 +72,14 @@ Files that don't resolve to any schema are reported as errors.`,
 	return c
 }
 
-// resolver picks a schema for a given file path. It hides the precedence
-// rules from the validate loop and caches compiled schemas so repeated
-// hits on the same schema file don't re-parse.
+// resolver builds checks for a given file path.
 type resolver struct {
 	// forcedPath, if non-empty, is the --schema override; every file
-	// gets this schema regardless of frontmatter or config.
+	// gets this object schema regardless of frontmatter or config.
 	forcedPath string
-	// cfg is nil when --schema is set (config isn't loaded at all in
-	// that mode).
+	// cfg can be nil when only --schema is used and no config exists.
 	cfg *config.Config
-	// cache holds compiled schemas by absolute file path.
+	// cache holds compiled object schemas by absolute file path.
 	cache map[string]*validator.Schema
 }
 
@@ -89,7 +90,6 @@ func newResolver(schemaFlag string) (*resolver, error) {
 			return nil, usageErr(fmt.Sprintf("--schema: %v", err))
 		}
 		r.forcedPath = schemaFlag
-		return r, nil
 	}
 
 	wd, err := os.Getwd()
@@ -99,42 +99,15 @@ func newResolver(schemaFlag string) (*resolver, error) {
 	cfg, err := config.Load(wd)
 	if err != nil {
 		if errors.Is(err, config.ErrNotFound) {
-			return nil, usageErr("no --schema given and no katabridge.yaml found (run `katabridge init`)")
+			if r.forcedPath != "" {
+				return r, nil
+			}
+			return nil, usageErr("no --schema given and no katalyst.yaml found (run `katalyst init`)")
 		}
 		return nil, err
 	}
 	r.cfg = cfg
 	return r, nil
-}
-
-// schemaFor returns the compiled schema for filePath, the human-readable
-// label describing which source determined that choice, and an error if
-// no schema could be resolved.
-func (r *resolver) schemaFor(filePath string, meta map[string]any) (*validator.Schema, string, error) {
-	// 1. --schema wins.
-	if r.forcedPath != "" {
-		s, err := r.compile(r.forcedPath)
-		return s, "--schema " + r.forcedPath, err
-	}
-
-	// 2. inline "schema:" key in frontmatter.
-	if name, ok := meta["schema"].(string); ok && name != "" {
-		path := r.cfg.SchemaPath(name)
-		if path == "" {
-			return nil, "", fmt.Errorf("inline schema %q is not registered in katabridge.yaml", name)
-		}
-		s, err := r.compile(path)
-		return s, "inline schema: " + name, err
-	}
-
-	// 3. config rules.
-	if name, ok := r.cfg.Match(filePath); ok {
-		path := r.cfg.SchemaPath(name)
-		s, err := r.compile(path)
-		return s, "rule -> " + name, err
-	}
-
-	return nil, "", errors.New("no schema matched (unmatched file)")
 }
 
 func (r *resolver) compile(path string) (*validator.Schema, error) {
@@ -154,10 +127,83 @@ func (r *resolver) compile(path string) (*validator.Schema, error) {
 	return s, nil
 }
 
-// validateFile reads one markdown file, picks a schema, validates the
-// frontmatter, and writes results to out/errOut. It returns (true, nil)
-// if the file is valid, (false, nil) if it has validation errors, or
-// (_, err) if the file couldn't be read/parsed or no schema applies.
+func (r *resolver) checksFor(filePath string, meta map[string]any) ([]checks.Check, error) {
+	checkList := make([]checks.Check, 0)
+
+	var matchedRule config.Rule
+	hasMatchedRule := false
+	if r.cfg != nil {
+		matchedRule, hasMatchedRule = r.cfg.RuleFor(filePath)
+	}
+
+	inlineSchema := ""
+	if raw, ok := meta["schema"].(string); ok {
+		inlineSchema = strings.TrimSpace(raw)
+	}
+
+	// Object checks: forced schema, then inline schema, then rule object checks.
+	switch {
+	case r.forcedPath != "":
+		schema, err := r.compile(r.forcedPath)
+		if err != nil {
+			return nil, err
+		}
+		checkList = append(checkList, checks.Object{Schema: schema})
+	case inlineSchema != "":
+		if r.cfg == nil {
+			return nil, errors.New("inline schema requires katalyst.yaml to resolve names")
+		}
+		path := r.cfg.SchemaPath(inlineSchema)
+		if path == "" {
+			return nil, fmt.Errorf("inline schema %q is not registered in katalyst.yaml", inlineSchema)
+		}
+		schema, err := r.compile(path)
+		if err != nil {
+			return nil, err
+		}
+		checkList = append(checkList, checks.Object{Schema: schema})
+	case hasMatchedRule:
+		for _, cfgCheck := range matchedRule.Checks {
+			if cfgCheck.Kind != config.CheckObject {
+				continue
+			}
+			path := r.cfg.SchemaPath(cfgCheck.Schema)
+			if path == "" {
+				return nil, fmt.Errorf("rule object schema %q is not registered in katalyst.yaml", cfgCheck.Schema)
+			}
+			schema, err := r.compile(path)
+			if err != nil {
+				return nil, err
+			}
+			checkList = append(checkList, checks.Object{Schema: schema})
+		}
+	}
+
+	// Non-object checks come from the matched rule regardless of --schema.
+	if hasMatchedRule {
+		for _, cfgCheck := range matchedRule.Checks {
+			switch cfgCheck.Kind {
+			case config.CheckMarkdownTitleMatchesH1:
+				checkList = append(checkList, checks.MarkdownTitleMatchesH1{Field: cfgCheck.Field})
+			case config.CheckFilesystemFilenameMatchesSlug:
+				checkList = append(checkList, checks.FilenameMatchesSlug{Field: cfgCheck.Field})
+			}
+		}
+	}
+
+	if len(checkList) > 0 {
+		return checkList, nil
+	}
+	if r.forcedPath == "" && inlineSchema == "" && !hasMatchedRule {
+		return nil, errors.New("no checks matched (unmatched file)")
+	}
+	return nil, errors.New("no checks configured for file")
+}
+
+// validateFile reads one markdown file, resolves checks, runs them, and
+// writes results to out/errOut. It returns (true, nil) if the file is
+// valid, (false, nil) if it has validation errors, or (_, err) if the
+// file couldn't be read/parsed or no checks apply.
 func validateFile(out, errOut io.Writer, r *resolver, path string) (bool, error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
@@ -174,29 +220,33 @@ func validateFile(out, errOut io.Writer, r *resolver, path string) (bool, error)
 		return false, nil
 	}
 
-	schema, _, err := r.schemaFor(path, doc.Meta)
+	checkList, err := r.checksFor(path, doc.Meta)
 	if err != nil {
 		return false, err
 	}
 
-	// The "schema" key is a katabridge directive, not user data. Strip
+	// The "schema" key is a katalyst directive, not user data. Strip
 	// it before validating so user schemas with additionalProperties:
 	// false don't reject documents that opt into themselves.
 	instance := dropKey(doc.Meta, "schema")
 
-	result := schema.Validate(instance)
-	if result.Valid {
+	result := checks.RunAll(checks.Context{
+		FilePath: path,
+		Doc:      doc,
+		Meta:     instance,
+	}, checkList)
+	if len(result) == 0 {
 		fmt.Fprintf(out, "%s: OK\n", path)
 		return true, nil
 	}
 
-	for _, e := range result.Errors {
+	for _, e := range result {
 		loc := e.Path
 		if loc == "" {
 			loc = "/"
 		}
-		if line, ok := lookupLine(doc.Lines, e.Path); ok {
-			fmt.Fprintf(errOut, "%s:%d: %s: %s\n", path, line, loc, e.Message)
+		if e.Line > 0 {
+			fmt.Fprintf(errOut, "%s:%d: %s: %s\n", path, e.Line, loc, e.Message)
 		} else {
 			fmt.Fprintf(errOut, "%s: %s: %s\n", path, loc, e.Message)
 		}

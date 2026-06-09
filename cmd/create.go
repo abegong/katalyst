@@ -18,7 +18,7 @@ func newCreateCmd() *cobra.Command {
 		Long: `create writes a new markdown file with YAML frontmatter.
 
 Assignments are YAML-decoded, so numbers/booleans/arrays are supported:
-  katabridge create notes/dune.md title=Dune year=1965 tags='[sci-fi,classic]'`,
+  katalyst create notes/dune.md title=Dune year=1965 tags='[sci-fi,classic]'`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := args[0]

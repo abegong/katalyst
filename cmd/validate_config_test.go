@@ -34,7 +34,7 @@ func TestValidate_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 	// Add a second schema and a doc that asks for it inline. The config
 	// rules (`notes/**` -> book) would otherwise apply.
 	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), strictBookConfigFixture)
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), strictBookConfigFixture)
 
 	docPath := filepath.Join(dir, "notes/strict.md")
 	mustWrite(t, docPath, `---
@@ -82,12 +82,75 @@ func TestValidate_schemaFlagWinsOverConfig(t *testing.T) {
 	mustWrite(t, loosePath, loose)
 
 	docPath := filepath.Join(dir, "notes/missing-required.md")
-	mustWrite(t, docPath, "---\nfoo: bar\n---\n# Body\n")
+	mustWrite(t, docPath, "---\nslug: missing-required\ntitle: Missing Required\n---\n# Missing Required\n")
 
-	// Config would apply `book` which requires title+year, but --schema
-	// trumps it and `loose` accepts anything.
+	// Config would apply object schema `book` (title+year required), but
+	// --schema overrides object checks while leaving markdown/filesystem
+	// checks active.
 	if _, _, err := runRoot(t, "validate", "--schema", loosePath, docPath); err != nil {
 		t.Fatalf("--schema should have overridden config rules: %v", err)
+	}
+
+	nonObjectFailure := filepath.Join(dir, "notes/non-object-fail.md")
+	mustWrite(t, nonObjectFailure, "---\nslug: wrong-slug\ntitle: Non Object Fail\n---\n# Non Object Fail\n")
+	_, stderr, err := runRoot(t, "validate", "--schema", loosePath, nonObjectFailure)
+	if err == nil {
+		t.Fatalf("expected non-object checks to still fail with --schema")
+	}
+	if !strings.Contains(stderr, "slug") {
+		t.Fatalf("expected slug mismatch in stderr, got: %q", stderr)
+	}
+}
+
+func TestValidate_objectCheck_reportsTypeError(t *testing.T) {
+	dir := t.TempDir()
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), objectCheckConfigFixture)
+	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
+	chdir(t, dir)
+
+	docPath := filepath.Join(dir, "notes/bad.md")
+	mustWrite(t, docPath, "---\ntitle: Dune\nyear: not-a-number\n---\n# Dune\n")
+
+	_, stderr, err := runRoot(t, "validate", docPath)
+	if err == nil {
+		t.Fatalf("expected object check failure")
+	}
+	if !strings.Contains(stderr, "/year") {
+		t.Fatalf("expected /year in stderr, got: %q", stderr)
+	}
+}
+
+func TestValidate_markdownCheck_reportsTitleMismatch(t *testing.T) {
+	dir := t.TempDir()
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), markdownCheckConfigFixture)
+	chdir(t, dir)
+
+	docPath := filepath.Join(dir, "notes/dune.md")
+	mustWrite(t, docPath, "---\ntitle: Dune\n---\n# Children of Dune\n")
+
+	_, stderr, err := runRoot(t, "validate", docPath)
+	if err == nil {
+		t.Fatalf("expected markdown check failure")
+	}
+	if !strings.Contains(stderr, "does not match first H1") {
+		t.Fatalf("expected title/H1 mismatch message, got: %q", stderr)
+	}
+}
+
+func TestValidate_filesystemCheck_reportsSlugMismatch(t *testing.T) {
+	dir := t.TempDir()
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), filesystemCheckConfigFixture)
+	chdir(t, dir)
+
+	docPath := filepath.Join(dir, "notes/dune.md")
+	mustWrite(t, docPath, "---\nslug: dune-messiah\n---\n# Dune Messiah\n")
+
+	_, stderr, err := runRoot(t, "validate", docPath)
+	if err == nil {
+		t.Fatalf("expected filesystem check failure")
+	}
+	if !strings.Contains(stderr, "must match filename") {
+		t.Fatalf("expected slug/filename mismatch message, got: %q", stderr)
 	}
 }
 
@@ -100,4 +163,3 @@ func mustWrite(t *testing.T, path, content string) {
 		t.Fatal(err)
 	}
 }
-

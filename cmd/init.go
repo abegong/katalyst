@@ -13,7 +13,7 @@ import (
 // intentionally minimal and self-consistent: running `validate` on the
 // scaffold immediately after `init` succeeds.
 const (
-	scaffoldConfig = `# katabridge configuration.
+	scaffoldConfig = `# katalyst configuration.
 # See product/decisions.md for the schema and rule semantics.
 
 schemas:
@@ -21,7 +21,11 @@ schemas:
 
 rules:
   - paths: "notes/**/*.md"
-    schema: book
+    checks:
+      - kind: object
+        schema: book
+      - kind: markdown_title_matches_h1
+      - kind: filesystem_filename_matches_slug
 `
 
 	scaffoldSchema = `{
@@ -38,8 +42,9 @@ rules:
 `
 
 	// Keys are sorted alphabetically so the scaffold is already in
-	// `katabridge fmt` canonical form — see TestInit_scaffoldIsCanonical.
+	// `katalyst fmt` canonical form — see TestInit_scaffoldIsCanonical.
 	scaffoldExample = `---
+slug: example
 tags:
   - example
 title: Example
@@ -56,7 +61,7 @@ func newInitCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Scaffold a katabridge.yaml, an example schema, and an example document.",
+		Short: "Scaffold a katalyst.yaml, an example schema, and an example document.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := dir
 			if target == "" {
@@ -71,7 +76,7 @@ func newInitCmd() *cobra.Command {
 				rel     string
 				content string
 			}{
-				{"katabridge.yaml", scaffoldConfig},
+				{"katalyst.yaml", scaffoldConfig},
 				{"schemas/book.json", scaffoldSchema},
 				{"notes/example.md", scaffoldExample},
 			}

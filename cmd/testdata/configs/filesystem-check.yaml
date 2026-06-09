@@ -1,0 +1,7 @@
+schemas:
+  book: ./schemas/book.json
+rules:
+  - paths: "notes/**/*.md"
+    checks:
+      - kind: filesystem_filename_matches_slug
+        field: slug

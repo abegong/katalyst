@@ -1,4 +1,4 @@
-// Package cmd contains the cobra command tree for the katabridge CLI.
+// Package cmd contains the cobra command tree for the katalyst CLI.
 package cmd
 
 import "github.com/spf13/cobra"
@@ -13,9 +13,9 @@ var Version = "0.0.0-dev"
 // and I/O streams.
 func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:   "katabridge",
+		Use:   "katalyst",
 		Short: "Define and enforce schemas for markdown frontmatter.",
-		Long: `katabridge validates structured metadata (frontmatter) on
+		Long: `katalyst validates structured metadata (frontmatter) on
 markdown files against JSON Schema documents.`,
 		Version:       Version,
 		SilenceUsage:  true,

@@ -8,14 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/katabase-ai/katabridge/internal/config"
+	"github.com/katabase-ai/katalyst/internal/config"
 	"github.com/spf13/cobra"
 )
 
 func newSchemaCmd() *cobra.Command {
 	s := &cobra.Command{
 		Use:   "schema",
-		Short: "Inspect schemas registered in katabridge.yaml.",
+		Short: "Inspect schemas registered in katalyst.yaml.",
 	}
 	s.AddCommand(newSchemaListCmd(), newSchemaShowCmd())
 	return s
@@ -56,7 +56,7 @@ func newSchemaShowCmd() *cobra.Command {
 			}
 			path := cfg.SchemaPath(name)
 			if path == "" {
-				return usageErr(fmt.Sprintf("unknown schema %q (try `katabridge schema list`)", name))
+				return usageErr(fmt.Sprintf("unknown schema %q (try `katalyst schema list`)", name))
 			}
 			src, err := os.ReadFile(path)
 			if err != nil {
@@ -89,7 +89,7 @@ func loadConfigFromCWD() (*config.Config, error) {
 	cfg, err := config.Load(wd)
 	if err != nil {
 		if errors.Is(err, config.ErrNotFound) {
-			return nil, usageErr("no katabridge.yaml found in this directory or any ancestor (run `katabridge init`)")
+			return nil, usageErr("no katalyst.yaml found in this directory or any ancestor (run `katalyst init`)")
 		}
 		return nil, err
 	}
