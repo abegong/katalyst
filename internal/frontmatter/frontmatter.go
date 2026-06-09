@@ -48,6 +48,7 @@ type Document struct {
 	HasFrontmatter bool
 	Meta           map[string]any
 	Body           []byte
+	BodyLine       int
 	Lines          map[string]int
 }
 
@@ -69,7 +70,7 @@ func Parse(src []byte) (*Document, error) {
 	// fence. We require an immediate newline (or end-of-file) after the
 	// fence so a line like "----" or "--- something" doesn't trigger.
 	if !startsWithFence(input) {
-		return &Document{Body: src}, nil
+		return &Document{Body: src, BodyLine: 1}, nil
 	}
 
 	// Skip past the opening fence and its line terminator.
@@ -84,6 +85,7 @@ func Parse(src []byte) (*Document, error) {
 
 	yamlBlock := rest[:closeStart]
 	body := rest[closeEnd:]
+	bodyLine := 1 + bytes.Count(input[:len(input)-len(rest)+closeEnd], []byte{'\n'})
 
 	meta := map[string]any{}
 	lines := map[string]int{}
@@ -105,6 +107,7 @@ func Parse(src []byte) (*Document, error) {
 		HasFrontmatter: true,
 		Meta:           meta,
 		Body:           body,
+		BodyLine:       bodyLine,
 		Lines:          lines,
 	}, nil
 }

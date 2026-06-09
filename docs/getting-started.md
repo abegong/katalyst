@@ -25,3 +25,7 @@ katalyst validate notes/example.md
 - `katalyst.yaml`
 - `schemas/book.json`
 - `notes/example.md`
+
+Next:
+- [Configuration]({{< relref "configuration.md" >}})
+- [Rules Reference]({{< relref "rules/_index.md" >}})

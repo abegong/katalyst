@@ -21,7 +21,11 @@ schemas:
 
 rules:
   - paths: "notes/**/*.md"
-    schema: book
+    checks:
+      - kind: object
+        schema: book
+      - kind: markdown_title_matches_h1
+      - kind: filesystem_filename_matches_slug
 `
 
 	scaffoldSchema = `{
@@ -40,6 +44,7 @@ rules:
 	// Keys are sorted alphabetically so the scaffold is already in
 	// `katalyst fmt` canonical form — see TestInit_scaffoldIsCanonical.
 	scaffoldExample = `---
+slug: example
 tags:
   - example
 title: Example

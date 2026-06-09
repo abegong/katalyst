@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/katabase-ai/katalyst/internal/checks"
 	"github.com/katabase-ai/katalyst/internal/frontmatter"
 	"github.com/katabase-ai/katalyst/internal/validator"
 	"gopkg.in/yaml.v3"
@@ -35,25 +36,29 @@ func validateWrite(path string, src []byte, schemaFlag string, strict bool) erro
 		return fmt.Errorf("%s: no frontmatter found", path)
 	}
 
-	schema, _, err := r.schemaFor(path, doc.Meta)
+	checkList, err := r.checksFor(path, doc.Meta)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
 
 	instance := dropKey(doc.Meta, "schema")
-	result := schema.Validate(instance)
-	if result.Valid {
+	result := checks.RunAll(checks.Context{
+		FilePath: path,
+		Doc:      doc,
+		Meta:     instance,
+	}, checkList)
+	if len(result) == 0 {
 		return nil
 	}
 
 	var lines []string
-	for _, e := range result.Errors {
+	for _, e := range result {
 		loc := e.Path
 		if loc == "" {
 			loc = "/"
 		}
-		if line, ok := lookupLine(doc.Lines, e.Path); ok {
-			lines = append(lines, fmt.Sprintf("%s:%d: %s: %s", path, line, loc, e.Message))
+		if e.Line > 0 {
+			lines = append(lines, fmt.Sprintf("%s:%d: %s: %s", path, e.Line, loc, e.Message))
 		} else {
 			lines = append(lines, fmt.Sprintf("%s: %s: %s", path, loc, e.Message))
 		}

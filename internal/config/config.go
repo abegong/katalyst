@@ -2,7 +2,7 @@
 // directory and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
-//  2. For a given markdown file path, which schema name applies?
+//  2. For a given markdown file path, which rule/check set applies?
 //
 // See product/decisions.md (D1, D2) for the rationale behind the
 // nearest-ancestor lookup and the first-match-wins rule semantics.
@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
@@ -41,12 +42,33 @@ type Config struct {
 	Rules []Rule
 }
 
-// Rule binds a glob pattern to a named schema.
+// CheckKind identifies the check implementation attached to a rule.
+type CheckKind string
+
+const (
+	CheckObject                        CheckKind = "object"
+	CheckMarkdownTitleMatchesH1        CheckKind = "markdown_title_matches_h1"
+	CheckFilesystemFilenameMatchesSlug CheckKind = "filesystem_filename_matches_slug"
+	defaultMarkdownTitleField                    = "title"
+	defaultFilesystemSlugField                   = "slug"
+)
+
+// Check configures one validation check.
+type Check struct {
+	Kind   CheckKind
+	Schema string
+	Field  string
+}
+
+// Rule binds a glob pattern to one or more checks.
 type Rule struct {
 	// Paths is a doublestar-syntax glob, relative to Root.
 	Paths string
-	// Schema is a key into Config.Schemas.
+	// Schema is retained for backward compatibility: it mirrors the
+	// first object check's schema name, if present.
 	Schema string
+	// Checks to run when Paths matches.
+	Checks []Check
 }
 
 // rawConfig mirrors the on-disk YAML shape, before validation.
@@ -56,8 +78,15 @@ type rawConfig struct {
 }
 
 type rawRule struct {
-	Paths  string `yaml:"paths"`
+	Paths  string     `yaml:"paths"`
+	Schema string     `yaml:"schema"`
+	Checks []rawCheck `yaml:"checks"`
+}
+
+type rawCheck struct {
+	Kind   string `yaml:"kind"`
 	Schema string `yaml:"schema"`
+	Field  string `yaml:"field"`
 }
 
 // Load finds katalyst.yaml by walking upward from start and parses
@@ -89,13 +118,44 @@ func Load(start string) (*Config, error) {
 		cfg.Schemas[name] = resolve(root, p)
 	}
 	for i, r := range raw.Rules {
-		if _, ok := cfg.Schemas[r.Schema]; !ok {
-			return nil, fmt.Errorf("rules[%d]: unknown schema %q", i, r.Schema)
-		}
 		if r.Paths == "" {
 			return nil, fmt.Errorf("rules[%d]: empty paths pattern", i)
 		}
-		cfg.Rules = append(cfg.Rules, Rule{Paths: r.Paths, Schema: r.Schema})
+
+		checks := make([]Check, 0, len(r.Checks)+1)
+		if r.Schema != "" {
+			if _, ok := cfg.Schemas[r.Schema]; !ok {
+				return nil, fmt.Errorf("rules[%d]: unknown schema %q", i, r.Schema)
+			}
+			checks = append(checks, Check{
+				Kind:   CheckObject,
+				Schema: r.Schema,
+			})
+		}
+
+		for j, rawCheck := range r.Checks {
+			ch, err := normalizeCheck(rawCheck, cfg.Schemas)
+			if err != nil {
+				return nil, fmt.Errorf("rules[%d].checks[%d]: %w", i, j, err)
+			}
+			checks = append(checks, ch)
+		}
+		if len(checks) == 0 {
+			return nil, fmt.Errorf("rules[%d]: no checks configured (set schema or checks)", i)
+		}
+
+		schemaName := ""
+		for _, ch := range checks {
+			if ch.Kind == CheckObject {
+				schemaName = ch.Schema
+				break
+			}
+		}
+		cfg.Rules = append(cfg.Rules, Rule{
+			Paths:  r.Paths,
+			Schema: schemaName,
+			Checks: checks,
+		})
 	}
 
 	return cfg, nil
@@ -123,17 +183,31 @@ func (c *Config) SchemaNames() []string {
 // filePath may be absolute or relative; it's compared as a path
 // relative to the config root.
 func (c *Config) Match(filePath string) (string, bool) {
+	rule, ok := c.RuleFor(filePath)
+	if !ok {
+		return "", false
+	}
+	for _, ch := range rule.Checks {
+		if ch.Kind == CheckObject {
+			return ch.Schema, true
+		}
+	}
+	return "", false
+}
+
+// RuleFor returns the first matching rule for filePath.
+func (c *Config) RuleFor(filePath string) (Rule, bool) {
 	rel, err := relativeToRoot(c.Root, filePath)
 	if err != nil {
-		return "", false
+		return Rule{}, false
 	}
 	for _, r := range c.Rules {
 		ok, err := doublestar.Match(r.Paths, rel)
 		if err == nil && ok {
-			return r.Schema, true
+			return r, true
 		}
 	}
-	return "", false
+	return Rule{}, false
 }
 
 // find walks from start upward until it locates a directory containing
@@ -209,4 +283,43 @@ func resolveSymlinks(p string) string {
 		return p
 	}
 	return filepath.Join(resolveSymlinks(dir), base)
+}
+
+func normalizeCheck(raw rawCheck, schemas map[string]string) (Check, error) {
+	kind := CheckKind(strings.TrimSpace(raw.Kind))
+	switch kind {
+	case CheckObject:
+		if raw.Schema == "" {
+			return Check{}, errors.New(`object check requires "schema"`)
+		}
+		if _, ok := schemas[raw.Schema]; !ok {
+			return Check{}, fmt.Errorf("unknown schema %q", raw.Schema)
+		}
+		if raw.Field != "" {
+			return Check{}, errors.New(`object check does not support "field"`)
+		}
+		return Check{Kind: CheckObject, Schema: raw.Schema}, nil
+	case CheckMarkdownTitleMatchesH1:
+		if raw.Schema != "" {
+			return Check{}, errors.New(`markdown_title_matches_h1 does not support "schema"`)
+		}
+		field := raw.Field
+		if field == "" {
+			field = defaultMarkdownTitleField
+		}
+		return Check{Kind: CheckMarkdownTitleMatchesH1, Field: field}, nil
+	case CheckFilesystemFilenameMatchesSlug:
+		if raw.Schema != "" {
+			return Check{}, errors.New(`filesystem_filename_matches_slug does not support "schema"`)
+		}
+		field := raw.Field
+		if field == "" {
+			field = defaultFilesystemSlugField
+		}
+		return Check{Kind: CheckFilesystemFilenameMatchesSlug, Field: field}, nil
+	case "":
+		return Check{}, errors.New(`check kind is required`)
+	default:
+		return Check{}, fmt.Errorf("unknown check kind %q", raw.Kind)
+	}
 }

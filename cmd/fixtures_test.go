@@ -20,3 +20,12 @@ var bookAndPersonConfigFixture string
 
 //go:embed testdata/configs/strict-book.yaml
 var strictBookConfigFixture string
+
+//go:embed testdata/configs/object-check.yaml
+var objectCheckConfigFixture string
+
+//go:embed testdata/configs/markdown-check.yaml
+var markdownCheckConfigFixture string
+
+//go:embed testdata/configs/filesystem-check.yaml
+var filesystemCheckConfigFixture string

@@ -18,4 +18,5 @@ Start with:
 - [Technical Spec]({{< relref "technical-spec.md" >}})
 - [Manifesto]({{< relref "manifesto.md" >}})
 - [Configuration]({{< relref "configuration.md" >}})
+- [Rules Reference]({{< relref "rules/_index.md" >}})
 - [Commands]({{< relref "commands.md" >}})
