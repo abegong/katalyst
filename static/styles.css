@@ -1,9 +1,30 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f9fafb;
+  --surface: #ffffff;
+  --text: #111827;
+  --border: #e5e7eb;
+  --link: #2563eb;
+  --code-bg: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220;
+    --surface: #111827;
+    --text: #e5e7eb;
+    --border: #374151;
+    --link: #93c5fd;
+    --code-bg: #1f2937;
+  }
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
-  color: #111827;
-  background: #f9fafb;
+  color: var(--text);
+  background: var(--bg);
 }
 
 .container {
@@ -13,8 +34,8 @@ body {
 }
 
 header {
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .brand {
@@ -27,7 +48,7 @@ nav a {
 }
 
 a {
-  color: #2563eb;
+  color: var(--link);
   text-decoration: none;
 }
 
@@ -36,14 +57,14 @@ a:hover {
 }
 
 main {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   margin-top: 1rem;
 }
 
 code {
-  background: #f3f4f6;
+  background: var(--code-bg);
   padding: 0.1rem 0.25rem;
   border-radius: 4px;
 }
