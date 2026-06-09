@@ -1,8 +1,8 @@
 # A general model for data systems
 
 > **Status: work in progress.** This is a deliberately abstract sketch,
-> captured as concepts are introduced. It is not about `katabridge`
-> specifically — katabridge is one instantiation among many. See
+> captured as concepts are introduced. It is not about `katalyst`
+> specifically — katalyst is one instantiation among many. See
 > [`domain-model-mapping.md`](domain-model-mapping.md) for how the
 > concepts here translate to today's code. Expect breaking revisions
 > until the concepts settle.

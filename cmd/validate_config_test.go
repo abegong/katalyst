@@ -34,7 +34,7 @@ func TestValidate_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 	// Add a second schema and a doc that asks for it inline. The config
 	// rules (`notes/**` -> book) would otherwise apply.
 	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "katabridge.yaml"), strictBookConfigFixture)
+	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), strictBookConfigFixture)
 
 	docPath := filepath.Join(dir, "notes/strict.md")
 	mustWrite(t, docPath, `---

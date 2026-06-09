@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ func newUpdateCmd() *cobra.Command {
 		Long: `update modifies top-level frontmatter attributes in-place.
 
 Values are YAML-decoded, so numbers/booleans/arrays are supported:
-  katabridge update notes/dune.md year=1965 published=true tags='[sci-fi,classic]'`,
+  katalyst update notes/dune.md year=1965 published=true tags='[sci-fi,classic]'`,
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := args[0]

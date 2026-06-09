@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
 )
 
 func TestParse_extractsYAMLFrontmatter(t *testing.T) {

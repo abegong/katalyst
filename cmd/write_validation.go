@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
-	"github.com/katabase-ai/katabridge/internal/validator"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/validator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -90,7 +90,7 @@ func composeMarkdown(meta map[string]any, body []byte) ([]byte, error) {
 // directory, minimizing the chance of partially-written files.
 func writeFileAtomic(path string, b []byte, mode os.FileMode) error {
 	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".katabridge-write-*")
+	tmp, err := os.CreateTemp(dir, ".katalyst-write-*")
 	if err != nil {
 		return err
 	}

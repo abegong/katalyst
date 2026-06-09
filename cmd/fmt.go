@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +68,7 @@ func formatOne(path string, check bool) (changed bool, err error) {
 	}
 	// Write atomically: write to a sibling temp file, then rename.
 	// This avoids leaving a half-written file behind on crash.
-	tmp, err := os.CreateTemp(filepathDir(path), ".katabridge-fmt-*")
+	tmp, err := os.CreateTemp(filepathDir(path), ".katalyst-fmt-*")
 	if err != nil {
 		return false, err
 	}

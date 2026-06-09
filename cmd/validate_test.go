@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/cmd"
+	"github.com/katabase-ai/katalyst/cmd"
 )
 
 func writeFile(t *testing.T, dir, name, content string) string {

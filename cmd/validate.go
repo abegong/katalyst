@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/katabase-ai/katabridge/internal/config"
-	"github.com/katabase-ai/katabridge/internal/frontmatter"
-	"github.com/katabase-ai/katabridge/internal/validator"
+	"github.com/katabase-ai/katalyst/internal/config"
+	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/katabase-ai/katalyst/internal/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +32,8 @@ checks it against a JSON Schema. Schema resolution, highest precedence first:
 
   1. --schema <path>      (applies to every file in the invocation)
   2. inline "schema:" key in the file's frontmatter (a schema name from
-     katabridge.yaml)
-  3. the first matching rule in katabridge.yaml
+     katalyst.yaml)
+  3. the first matching rule in katalyst.yaml
 
 Files that don't resolve to any schema are reported as errors.`,
 		Args: cobra.MinimumNArgs(1),
@@ -99,7 +99,7 @@ func newResolver(schemaFlag string) (*resolver, error) {
 	cfg, err := config.Load(wd)
 	if err != nil {
 		if errors.Is(err, config.ErrNotFound) {
-			return nil, usageErr("no --schema given and no katabridge.yaml found (run `katabridge init`)")
+			return nil, usageErr("no --schema given and no katalyst.yaml found (run `katalyst init`)")
 		}
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (r *resolver) schemaFor(filePath string, meta map[string]any) (*validator.S
 	if name, ok := meta["schema"].(string); ok && name != "" {
 		path := r.cfg.SchemaPath(name)
 		if path == "" {
-			return nil, "", fmt.Errorf("inline schema %q is not registered in katabridge.yaml", name)
+			return nil, "", fmt.Errorf("inline schema %q is not registered in katalyst.yaml", name)
 		}
 		s, err := r.compile(path)
 		return s, "inline schema: " + name, err
@@ -179,7 +179,7 @@ func validateFile(out, errOut io.Writer, r *resolver, path string) (bool, error)
 		return false, err
 	}
 
-	// The "schema" key is a katabridge directive, not user data. Strip
+	// The "schema" key is a katalyst directive, not user data. Strip
 	// it before validating so user schemas with additionalProperties:
 	// false don't reject documents that opt into themselves.
 	instance := dropKey(doc.Meta, "schema")

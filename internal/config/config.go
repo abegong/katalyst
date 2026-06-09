@@ -1,4 +1,4 @@
-// Package config loads katabridge.yaml from the nearest ancestor
+// Package config loads katalyst.yaml from the nearest ancestor
 // directory and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
@@ -20,11 +20,11 @@ import (
 )
 
 // Filename is the fixed config name we look for during ascent.
-const Filename = "katabridge.yaml"
+const Filename = "katalyst.yaml"
 
-// ErrNotFound is returned when no katabridge.yaml is present in the
+// ErrNotFound is returned when no katalyst.yaml is present in the
 // starting directory or any of its ancestors.
-var ErrNotFound = errors.New("config: katabridge.yaml not found")
+var ErrNotFound = errors.New("config: katalyst.yaml not found")
 
 // Config is the parsed, validated, root-relative-resolved configuration.
 //
@@ -33,7 +33,7 @@ var ErrNotFound = errors.New("config: katabridge.yaml not found")
 //
 // Rules retains the source order (first match wins).
 type Config struct {
-	// Root is the absolute directory containing katabridge.yaml.
+	// Root is the absolute directory containing katalyst.yaml.
 	Root string
 	// Schemas is name → absolute path.
 	Schemas map[string]string
@@ -60,7 +60,7 @@ type rawRule struct {
 	Schema string `yaml:"schema"`
 }
 
-// Load finds katabridge.yaml by walking upward from start and parses
+// Load finds katalyst.yaml by walking upward from start and parses
 // it. The returned Config has all schema paths resolved to absolute
 // form and has been validated for internal consistency (every rule
 // references a known schema).

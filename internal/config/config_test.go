@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/internal/config"
+	"github.com/katabase-ai/katalyst/internal/config"
 )
 
 func writeConfig(t *testing.T, dir, content string) string {
 	t.Helper()
-	p := filepath.Join(dir, "katabridge.yaml")
+	p := filepath.Join(dir, "katalyst.yaml")
 	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}

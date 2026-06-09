@@ -1,6 +1,6 @@
 .PHONY: all build test vet fmt tidy run clean
 
-BINARY := katabridge
+BINARY := katalyst
 
 all: vet test build
 

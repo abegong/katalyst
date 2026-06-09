@@ -1,5 +1,5 @@
 // Package validator wraps github.com/santhosh-tekuri/jsonschema/v6 with a
-// small, stable API tailored to katabridge's needs.
+// small, stable API tailored to katalyst's needs.
 //
 // The wrapper exists so the rest of the codebase doesn't depend directly on
 // the underlying library. That keeps three things flexible:

@@ -10,7 +10,7 @@ For *why* the design is the way it is, see [`product/decisions.md`](product/deci
 ```
 make test    # go test ./...
 make vet     # go vet ./...
-make build   # produces ./bin/katabridge
+make build   # produces ./bin/katalyst
 make all     # vet + test + build
 ```
 
@@ -20,7 +20,7 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, validate, schema, fmt)
-internal/config       katabridge.yaml loader + glob-based schema resolution
+internal/config       katalyst.yaml loader + glob-based schema resolution
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions

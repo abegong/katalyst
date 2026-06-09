@@ -1,6 +1,6 @@
 # Domain model
 
-What `katabridge` is *about*: the concepts it manipulates, how they relate,
+What `katalyst` is *about*: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.
 
 For *what* the CLI does, see [`README.md`](../README.md). For *why*
@@ -14,7 +14,7 @@ flowchart LR
     subgraph Disk["On disk"]
         MD["Markdown file<br/>(frontmatter + body)"]
         SF["Schema file<br/>(JSON Schema)"]
-        CF["katabridge.yaml<br/>(config)"]
+        CF["katalyst.yaml<br/>(config)"]
     end
 
     subgraph Parsed["In memory"]
@@ -79,7 +79,7 @@ A JSON Schema (draft 2020-12 by default; the library supports 4 through
 A schema has two identities:
 
 - A **path** on disk, where the JSON lives.
-- A **name** registered in `katabridge.yaml` (e.g. `book`, `person`). The
+- A **name** registered in `katalyst.yaml` (e.g. `book`, `person`). The
   name is the stable public handle used by inline `schema:` directives
   and `schema show`. Paths can change; names should not.
 
@@ -93,7 +93,7 @@ depend on the library directly.
 ### Config
 
 The single source of truth for "what schemas exist and where they
-apply." Lives at `katabridge.yaml` in the **repo root**.
+apply." Lives at `katalyst.yaml` in the **repo root**.
 
 Discovery walks upward from the current working directory looking for
 the nearest ancestor that contains the file (cf. `.git`, `.editorconfig`,
@@ -120,7 +120,7 @@ ordered; the first one whose glob matches a document path wins.
 ### Schema directive (`schema:` in frontmatter)
 
 A per-document opt-in to a specific schema. Treated as **metadata about
-katabridge itself, not user data**: the resolver reads it to choose a
+katalyst itself, not user data**: the resolver reads it to choose a
 schema, then strips it from `Meta` before passing to the validator. This
 matters when a schema uses `additionalProperties: false` — the document
 can still "name itself" without the directive becoming a validation
@@ -164,7 +164,7 @@ parent object is better than pointing at nothing.
 The data flow per file, end-to-end:
 
 1. **Resolve config or schema flag.** If `--schema` is set, skip config
-   loading. Otherwise discover `katabridge.yaml` from the working
+   loading. Otherwise discover `katalyst.yaml` from the working
    directory; failing to find one is a usage error (exit 2).
 2. **Read file bytes.** Read errors are reported per-file but don't
    abort the run; we accumulate exit-1 status and continue.
@@ -173,7 +173,7 @@ The data flow per file, end-to-end:
 4. **Resolve schema.** Run the precedence policy above. Unmatched files
    become per-file errors.
 5. **Strip the `schema:` directive** from `Meta` so user schemas with
-   `additionalProperties: false` aren't tripped by katabridge's own
+   `additionalProperties: false` aren't tripped by katalyst's own
    metadata.
 6. **Compile or fetch from cache.** Schemas live behind a path-keyed
    cache so repeated hits cost nothing.
@@ -206,12 +206,12 @@ tests; a few are protected only by code review and convention.
 1. **Body bytes are sacred.** No command except `fmt` modifies them.
    Even `fmt` only normalizes trailing whitespace and the leading
    separator; interior body bytes round-trip exactly.
-2. **Schema names are stable; paths can move.** `katabridge.yaml` is
+2. **Schema names are stable; paths can move.** `katalyst.yaml` is
    the only place that knows how names map to paths.
-3. **The `schema:` directive is katabridge metadata, not user data.**
+3. **The `schema:` directive is katalyst metadata, not user data.**
    It influences resolution but never reaches the validator.
 4. **First matching rule wins.** No "most specific match" heuristics,
-   no precedence inversions. Order in `katabridge.yaml` is authoritative.
+   no precedence inversions. Order in `katalyst.yaml` is authoritative.
 5. **Line numbers are file-relative and 1-indexed.** The opening `---`
    fence is line 1, so the first YAML key is typically line 2.
 6. **Unmatched is an error, not a warning.** Silent skips hide config
@@ -236,8 +236,8 @@ Terms to use consistently in code, docs, and user-facing copy:
 | **Metadata** | The parsed in-memory structure (a `map[string]any`). |
 | **Schema** | A JSON Schema document. Named in config; located by path. |
 | **Schema directive** | The inline `schema:` key inside a document's frontmatter. |
-| **Rule** | A `(glob, schema name)` pair in `katabridge.yaml`. |
-| **Repo root** | The directory containing `katabridge.yaml`. |
+| **Rule** | A `(glob, schema name)` pair in `katalyst.yaml`. |
+| **Repo root** | The directory containing `katalyst.yaml`. |
 | **Resolver** | The runtime object that decides which schema applies to a file. |
 | **Document** | A parsed markdown file with frontmatter + body + line map. |
 
@@ -246,7 +246,7 @@ Avoid:
 - "Validator" as a *thing*. Use "schema" for what users author, and
   reserve "validator" for the runtime check itself.
 - "Config" without qualification when ambiguous. Prefer
-  "`katabridge.yaml`" or "the config" depending on context.
+  "`katalyst.yaml`" or "the config" depending on context.
 
 ## Out of scope (today)
 
@@ -259,5 +259,5 @@ domain currently is *not*:
 - **Schema evolution.** No "this field was renamed in v2" migrations.
   Tracked in roadmap v0.4.
 - **Query.** No "find all docs where year > 1980." Tracked in v0.4.
-- **Derived state.** No index, no cache file, no `.katabridge/`
+- **Derived state.** No index, no cache file, no `.katalyst/`
   directory. Every run is stateless.

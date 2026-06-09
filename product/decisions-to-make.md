@@ -7,15 +7,15 @@ Open design questions. Resolved decisions move to `decisions.md`.
 Implemented so far: `init`, `validate`, `schema list`, `schema show`,
 `fmt`. Candidates for the rest of v1, roughly in order of usefulness:
 
-- `katabridge schema check` — sanity-check the schema files themselves
+- `katalyst schema check` — sanity-check the schema files themselves
   (valid JSON Schema, no dangling `$ref`s, etc.).
-- `katabridge ls` — list files and the schema each one matched against
+- `katalyst ls` — list files and the schema each one matched against
   (great for debugging association rules).
-- `katabridge explain <path>` — show, for one file, which schema matched,
+- `katalyst explain <path>` — show, for one file, which schema matched,
   why, and what the validation result was.
-- `katabridge infer <paths...>` — synthesize a starter schema from existing
+- `katalyst infer <paths...>` — synthesize a starter schema from existing
   files. (See roadmap v0.4.)
-- `katabridge watch` — re-validate on save.
+- `katalyst watch` — re-validate on save.
 
 Naming question: do we keep `validate` or rename to `check`? `check`
 reads more like "is this OK?", `validate` is the Mongo term. Currently

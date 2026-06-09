@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katabridge/internal/validator"
+	"github.com/katabase-ai/katalyst/internal/validator"
 )
 
 //go:embed testdata/schemas/book.json

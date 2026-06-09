@@ -1,4 +1,4 @@
-module github.com/katabase-ai/katabridge
+module github.com/katabase-ai/katalyst
 
 go 1.23
 

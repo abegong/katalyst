@@ -1,4 +1,4 @@
-# katabridge
+# katalyst
 
 Define and enforce schemas for structured metadata (frontmatter) on markdown
 files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
@@ -14,32 +14,32 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 ## Install
 
 ```
-go install github.com/katabase-ai/katabridge@latest
+go install github.com/katabase-ai/katalyst@latest
 ```
 
 Or from source:
 
 ```
-git clone https://github.com/katabase-ai/katabridge
-cd katabridge
-make build  # produces ./bin/katabridge
+git clone https://github.com/katabase-ai/katalyst
+cd katalyst
+make build  # produces ./bin/katalyst
 ```
 
 ## Quickstart
 
 ```bash
 mkdir my-notes && cd my-notes
-katabridge init                  # scaffolds katabridge.yaml, schemas/, notes/
-katabridge validate notes/example.md
+katalyst init                  # scaffolds katalyst.yaml, schemas/, notes/
+katalyst validate notes/example.md
 ```
 
 Both files are picked up automatically: `validate` discovers the nearest
-`katabridge.yaml` walking up from the working directory, then matches the
+`katalyst.yaml` walking up from the working directory, then matches the
 file against the config's glob rules.
 
 ## Configuring
 
-A `katabridge.yaml` at your repo root maps schemas to globs:
+A `katalyst.yaml` at your repo root maps schemas to globs:
 
 ```yaml
 schemas:
@@ -66,15 +66,15 @@ Files that don't resolve to any schema are reported as errors.
 
 ## Commands
 
-### `katabridge validate [paths...]`
+### `katalyst validate [paths...]`
 
 Validate each file's frontmatter against its resolved schema.
 
 ```
-$ katabridge validate notes/dune.md
+$ katalyst validate notes/dune.md
 notes/dune.md: OK
 
-$ katabridge validate notes/bad.md
+$ katalyst validate notes/bad.md
 notes/bad.md:3: /year: got string, want integer
 notes/bad.md: /: missing property 'isbn'
 ```
@@ -90,14 +90,14 @@ Exit codes:
 | `1`  | One or more validation failures      |
 | `2`  | Usage error or unreadable input      |
 
-### `katabridge fmt [paths...]`
+### `katalyst fmt [paths...]`
 
 Normalize frontmatter: top-level keys sorted alphabetically, default
 block style, exactly one trailing newline. Body preserved verbatim.
 
 ```
-katabridge fmt notes/**/*.md                  # rewrites in place
-katabridge fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if any change
+katalyst fmt notes/**/*.md                  # rewrites in place
+katalyst fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if any change
 ```
 
 `fmt` has no flags besides `--check` on purpose — see
@@ -108,18 +108,18 @@ katabridge fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if an
 The CLI supports basic item-level CRUD operations:
 
 ```bash
-katabridge create notes/a.md title="New title" year=2026
-katabridge read notes/a.md
-katabridge update notes/a.md title="Updated title"
-katabridge delete notes/a.md
+katalyst create notes/a.md title="New title" year=2026
+katalyst read notes/a.md
+katalyst update notes/a.md title="Updated title"
+katalyst delete notes/a.md
 ```
 
 Implemented commands:
 
-- `katabridge create <path> [key=value ...]`
-- `katabridge read <path>`
-- `katabridge update <path> key=value [key=value...]`
-- `katabridge delete <path> [path...]`
+- `katalyst create <path> [key=value ...]`
+- `katalyst read <path>`
+- `katalyst update <path> key=value [key=value...]`
+- `katalyst delete <path> [path...]`
 
 Validation behavior for write-affecting commands (`create`, `update`):
 
@@ -129,23 +129,23 @@ Validation behavior for write-affecting commands (`create`, `update`):
 - `--no-validate` bypasses this check.
 - `--schema` overrides config-based schema resolution (same precedence rules as `validate`).
 
-### `katabridge schema list` / `katabridge schema show <name>`
+### `katalyst schema list` / `katalyst schema show <name>`
 
 ```
-$ katabridge schema list
+$ katalyst schema list
 book    schemas/book.json
 person  schemas/person.json
 
-$ katabridge schema show book
+$ katalyst schema show book
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   ...
 }
 ```
 
-### `katabridge init [--dir <path>]`
+### `katalyst init [--dir <path>]`
 
-Scaffold a minimal working repo: `katabridge.yaml`, one schema, one
+Scaffold a minimal working repo: `katalyst.yaml`, one schema, one
 example document. Refuses to overwrite anything that already exists.
 
 ### Shell completion
@@ -153,8 +153,8 @@ example document. Refuses to overwrite anything that already exists.
 Cobra provides scripts for bash, zsh, fish, and powershell:
 
 ```bash
-source <(katabridge completion zsh)
-katabridge completion zsh > "${fpath[1]}/_katabridge"   # persistent
+source <(katalyst completion zsh)
+katalyst completion zsh > "${fpath[1]}/_katalyst"   # persistent
 ```
 
 ## Development
@@ -172,7 +172,7 @@ Layout:
 
 ```
 cmd/                  cobra commands (root, init, validate, schema, fmt, create/read/update/delete)
-internal/config       katabridge.yaml loader + glob-based schema resolution
+internal/config       katalyst.yaml loader + glob-based schema resolution
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions
