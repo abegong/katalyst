@@ -183,10 +183,44 @@ func (r *resolver) checksFor(filePath string, meta map[string]any) ([]checks.Che
 	if hasMatchedRule {
 		for _, cfgCheck := range matchedRule.Checks {
 			switch cfgCheck.Kind {
+			case config.CheckObjectRequiredField:
+				checkList = append(checkList, checks.ObjectRequiredField{Field: cfgCheck.Field})
+			case config.CheckObjectFieldType:
+				checkList = append(checkList, checks.ObjectFieldType{Field: cfgCheck.Field, Type: cfgCheck.Type})
+			case config.CheckObjectFieldEnum:
+				checkList = append(checkList, checks.ObjectFieldEnum{Field: cfgCheck.Field, Values: cfgCheck.Values})
+			case config.CheckObjectNumberRange:
+				checkList = append(checkList, checks.ObjectNumberRange{Field: cfgCheck.Field, Min: cfgCheck.Min, Max: cfgCheck.Max})
+			case config.CheckObjectStringLength:
+				checkList = append(checkList, checks.ObjectStringLength{
+					Field:     cfgCheck.Field,
+					MinLength: cfgCheck.MinLength,
+					MaxLength: cfgCheck.MaxLength,
+				})
 			case config.CheckMarkdownTitleMatchesH1:
 				checkList = append(checkList, checks.MarkdownTitleMatchesH1{Field: cfgCheck.Field})
+			case config.CheckMarkdownRequiresH1:
+				checkList = append(checkList, checks.MarkdownRequiresH1{})
+			case config.CheckMarkdownSingleH1:
+				checkList = append(checkList, checks.MarkdownSingleH1{})
+			case config.CheckMarkdownNoHeadingLevelJumps:
+				checkList = append(checkList, checks.MarkdownNoHeadingLevelJumps{})
+			case config.CheckMarkdownRequiredSection:
+				checkList = append(checkList, checks.MarkdownRequiredSection{Heading: cfgCheck.Heading})
+			case config.CheckMarkdownCodeFenceHasLanguage:
+				checkList = append(checkList, checks.MarkdownCodeFenceHasLanguage{})
 			case config.CheckFilesystemFilenameMatchesSlug:
 				checkList = append(checkList, checks.FilenameMatchesSlug{Field: cfgCheck.Field})
+			case config.CheckFilesystemExtensionIn:
+				checkList = append(checkList, checks.FilesystemExtensionIn{Values: cfgCheck.Values})
+			case config.CheckFilesystemFilenameKebabCase:
+				checkList = append(checkList, checks.FilesystemFilenameKebabCase{})
+			case config.CheckFilesystemNoSpacesInPath:
+				checkList = append(checkList, checks.FilesystemNoSpacesInPath{})
+			case config.CheckFilesystemParentDirIn:
+				checkList = append(checkList, checks.FilesystemParentDirIn{Values: cfgCheck.Values})
+			case config.CheckFilesystemFilenamePrefix:
+				checkList = append(checkList, checks.FilesystemFilenamePrefix{Value: cfgCheck.Value})
 			}
 		}
 	}

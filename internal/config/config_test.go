@@ -125,8 +125,38 @@ rules:
     checks:
       - kind: object
         schema: book
+      - kind: object_required_field
+        field: year
+      - kind: object_field_type
+        field: year
+        type: integer
+      - kind: object_field_enum
+        field: status
+        values: [draft, published]
+      - kind: object_number_range
+        field: year
+        min: 1900
+        max: 2100
+      - kind: object_string_length
+        field: title
+        min_length: 1
+        max_length: 100
       - kind: markdown_title_matches_h1
+      - kind: markdown_requires_h1
+      - kind: markdown_single_h1
+      - kind: markdown_no_heading_level_jumps
+      - kind: markdown_required_section
+        heading: Summary
+      - kind: markdown_code_fence_language_required
       - kind: filesystem_filename_matches_slug
+      - kind: filesystem_extension_in
+        values: [.md]
+      - kind: filesystem_filename_kebab_case
+      - kind: filesystem_no_spaces_in_path
+      - kind: filesystem_parent_dir_in
+        values: [books, notes]
+      - kind: filesystem_filename_prefix
+        value: book-
 `)
 	cfg, err := config.Load(dir)
 	if err != nil {
@@ -136,17 +166,17 @@ rules:
 		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
 	}
 	got := cfg.Rules[0].Checks
-	if len(got) != 3 {
-		t.Fatalf("expected 3 checks, got %d", len(got))
+	if len(got) != 18 {
+		t.Fatalf("expected 18 checks, got %d", len(got))
 	}
 	if got[0].Kind != config.CheckObject || got[0].Schema != "book" {
 		t.Fatalf("check[0] = %+v, want object schema=book", got[0])
 	}
-	if got[1].Kind != config.CheckMarkdownTitleMatchesH1 || got[1].Field != "title" {
-		t.Fatalf("check[1] = %+v, want markdown default field title", got[1])
+	if got[6].Kind != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
+		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
 	}
-	if got[2].Kind != config.CheckFilesystemFilenameMatchesSlug || got[2].Field != "slug" {
-		t.Fatalf("check[2] = %+v, want filesystem default field slug", got[2])
+	if got[12].Kind != config.CheckFilesystemFilenameMatchesSlug || got[12].Field != "slug" {
+		t.Fatalf("check[12] = %+v, want filesystem default field slug", got[12])
 	}
 }
 

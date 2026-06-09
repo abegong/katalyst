@@ -154,6 +154,205 @@ func TestValidate_filesystemCheck_reportsSlugMismatch(t *testing.T) {
 	}
 }
 
+func TestValidate_newRuleKinds_reportViolations(t *testing.T) {
+	tests := []struct {
+		name       string
+		checkYAML  string
+		docPath    string
+		docContent string
+		want       string
+		setup      func(t *testing.T, dir string)
+	}{
+		{
+			name:      "object_required_field",
+			checkYAML: "- kind: object_required_field\n        field: year",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "missing required field",
+		},
+		{
+			name:      "object_field_type",
+			checkYAML: "- kind: object_field_type\n        field: year\n        type: integer",
+			docPath:   "notes/a.md",
+			docContent: `---
+year: no
+---
+# Dune
+`,
+			want: "must be type",
+		},
+		{
+			name:      "object_field_enum",
+			checkYAML: "- kind: object_field_enum\n        field: status\n        values: [draft, published]",
+			docPath:   "notes/a.md",
+			docContent: `---
+status: archived
+---
+# Dune
+`,
+			want: "allowed set",
+		},
+		{
+			name:      "object_number_range",
+			checkYAML: "- kind: object_number_range\n        field: year\n        min: 1900\n        max: 2100",
+			docPath:   "notes/a.md",
+			docContent: `---
+year: 1800
+---
+# Dune
+`,
+			want: "must be >=",
+		},
+		{
+			name:      "object_string_length",
+			checkYAML: "- kind: object_string_length\n        field: title\n        min_length: 3",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: D
+---
+# D
+`,
+			want: "length",
+		},
+		{
+			name:      "markdown_requires_h1",
+			checkYAML: "- kind: markdown_requires_h1",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+No heading
+`,
+			want: "missing H1",
+		},
+		{
+			name:      "markdown_single_h1",
+			checkYAML: "- kind: markdown_single_h1",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# One
+# Two
+`,
+			want: "only one H1",
+		},
+		{
+			name:      "markdown_no_heading_level_jumps",
+			checkYAML: "- kind: markdown_no_heading_level_jumps",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# One
+### Jump
+`,
+			want: "jump",
+		},
+		{
+			name:      "markdown_required_section",
+			checkYAML: "- kind: markdown_required_section\n        heading: Summary",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+## Notes
+`,
+			want: "required section",
+		},
+		{
+			name:       "markdown_code_fence_language_required",
+			checkYAML:  "- kind: markdown_code_fence_language_required",
+			docPath:    "notes/a.md",
+			docContent: "---\ntitle: Dune\n---\n```\ntext\n```\n",
+			want:       "code fence",
+		},
+		{
+			name:      "filesystem_extension_in",
+			checkYAML: "- kind: filesystem_extension_in\n        values: [.md]",
+			docPath:   "notes/a.txt",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "extension",
+		},
+		{
+			name:      "filesystem_filename_kebab_case",
+			checkYAML: "- kind: filesystem_filename_kebab_case",
+			docPath:   "notes/Bad Name.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "kebab-case",
+		},
+		{
+			name:      "filesystem_no_spaces_in_path",
+			checkYAML: "- kind: filesystem_no_spaces_in_path",
+			docPath:   "notes/with space.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "spaces",
+		},
+		{
+			name:      "filesystem_parent_dir_in",
+			checkYAML: "- kind: filesystem_parent_dir_in\n        values: [books]",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "parent directory",
+		},
+		{
+			name:      "filesystem_filename_prefix",
+			checkYAML: "- kind: filesystem_filename_prefix\n        value: book-",
+			docPath:   "notes/a.md",
+			docContent: `---
+title: Dune
+---
+# Dune
+`,
+			want: "prefix",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			cfg := "schemas: {}\nrules:\n  - paths: \"**/*\"\n    checks:\n      " + tc.checkYAML + "\n"
+			mustWrite(t, filepath.Join(dir, "katalyst.yaml"), cfg)
+			docPath := filepath.Join(dir, tc.docPath)
+			mustWrite(t, docPath, tc.docContent)
+			if tc.setup != nil {
+				tc.setup(t, dir)
+			}
+			chdir(t, dir)
+
+			_, stderr, err := runRoot(t, "validate", docPath)
+			if err == nil {
+				t.Fatalf("expected validation failure for %s", tc.name)
+			}
+			if !strings.Contains(stderr, tc.want) {
+				t.Fatalf("expected stderr to contain %q, got: %q", tc.want, stderr)
+			}
+		})
+	}
+}
+
 func mustWrite(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
