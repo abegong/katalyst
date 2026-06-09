@@ -157,6 +157,35 @@ source <(katalyst completion zsh)
 katalyst completion zsh > "${fpath[1]}/_katalyst"   # persistent
 ```
 
+## Documentation site (Hugo)
+
+User-facing docs live under `docs/` and are served/built by Hugo.
+
+If `hugo` is on your `PATH`, `make` will use it directly. Otherwise the docs
+targets automatically fall back to:
+
+```bash
+go run github.com/gohugoio/hugo@latest
+```
+
+Optional local install:
+
+```bash
+go install github.com/gohugoio/hugo@latest
+```
+
+Run docs locally:
+
+```bash
+make docs-serve
+```
+
+Build static docs:
+
+```bash
+make docs-build
+```
+
 ## Development
 
 This project follows TDD. Tests live next to the code they exercise, in

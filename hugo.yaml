@@ -1,0 +1,11 @@
+baseURL: https://katabase-ai.github.io/katalyst/
+languageCode: en-us
+title: Katalyst Documentation
+contentDir: docs
+disableKinds:
+  - taxonomy
+  - term
+markup:
+  goldmark:
+    renderer:
+      unsafe: false
