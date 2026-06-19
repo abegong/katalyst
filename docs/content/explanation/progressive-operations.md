@@ -1,3 +1,8 @@
++++
+title = "Progressive Operations"
+weight = 30
++++
+
 # Progressive Operations
 
 _How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn't._

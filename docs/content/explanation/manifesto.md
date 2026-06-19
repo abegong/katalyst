@@ -1,5 +1,6 @@
 +++
 title = "Manifesto (Draft)"
+weight = 10
 +++
 
 # Katalyst Manifesto

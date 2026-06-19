@@ -1,5 +1,6 @@
 +++
 title = "Technical Spec (Draft)"
+weight = 90
 +++
 
 ## Scope
@@ -39,12 +40,13 @@ and should compose across storage boundaries.
 
 ## Roadmap directions
 
-Katalyst is expected to expand in three directions:
-
-1. A richer and more expressive validation language.
-2. Application to more storage backends.
-3. Tooling that uses validation rules to support additional operations,
-   especially content and storage migrations.
+Katalyst is expected to expand along a richer validation language, more
+storage backends, and tooling that reuses validation rules for additional
+operations (especially migrations). The dated, itemized version of this lives
+in the [roadmap]({{< relref "../contributing/roadmap.md" >}}); the conceptual
+basis — why each backend tier unlocks new operations — is in
+[Progressive operations]({{< relref "progressive-operations.md" >}}) and the
+[general model]({{< relref "general-model.md" >}}).
 
 ## DSL direction
 

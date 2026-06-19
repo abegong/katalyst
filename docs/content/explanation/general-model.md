@@ -1,9 +1,14 @@
++++
+title = "A general model for data systems"
+weight = 20
++++
+
 # A general model for data systems
 
 > **Status: work in progress.** This is a deliberately abstract sketch,
 > captured as concepts are introduced. It is not about `katalyst`
 > specifically — katalyst is one instantiation among many. See
-> [`domain-model-mapping.md`](domain-model-mapping.md) for how the
+> [Domain model mapping]({{< relref "domain-model-mapping.md" >}}) for how the
 > concepts here translate to today's code. Expect breaking revisions
 > until the concepts settle.
 

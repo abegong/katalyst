@@ -1,10 +1,15 @@
++++
+title = "Connectors"
+weight = 80
++++
+
 # Connectors
 
-> **Status: future — not in scope for v0.** Captured now because it shapes
-> the seams we leave in the v0 code. v0 ships a single *trivial* connector
-> (one flat directory, `*.md` files, filename stem = item id); everything
-> here is what that abstraction grows into. See the "Bridges" section of
-> [`roadmap.md`](roadmap.md).
+> **Status: future — not shipped.** Captured now because it shapes the seams
+> the current code leaves open. Katalyst today ships a single *trivial*
+> connector (one flat directory, `*.md` files, filename stem = item id);
+> everything here is what that abstraction grows into. See the "Bridges"
+> section of the [roadmap]({{< relref "../contributing/roadmap.md" >}}).
 
 ## What a connector is
 
@@ -13,7 +18,7 @@ Katalyst domain model. It answers: *what collections and items does this
 store contain, and where does each one live?* — in both directions.
 
 It is Katalyst's realization of the **data interface** concept from
-[`general-model.md`](general-model.md): the filesystem is one backend;
+the [general model]({{< relref "general-model.md" >}}): the filesystem is one backend;
 SQLite, directories of CSVs, S3 buckets, and hosted APIs are others. The
 first real stress test will be **SQLite**, because it is the first backend
 that forces the granularity question below.
@@ -86,7 +91,7 @@ GX shipped both, and they map cleanly onto Katalyst verbs:
 
 GX tracked files that matched no pattern (`get_unmatched_data_references`)
 rather than silently dropping them. Katalyst already treats unmatched as an
-error (see [`decisions.md`](decisions.md) D2). GX's `self_check` — "here are
+error (see [Configuration]({{< relref "configuration.md" >}})). GX's `self_check` — "here are
 your collections, some examples, and the files that matched nothing" — is the
 template for a future `katalyst doctor` / `explain` that diagnoses a
 connector's mapping.
@@ -139,4 +144,4 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 | **Coordinates** | The captured fields that identify a unit within its collection. |
 | **Granularity** | The level (item vs. collection) at which a connector attaches a store's units to the domain model. |
 
-[addressing]: domain-model.md
+[addressing]: {{< relref "domain-model.md" >}}
