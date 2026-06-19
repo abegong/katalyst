@@ -1,6 +1,20 @@
 # Project layout & init — plan
 
 > Spec: [Project layout & init](./project-layout-spec.md)
+>
+> **Status: done.** All five phases implemented; `make all` green.
+>
+> **Deviations from the plan as written:**
+> - Phase 1 used two concrete settings structs (`rawSchemaKind`,
+>   `rawCollectionKind`) instead of a generic `rawKind[T]`, avoiding any
+>   reliance on generics in yaml.v3 unmarshalling.
+> - Phase 2 added `validator.LoadYAML(name, io.Reader)` (decode YAML → marshal
+>   JSON → existing `Load`) rather than `validator.Compile(name, any)`. The
+>   re-marshal route reuses the proven JSON compile path exactly, avoiding any
+>   question of whether the compiler accepts YAML-native number types.
+> - Phase 4 dropped the whole-config `cmd/testdata/configs/*.yaml` fixtures
+>   entirely; collection bodies are small enough to inline per test, and schema
+>   fixtures stayed JSON with `schemas: {format: json}` in each test project.
 
 ## Current State
 

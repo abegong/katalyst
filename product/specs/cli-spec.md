@@ -56,34 +56,44 @@ Rules:
 
 ## Config (v0)
 
-`katalyst.yaml` lives at the project root. Collections are **named** (this
-replaces the old anonymous `rules:` list).
+Config lives in a `.katalyst/` directory at the project root (see
+[`decisions.md`](../decisions.md) D1 and
+[`project-layout-spec.md`](./project-layout-spec.md)). Schemas and
+collections are each **one named file** — the filename stem is the name.
+
+```
+.katalyst/
+  config.yaml                 # optional project-level settings
+  schemas/note.yaml           # JSON Schema, authored in YAML
+  collections/notes.yaml
+```
 
 ```yaml
-collections:
-  notes:
-    path: notes          # directory, relative to root
-    pattern: "*.md"      # optional; default "*.md"
-    schema: note         # a name from `schemas:`; OR use `checks:`
-    # checks:            # optional explicit check list (engine already supports)
-    #   - kind: object_required_field
-    #     field: title
-
-schemas:
-  note: ./schemas/note.json
+# .katalyst/collections/notes.yaml — the name "notes" is the filename stem.
+path: notes            # directory, relative to root
+pattern: "*.md"        # optional; default "*.md"
+schema: note           # a schema name from .katalyst/schemas/; OR use `checks:`
+# checks:
+#   - kind: object_required_field
+#     field: title
 ```
 
 - Item `notes/dune` resolves to `notes/dune.md` (path + id + extension).
 - A file inside a collection's directory that does not match `pattern` is an
   **unmatched reference** → an error under `check` (cf. [`decisions.md`](../decisions.md) D2).
+- Discovery (`convention` | `explicit`) and format (`yaml` | `json` | `both`)
+  are settable per kind in `.katalyst/config.yaml`, defaulting to convention +
+  YAML.
 
 ## Command reference
 
 ### `katalyst init [--dir <path>]`
 
-Scaffold a working project: `katalyst.yaml` (one collection `notes`), one
-schema under `schemas/`, one example item under `notes/`. Refuses to
-overwrite anything that exists. **Unchanged from today.**
+Prepare the current directory as a katalyst project: create `.katalyst/`
+with empty `schemas/` and `collections/` directories and a commented
+`config.yaml`. Writes **no example content**, and refuses to run if a
+`.katalyst/` directory already exists. See
+[`project-layout-spec.md`](./project-layout-spec.md).
 
 ### `katalyst check [selector ...]`
 

@@ -1,10 +1,11 @@
 # Project layout & init
 
-> **Status: planning.** Moves project config into a `.katalyst/` directory,
+> **Status: done.** Moves project config into a `.katalyst/` directory,
 > defines schemas and collections as one named file each (discovered by
 > convention, configurable in `config.yaml`), and redefines `init` as "prepare
-> this directory," not "scaffold example content." Retires once the new layout
-> ships and `decisions.md` D1 is rewritten.
+> this directory," not "scaffold example content." Shipped; `decisions.md` D1,
+> the domain model, `cli-spec.md`, and the user docs are reconciled. Retained
+> for reference pending graduation cleanup.
 
 ## Overview
 
