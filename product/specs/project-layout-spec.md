@@ -1,9 +1,10 @@
 # Project layout & init
 
 > **Status: planning.** Moves project config into a `.katalyst/` directory,
-> defines schemas and collections as one named YAML file each, and redefines
-> `init` as "prepare this directory," not "scaffold example content." Retires
-> once the new layout ships and `decisions.md` D1 is updated.
+> defines schemas and collections as one named file each (discovered by
+> convention, configurable in `config.yaml`), and redefines `init` as "prepare
+> this directory," not "scaffold example content." Retires once the new layout
+> ships and `decisions.md` D1 is rewritten.
 
 ## Overview
 
@@ -11,9 +12,11 @@
 schema and an example document alongside the config; instead it should only
 *prepare the current directory* as a katalyst project. In the same move, project
 configuration leaves the repo root for a `.katalyst/` directory, and both
-**schemas and collections** are defined the same way — one named YAML file each,
-under `.katalyst/schema/` and `.katalyst/collections/`. The file's stem is the
-schema or collection name.
+**schemas and collections** are defined the same way — one named file each, under
+`.katalyst/schemas/` and `.katalyst/collections/`, where the file's stem is the
+name. This convention is the default; how each is discovered (by directory scan
+or an explicit map) and what format each file is in (YAML or JSON) are settable
+per kind in `.katalyst/config.yaml`.
 
 ## Value
 
@@ -56,10 +59,10 @@ A project is a directory that contains a `.katalyst/` subdirectory:
 ```
 <project root>/
   .katalyst/
-    config.yaml        # project-level settings (optional; empty in v0)
-    schema/            # one named YAML file per schema
+    config.yaml        # project-level settings (optional; all keys default)
+    schemas/           # one named file per schema
       book.yaml
-    collections/       # one named YAML file per collection
+    collections/       # one named file per collection
       notes.yaml
   ...                  # the user's own documents, untouched
 ```
@@ -83,20 +86,19 @@ matters for macOS temp dirs). `ErrNotFound` and its message update to name
 
 ### Schemas and collections share one convention
 
-Both schemas and collections are defined **one named YAML file each**, and the
-file's stem is the name. The loader scans the two directories and builds the
-maps it builds today — no central registry, no name declared twice.
+Schemas and collections are defined the same way: **one named file each**, where
+the file's stem is the name. The loader scans the two directories and builds the
+same maps it builds today (`Config.Schemas`, `Config.Collections`) — no central
+registry, no name declared twice.
 
-**Schemas** live at `.katalyst/schema/{name}.yaml`. `.katalyst/schema/book.yaml`
-defines schema `book`. The loader scans `.katalyst/schema/*.yaml` and populates
+**Schemas** live at `.katalyst/schemas/{name}.yaml`. `.katalyst/schemas/book.yaml`
+defines schema `book`. The loader scans the directory and populates
 `Config.Schemas` (name → absolute path), so a `schema: book` reference resolves
-to that file. `cmd/schema.go` keeps reading `cfg.Schemas` unchanged.
-
-Schemas are authored in **YAML**, not JSON. JSON Schema is just a data shape, so
-a YAML document parses to the same structure; the validator already works in
-terms of decoded `any` values. The loader unmarshals `*.yaml` and feeds the
-validator the resulting structure instead of raw JSON bytes. (See Q2 for whether
-`.json` is still accepted in `schema/`.)
+to that file. `cmd/schema.go` keeps reading `cfg.Schemas` unchanged. A YAML
+schema is just JSON Schema in YAML syntax — it parses to the same structure, and
+the validator already works in terms of decoded `any` values, so the loader
+unmarshals the file and feeds the validator the result rather than raw JSON
+bytes.
 
 **Collections** live at `.katalyst/collections/{name}.yaml`. The file holds what
 a `collections:` map entry holds today — `path`, `pattern`, `schema`, `checks` —
@@ -106,34 +108,65 @@ minus the name, which is the stem:
 # .katalyst/collections/notes.yaml
 path: notes              # optional; defaults to the collection name
 pattern: "*.md"          # optional; default "*.md"
-schema: book             # a schema name from .katalyst/schema/; OR use checks:
+schema: book             # a schema name from .katalyst/schemas/; OR use checks:
 checks:
   - kind: markdown_title_matches_h1
   - kind: filesystem_filename_matches_slug
 ```
 
-The loader scans `.katalyst/collections/*.yaml` and builds `Config.Collections`
+The loader scans `.katalyst/collections/*` and builds `Config.Collections`
 (sorted by name, as today). This replaces the top-level `collections:` map from
 `cli-spec.md`. All existing per-collection semantics carry over verbatim: a
 collection needs a `schema` or non-empty `checks` (else load error); `path`
 defaults to the name; `pattern` defaults to `*.md`; the first object check's
 schema mirrors into `Collection.Schema` for display.
 
-### `config.yaml`
+### `config.yaml` — discovery and format options
 
-With schemas and collections both file-per-definition, `config.yaml` holds only
-**project-level settings**, of which v0 has none. It is therefore **optional**:
-the project marker is the `.katalyst/` directory, and a project with no
-`config.yaml` loads fine. `init` still writes a commented placeholder so the
-file exists as the obvious home for future settings (see Q3).
+`.katalyst/config.yaml` holds **project-level settings**. In v0 those settings
+configure, per kind, *how* schemas and collections are found and *what format*
+their files are in. Every key has a default, so the file is **optional**: a
+project with no `config.yaml` behaves exactly as the convention above describes.
+
+```yaml
+# .katalyst/config.yaml — all keys optional; values shown are the defaults.
+schemas:
+  discovery: convention   # convention: scan .katalyst/schemas/; explicit: use `defs`
+  format: yaml            # yaml | json | both — extensions scanned and how files parse
+  # defs:                 # consulted only when discovery: explicit (name → path)
+  #   book: ./.katalyst/schemas/book.yaml
+collections:
+  discovery: convention
+  format: yaml
+  # defs:                 # consulted only when discovery: explicit (name → definition)
+  #   notes: { path: notes, schema: book }
+```
+
+- **`discovery: convention`** (default) scans the kind's directory; the name is
+  the filename stem. **`discovery: explicit`** ignores the directory and reads
+  the `defs` map — the pre-spec behavior, preserved for users who want a single
+  declared list. `defs` is required (and non-empty) under `explicit`.
+- **`format`** selects which extensions count and how files parse: `yaml` →
+  `*.yaml`/`*.yml`, `json` → `*.json`, `both` → either, dispatched by extension.
+  It governs convention scans and the file contents that `defs` paths point at.
+- The options are **independent per kind** — schemas can be `explicit`+`json`
+  while collections stay `convention`+`yaml`.
+
+The two `defs` maps under `explicit` are the old top-level `schemas:`/
+`collections:` maps relocated under their kind's settings block (so the block
+name `schemas`/`collections` doesn't collide with a bare map). This keeps both
+the convention and explicit code paths alive, selectable without a rebuild.
 
 ### `init` semantics
 
 `katalyst init [--dir <path>]` prepares the target directory:
 
-1. Creates `.katalyst/`, `.katalyst/schema/`, and `.katalyst/collections/`.
-2. Writes a commented placeholder `.katalyst/config.yaml`. **No example schema,
-   no example collection, no example document.**
+1. Creates `.katalyst/`, `.katalyst/schemas/`, and `.katalyst/collections/`
+   (empty; no `.gitkeep`).
+2. Writes `.katalyst/config.yaml` as a **commented template** — the default
+   `schemas`/`collections` settings block shown commented out, so the keys are
+   discoverable but the file is effectively empty. **No example schema, no
+   example collection, no example document.**
 3. Refuses to overwrite: if `.katalyst/` already exists, it errors (exit 2) and
    writes nothing, preserving today's all-or-nothing guarantee.
 4. Prints one line per path created.
@@ -149,21 +182,23 @@ The **Project** concept (`product/domain-model.md`, `cli-spec.md` "Concepts")
 is redefined: "the directory containing `.katalyst/`" rather than "the directory
 containing `katalyst.yaml`." The **schema** and **collection** vocabulary gains
 the shared convention that the name is the filename stem under
-`.katalyst/schema/` and `.katalyst/collections/` respectively.
+`.katalyst/schemas/` and `.katalyst/collections/` respectively.
 
 ### Code touch points
 
-- `cmd/init.go` — drop `scaffoldSchema`/`scaffoldExample`/`scaffoldConfig`'s
-  collection body; write the `.katalyst/` scaffold; update the `Short` help text.
+- `cmd/init.go` — drop `scaffoldSchema`/`scaffoldExample` and the collection
+  body of `scaffoldConfig`; write the `.katalyst/` scaffold (dirs + commented
+  `config.yaml`); update the `Short` help text.
 - `cmd/init_test.go` — replace the three-file assertions; drop
   `TestInit_scaffoldChecksCleanly`; keep refuse-to-overwrite and
   fix-canonical (the placeholder config must still be in `fix` canonical form).
-- `internal/config/config.go` — `Dir` constant + directory-marker discovery;
-  scan `.katalyst/schema/*.yaml` for `Schemas` and `.katalyst/collections/*.yaml`
-  for `Collections`; drop `rawConfig`'s `schemas:`/`collections:` maps (a
-  per-collection `rawCollection` file replaces the map value); YAML schema
-  parsing. Per-collection validation (`no checks configured`, unknown schema)
-  moves to the per-file loop but is otherwise unchanged.
+- `internal/config/config.go` — `Dir` constant + directory-marker discovery.
+  `rawConfig` becomes two per-kind settings blocks (`discovery`, `format`,
+  `defs`) instead of bare `schemas:`/`collections:` maps. `Load` branches on
+  `discovery`: convention scans the kind's directory (filtered by `format`),
+  explicit reads `defs`. The collection-definition shape (`rawCollection`) and
+  its per-collection validation (`no checks configured`, unknown schema) are
+  unchanged — only their source (a file vs. a map value) differs.
 - `internal/validator` — accept a decoded schema structure (or YAML bytes)
   rather than only JSON.
 - `cmd/testdata/` and `internal/validator/testdata/` — schemas and collection
@@ -172,26 +207,17 @@ the shared convention that the name is the filename stem under
 
 ## Open Questions
 
-1. **Schema/collection format — YAML only or YAML+JSON.** Recommend YAML as the
-   authored format for both. Open: do we still accept `.json` schema files in
-   `schema/` (scan both extensions) for users who already have JSON Schema, or
-   YAML-only and convert? (Collections were never JSON, so this is schema-only.)
-2. **Folder naming — `schema/` (singular) vs `collections/` (plural).** As
-   stated by the user the two differ. Recommend making them consistent — either
-   both singular (`schema/`, `collection/`) or both plural
-   (`schemas/`, `collections/`). Mild preference for plural, matching the
-   directories holding many files.
-3. **What does `init`'s `config.yaml` contain, and is it written at all?** Since
-   v0 has no project-level settings and the marker is the directory, `config.yaml`
-   is optional. Recommend writing a commented placeholder so the settings home is
-   obvious. Alternative: don't write it until there's a setting to put in it.
-4. **Backward compatibility.** Recommend a hard switch — katalyst is pre-v0 with
-   no external users, so no transitional support for a root `katalyst.yaml`.
-   Confirm there's no installed base to migrate.
-5. **Does `init` create empty `schema/` and `collections/` dirs?** Git won't
-   track an empty directory, so they vanish on commit. Options: create them
-   anyway (local convenience), add `.gitkeep`s, or don't create them until the
-   first definition exists. Recommend creating them without `.gitkeep`s.
+_None — all resolved._ For the record:
+
+- **Discovery & format are config options, not a fixed choice.** Both schema and
+  collection discovery (convention vs. explicit `defs` map) and file format (YAML
+  / JSON / both) are settable per kind in `config.yaml`, defaulting to
+  convention + YAML.
+- **Folder naming is plural:** `.katalyst/schemas/` and `.katalyst/collections/`.
+- **`init` writes a commented-template `config.yaml`** (default settings shown
+  commented out) plus the two empty directories, no `.gitkeep`s.
+- **No backward compatibility** — katalyst is pre-v0; the root `katalyst.yaml`
+  layout is dropped outright, not supported in parallel.
 
 ## Rejected alternatives
 
@@ -212,19 +238,26 @@ the shared convention that the name is the filename stem under
 ## Test checklist (what the pending tests assert)
 
 `init`:
-- [ ] creates `.katalyst/`, `.katalyst/schema/`, `.katalyst/collections/`
+- [ ] creates `.katalyst/`, `.katalyst/schemas/`, `.katalyst/collections/`
 - [ ] writes no example schema, collection, or document
 - [ ] refuses to run when `.katalyst/` already exists; writes nothing
 - [ ] scaffolded `config.yaml` is in `fix` canonical form
 - [ ] `check` on a freshly-`init`ed project exits 0 with no collections
 
-Config & discovery:
+Discovery (convention, the default):
 - [ ] project root is the ancestor containing `.katalyst/`
-- [ ] `.katalyst/schema/{name}.yaml` is discovered as schema `{name}`
+- [ ] `.katalyst/schemas/{name}.yaml` is discovered as schema `{name}`
 - [ ] `.katalyst/collections/{name}.yaml` is discovered as collection `{name}`
-- [ ] a collection's `schema: foo` resolves to `.katalyst/schema/foo.yaml`
+- [ ] a collection's `schema: foo` resolves to `.katalyst/schemas/foo.yaml`
 - [ ] a collection file with neither `schema` nor `checks` → load error
 - [ ] `path` defaults to the collection name; `pattern` defaults to `*.md`
 - [ ] YAML-authored schema validates the same documents the old JSON one did
-- [ ] a project with no `config.yaml` (but a `.katalyst/` dir) still loads
+- [ ] a project with no `config.yaml` (but a `.katalyst/` dir) loads via defaults
 - [ ] no `.katalyst/` in any ancestor → `ErrNotFound`, exit 2
+
+Config options:
+- [ ] `schemas.discovery: explicit` reads `defs`, ignores the directory scan
+- [ ] `collections.discovery: explicit` reads `defs`, ignores the directory scan
+- [ ] `explicit` with missing/empty `defs` → load error
+- [ ] `format: json` scans `*.json`; `format: both` scans both, parsed by ext
+- [ ] options are independent per kind (e.g. schemas `explicit`, collections `convention`)
