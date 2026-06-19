@@ -1,7 +1,8 @@
 schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "notes/**/*.md"
+collections:
+  notes:
+    path: notes
     checks:
       - kind: object
         schema: book

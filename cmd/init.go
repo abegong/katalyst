@@ -14,16 +14,17 @@ import (
 // scaffold immediately after `init` succeeds.
 const (
 	scaffoldConfig = `# katalyst configuration.
-# See product/decisions.md for the schema and rule semantics.
+# See product/cli-spec.md for the collections model and check semantics.
 
 schemas:
   book: ./schemas/book.json
 
-rules:
-  - paths: "notes/**/*.md"
+collections:
+  notes:
+    path: notes
+    pattern: "*.md"
+    schema: book
     checks:
-      - kind: object
-        schema: book
       - kind: markdown_title_matches_h1
       - kind: filesystem_filename_matches_slug
 `

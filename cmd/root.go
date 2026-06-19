@@ -24,13 +24,11 @@ markdown files against JSON Schema documents.`,
 
 	root.AddCommand(
 		newInitCmd(),
-		newValidateCmd(),
+		newCheckCmd(),
+		newFixCmd(),
+		newCollectionCmd(),
+		newItemCmd(),
 		newSchemaCmd(),
-		newFmtCmd(),
-		newCreateCmd(),
-		newReadCmd(),
-		newUpdateCmd(),
-		newDeleteCmd(),
 	)
 
 	return root

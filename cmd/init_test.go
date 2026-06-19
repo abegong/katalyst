@@ -1,25 +1,11 @@
 package cmd_test
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/katabase-ai/katalyst/cmd"
 )
-
-func runRoot(t *testing.T, args ...string) (stdout, stderr string, err error) {
-	t.Helper()
-	root := cmd.NewRootCmd()
-	var outBuf, errBuf bytes.Buffer
-	root.SetOut(&outBuf)
-	root.SetErr(&errBuf)
-	root.SetArgs(args)
-	err = root.Execute()
-	return outBuf.String(), errBuf.String(), err
-}
 
 func TestInit_scaffoldsConfigSchemaAndExample(t *testing.T) {
 	dir := t.TempDir()
@@ -61,35 +47,28 @@ func TestInit_refusesToOverwrite(t *testing.T) {
 	}
 }
 
-// The scaffold must already be in `katalyst fmt` canonical form,
-// otherwise a brand-new repo fails `fmt --check` in CI, which is a
-// nasty first-impression.
+// The scaffold must already be in `katalyst fix` canonical form, otherwise
+// a brand-new repo fails `fix --check` in CI.
 func TestInit_scaffoldIsCanonical(t *testing.T) {
 	dir := t.TempDir()
 	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
 		t.Fatalf("init: %v", err)
 	}
-	if _, _, err := runRoot(t, "fmt", "--check", filepath.Join(dir, "notes/example.md")); err != nil {
-		t.Errorf("scaffolded example.md is not in fmt canonical form: %v", err)
+	chdir(t, dir)
+	if _, _, err := runRoot(t, "fix", "--check"); err != nil {
+		t.Errorf("scaffolded project is not in fix canonical form: %v", err)
 	}
 }
 
-// TestInit_scaffoldValidatesCleanly_viaExplicitSchema asserts the
-// scaffold is internally consistent (the example doc satisfies the
-// example schema) using --schema. A stronger version that also
-// exercises config discovery lives in validate_config_test.go once
-// `validate` learns to read the config.
-func TestInit_scaffoldValidatesCleanly_viaExplicitSchema(t *testing.T) {
+// The scaffold is internally consistent: the example item satisfies the
+// configured checks, discovered via the scaffolded katalyst.yaml.
+func TestInit_scaffoldChecksCleanly(t *testing.T) {
 	dir := t.TempDir()
 	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
 		t.Fatalf("init: %v", err)
 	}
-
-	schema := filepath.Join(dir, "schemas/book.json")
-	doc := filepath.Join(dir, "notes/example.md")
-
-	_, stderr, err := runRoot(t, "validate", "--schema", schema, doc)
-	if err != nil {
-		t.Fatalf("validate on scaffolded example failed: %v\nstderr: %s", err, stderr)
+	chdir(t, dir)
+	if _, stderr, err := runRoot(t, "check"); err != nil {
+		t.Fatalf("check on scaffolded project failed: %v\nstderr: %s", err, stderr)
 	}
 }

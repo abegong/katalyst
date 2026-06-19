@@ -9,43 +9,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newFmtCmd() *cobra.Command {
-	var check bool
+func newFixCmd() *cobra.Command {
+	var checkOnly bool
 
 	c := &cobra.Command{
-		Use:   "fmt [paths...]",
-		Short: "Normalize markdown frontmatter (sorts keys, fixes trailing newline).",
-		Long: `Format rewrites each file's frontmatter in a canonical form:
+		Use:   "fix [selector ...]",
+		Short: "Apply deterministic, safe fixes to the selected items.",
+		Long: `fix rewrites each selected item's frontmatter in a canonical form:
 top-level keys sorted alphabetically, yaml.v3 default block style, and
-exactly one trailing newline on the file. The body is preserved verbatim.
+exactly one trailing newline. The body is preserved verbatim.
 
-See product/decisions.md (D4) for the rationale.
+fix never invents semantic values: it will not inject placeholders for
+missing required keys (the D3 guardrail). See product/decisions.md (D4).
 
-With --check, no files are modified; instead, paths that would change
-are printed and the command exits with status 1. Use this in CI.`,
-		Args: cobra.MinimumNArgs(1),
+Selectors follow the same grammar as 'check'. With no selector, every
+item in the project is considered.
+
+With --check, no files are modified; instead, items that would change are
+printed and the command exits with status 1. Use this in CI.`,
+		Args: cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := loadConfigFromCWD()
+			if err != nil {
+				return err
+			}
+			res, err := resolveSelectors(projectFor(cfg), args)
+			if err != nil {
+				return err
+			}
+
 			changed := false
-			for _, path := range args {
-				didChange, err := formatOne(path, check)
+			for _, item := range res.Items {
+				didChange, err := formatOne(item.Path, checkOnly)
 				if err != nil {
-					fmt.Fprintf(cmd.ErrOrStderr(), "%s: %v\n", path, err)
+					fmt.Fprintf(cmd.ErrOrStderr(), "%s: %v\n", item.Path, err)
 					return &exitError{code: exitValidationFail}
 				}
 				if didChange {
 					changed = true
-					fmt.Fprintln(cmd.OutOrStdout(), path)
+					fmt.Fprintln(cmd.OutOrStdout(), item.Path)
 				}
 			}
-			if check && changed {
+			if checkOnly && changed {
 				return &exitError{code: exitValidationFail}
 			}
 			return nil
 		},
 	}
 
-	c.Flags().BoolVar(&check, "check", false,
-		"Don't write; exit 1 if any file would change (for CI).")
+	c.Flags().BoolVar(&checkOnly, "check", false,
+		"Don't write; exit 1 if any item would change (for CI).")
 	return c
 }
 
@@ -67,8 +80,7 @@ func formatOne(path string, check bool) (changed bool, err error) {
 		return true, nil
 	}
 	// Write atomically: write to a sibling temp file, then rename.
-	// This avoids leaving a half-written file behind on crash.
-	tmp, err := os.CreateTemp(filepathDir(path), ".katalyst-fmt-*")
+	tmp, err := os.CreateTemp(filepathDir(path), ".katalyst-fix-*")
 	if err != nil {
 		return false, err
 	}
@@ -86,10 +98,8 @@ func formatOne(path string, check bool) (changed bool, err error) {
 	return true, nil
 }
 
-// filepathDir is a tiny helper that returns the directory of path,
-// defaulting to "." when path has no separator. It exists because
-// os.CreateTemp("", ...) puts the file in $TMPDIR which would prevent
-// an atomic rename across filesystems.
+// filepathDir returns the directory of path, defaulting to "." when path
+// has no separator. Used to keep atomic temp files on the same filesystem.
 func filepathDir(path string) string {
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] == '/' || path[i] == '\\' {
