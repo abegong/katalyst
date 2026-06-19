@@ -7,68 +7,82 @@ import (
 	"testing"
 )
 
-func TestInit_scaffoldsConfigSchemaAndExample(t *testing.T) {
+func TestInit_preparesKatalystDir(t *testing.T) {
 	dir := t.TempDir()
-	_, _, err := runRoot(t, "init", "--dir", dir)
-	if err != nil {
+	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 
 	for _, want := range []string{
-		"katalyst.yaml",
-		"schemas/book.json",
-		"notes/example.md",
+		".katalyst",
+		".katalyst/schemas",
+		".katalyst/collections",
+		".katalyst/config.yaml",
 	} {
-		p := filepath.Join(dir, want)
-		if _, err := os.Stat(p); err != nil {
+		if _, err := os.Stat(filepath.Join(dir, want)); err != nil {
 			t.Errorf("expected %s to exist: %v", want, err)
 		}
 	}
 }
 
-func TestInit_refusesToOverwrite(t *testing.T) {
+// init prepares the directory only; it must not scaffold example schemas,
+// collections, or documents.
+func TestInit_writesNoExampleContent(t *testing.T) {
 	dir := t.TempDir()
-	cfg := filepath.Join(dir, "katalyst.yaml")
-	if err := os.WriteFile(cfg, []byte("existing: true\n"), 0o644); err != nil {
+	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
+		t.Fatalf("init: %v", err)
+	}
+
+	for _, unwanted := range []string{
+		"katalyst.yaml",
+		"schemas",
+		"notes",
+		".katalyst/schemas/book.yaml",
+		".katalyst/collections/notes.yaml",
+	} {
+		if _, err := os.Stat(filepath.Join(dir, unwanted)); err == nil {
+			t.Errorf("did not expect %s to exist", unwanted)
+		}
+	}
+}
+
+func TestInit_refusesWhenKatalystDirExists(t *testing.T) {
+	dir := t.TempDir()
+	existing := filepath.Join(dir, ".katalyst")
+	if err := os.MkdirAll(existing, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(existing, "config.yaml")
+	if err := os.WriteFile(sentinel, []byte("existing: true\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	_, stderr, err := runRoot(t, "init", "--dir", dir)
 	if err == nil {
-		t.Fatalf("expected error when config exists")
+		t.Fatalf("expected error when .katalyst/ exists")
 	}
 	if !strings.Contains(err.Error(), "exists") && !strings.Contains(stderr, "exists") {
-		t.Errorf("expected message about pre-existing config, got err=%v stderr=%q", err, stderr)
+		t.Errorf("expected message about pre-existing .katalyst, got err=%v stderr=%q", err, stderr)
 	}
 
-	body, _ := os.ReadFile(cfg)
+	body, _ := os.ReadFile(sentinel)
 	if !strings.Contains(string(body), "existing: true") {
 		t.Errorf("init clobbered an existing file: %q", body)
 	}
 }
 
-// The scaffold must already be in `katalyst fix` canonical form, otherwise
-// a brand-new repo fails `fix --check` in CI.
-func TestInit_scaffoldIsCanonical(t *testing.T) {
+// A freshly-prepared project must satisfy `fix --check` (nothing to
+// format) and `check` (no collections, nothing to validate).
+func TestInit_freshProjectIsClean(t *testing.T) {
 	dir := t.TempDir()
 	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 	chdir(t, dir)
 	if _, _, err := runRoot(t, "fix", "--check"); err != nil {
-		t.Errorf("scaffolded project is not in fix canonical form: %v", err)
+		t.Errorf("fix --check on a fresh project failed: %v", err)
 	}
-}
-
-// The scaffold is internally consistent: the example item satisfies the
-// configured checks, discovered via the scaffolded katalyst.yaml.
-func TestInit_scaffoldChecksCleanly(t *testing.T) {
-	dir := t.TempDir()
-	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
-		t.Fatalf("init: %v", err)
-	}
-	chdir(t, dir)
 	if _, stderr, err := runRoot(t, "check"); err != nil {
-		t.Fatalf("check on scaffolded project failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("check on a fresh project failed: %v\nstderr: %s", err, stderr)
 	}
 }
