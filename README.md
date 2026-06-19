@@ -31,12 +31,12 @@ make build  # produces ./bin/katalyst
 
 ```bash
 mkdir my-notes && cd my-notes
-katalyst init                  # scaffolds katalyst.yaml, schemas/, notes/
+katalyst init                  # prepares a .katalyst/ project directory
 katalyst check                 # check every item in the project
 ```
 
 The config is picked up automatically: every command discovers the nearest
-`katalyst.yaml` walking up from the working directory, then resolves
+`.katalyst/` directory walking up from the working directory, then resolves
 **selectors** against the collections it declares.
 
 ## Selectors
@@ -56,27 +56,42 @@ expect a fixed depth.
 
 ## Configuring
 
-A `katalyst.yaml` at your repo root declares named **collections**, each
-backed by a directory of files:
+A `.katalyst/` directory at your project root holds the config. Schemas and
+collections are each one named file, discovered by filename:
+
+```
+.katalyst/
+  config.yaml                  # optional project-level settings
+  schemas/
+    book.yaml                  # JSON Schema, authored in YAML
+    person.yaml
+  collections/
+    books.yaml
+    people.yaml
+```
 
 ```yaml
-schemas:
-  book:   ./schemas/book.json
-  person: ./schemas/person.json
-
-collections:
-  books:
-    path: notes/books     # directory, relative to the repo root
-    pattern: "*.md"        # optional; default "*.md"
-    schema: book           # a name from schemas:, OR use checks:
-  people:
-    path: notes/people
-    schema: person
+# .katalyst/collections/books.yaml — the name "books" is the filename stem.
+path: notes/books     # directory, relative to the project root
+pattern: "*.md"        # optional; default "*.md"
+schema: book           # a schema name from .katalyst/schemas/, OR use checks:
 ```
 
 The item `books/dune` resolves to `notes/books/dune.md` (path + id +
 extension). A file inside a collection's directory that does not match its
 `pattern` is reported as an unmatched reference (an error under `check`).
+
+Discovery and file format are settable per kind in `.katalyst/config.yaml`
+(defaults shown):
+
+```yaml
+schemas:
+  discovery: convention   # convention (scan the dir) | explicit (list under defs)
+  format: yaml            # yaml | json | both
+collections:
+  discovery: convention
+  format: yaml
+```
 
 Object-schema resolution precedence, highest first:
 
@@ -178,20 +193,21 @@ Validation behavior for write commands (`add`, `update`):
 
 ```
 $ katalyst schema list
-book    schemas/book.json
-person  schemas/person.json
+book    .katalyst/schemas/book.yaml
+person  .katalyst/schemas/person.yaml
 
 $ katalyst schema show book
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  ...
-}
+type: object
+required: [title, year]
+...
 ```
 
 ### `katalyst init [--dir <path>]`
 
-Scaffold a minimal working repo: `katalyst.yaml`, one schema, one
-example document. Refuses to overwrite anything that already exists.
+Prepare the current directory as a katalyst project: create `.katalyst/`
+with empty `schemas/` and `collections/` directories and a commented
+`config.yaml`. Writes no example content, and refuses to run if a
+`.katalyst/` directory already exists.
 
 ### Shell completion
 
@@ -254,7 +270,7 @@ Layout:
 
 ```
 cmd/                  cobra commands (root, init, check, fix, collection, item, schema)
-internal/config       katalyst.yaml loader + named collection/schema resolution
+internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)

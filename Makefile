@@ -4,7 +4,7 @@ BINARY := katalyst
 DOCS_DIR := docs
 HUGO_BOOK_MODULE := github.com/alex-shpak/hugo-book
 HUGO_LOCAL := $(shell command -v hugo 2>/dev/null)
-HUGO_LOCAL_EXTENDED := $(shell if [ -n "$(HUGO_LOCAL)" ]; then case "$$($(HUGO_LOCAL) version 2>/dev/null)" in *extended*) echo 1 ;; *) echo 0 ;; esac; else echo 0; fi)
+HUGO_LOCAL_EXTENDED := $(shell hugo version 2>/dev/null | grep -q extended && echo 1 || echo 0)
 ifeq ($(HUGO_LOCAL_EXTENDED),1)
 HUGO := $(HUGO_LOCAL)
 else

@@ -13,8 +13,8 @@ For *how the code is laid out*, see [`AGENTS.md`](../AGENTS.md).
 flowchart LR
     subgraph Disk["On disk"]
         MD["Markdown file<br/>(frontmatter + body)"]
-        SF["Schema file<br/>(JSON Schema)"]
-        CF["katalyst.yaml<br/>(config)"]
+        SF[".katalyst/schemas/*.yaml<br/>(JSON Schema in YAML)"]
+        CF[".katalyst/ (config +<br/>collections)"]
     end
 
     subgraph Parsed["In memory"]
@@ -92,12 +92,15 @@ depend on the library directly.
 
 ### Config
 
-The single source of truth for "what schemas exist and where they
-apply." Lives at `katalyst.yaml` in the **repo root**.
+The single source of truth for "what schemas and collections exist."
+Lives in a `.katalyst/` directory at the **project root**: schemas in
+`.katalyst/schemas/<name>.yaml`, collections in
+`.katalyst/collections/<name>.yaml`, with optional settings in
+`.katalyst/config.yaml`.
 
 Discovery walks upward from the current working directory looking for
-the nearest ancestor that contains the file (cf. `.git`, `.editorconfig`,
-`go.mod`). The discovered directory *is* the repo root for all
+the nearest ancestor that contains a `.katalyst/` directory (cf. `.git`,
+`.editorconfig`, `go.mod`). That ancestor *is* the project root for all
 subsequent path resolution.
 
 A `config.Config` has:
@@ -164,7 +167,7 @@ parent object is better than pointing at nothing.
 The data flow per file, end-to-end:
 
 1. **Resolve config or schema flag.** If `--schema` is set, skip config
-   loading. Otherwise discover `katalyst.yaml` from the working
+   loading. Otherwise discover the `.katalyst/` directory from the working
    directory; failing to find one is a usage error (exit 2).
 2. **Read file bytes.** Read errors are reported per-file but don't
    abort the run; we accumulate exit-1 status and continue.
@@ -206,12 +209,13 @@ tests; a few are protected only by code review and convention.
 1. **Body bytes are sacred.** No command except `fmt` modifies them.
    Even `fmt` only normalizes trailing whitespace and the leading
    separator; interior body bytes round-trip exactly.
-2. **Schema names are stable; paths can move.** `katalyst.yaml` is
-   the only place that knows how names map to paths.
+2. **Schema names are stable; paths can move.** A schema's name is its
+   `.katalyst/schemas/` filename stem (or a `defs` key under explicit
+   discovery); that mapping is the only place names bind to paths.
 3. **The `schema:` directive is katalyst metadata, not user data.**
    It influences resolution but never reaches the validator.
 4. **First matching rule wins.** No "most specific match" heuristics,
-   no precedence inversions. Order in `katalyst.yaml` is authoritative.
+   no precedence inversions. Order in the config is authoritative.
 5. **Line numbers are file-relative and 1-indexed.** The opening `---`
    fence is line 1, so the first YAML key is typically line 2.
 6. **Unmatched is an error, not a warning.** Silent skips hide config
@@ -234,10 +238,10 @@ Terms to use consistently in code, docs, and user-facing copy:
 |---|---|
 | **Frontmatter** | The on-disk YAML block delimited by `---` fences. |
 | **Metadata** | The parsed in-memory structure (a `map[string]any`). |
-| **Schema** | A JSON Schema document. Named in config; located by path. |
+| **Schema** | A JSON Schema document (authored in YAML). Named by its `.katalyst/schemas/` filename stem; located by path. |
 | **Schema directive** | The inline `schema:` key inside a document's frontmatter. |
-| **Rule** | A `(glob, schema name)` pair in `katalyst.yaml`. |
-| **Repo root** | The directory containing `katalyst.yaml`. |
+| **Collection** | A named group of items, defined in `.katalyst/collections/<name>.yaml`. |
+| **Project root** | The directory containing the `.katalyst/` directory. |
 | **Resolver** | The runtime object that decides which schema applies to a file. |
 | **Document** | A parsed markdown file with frontmatter + body + line map. |
 
@@ -246,7 +250,7 @@ Avoid:
 - "Validator" as a *thing*. Use "schema" for what users author, and
   reserve "validator" for the runtime check itself.
 - "Config" without qualification when ambiguous. Prefer
-  "`katalyst.yaml`" or "the config" depending on context.
+  "`.katalyst/`" or "the config" depending on context.
 
 ## Out of scope (today)
 

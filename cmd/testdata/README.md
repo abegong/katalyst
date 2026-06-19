@@ -20,22 +20,16 @@ to use a fixture vs an inline literal.
 These are deliberately simpler than `internal/validator/testdata/schemas/book.json`,
 which exists to exercise the validator itself.
 
-### `configs/`
-
-All configs use the v0 named `collections:` map (see
-`product/cli-spec.md`).
-
-| File                       | Used by                              | Purpose                                                            |
-|----------------------------|--------------------------------------|--------------------------------------------------------------------|
-| `book-and-person.yaml`     | `schema_test.go`, `collection_test.go` | Two-schema config with `books` and `people` collections. Drives `schema`/`collection` tests. |
-| `strict-book.yaml`         | `check_test.go`                      | Two-schema config (`book` + `strict-book`) with a single `notes` collection bound to `book`, so an inline `schema: strict-book` key has something to override. |
-| `object-check.yaml`        | (reference)                          | `notes` collection using `checks:` with `kind: object`. |
-| `markdown-check.yaml`      | `check_test.go`                      | `notes` collection using `checks:` with `kind: markdown_title_matches_h1`. |
-| `filesystem-check.yaml`    | (reference)                          | `notes` collection using `checks:` with `kind: filesystem_filename_matches_slug`. |
+Project layout (the `.katalyst/` directory, schema files, and collection
+files) is scaffolded inline by the `writeProject` helper in
+[`../helpers_test.go`](../helpers_test.go); collection bodies are small
+enough to live as literals in each test rather than as fixtures. Because
+the shared schema fixtures are JSON, test projects set `schemas: { format:
+json }` in their `.katalyst/config.yaml` (the `schemaFormatJSON` helper).
 
 ## Adding a fixture
 
-1. Drop the file under `schemas/` or `configs/` (add a new subfolder if a
-   new kind of fixture earns one).
+1. Drop the file under `schemas/` (add a new subfolder if a new kind of
+   fixture earns one).
 2. Embed it in `../fixtures_test.go` with `//go:embed`.
 3. Add a row to the relevant table above.

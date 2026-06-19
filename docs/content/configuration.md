@@ -2,30 +2,34 @@
 title = "Configuration"
 +++
 
-Katalyst looks for the nearest `katalyst.yaml` by walking upward from the
-current working directory.
+Katalyst looks for the nearest `.katalyst/` directory by walking upward from
+the current working directory; that directory's parent is the project root.
+Schemas live in `.katalyst/schemas/<name>.yaml` and collections in
+`.katalyst/collections/<name>.yaml`, each discovered by filename.
 
-Example:
+Example — a `books` collection:
 
 ```yaml
-schemas:
-  book: ./schemas/book.json
-  person: ./schemas/person.json
-
-rules:
-  - paths: "notes/books/**/*.md"
-    checks:
-      - kind: object
-        schema: book
-      - kind: markdown_title_matches_h1
-      - kind: filesystem_filename_matches_slug
-  - paths: "notes/people/**/*.md"
-    schema: person # legacy shorthand for object check
+# .katalyst/collections/books.yaml
+path: notes/books        # directory, relative to the project root
+pattern: "*.md"           # optional; default "*.md"
+checks:
+  - kind: object
+    schema: book          # a schema name from .katalyst/schemas/
+  - kind: markdown_title_matches_h1
+  - kind: filesystem_filename_matches_slug
 ```
 
-`rules` are evaluated in source order; first matching `paths` wins.
+A collection backed by a single object schema can use the `schema:`
+shorthand instead of an explicit `object` check:
 
-Each rule can contain one or more `checks`:
+```yaml
+# .katalyst/collections/people.yaml
+path: notes/people
+schema: person
+```
+
+Each collection runs one or more `checks`:
 
 - `kind: object` with `schema: <name>` validates frontmatter against a schema.
 - `kind: object_required_field` requires a field to exist.
@@ -50,10 +54,14 @@ Object-schema resolution precedence:
 
 1. `--schema <path>`
 2. Inline `schema: <name>` key in frontmatter
-3. `kind: object` checks in the first matching rule
+3. The collection's `kind: object` checks
 
-Markdown/filesystem checks always come from the first matching rule, even when
+Markdown/filesystem checks always come from the collection, even when
 `--schema` is used.
+
+Schema discovery (`convention` vs. an explicit `defs` map) and file format
+(`yaml`, `json`, or `both`) are settable per kind in `.katalyst/config.yaml`;
+both default to `convention` and `yaml`.
 
 Rule references:
 

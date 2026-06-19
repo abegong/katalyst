@@ -16,7 +16,7 @@ forcing a translation.
 
 | Future concept | Today, in katalyst |
 |----------------|----------------------|
-| Data interface | The filesystem — specifically, the subtree rooted at the directory containing `katalyst.yaml`. Katalyst is single-backend today; nothing in the code knows about "data interface" as an abstraction. |
+| Data interface | The filesystem — specifically, the subtree rooted at the directory containing `.katalyst/`. Katalyst is single-backend today; nothing in the code knows about "data interface" as an abstraction. |
 | Item           | A markdown document (frontmatter + body). |
 | Collection     | The set of files matched by a `Rule`'s glob, sharing a schema. |
 | Attribute      | A key in a document's frontmatter — *and* arguably the file's path, name, and existence of a body. The current code only validates frontmatter keys; the other "attributes of the document itself" are not yet first-class. |

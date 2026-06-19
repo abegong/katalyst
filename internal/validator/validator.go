@@ -12,11 +12,14 @@
 package validator
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"gopkg.in/yaml.v3"
 )
 
 // Schema is a compiled JSON Schema.
@@ -65,6 +68,22 @@ func Load(name string, r io.Reader) (*Schema, error) {
 	}
 
 	return &Schema{name: name, compiled: compiled}, nil
+}
+
+// LoadYAML compiles a schema authored in YAML. A JSON Schema is just a
+// data shape, so the YAML is decoded and re-encoded as JSON, then handed
+// to Load — the schema compiles through the exact path a .json file does,
+// with no second compiler to keep in sync.
+func LoadYAML(name string, r io.Reader) (*Schema, error) {
+	var doc any
+	if err := yaml.NewDecoder(r).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("parse schema %q: %w", name, err)
+	}
+	buf, err := json.Marshal(doc)
+	if err != nil {
+		return nil, fmt.Errorf("convert schema %q to JSON: %w", name, err)
+	}
+	return Load(name, bytes.NewReader(buf))
 }
 
 // Validate checks instance against the schema. The instance may use

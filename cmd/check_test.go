@@ -7,23 +7,23 @@ import (
 	"testing"
 )
 
-// setupNotesRepo writes a katalyst.yaml + book schema and chdirs in. The
-// single collection `notes` maps to the book schema (title+year required).
-func setupNotesRepo(t *testing.T, cfg string) string {
+// setupNotesRepo writes a project with the book schema and a single
+// `notes` collection defined by the given collection body, then chdirs in.
+// The book schema requires title+year.
+func setupNotesRepo(t *testing.T, notesCollection string) string {
 	t.Helper()
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), cfg)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
+	writeProject(t, dir, map[string]string{
+		"config.yaml":            schemaFormatJSON,
+		"schemas/book.json":      bookSchemaFixture,
+		"collections/notes.yaml": notesCollection,
+	})
 	chdir(t, dir)
 	return dir
 }
 
-const objectNotesConfig = `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    schema: book
+const objectNotesConfig = `path: notes
+schema: book
 `
 
 func TestCheck_validItem_OK(t *testing.T) {
@@ -152,9 +152,12 @@ func TestCheck_schemaFlagOverridesForAllItems(t *testing.T) {
 
 func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), strictBookConfigFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
+	writeProject(t, dir, map[string]string{
+		"config.yaml":              schemaFormatJSON,
+		"schemas/book.json":        bookSchemaFixture,
+		"schemas/strict-book.json": strictBookSchemaFixture,
+		"collections/notes.yaml":   "path: notes\nschema: book\n",
+	})
 	chdir(t, dir)
 
 	// Collection maps notes → book, but the doc opts into strict-book,
@@ -173,8 +176,9 @@ func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 
 func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), markdownCheckConfigFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n",
+	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/dune.md"), "---\ntitle: Dune\n---\n# Children of Dune\n")
 

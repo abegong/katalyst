@@ -13,9 +13,12 @@ import (
 func setupItemRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), objectNotesConfig)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/strict-book.json"), strictBookSchemaFixture)
+	writeProject(t, dir, map[string]string{
+		"config.yaml":              schemaFormatJSON,
+		"schemas/book.json":        bookSchemaFixture,
+		"schemas/strict-book.json": strictBookSchemaFixture,
+		"collections/notes.yaml":   objectNotesConfig,
+	})
 	chdir(t, dir)
 	return dir
 }
@@ -55,7 +58,7 @@ func TestItemAdd_refusesExisting_exit2(t *testing.T) {
 
 func TestItemAdd_validationFailureWritesNothing_exit1(t *testing.T) {
 	dir := setupItemRepo(t)
-	strict := filepath.Join(dir, "schemas/strict-book.json")
+	strict := filepath.Join(dir, ".katalyst/schemas/strict-book.json")
 	_, _, err := runRoot(t, "item", "add", "--schema", strict, "notes/dune", "title=Dune", "year=1965")
 	if err == nil {
 		t.Fatalf("expected strict validation failure")
@@ -74,7 +77,7 @@ func TestItemAdd_validationFailureWritesNothing_exit1(t *testing.T) {
 
 func TestItemAdd_noValidateBypasses(t *testing.T) {
 	dir := setupItemRepo(t)
-	strict := filepath.Join(dir, "schemas/strict-book.json")
+	strict := filepath.Join(dir, ".katalyst/schemas/strict-book.json")
 	if _, _, err := runRoot(t, "item", "add", "--schema", strict, "--no-validate", "notes/dune", "title=Dune"); err != nil {
 		t.Fatalf("expected --no-validate to succeed: %v", err)
 	}
@@ -153,7 +156,7 @@ func TestItemUpdate_strictFailureLeavesFileUnchanged(t *testing.T) {
 	before := "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"
 	mustWrite(t, p, before)
 
-	strict := filepath.Join(dir, "schemas/strict-book.json")
+	strict := filepath.Join(dir, ".katalyst/schemas/strict-book.json")
 	_, _, err := runRoot(t, "item", "update", "--schema", strict, "notes/dune", "title=Changed")
 	if err == nil {
 		t.Fatalf("expected strict update failure")

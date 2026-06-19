@@ -4,39 +4,56 @@ Resolved design decisions. Each entry records *what* was decided, *why*,
 and *when* (by commit or version). Open questions live in
 `decisions-to-make.md`.
 
-## D1 — Config file format and location (v0.1)
+## D1 — Project layout and config location (v0.1; revised)
 
-**Decision.** The config file is `katalyst.yaml` at the repo root.
-Discovery: walk up from the working directory looking for the nearest
-ancestor that contains a `katalyst.yaml`. That directory becomes the
-"repo root" for path resolution.
+**Decision.** A project is marked by a `.katalyst/` directory. Discovery:
+walk up from the working directory looking for the nearest ancestor that
+contains a `.katalyst/` directory; that ancestor is the **project root**
+for path resolution. Schemas and collections are each defined one named
+file per definition:
 
-**Shape.**
+```
+<root>/.katalyst/
+  config.yaml            # optional project-level settings
+  schemas/<name>.yaml    # JSON Schema, authored in YAML
+  collections/<name>.yaml
+```
+
+A schema's or collection's **name** is its filename stem
+(`.katalyst/schemas/book.yaml` → `book`). A collection file holds the
+same fields a `collections:` map entry held (`path`, `pattern`, `schema`,
+`checks`), minus the name.
+
+**Config options.** `.katalyst/config.yaml` is optional; every key
+defaults. It configures, **per kind**, how definitions are discovered and
+in what format:
 
 ```yaml
 schemas:
-  book:   ./schemas/book.json
-  person: ./schemas/person.json
-
-rules:
-  - paths: "notes/books/**/*.md"
-    schema: book
-  - paths: "notes/people/**/*.md"
-    schema: person
+  discovery: convention   # convention (scan the dir) | explicit (use defs)
+  format: yaml            # yaml | json | both
+  # defs:                 # name → path, only under discovery: explicit
+collections:
+  discovery: convention
+  format: yaml
+  # defs:                 # name → definition, only under discovery: explicit
 ```
 
-- `schemas` is a name → file-path map. Names are the public handle used
-  by other commands (`schema show book`, inline `schema: book` keys,
-  etc.). Paths are resolved relative to the config file.
-- `rules` is an ordered list of `{paths, schema}` pairs. The first
-  matching rule wins. Globs use Go's [doublestar][ds] syntax (so `**`
-  works, unlike `path/filepath.Match`).
+**Why.** A single hideable `.katalyst/` directory groups everything
+katalyst owns (mirroring `.git`, `.github`), instead of scattering a root
+`katalyst.yaml` and a sibling `schemas/` among the user's documents. One
+file per schema/collection diffs and reorganizes better than one growing
+map, and makes the name-is-the-filename convention obvious. YAML matches
+what users already write in frontmatter; JSON Schema is just a data shape,
+so a YAML schema compiles through the same path a `.json` file does. The
+nearest-ancestor lookup is unchanged in spirit — only the marker moved
+from a file to a directory.
 
-**Why.** YAML matches what the user already writes in frontmatter, so
-there's no second format to learn. A nearest-ancestor lookup mirrors
-`.git`, `.editorconfig`, and `go.mod` — familiar and predictable. We
-keep `schemas` and `rules` separate so the same schema can apply to
-multiple path patterns without duplication.
+**Supersedes.** The original D1 put a single `katalyst.yaml` at the repo
+root with top-level `schemas:` and `rules:`/`collections:` maps. The
+explicit `defs` map preserves that style for users who want one declared
+list. See `product/specs/project-layout-spec.md` for the full rationale
+and rejected alternatives.
 
 [ds]: https://github.com/bmatcuk/doublestar
 

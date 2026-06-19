@@ -10,14 +10,30 @@ import (
 	"github.com/katabase-ai/katalyst/internal/config"
 )
 
-func writeConfig(t *testing.T, dir, content string) string {
+// writeProject scaffolds a .katalyst/ tree: keys are paths relative to
+// the .katalyst/ directory (e.g. "schemas/book.yaml", "config.yaml"),
+// values are file contents. It always creates the .katalyst/ dir so the
+// project is discoverable even when files is empty.
+func writeProject(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
-	p := filepath.Join(dir, "katalyst.yaml")
-	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
-		t.Fatalf("write config: %v", err)
+	if err := os.MkdirAll(filepath.Join(dir, ".katalyst"), 0o755); err != nil {
+		t.Fatalf("mkdir .katalyst: %v", err)
 	}
-	return p
+	for rel, content := range files {
+		p := filepath.Join(dir, ".katalyst", rel)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", filepath.Dir(p), err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatalf("write %s: %v", rel, err)
+		}
+	}
 }
+
+// minimalSchema is a placeholder schema body; the config layer records a
+// schema's path but never compiles it, so the contents only need to be a
+// valid file.
+const minimalSchema = "type: object\n"
 
 // realPath returns dir with symlinks resolved. macOS's $TMPDIR is
 // /var/folders/... which is a symlink to /private/var/folders/...;
@@ -32,20 +48,19 @@ func realPath(t *testing.T, dir string) string {
 	return r
 }
 
-func TestLoad_parsesSchemasAndCollections(t *testing.T) {
+func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book:   ./schemas/book.json
-  person: ./schemas/person.json
-collections:
-  books:
-    path: notes/books
-    schema: book
-  people:
-    path: notes/people
-    pattern: "*.markdown"
-    schema: person
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":   minimalSchema,
+		"schemas/person.yaml": minimalSchema,
+		"collections/books.yaml": `path: notes/books
+schema: book
+`,
+		"collections/people.yaml": `path: notes/people
+pattern: "*.markdown"
+schema: person
+`,
+	})
 
 	cfg, err := config.Load(dir)
 	if err != nil {
@@ -59,8 +74,8 @@ collections:
 	if len(cfg.Schemas) != 2 {
 		t.Fatalf("expected 2 schemas, got %d", len(cfg.Schemas))
 	}
-	if got := cfg.SchemaPath("book"); got != filepath.Join(wantRoot, "schemas/book.json") {
-		t.Errorf("SchemaPath(book) = %q", got)
+	if got, want := cfg.SchemaPath("book"), filepath.Join(wantRoot, ".katalyst/schemas/book.yaml"); got != want {
+		t.Errorf("SchemaPath(book) = %q, want %q", got, want)
 	}
 
 	// Collections are sorted by name: books, people.
@@ -96,12 +111,10 @@ collections:
 
 func TestLoad_defaultsPathToCollectionName(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    schema: book
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":      minimalSchema,
+		"collections/notes.yaml": "schema: book\n",
+	})
 	cfg, err := config.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -112,9 +125,9 @@ collections:
 	}
 }
 
-func TestLoad_ascendsToFindConfig(t *testing.T) {
+func TestLoad_ascendsToFindProject(t *testing.T) {
 	repo := t.TempDir()
-	writeConfig(t, repo, "schemas: {}\ncollections: {}\n")
+	writeProject(t, repo, nil)
 	deep := filepath.Join(repo, "a", "b", "c")
 	if err := os.MkdirAll(deep, 0o755); err != nil {
 		t.Fatal(err)
@@ -130,6 +143,23 @@ func TestLoad_ascendsToFindConfig(t *testing.T) {
 	}
 }
 
+func TestLoad_noConfigFile_usesConventionDefaults(t *testing.T) {
+	// A project with a .katalyst/ dir but no config.yaml loads via the
+	// default convention + yaml discovery.
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":      minimalSchema,
+		"collections/notes.yaml": "schema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if _, ok := cfg.Collection("notes"); !ok {
+		t.Errorf("expected notes collection from convention defaults")
+	}
+}
+
 func TestLoad_notFound(t *testing.T) {
 	dir := t.TempDir()
 	_, err := config.Load(dir)
@@ -140,13 +170,12 @@ func TestLoad_notFound(t *testing.T) {
 
 func TestLoad_rejectsUnknownSchemaInCollection(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    schema: nonexistent
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"collections/notes.yaml": `path: notes
+schema: nonexistent
+`,
+	})
 	_, err := config.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for collection referencing unknown schema")
@@ -158,11 +187,9 @@ collections:
 
 func TestLoad_rejectsCollectionWithNoChecks(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas: {}
-collections:
-  notes:
-    path: notes
-`)
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": "path: notes\n",
+	})
 	_, err := config.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for collection with no checks")
@@ -174,47 +201,46 @@ collections:
 
 func TestLoad_parsesChecks(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: object
-        schema: book
-      - kind: object_required_field
-        field: year
-      - kind: object_field_type
-        field: year
-        type: integer
-      - kind: object_field_enum
-        field: status
-        values: [draft, published]
-      - kind: object_number_range
-        field: year
-        min: 1900
-        max: 2100
-      - kind: object_string_length
-        field: title
-        min_length: 1
-        max_length: 100
-      - kind: markdown_title_matches_h1
-      - kind: markdown_requires_h1
-      - kind: markdown_single_h1
-      - kind: markdown_no_heading_level_jumps
-      - kind: markdown_required_section
-        heading: Summary
-      - kind: markdown_code_fence_language_required
-      - kind: filesystem_filename_matches_slug
-      - kind: filesystem_extension_in
-        values: [.md]
-      - kind: filesystem_filename_kebab_case
-      - kind: filesystem_no_spaces_in_path
-      - kind: filesystem_parent_dir_in
-        values: [books, notes]
-      - kind: filesystem_filename_prefix
-        value: book-
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"collections/notes.yaml": `path: notes
+checks:
+  - kind: object
+    schema: book
+  - kind: object_required_field
+    field: year
+  - kind: object_field_type
+    field: year
+    type: integer
+  - kind: object_field_enum
+    field: status
+    values: [draft, published]
+  - kind: object_number_range
+    field: year
+    min: 1900
+    max: 2100
+  - kind: object_string_length
+    field: title
+    min_length: 1
+    max_length: 100
+  - kind: markdown_title_matches_h1
+  - kind: markdown_requires_h1
+  - kind: markdown_single_h1
+  - kind: markdown_no_heading_level_jumps
+  - kind: markdown_required_section
+    heading: Summary
+  - kind: markdown_code_fence_language_required
+  - kind: filesystem_filename_matches_slug
+  - kind: filesystem_extension_in
+    values: [.md]
+  - kind: filesystem_filename_kebab_case
+  - kind: filesystem_no_spaces_in_path
+  - kind: filesystem_parent_dir_in
+    values: [books, notes]
+  - kind: filesystem_filename_prefix
+    value: book-
+`,
+	})
 	cfg, err := config.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -240,14 +266,13 @@ collections:
 
 func TestLoad_rejectsUnknownCheckKind(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: not-real
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"collections/notes.yaml": `path: notes
+checks:
+  - kind: not-real
+`,
+	})
 	_, err := config.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for unknown check kind")
@@ -259,14 +284,13 @@ collections:
 
 func TestLoad_rejectsMalformedCheckPayload(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: object
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"collections/notes.yaml": `path: notes
+checks:
+  - kind: object
+`,
+	})
 	_, err := config.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for missing object schema")
@@ -276,15 +300,124 @@ collections:
 	}
 }
 
+func TestLoad_explicitDiscovery_readsDefs(t *testing.T) {
+	// In explicit mode, the directory scan is ignored and the defs maps
+	// in config.yaml are authoritative.
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"my-schemas/book.yaml": minimalSchema,
+		"config.yaml": `schemas:
+  discovery: explicit
+  defs:
+    book: ./.katalyst/my-schemas/book.yaml
+collections:
+  discovery: explicit
+  defs:
+    notes:
+      path: notes
+      schema: book
+`,
+		// A stray file in the convention dir must be ignored.
+		"schemas/ignored.yaml": minimalSchema,
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if _, ok := cfg.Schemas["ignored"]; ok {
+		t.Errorf("explicit discovery must ignore the schemas/ dir scan")
+	}
+	wantRoot := realPath(t, dir)
+	if got, want := cfg.SchemaPath("book"), filepath.Join(wantRoot, ".katalyst/my-schemas/book.yaml"); got != want {
+		t.Errorf("SchemaPath(book) = %q, want %q", got, want)
+	}
+	if _, ok := cfg.Collection("notes"); !ok {
+		t.Errorf("expected notes collection from explicit defs")
+	}
+}
+
+func TestLoad_explicitDiscovery_requiresDefs(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": "schemas:\n  discovery: explicit\n",
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "defs") {
+		t.Fatalf("expected explicit-requires-defs error, got: %v", err)
+	}
+}
+
+func TestLoad_formatJSON_scansJSONFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.json":      `{"type":"object"}`,
+		"config.yaml":            "schemas:\n  format: json\n",
+		"collections/notes.yaml": "schema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got, want := cfg.SchemaPath("book"), filepath.Join(realPath(t, dir), ".katalyst/schemas/book.json"); got != want {
+		t.Errorf("SchemaPath(book) = %q, want %q", got, want)
+	}
+}
+
+func TestLoad_formatBoth_rejectsNameCollision(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"schemas/book.json": `{"type":"object"}`,
+		"config.yaml":       "schemas:\n  format: both\n",
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "two files") {
+		t.Fatalf("expected name-collision error, got: %v", err)
+	}
+}
+
+func TestLoad_perKindIndependence(t *testing.T) {
+	// Schemas explicit + json; collections convention + yaml.
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.json": `{"type":"object"}`,
+		"config.yaml": `schemas:
+  discovery: explicit
+  format: json
+  defs:
+    book: ./.katalyst/schemas/book.json
+`,
+		"collections/notes.yaml": "schema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.SchemaPath("book") == "" {
+		t.Errorf("expected book schema from explicit json defs")
+	}
+	if _, ok := cfg.Collection("notes"); !ok {
+		t.Errorf("expected notes collection from convention yaml scan")
+	}
+}
+
+func TestLoad_rejectsBadDiscovery(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": "schemas:\n  discovery: bogus\n",
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "discovery") {
+		t.Fatalf("expected discovery validation error, got: %v", err)
+	}
+}
+
 func TestCollection_unknownReturnsFalse(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    schema: book
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":      minimalSchema,
+		"collections/notes.yaml": "schema: book\n",
+	})
 	cfg, err := config.Load(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -296,12 +429,11 @@ collections:
 
 func TestSchemaNames_returnsSortedNames(t *testing.T) {
 	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  zebra:  ./z.json
-  apple:  ./a.json
-  middle: ./m.json
-collections: {}
-`)
+	writeProject(t, dir, map[string]string{
+		"schemas/zebra.yaml":  minimalSchema,
+		"schemas/apple.yaml":  minimalSchema,
+		"schemas/middle.yaml": minimalSchema,
+	})
 	cfg, err := config.Load(dir)
 	if err != nil {
 		t.Fatal(err)

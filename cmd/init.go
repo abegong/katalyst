@@ -5,64 +5,34 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/katabase-ai/katalyst/internal/config"
 	"github.com/spf13/cobra"
 )
 
-// Scaffold contents are kept as package-level strings (rather than
-// embedded files) so they're trivial to evolve in tests. They are
-// intentionally minimal and self-consistent: running `validate` on the
-// scaffold immediately after `init` succeeds.
-const (
-	scaffoldConfig = `# katalyst configuration.
-# See product/cli-spec.md for the collections model and check semantics.
-
-schemas:
-  book: ./schemas/book.json
-
-collections:
-  notes:
-    path: notes
-    pattern: "*.md"
-    schema: book
-    checks:
-      - kind: markdown_title_matches_h1
-      - kind: filesystem_filename_matches_slug
+// scaffoldConfig is the commented-template config.yaml written by init.
+// Every setting is shown at its default and commented out, so a fresh
+// project loads as an empty, valid configuration while the file documents
+// the available knobs. See product/specs/project-layout-spec.md.
+const scaffoldConfig = `# katalyst project configuration.
+#
+# Schemas live in .katalyst/schemas/<name>.yaml and collections in
+# .katalyst/collections/<name>.yaml, discovered by filename. The settings
+# below are optional and shown at their defaults; uncomment to change them.
+#
+# schemas:
+#   discovery: convention   # convention | explicit
+#   format: yaml            # yaml | json | both
+# collections:
+#   discovery: convention
+#   format: yaml
 `
-
-	scaffoldSchema = `{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "book",
-  "type": "object",
-  "required": ["title", "year"],
-  "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "year":  { "type": "integer", "minimum": 0 },
-    "tags":  { "type": "array", "items": { "type": "string" } }
-  }
-}
-`
-
-	// Keys are sorted alphabetically so the scaffold is already in
-	// `katalyst fmt` canonical form — see TestInit_scaffoldIsCanonical.
-	scaffoldExample = `---
-slug: example
-tags:
-  - example
-title: Example
-year: 2026
----
-# Example
-
-This file's frontmatter is validated by ` + "`schemas/book.json`" + `.
-`
-)
 
 func newInitCmd() *cobra.Command {
 	var dir string
 
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Scaffold a katalyst.yaml, an example schema, and an example document.",
+		Short: "Prepare the current directory as a katalyst project.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := dir
 			if target == "" {
@@ -73,39 +43,30 @@ func newInitCmd() *cobra.Command {
 				target = wd
 			}
 
-			files := []struct {
-				rel     string
-				content string
-			}{
-				{"katalyst.yaml", scaffoldConfig},
-				{"schemas/book.json", scaffoldSchema},
-				{"notes/example.md", scaffoldExample},
+			// Refuse to touch an existing project. Checking the .katalyst/
+			// dir up front keeps init all-or-nothing.
+			katalystDir := filepath.Join(target, config.Dir)
+			if _, err := os.Stat(katalystDir); err == nil {
+				return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", katalystDir))
 			}
 
-			// Refuse to overwrite anything. Atomic-ish: we check all
-			// destinations before writing any, so a partial scaffold
-			// can't happen due to a single pre-existing file.
-			for _, f := range files {
-				p := filepath.Join(target, f.rel)
-				if _, err := os.Stat(p); err == nil {
-					return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", p))
+			for _, sub := range []string{"schemas", "collections"} {
+				rel := filepath.Join(config.Dir, sub)
+				if err := os.MkdirAll(filepath.Join(target, rel), 0o755); err != nil {
+					return err
 				}
+				fmt.Fprintf(cmd.OutOrStdout(), "created %s/\n", rel)
 			}
 
-			for _, f := range files {
-				p := filepath.Join(target, f.rel)
-				if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-					return err
-				}
-				if err := os.WriteFile(p, []byte(f.content), 0o644); err != nil {
-					return err
-				}
-				fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", f.rel)
+			cfgRel := filepath.Join(config.Dir, "config.yaml")
+			if err := os.WriteFile(filepath.Join(target, cfgRel), []byte(scaffoldConfig), 0o644); err != nil {
+				return err
 			}
+			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", cfgRel)
 			return nil
 		},
 	}
 
-	c.Flags().StringVar(&dir, "dir", "", "Directory to scaffold into (default: current directory)")
+	c.Flags().StringVar(&dir, "dir", "", "Directory to prepare (default: current directory)")
 	return c
 }
