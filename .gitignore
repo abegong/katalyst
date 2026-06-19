@@ -30,9 +30,10 @@ go.work.sum
 # Build output
 /bin/
 /katalyst
-/public/
-/resources/_gen/
-/.hugo_build.lock
+# Hugo build artifacts (docs site lives under docs/, so match at any depth)
+public/
+**/resources/_gen/
+.hugo_build.lock
 
 # Editor/IDE
 # .idea/

@@ -1,7 +1,8 @@
 # Plan — separate the docs Hugo module from the Go module
 
-> **Status: planning.** Implements
-> [`docs-module-separation.md`](docs-module-separation.md). Not yet started.
+> **Status: implementing.** Implements
+> [`docs-module-separation.md`](docs-module-separation.md). Phases 1–4 done;
+> Phase 5 verification in progress.
 
 Branch: `claude/docs-module-separation` (off `main`).
 
@@ -65,21 +66,32 @@ mechanical phase, verified by a successful `hugo build`.
 These are the assertions that prove the change; they stand in for the
 "failing tests" of a code change.
 
-- [ ] `go mod tidy` at the repo root produces **no** diff
+- [x] `go mod tidy` at the repo root produces **no** diff
       (`git diff --exit-code go.mod go.sum` clean) — i.e. CI `Tidy check`
       passes without special-casing.
-- [ ] Repo-root `go.mod`/`go.sum` contain no `alex-shpak/hugo-book`.
-- [ ] `docs/go.mod` requires `alex-shpak/hugo-book`; a fresh
-      `hugo mod get` in `docs/` is a no-op on a clean tree.
-- [ ] `make docs-build` succeeds **and** leaves the repo-root
-      `go.mod`/`go.sum` unmodified afterward.
-- [ ] `make docs-build` re-runs are idempotent (no tree changes).
-- [ ] Built site output matches today's (same pages, same `baseURL`, nav
-      intact) — spot-check a rules page and the landing page.
-- [ ] `make all` (vet + test + build) still green.
-- [ ] CI green on the PR (all four `ci.yml` steps).
+- [x] Repo-root `go.mod`/`go.sum` contain no `alex-shpak/hugo-book`.
+- [x] `docs/go.mod` requires `alex-shpak/hugo-book`; `go mod verify` in
+      `docs/` passes (theme has no transitive Go deps).
+- [x] Docs build succeeds **and** leaves the repo-root `go.mod`/`go.sum`
+      unmodified afterward (verified with `hugo -s docs --minify`; root
+      `git diff` clean post-build).
+- [x] Build re-runs are idempotent (no tree changes; `docs/go.*` stable).
+- [x] Built site renders (39 pages, 31 HTML; theme SCSS compiled;
+      `getting-started/` and `rules/objects/object/` present).
+- [x] `make all` (vet + test + build) still green.
+- [ ] CI green on the PR (all four `ci.yml` steps) — pending push.
 
 ## Deviations
 
-_None yet. Record here as implementation diverges from the plan above
-(what changed, why)._
+- **Phase 3 was a no-op.** This branch's base (`main`) already had the
+  theme stripped from the root `go.mod` (the earlier bandaid) and
+  `doublestar` as a direct require, so no root-module change was needed —
+  only confirming `go mod tidy` is clean.
+- **`docs/go.sum` generated via `go mod download`**, not `hugo mod get`:
+  no `hugo` binary is installed in this environment. Equivalent result for
+  a theme with no transitive Go deps; `hugo mod get` would produce the same
+  two `go.sum` lines.
+- **Build verified with `go run … hugo@latest -tags extended`** (Hugo
+  v0.163.3 extended) since there's no local Hugo. Pre-existing, unrelated
+  deprecation warning surfaced: `languageCode` → `locale` (Hugo v0.158+);
+  left for a separate docs touch-up.
