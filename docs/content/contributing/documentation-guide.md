@@ -81,4 +81,4 @@ type rather than guessed up front.
 Use the project [glossary]({{< relref "../reference/glossary.md" >}}) as the
 source of truth for vocabulary (frontmatter vs. metadata, schema vs.
 validator, collection, item, check). Match the existing pages' TOML `+++`
-frontmatter and `{{< relref >}}` cross-links.
+frontmatter and `{{</* relref */>}}` cross-links.
