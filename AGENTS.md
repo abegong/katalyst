@@ -4,6 +4,8 @@ Conventions for anyone — human or AI — making changes in this repo.
 
 For *what* the project does and how to use the CLI, see [`README.md`](README.md).
 For *why* the design is the way it is, see [`product/decisions.md`](product/decisions.md).
+For *how we plan and document* changes, see [`product/how-we-plan.md`](product/how-we-plan.md)
+and [`product/how-we-document.md`](product/how-we-document.md).
 
 ## Commands
 
