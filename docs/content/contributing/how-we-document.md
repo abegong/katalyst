@@ -1,9 +1,13 @@
 +++
 title = "How we document"
-weight = 20
+weight = 10
 +++
 
 # How we document
+
+This is the one page on where Katalyst documentation lives and how to add to
+it. Putting a page in the wrong home is how trees drift apart, so when in
+doubt, start here.
 
 ## Goals
 
@@ -14,7 +18,8 @@ weight = 20
 
 ## Where each kind of doc lives
 
-Katalyst has three homes for documentation.
+Katalyst keeps documentation in a few homes; everything durable belongs in
+`docs/`.
 
 ### `docs/` — the published site (Hugo)
 
@@ -28,16 +33,11 @@ The durable home for everything a user **or** contributor needs, organized by
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
 - **`explanation/`** — understanding-oriented "why": the manifesto, the
-  general and domain models, connectors, and **design rationale**. There is
-  no central decision log; the *why* behind a choice lives on the
-  explanation page for its topic.
+  general and domain models, connectors, and **design rationale**.
 - **`contributing/`** — project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), the
-  [roadmap]({{< relref "roadmap.md" >}}), the [documentation
-  guide]({{< relref "documentation-guide.md" >}})). Not a Diátaxis quadrant.
-
-The [documentation guide]({{< relref "documentation-guide.md" >}}) has the
-"where does this page go?" decision tree.
+  [roadmap]({{< relref "roadmap.md" >}}), and the page templates). Not a
+  Diátaxis quadrant.
 
 ### `AGENTS.md` — code-writing conventions
 
@@ -64,37 +64,76 @@ staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 Package- and symbol-level documentation lives in the code as Go doc
 comments, not in Markdown.
 
-## What goes where (quick matrix)
+## Where does this go?
 
-| You're documenting… | It goes in… |
-|---|---|
-| A rule for writing code here | `AGENTS.md` (root or co-located) |
-| How a subsystem works / a domain concept | `docs/explanation/` |
-| Why a choice was made | `docs/explanation/` (on the topic's page) |
-| How to use the CLI (lookup) | `docs/reference/` |
-| How to accomplish a task | `docs/how-to/` |
-| A first lesson for new users | `docs/getting-started.md` (top-level) |
-| A change being designed, not yet merged | a spec in `product/specs/` |
-| An open design question | a GitHub issue, or the in-flight spec |
-| What a package/function does | Go doc comments |
+Walk top to bottom; stop at the first match.
+
+1. **Is it a convention for writing code in this repo?** → root or
+   co-located `AGENTS.md`. Not `docs/`.
+2. **Is it a record of an in-flight change** (a spec or plan for work not
+   yet merged)? → `product/specs/`. Deleted when the work lands and its
+   durable content graduates into `docs/`.
+3. **Is it package- or function-level API detail?** → a Go doc comment.
+4. **Otherwise it is durable documentation — pick the Diátaxis quadrant by
+   what the reader is doing:**
+
+| The reader is… | Quadrant | Folder |
+|---|---|---|
+| learning Katalyst by doing | **Tutorial** | `docs/getting-started.md` (top-level; add a `docs/tutorials/` section once there's more than one) |
+| accomplishing a specific task | **How-to** | `docs/how-to/` |
+| looking up a fact (config keys, check kinds, terms) | **Reference** | `docs/reference/` |
+| trying to understand *why* | **Explanation** | `docs/explanation/` |
+| reading a project/process record (roadmap, this guide) | — (not Diátaxis) | `docs/contributing/` |
+
+The four quadrants are distinct on purpose. The common failure is mixing
+them: a reference page that drifts into a tutorial, or an explanation page
+that becomes a how-to. Each [template](#templates) names what its page **is
+not**, to keep the boundary sharp.
+
+## Decision rationale has no central log
+
+There is no `decisions.md` and no ADR folder. The *why* behind a choice
+lives on the `explanation/` page for its topic, written into the prose. When
+a choice supersedes a previous approach, the explanation page notes the old
+approach and why it changed — that is where a reader is already looking for
+"why."
+
+Open questions get no standing file. While a change is in flight they live
+in its `product/specs/` spec; otherwise they are GitHub issues.
 
 ## Generated reference
 
-Rule pages under `docs/reference/rules/` are generated from
-`internal/checks/registry.go` by `cmd/gendocs` (`make docs-gen`). Never edit
-them by hand; CI fails if a registered check has no page. Adding a check
-means adding its `Descriptor` — see the `add-katalyst-rule` skill.
+Rule pages under `docs/reference/rules/` are **generated** from the checks
+registry (`internal/checks/registry.go`) by `cmd/gendocs`. Do not edit them
+by hand — run `make docs-gen` and commit the result. CI fails if a
+registered check has no page, so a new check cannot ship undocumented. To add
+a rule, see [add-katalyst-rule](../../.cursor/skills/add-katalyst-rule/SKILL.md).
 
-## Guidelines
+## Templates
+
+New reference and explanation pages start from a template under
+`templates/`. Each carries the Diátaxis "this page IS X, is NOT Y"
+guardrail. The templates are marked `draft = true` so the public build
+excludes them; they are in-repo for contributors only.
+
+- [Reference template](templates/reference.md)
+- [Explanation template](templates/explanation.md)
+
+Tutorial and how-to templates are derived from the first real page of each
+type rather than guessed up front.
+
+## Style
 
 - **Keep `AGENTS.md` lean** — conventions, not walls of text.
 - **Don't repeat root standards** in co-located docs; document only what's
   specific to that location.
 - **Update docs in the same change** that establishes a convention or ships
   a feature; for a check, regenerate the reference.
-- **Vocabulary is shared.** Use the terms in the
-  [glossary]({{< relref "../reference/glossary.md" >}}) consistently across
-  code, docs, and user-facing copy.
+- **Vocabulary is shared.** Use the [glossary]({{< relref "../reference/glossary.md" >}})
+  as the source of truth (frontmatter vs. metadata, schema vs. validator,
+  collection, item, check) across code, docs, and user-facing copy.
+- **Match the existing pages'** TOML `+++` frontmatter and `{{</* relref */>}}`
+  cross-links.
 
 ## Tool-specific files
 
