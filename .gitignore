@@ -29,6 +29,7 @@ go.work.sum
 
 # Build output
 /bin/
+/katalyst
 /public/
 /resources/_gen/
 /.hugo_build.lock
@@ -36,3 +37,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# macOS
+.DS_Store
