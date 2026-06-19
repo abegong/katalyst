@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/katabase-ai/katalyst/internal/checks"
@@ -49,7 +50,14 @@ func (e *engine) compile(path string) (*validator.Schema, error) {
 		return nil, fmt.Errorf("open schema %s: %w", path, err)
 	}
 	defer f.Close()
-	s, err := validator.Load(path, f)
+
+	var s *validator.Schema
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".yaml", ".yml":
+		s, err = validator.LoadYAML(path, f)
+	default:
+		s, err = validator.Load(path, f)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -27,6 +27,42 @@ func TestLoad_invalidSchema(t *testing.T) {
 	}
 }
 
+// A YAML-authored schema compiles through LoadYAML and validates the same
+// way the equivalent JSON schema would.
+func TestLoadYAML_compilesAndValidates(t *testing.T) {
+	const bookSchemaYAML = `type: object
+additionalProperties: false
+required:
+  - title
+  - year
+properties:
+  title:
+    type: string
+    minLength: 1
+  year:
+    type: integer
+  tags:
+    type: array
+    items:
+      type: string
+`
+	s, err := validator.LoadYAML("book.yaml", strings.NewReader(bookSchemaYAML))
+	if err != nil {
+		t.Fatalf("LoadYAML: %v", err)
+	}
+
+	if r := s.Validate(map[string]any{"title": "Dune", "year": 1965}); !r.Valid {
+		t.Fatalf("expected valid, got errors: %+v", r.Errors)
+	}
+	r := s.Validate(map[string]any{"title": "Dune"})
+	if r.Valid {
+		t.Fatalf("expected invalid (missing year)")
+	}
+	if !hasErrorMentioning(r.Errors, "year") {
+		t.Errorf("expected an error mentioning 'year', got: %+v", r.Errors)
+	}
+}
+
 func TestValidate_valid(t *testing.T) {
 	s := mustLoad(t, bookSchema)
 
