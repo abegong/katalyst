@@ -72,6 +72,13 @@ toolkit for *evolving* and *querying* schemas. Borrow these ideas:
 - LSP server so editors can show schema errors inline.
 - Relations between notes (foreign-key-style refs between documents).
 
+## Housekeeping / infra
+
+- Separate the docs Hugo module from the Go module so `go mod tidy` stays
+  clean — spec + plan in
+  [`specs/docs-module-separation.md`](specs/docs-module-separation.md)
+  (status: planning).
+
 ## Non-goals (for now)
 
 - Being a general-purpose markdown linter (use `markdownlint` etc.).
