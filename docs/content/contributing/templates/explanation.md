@@ -40,6 +40,6 @@ What was given up, and which alternatives were considered and rejected.
 
 ## See also
 
-- The [reference]({{< relref "../reference/_index.md" >}}) page for the
-  precise surface
+- The reference page for the precise surface (link with `relref` once you
+  copy this into `docs/explanation/`)
 - Related explanation pages

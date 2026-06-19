@@ -42,5 +42,5 @@ here, stated plainly.
 ## See also
 
 - Related reference page
-- The relevant [explanation]({{< relref "../explanation/_index.md" >}}) page
-  for the *why*
+- The relevant explanation page for the *why* (link with `relref` once you
+  copy this into `docs/reference/`)
