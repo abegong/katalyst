@@ -5,10 +5,6 @@ weight = 10
 
 # How we document
 
-This is the one page on where Katalyst documentation lives and how to add to
-it. Putting a page in the wrong home is how trees drift apart, so when in
-doubt, start here.
-
 ## Goals
 
 - Users and contributors both find what they need in one published tree.
@@ -18,17 +14,13 @@ doubt, start here.
 
 ## Where each kind of doc lives
 
-Katalyst keeps documentation in a few homes; everything durable belongs in
-`docs/`.
+Katalyst keeps documentation in a few homes.
 
 ### `docs/` — the published site (Hugo)
 
-The durable home for everything a user **or** contributor needs, organized by
+The durable home for everything a user needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
 
-- **Tutorials** — learning-oriented, guided lessons. A single top-level
-  `getting-started.md` today; promote to a `tutorials/` section once there's
-  more than one.
 - **`how-to/`** — task-oriented recipes.
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
@@ -38,6 +30,13 @@ The durable home for everything a user **or** contributor needs, organized by
   [How we plan]({{< relref "how-we-plan.md" >}}), the
   [roadmap]({{< relref "roadmap.md" >}}), and the page templates). Not a
   Diátaxis quadrant.
+
+### `product/` — in-flight specs and plans only
+
+`product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
+merged**. A spec is deleted when its work lands and its durable content
+graduates into `docs/`. Nothing evergreen lives in `product/` — it is
+staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 
 ### `AGENTS.md` — code-writing conventions
 
@@ -52,54 +51,10 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### `product/` — in-flight specs only
-
-`product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
-merged**. A spec is deleted when its work lands and its durable content
-graduates into `docs/`. Nothing evergreen lives in `product/` — it is
-staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
-
 ### Go doc comments — code-level API docs
 
 Package- and symbol-level documentation lives in the code as Go doc
 comments, not in Markdown.
-
-## Where does this go?
-
-Walk top to bottom; stop at the first match.
-
-1. **Is it a convention for writing code in this repo?** → root or
-   co-located `AGENTS.md`. Not `docs/`.
-2. **Is it a record of an in-flight change** (a spec or plan for work not
-   yet merged)? → `product/specs/`. Deleted when the work lands and its
-   durable content graduates into `docs/`.
-3. **Is it package- or function-level API detail?** → a Go doc comment.
-4. **Otherwise it is durable documentation — pick the Diátaxis quadrant by
-   what the reader is doing:**
-
-| The reader is… | Quadrant | Folder |
-|---|---|---|
-| learning Katalyst by doing | **Tutorial** | `docs/getting-started.md` (top-level; add a `docs/tutorials/` section once there's more than one) |
-| accomplishing a specific task | **How-to** | `docs/how-to/` |
-| looking up a fact (config keys, check kinds, terms) | **Reference** | `docs/reference/` |
-| trying to understand *why* | **Explanation** | `docs/explanation/` |
-| reading a project/process record (roadmap, this guide) | — (not Diátaxis) | `docs/contributing/` |
-
-The four quadrants are distinct on purpose. The common failure is mixing
-them: a reference page that drifts into a tutorial, or an explanation page
-that becomes a how-to. Each [template](#templates) names what its page **is
-not**, to keep the boundary sharp.
-
-## Decision rationale has no central log
-
-There is no `decisions.md` and no ADR folder. The *why* behind a choice
-lives on the `explanation/` page for its topic, written into the prose. When
-a choice supersedes a previous approach, the explanation page notes the old
-approach and why it changed — that is where a reader is already looking for
-"why."
-
-Open questions get no standing file. While a change is in flight they live
-in its `product/specs/` spec; otherwise they are GitHub issues.
 
 ## Generated reference
 
