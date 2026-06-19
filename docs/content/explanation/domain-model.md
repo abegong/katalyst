@@ -61,7 +61,7 @@ flowchart LR
 The unit of work. A file on disk with two optional regions:
 
 - A **frontmatter** block, fenced by `---` lines at the very top of the
-  file. YAML in v0.x; TOML / JSON deferred to v0.5 (roadmap).
+  file. YAML today; TOML / JSON are planned.
 - A **body**, everything after the closing fence.
 
 A document *may* have no frontmatter, in which case `check` reports it as an
@@ -315,10 +315,9 @@ These are absences worth being explicit about; they shape what the
 domain currently is *not*:
 
 - **Relations between documents.** A schema can constrain one document at a
-  time. No `$ref` to other documents, no foreign keys. Tracked in roadmap
-  v0.6+.
+  time. No `$ref` to other documents, no foreign keys. Planned.
 - **Schema evolution.** No "this field was renamed in v2" migrations.
-  Tracked in roadmap v0.4.
-- **Query.** No "find all docs where year > 1980." Tracked in v0.4.
+  Planned.
+- **Query.** No "find all docs where year > 1980." Planned.
 - **Derived state.** No index, no cache file, no `.katalyst/` directory.
   Every run is stateless.

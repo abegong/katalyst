@@ -39,5 +39,4 @@ For people working on Katalyst, and anyone who wants the bigger picture.
   design rationale behind each command.
 - **[Contributing]({{< relref "contributing/_index.md" >}})** — how we
   [document]({{< relref "contributing/how-we-document.md" >}}) and
-  [plan]({{< relref "contributing/how-we-plan.md" >}}), and the
-  [roadmap]({{< relref "contributing/roadmap.md" >}}).
+  [plan]({{< relref "contributing/how-we-plan.md" >}}) changes.

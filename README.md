@@ -9,8 +9,7 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 > **Status:** v0. The command surface is `init`, `check`, `fix`,
 > `collection list/get`, `item list/get/add/update/delete`, and
 > `schema list/show` (see [`docs/reference/commands.md`](docs/reference/commands.md)).
-> See [`docs/contributing/roadmap.md`](docs/contributing/roadmap.md) for
-> what's next and the explanation pages under
+> See the explanation pages under
 > [`docs/explanation/`](docs/explanation/) for the design rationale.
 
 ## Install

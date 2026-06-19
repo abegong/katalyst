@@ -8,8 +8,7 @@ weight = 80
 > **Status: future — not shipped.** Captured now because it shapes the seams
 > the current code leaves open. Katalyst today ships a single *trivial*
 > connector (one flat directory, `*.md` files, filename stem = item id);
-> everything here is what that abstraction grows into. See the "Bridges"
-> section of the [roadmap]({{< relref "../contributing/roadmap.md" >}}).
+> everything here is what that abstraction grows into.
 
 ## What a connector is
 
@@ -109,8 +108,8 @@ selector grammar and the connector pattern are two views of the same thing.
 Reuse as-is:
 
 - The contract is **two-way**, not one-way (discovery *and* reconstruction).
-- **Configured / Inferred ≙ `check` / `infer`** — same axis, already on the
-  roadmap.
+- **Configured / Inferred ≙ `check` / `infer`** — same axis, already
+  planned.
 - **Surface unmatched**, don't swallow it.
 - **Coordinates = selector** — design them as one concept.
 

@@ -27,9 +27,8 @@ The durable home for everything a user needs, organized by
 - **`explanation/`** — understanding-oriented "why": the manifesto, the
   general and domain models, connectors, and **design rationale**.
 - **`contributing/`** — project and process records (this file,
-  [How we plan]({{< relref "how-we-plan.md" >}}), the
-  [roadmap]({{< relref "roadmap.md" >}}), and the page templates). Not a
-  Diátaxis quadrant.
+  [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
+  a Diátaxis quadrant.
 
 ### `product/` — in-flight specs and plans only
 

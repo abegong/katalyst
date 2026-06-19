@@ -71,7 +71,7 @@ adjectives; skip the obvious.
 
 1. **Read context.** Read the relevant code and the explanation docs the
    feature builds on — `docs/explanation/domain-model.md`, the topic's
-   explanation page, `docs/contributing/roadmap.md`, and any related spec under
+   explanation page, and any related spec under
    `product/specs/`. Note the rationale and domain vocabulary the feature
    should extend.
 2. **Draft.** Fill Status, Overview, Current State, and Design. Add Value if not
@@ -83,8 +83,8 @@ adjectives; skip the obvious.
 
 ## What makes a great spec
 
-A great spec is **complementary** — it builds on the existing domain model,
-explanation pages, and roadmap, and shows how the new work fits what's already
+A great spec is **complementary** — it builds on the existing domain model
+and explanation pages, and shows how the new work fits what's already
 there. Cite the prior rationale and patterns it extends. When a spec **diverges** from
 an established pattern, it says so explicitly with a specific reason. "We're not
 doing X here because Y" beats silent inconsistency.

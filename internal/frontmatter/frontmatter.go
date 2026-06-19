@@ -10,8 +10,8 @@
 //	---
 //	# Body starts here
 //
-// Only YAML frontmatter is supported in v0.1. TOML and JSON frontmatter
-// are tracked in docs/contributing/roadmap.md.
+// Only YAML frontmatter is supported today. TOML and JSON frontmatter
+// are planned.
 package frontmatter
 
 import (

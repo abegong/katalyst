@@ -41,8 +41,7 @@ its `product/specs/` spec; otherwise they are GitHub issues.
 | **done** | Shipped and verified; ready to graduate content |
 | **shelved** | Deprioritized; kept for reference |
 
-Track status as a line at the top of the spec/plan, and overall sequencing in
-the [roadmap]({{< relref "roadmap.md" >}}).
+Track status as a line at the top of the spec/plan.
 
 ### Typical flow
 
