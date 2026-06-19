@@ -1,12 +1,16 @@
-// Package config loads katalyst.yaml from the nearest ancestor
+// Package config loads a project's configuration from its .katalyst/
 // directory and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
 //  2. Which named collections exist, and what checks does each run?
 //
-// See product/decisions.md (D1) for the nearest-ancestor lookup, and
-// product/cli-spec.md for the v0 collections model that replaced the
-// older anonymous `rules:` list.
+// A project is the nearest ancestor directory that contains a .katalyst/
+// subdirectory. Schemas and collections are each defined one named file
+// per definition under .katalyst/schemas/ and .katalyst/collections/
+// (discovery: convention, the default), or listed explicitly in
+// .katalyst/config.yaml (discovery: explicit). The file format (yaml,
+// json, or both) is also set per kind in config.yaml. See
+// product/specs/project-layout-spec.md.
 package config
 
 import (
@@ -20,16 +24,32 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Filename is the fixed config name we look for during ascent.
-const Filename = "katalyst.yaml"
+// Dir is the per-project directory that marks a project root and holds
+// its config, schemas, and collections.
+const Dir = ".katalyst"
+
+// configFile is the optional settings file inside Dir.
+const configFile = "config.yaml"
+
+// Subdirectories of Dir holding one named file per definition.
+const (
+	schemasSubdir     = "schemas"
+	collectionsSubdir = "collections"
+)
+
+// Discovery modes for a kind (schemas or collections).
+const (
+	discoveryConvention = "convention"
+	discoveryExplicit   = "explicit"
+)
 
 // defaultPattern is the glob applied to a collection's directory when the
 // collection does not set its own `pattern`.
 const defaultPattern = "*.md"
 
-// ErrNotFound is returned when no katalyst.yaml is present in the
+// ErrNotFound is returned when no .katalyst/ directory is present in the
 // starting directory or any of its ancestors.
-var ErrNotFound = errors.New("config: katalyst.yaml not found")
+var ErrNotFound = errors.New("config: .katalyst/ not found")
 
 // Config is the parsed, validated, root-relative-resolved configuration.
 //
@@ -38,7 +58,7 @@ var ErrNotFound = errors.New("config: katalyst.yaml not found")
 //
 // Collections are sorted by name for deterministic output.
 type Config struct {
-	// Root is the absolute directory containing katalyst.yaml.
+	// Root is the absolute directory containing the .katalyst/ dir.
 	Root string
 	// Schemas is name → absolute path.
 	Schemas map[string]string
@@ -105,10 +125,28 @@ type Collection struct {
 	Checks []Check
 }
 
-// rawConfig mirrors the on-disk YAML shape, before validation.
+// rawConfig mirrors .katalyst/config.yaml. Both blocks are optional; an
+// absent file (or an absent block) means convention discovery with the
+// default YAML format.
 type rawConfig struct {
-	Schemas     map[string]string        `yaml:"schemas"`
-	Collections map[string]rawCollection `yaml:"collections"`
+	Schemas     rawSchemaKind     `yaml:"schemas"`
+	Collections rawCollectionKind `yaml:"collections"`
+}
+
+// rawSchemaKind configures how schemas are discovered. Defs is consulted
+// only when Discovery is "explicit" (name → file path).
+type rawSchemaKind struct {
+	Discovery string            `yaml:"discovery"`
+	Format    string            `yaml:"format"`
+	Defs      map[string]string `yaml:"defs"`
+}
+
+// rawCollectionKind configures how collections are discovered. Defs is
+// consulted only when Discovery is "explicit" (name → definition).
+type rawCollectionKind struct {
+	Discovery string                   `yaml:"discovery"`
+	Format    string                   `yaml:"format"`
+	Defs      map[string]rawCollection `yaml:"defs"`
 }
 
 type rawCollection struct {
@@ -132,93 +170,252 @@ type rawCheck struct {
 	Heading   string   `yaml:"heading"`
 }
 
-// Load finds katalyst.yaml by walking upward from start and parses it.
-// The returned Config has all schema paths resolved to absolute form and
-// has been validated for internal consistency (every collection
-// references a known schema).
+// Load finds the project root (nearest ancestor with a .katalyst/ dir),
+// reads the optional .katalyst/config.yaml, and resolves schemas and
+// collections per the configured discovery and format. Schema paths are
+// absolute; collections are sorted by name and validated for internal
+// consistency (every referenced schema exists, every collection has at
+// least one check).
 func Load(start string) (*Config, error) {
-	root, path, err := find(start)
+	root, err := find(start)
 	if err != nil {
 		return nil, err
 	}
 
-	src, err := os.ReadFile(path)
+	raw, err := readConfigFile(root)
 	if err != nil {
-		return nil, fmt.Errorf("read config: %w", err)
-	}
-
-	var raw rawConfig
-	if err := yaml.Unmarshal(src, &raw); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", Filename, err)
+		return nil, err
 	}
 
 	cfg := &Config{
 		Root:        root,
-		Schemas:     make(map[string]string, len(raw.Schemas)),
-		Collections: make([]Collection, 0, len(raw.Collections)),
+		Schemas:     make(map[string]string),
+		Collections: make([]Collection, 0),
 	}
-	for name, p := range raw.Schemas {
-		cfg.Schemas[name] = resolve(root, p)
+	if err := cfg.loadSchemas(raw.Schemas); err != nil {
+		return nil, err
+	}
+	if err := cfg.loadCollections(raw.Collections); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+// readConfigFile parses .katalyst/config.yaml if it exists. A missing
+// file yields a zero rawConfig (all defaults).
+func readConfigFile(root string) (rawConfig, error) {
+	var raw rawConfig
+	rel := filepath.Join(Dir, configFile)
+	src, err := os.ReadFile(filepath.Join(root, rel))
+	if errors.Is(err, os.ErrNotExist) {
+		return raw, nil
+	}
+	if err != nil {
+		return raw, fmt.Errorf("read config: %w", err)
+	}
+	if err := yaml.Unmarshal(src, &raw); err != nil {
+		return raw, fmt.Errorf("parse %s: %w", rel, err)
+	}
+	return raw, nil
+}
+
+// loadSchemas populates c.Schemas (name → absolute path) from either the
+// schemas directory (convention) or an explicit defs map.
+func (c *Config) loadSchemas(k rawSchemaKind) error {
+	discovery, err := normDiscovery(k.Discovery)
+	if err != nil {
+		return fmt.Errorf("schemas: %w", err)
+	}
+	if discovery == discoveryExplicit {
+		if len(k.Defs) == 0 {
+			return errors.New(`schemas: discovery "explicit" requires a non-empty "defs" map`)
+		}
+		for name, p := range k.Defs {
+			c.Schemas[name] = resolve(c.Root, p)
+		}
+		return nil
+	}
+	exts, err := formatExts(k.Format)
+	if err != nil {
+		return fmt.Errorf("schemas: %w", err)
+	}
+	found, err := scanKindDir(filepath.Join(c.Root, Dir, schemasSubdir), exts)
+	if err != nil {
+		return fmt.Errorf("schemas: %w", err)
+	}
+	for name, path := range found {
+		c.Schemas[name] = path
+	}
+	return nil
+}
+
+// loadCollections populates c.Collections (sorted by name) from either
+// the collections directory (convention) or an explicit defs map.
+func (c *Config) loadCollections(k rawCollectionKind) error {
+	discovery, err := normDiscovery(k.Discovery)
+	if err != nil {
+		return fmt.Errorf("collections: %w", err)
 	}
 
-	// Iterate collections in name order so Load is deterministic.
-	names := make([]string, 0, len(raw.Collections))
-	for name := range raw.Collections {
+	defs := map[string]rawCollection{}
+	if discovery == discoveryExplicit {
+		if len(k.Defs) == 0 {
+			return errors.New(`collections: discovery "explicit" requires a non-empty "defs" map`)
+		}
+		defs = k.Defs
+	} else {
+		exts, err := formatExts(k.Format)
+		if err != nil {
+			return fmt.Errorf("collections: %w", err)
+		}
+		found, err := scanKindDir(filepath.Join(c.Root, Dir, collectionsSubdir), exts)
+		if err != nil {
+			return fmt.Errorf("collections: %w", err)
+		}
+		for name, path := range found {
+			src, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("collection %q: %w", name, err)
+			}
+			var rc rawCollection
+			if err := yaml.Unmarshal(src, &rc); err != nil {
+				return fmt.Errorf("collection %q: %w", name, err)
+			}
+			defs[name] = rc
+		}
+	}
+
+	names := make([]string, 0, len(defs))
+	for name := range defs {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 
 	for _, name := range names {
-		rc := raw.Collections[name]
+		col, err := c.buildCollection(name, defs[name])
+		if err != nil {
+			return err
+		}
+		c.Collections = append(c.Collections, col)
+	}
+	return nil
+}
 
-		dirRel := rc.Path
-		if dirRel == "" {
-			// A collection without an explicit path defaults to a
-			// directory named after the collection itself.
-			dirRel = name
-		}
-		pattern := rc.Pattern
-		if pattern == "" {
-			pattern = defaultPattern
-		}
-
-		checks := make([]Check, 0, len(rc.Checks)+1)
-		if rc.Schema != "" {
-			if _, ok := cfg.Schemas[rc.Schema]; !ok {
-				return nil, fmt.Errorf("collection %q: unknown schema %q", name, rc.Schema)
-			}
-			checks = append(checks, Check{Kind: CheckObject, Schema: rc.Schema})
-		}
-		for j, raw := range rc.Checks {
-			ch, err := normalizeCheck(raw, cfg.Schemas)
-			if err != nil {
-				return nil, fmt.Errorf("collection %q: checks[%d]: %w", name, j, err)
-			}
-			checks = append(checks, ch)
-		}
-		if len(checks) == 0 {
-			return nil, fmt.Errorf("collection %q: no checks configured (set schema or checks)", name)
-		}
-
-		schemaName := ""
-		for _, ch := range checks {
-			if ch.Kind == CheckObject {
-				schemaName = ch.Schema
-				break
-			}
-		}
-
-		cfg.Collections = append(cfg.Collections, Collection{
-			Name:    name,
-			Path:    dirRel,
-			Dir:     resolve(root, dirRel),
-			Pattern: pattern,
-			Schema:  schemaName,
-			Checks:  checks,
-		})
+// buildCollection turns one raw collection definition into a validated
+// Collection. The name comes from the source (filename stem in convention
+// mode, map key in explicit mode), never from the file body.
+func (c *Config) buildCollection(name string, rc rawCollection) (Collection, error) {
+	dirRel := rc.Path
+	if dirRel == "" {
+		// A collection without an explicit path defaults to a directory
+		// named after the collection itself.
+		dirRel = name
+	}
+	pattern := rc.Pattern
+	if pattern == "" {
+		pattern = defaultPattern
 	}
 
-	return cfg, nil
+	checks := make([]Check, 0, len(rc.Checks)+1)
+	if rc.Schema != "" {
+		if _, ok := c.Schemas[rc.Schema]; !ok {
+			return Collection{}, fmt.Errorf("collection %q: unknown schema %q", name, rc.Schema)
+		}
+		checks = append(checks, Check{Kind: CheckObject, Schema: rc.Schema})
+	}
+	for j, raw := range rc.Checks {
+		ch, err := normalizeCheck(raw, c.Schemas)
+		if err != nil {
+			return Collection{}, fmt.Errorf("collection %q: checks[%d]: %w", name, j, err)
+		}
+		checks = append(checks, ch)
+	}
+	if len(checks) == 0 {
+		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema or checks)", name)
+	}
+
+	schemaName := ""
+	for _, ch := range checks {
+		if ch.Kind == CheckObject {
+			schemaName = ch.Schema
+			break
+		}
+	}
+
+	return Collection{
+		Name:    name,
+		Path:    dirRel,
+		Dir:     resolve(c.Root, dirRel),
+		Pattern: pattern,
+		Schema:  schemaName,
+		Checks:  checks,
+	}, nil
+}
+
+// normDiscovery validates and defaults a kind's discovery mode.
+func normDiscovery(d string) (string, error) {
+	switch d {
+	case "", discoveryConvention:
+		return discoveryConvention, nil
+	case discoveryExplicit:
+		return discoveryExplicit, nil
+	default:
+		return "", fmt.Errorf("unknown discovery %q (want convention or explicit)", d)
+	}
+}
+
+// formatExts maps a kind's format option to the file extensions a
+// convention scan accepts. The empty string defaults to yaml.
+func formatExts(format string) ([]string, error) {
+	switch format {
+	case "", "yaml":
+		return []string{".yaml", ".yml"}, nil
+	case "json":
+		return []string{".json"}, nil
+	case "both":
+		return []string{".yaml", ".yml", ".json"}, nil
+	default:
+		return nil, fmt.Errorf("unknown format %q (want yaml, json, or both)", format)
+	}
+}
+
+// scanKindDir lists files in dir whose extension is in exts and returns a
+// map of filename stem → absolute path. A stem claimed by two files (e.g.
+// foo.yaml and foo.json under format "both") is an error. A missing dir
+// yields an empty map.
+func scanKindDir(dir string, exts []string) (map[string]string, error) {
+	out := map[string]string{}
+	entries, err := os.ReadDir(dir)
+	if errors.Is(err, os.ErrNotExist) {
+		return out, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(e.Name())
+		if !contains(exts, ext) {
+			continue
+		}
+		stem := strings.TrimSuffix(e.Name(), ext)
+		if prev, ok := out[stem]; ok {
+			return nil, fmt.Errorf("%q is defined by two files (%s and %s)", stem, filepath.Base(prev), e.Name())
+		}
+		out[stem] = filepath.Join(dir, e.Name())
+	}
+	return out, nil
+}
+
+func contains(ss []string, s string) bool {
+	for _, x := range ss {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 // SchemaPath returns the absolute file path for a schema name, or "" if
@@ -267,31 +464,30 @@ func (c Collection) Ext() string {
 	return ext
 }
 
-// find walks from start upward until it locates a directory containing
-// Filename. The returned root is the absolute, symlink-resolved
-// directory; path is the absolute path of the config file itself.
+// find walks from start upward until it locates a directory containing a
+// .katalyst/ subdirectory. The returned root is the absolute,
+// symlink-resolved directory.
 //
 // Symlink resolution matters on macOS where temp dirs (and sometimes
 // user home dirs) live behind /var -> /private/var.
-func find(start string) (root, path string, err error) {
+func find(start string) (string, error) {
 	abs, err := filepath.Abs(start)
 	if err != nil {
-		return "", "", fmt.Errorf("resolve start dir: %w", err)
+		return "", fmt.Errorf("resolve start dir: %w", err)
 	}
 	dir := abs
 	for {
-		candidate := filepath.Join(dir, Filename)
-		info, statErr := os.Stat(candidate)
-		if statErr == nil && !info.IsDir() {
+		info, statErr := os.Stat(filepath.Join(dir, Dir))
+		if statErr == nil && info.IsDir() {
 			resolved, err := filepath.EvalSymlinks(dir)
 			if err != nil {
 				resolved = dir
 			}
-			return resolved, filepath.Join(resolved, Filename), nil
+			return resolved, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", "", ErrNotFound
+			return "", ErrNotFound
 		}
 		dir = parent
 	}
