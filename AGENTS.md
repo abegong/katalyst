@@ -19,8 +19,9 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 ## Layout
 
 ```
-cmd/                  cobra commands (root, init, validate, schema, fmt)
-internal/config       katalyst.yaml loader + glob-based schema resolution
+cmd/                  cobra commands (root, init, check, fix, collection, item, schema)
+internal/config       katalyst.yaml loader + named collection/schema resolution
+internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions

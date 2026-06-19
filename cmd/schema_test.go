@@ -2,29 +2,9 @@ package cmd_test
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
-
-func writeConfigDir(t *testing.T) string {
-	t.Helper()
-	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), bookAndPersonConfigFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/person.json"), personSchemaFixture)
-	return dir
-}
-
-func chdir(t *testing.T, dir string) {
-	t.Helper()
-	old, _ := os.Getwd()
-	t.Cleanup(func() { _ = os.Chdir(old) })
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-}
 
 func TestSchemaList_printsSortedNamesAndPaths(t *testing.T) {
 	dir := writeConfigDir(t)

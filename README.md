@@ -6,10 +6,12 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 [js]: https://json-schema.org/
 [mv]: https://www.mongodb.com/docs/manual/core/schema-validation/
 
-> **Status:** v0.2. `init`, `validate`, `schema list/show`, and `fmt` are
-> implemented. See [`product/roadmap.md`](product/roadmap.md) for what's
-> next and [`product/decisions.md`](product/decisions.md) for what's
-> already locked in.
+> **Status:** v0. The command surface follows
+> [`product/cli-spec.md`](product/cli-spec.md): `init`, `check`, `fix`,
+> `collection list/get`, `item list/get/add/update/delete`, and
+> `schema list/show`. See [`product/roadmap.md`](product/roadmap.md) for
+> what's next and [`product/decisions.md`](product/decisions.md) for
+> what's already locked in.
 
 ## Install
 
@@ -30,104 +32,147 @@ make build  # produces ./bin/katalyst
 ```bash
 mkdir my-notes && cd my-notes
 katalyst init                  # scaffolds katalyst.yaml, schemas/, notes/
-katalyst validate notes/example.md
+katalyst check                 # check every item in the project
 ```
 
-Both files are picked up automatically: `validate` discovers the nearest
-`katalyst.yaml` walking up from the working directory, then matches the
-file against the config's glob rules.
+The config is picked up automatically: every command discovers the nearest
+`katalyst.yaml` walking up from the working directory, then resolves
+**selectors** against the collections it declares.
+
+## Selectors
+
+Commands address targets by **selector**, where depth determines scope:
+
+```
+(omitted)              the whole project (all collections)
+<collection>           one collection (all its items)
+<collection>/<item>    one item
+```
+
+The first segment is always a collection; a bare token (`notes`) is a
+collection, never an item. `check` and `fix` accept selectors at any depth
+and accept several at once; the noun commands (`collection`, `item`)
+expect a fixed depth.
 
 ## Configuring
 
-A `katalyst.yaml` at your repo root maps schemas to globs:
+A `katalyst.yaml` at your repo root declares named **collections**, each
+backed by a directory of files:
 
 ```yaml
 schemas:
   book:   ./schemas/book.json
   person: ./schemas/person.json
 
-rules:
-  - paths: "notes/books/**/*.md"
-    schema: book
-  - paths: "notes/people/**/*.md"
+collections:
+  books:
+    path: notes/books     # directory, relative to the repo root
+    pattern: "*.md"        # optional; default "*.md"
+    schema: book           # a name from schemas:, OR use checks:
+  people:
+    path: notes/people
     schema: person
 ```
 
-Schema resolution precedence, highest first:
+The item `books/dune` resolves to `notes/books/dune.md` (path + id +
+extension). A file inside a collection's directory that does not match its
+`pattern` is reported as an unmatched reference (an error under `check`).
+
+Object-schema resolution precedence, highest first:
 
 1. `--schema <path>` on the command line (overrides everything).
-2. An inline `schema: <name>` key inside a file's frontmatter (the name
+2. An inline `schema: <name>` key inside an item's frontmatter (the name
    refers to an entry in `schemas:` above; the directive itself is
    stripped before validation, so you can have strict
    `additionalProperties: false` schemas without listing it).
-3. The first matching entry in `rules`.
-
-Files that don't resolve to any schema are reported as errors.
+3. The collection's configured object checks.
 
 ## Commands
 
-### `katalyst validate [paths...]`
+### `katalyst check [selector ...]`
 
-Validate each file's frontmatter against its resolved schema.
+Run the configured checks against the selected items (the whole project
+when no selector is given).
 
 ```
-$ katalyst validate notes/dune.md
-notes/dune.md: OK
+$ katalyst check books/dune
+notes/books/dune.md: OK
 
-$ katalyst validate notes/bad.md
-notes/bad.md:3: /year: got string, want integer
-notes/bad.md: /: missing property 'isbn'
+$ katalyst check books/bad
+notes/books/bad.md:3: /year: got string, want integer
+notes/books/bad.md: /: missing property 'isbn'
 ```
 
-Errors include `:line` when the source position is known. Missing-required
-errors fall back to the nearest known ancestor line.
+Errors include `:line` when the source position is known; missing-required
+errors fall back to the nearest known ancestor line. Files in a collection
+directory that don't match its `pattern` are reported as unmatched.
 
 Exit codes:
 
-| Code | Meaning                              |
-|-----:|--------------------------------------|
-| `0`  | All files valid                      |
-| `1`  | One or more validation failures      |
-| `2`  | Usage error or unreadable input      |
+| Code | Meaning                                    |
+|-----:|--------------------------------------------|
+| `0`  | All items valid                            |
+| `1`  | One or more failures, or unmatched files   |
+| `2`  | Usage error, unknown selector, or IO error |
 
-### `katalyst fmt [paths...]`
+`--schema <path>` overrides object-schema resolution for every selected
+item.
 
-Normalize frontmatter: top-level keys sorted alphabetically, default
-block style, exactly one trailing newline. Body preserved verbatim.
+### `katalyst fix [selector ...]`
+
+Apply the deterministic, safe subset of fixes: normalize frontmatter
+(top-level keys sorted alphabetically, default block style, exactly one
+trailing newline). Body preserved verbatim. `fix` never invents semantic
+values for missing keys — see [`product/decisions.md`](product/decisions.md)
+D3/D4.
 
 ```
-katalyst fmt notes/**/*.md                  # rewrites in place
-katalyst fmt --check notes/**/*.md          # CI mode: no writes, exit 1 if any change
+katalyst fix                       # rewrites the whole project in place
+katalyst fix --check               # CI mode: no writes, exit 1 if any change
+katalyst fix books books/dune      # selected scopes only
 ```
 
-`fmt` has no flags besides `--check` on purpose — see
-[`product/decisions.md`](product/decisions.md) D4.
+### `katalyst collection list` / `katalyst collection get <collection>`
 
-### CRUD operations
+```
+$ katalyst collection list
+NAME   DIRECTORY    ITEMS  SCHEMA
+books  notes/books  1      book
+people notes/people 0      person
 
-The CLI supports basic item-level CRUD operations:
+$ katalyst collection get books
+name:    books
+path:    notes/books
+pattern: *.md
+schema:  book
+items:   1
+checks:  object
+```
+
+### `katalyst item ...`
+
+Item-level commands, all addressed by `<collection>/<item>` selector
+(except `item list`, which takes a `<collection>`):
 
 ```bash
-katalyst create notes/a.md title="New title" year=2026
-katalyst read notes/a.md
-katalyst update notes/a.md title="Updated title"
-katalyst delete notes/a.md
+katalyst item list books                              # ids + check status
+katalyst item get books/dune                          # frontmatter + body
+katalyst item get books/dune --frontmatter            # or --body
+katalyst item add books/dune title="Dune" year=1965   # create
+katalyst item update books/dune year=1965             # merge keys
+katalyst item delete books/dune [books/other ...]     # remove
 ```
 
-Implemented commands:
+`key=value` values are parsed as YAML scalars (`year=2026` → integer,
+`draft=true` → boolean, `title="New title"` → string).
 
-- `katalyst create <path> [key=value ...]`
-- `katalyst read <path>`
-- `katalyst update <path> key=value [key=value...]`
-- `katalyst delete <path> [path...]`
+Validation behavior for write commands (`add`, `update`):
 
-Validation behavior for write-affecting commands (`create`, `update`):
-
-- Default is strict validation before write.
-- `create` validates markdown destination files (`*.md`) before writing.
-- `update` validates the resulting markdown document before writing.
-- `--no-validate` bypasses this check.
-- `--schema` overrides config-based schema resolution (same precedence rules as `validate`).
+- Default is strict validation before write; nothing is written on failure.
+- `--no-validate` bypasses the check.
+- `--schema` overrides config-based schema resolution (same precedence
+  rules as `check`).
+- `add` refuses to overwrite an existing item.
 
 ### `katalyst schema list` / `katalyst schema show <name>`
 
@@ -206,8 +251,9 @@ make all     # vet, test, build
 Layout:
 
 ```
-cmd/                  cobra commands (root, init, validate, schema, fmt, create/read/update/delete)
-internal/config       katalyst.yaml loader + glob-based schema resolution
+cmd/                  cobra commands (root, init, check, fix, collection, item, schema)
+internal/config       katalyst.yaml loader + named collection/schema resolution
+internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions

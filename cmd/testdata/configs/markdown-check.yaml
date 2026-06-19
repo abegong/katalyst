@@ -1,7 +1,8 @@
 schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "notes/**/*.md"
+collections:
+  notes:
+    path: notes
     checks:
       - kind: markdown_title_matches_h1
         field: title

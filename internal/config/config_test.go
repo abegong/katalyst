@@ -32,15 +32,18 @@ func realPath(t *testing.T, dir string) string {
 	return r
 }
 
-func TestLoad_parsesSchemasAndRules(t *testing.T) {
+func TestLoad_parsesSchemasAndCollections(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book:   ./schemas/book.json
   person: ./schemas/person.json
-rules:
-  - paths: "notes/books/**/*.md"
+collections:
+  books:
+    path: notes/books
     schema: book
-  - paths: "notes/people/**/*.md"
+  people:
+    path: notes/people
+    pattern: "*.markdown"
     schema: person
 `)
 
@@ -59,23 +62,59 @@ rules:
 	if got := cfg.SchemaPath("book"); got != filepath.Join(wantRoot, "schemas/book.json") {
 		t.Errorf("SchemaPath(book) = %q", got)
 	}
-	if len(cfg.Rules) != 2 {
-		t.Fatalf("expected 2 rules, got %d", len(cfg.Rules))
+
+	// Collections are sorted by name: books, people.
+	if got := cfg.CollectionNames(); strings.Join(got, ",") != "books,people" {
+		t.Fatalf("CollectionNames = %v, want [books people]", got)
 	}
-	if cfg.Rules[0].Schema != "book" {
-		t.Errorf("rule[0].Schema = %q, want book", cfg.Rules[0].Schema)
+
+	books, ok := cfg.Collection("books")
+	if !ok {
+		t.Fatal("expected books collection")
 	}
-	if len(cfg.Rules[0].Checks) != 1 {
-		t.Fatalf("expected legacy schema rule to produce one check, got %d", len(cfg.Rules[0].Checks))
+	if books.Schema != "book" {
+		t.Errorf("books.Schema = %q, want book", books.Schema)
 	}
-	if cfg.Rules[0].Checks[0].Kind != config.CheckObject {
-		t.Fatalf("legacy schema should map to object check, got %q", cfg.Rules[0].Checks[0].Kind)
+	if books.Pattern != "*.md" {
+		t.Errorf("books.Pattern = %q, want default *.md", books.Pattern)
+	}
+	if books.Dir != filepath.Join(wantRoot, "notes/books") {
+		t.Errorf("books.Dir = %q", books.Dir)
+	}
+	if len(books.Checks) != 1 || books.Checks[0].Kind != config.CheckObject {
+		t.Fatalf("books schema shorthand should map to one object check, got %+v", books.Checks)
+	}
+
+	people, _ := cfg.Collection("people")
+	if people.Pattern != "*.markdown" {
+		t.Errorf("people.Pattern = %q, want *.markdown", people.Pattern)
+	}
+	if people.Ext() != ".markdown" {
+		t.Errorf("people.Ext() = %q, want .markdown", people.Ext())
+	}
+}
+
+func TestLoad_defaultsPathToCollectionName(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `schemas:
+  book: ./schemas/book.json
+collections:
+  notes:
+    schema: book
+`)
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if notes.Path != "notes" {
+		t.Errorf("notes.Path = %q, want default 'notes'", notes.Path)
 	}
 }
 
 func TestLoad_ascendsToFindConfig(t *testing.T) {
 	repo := t.TempDir()
-	writeConfig(t, repo, "schemas: {}\nrules: []\n")
+	writeConfig(t, repo, "schemas: {}\ncollections: {}\n")
 	deep := filepath.Join(repo, "a", "b", "c")
 	if err := os.MkdirAll(deep, 0o755); err != nil {
 		t.Fatal(err)
@@ -99,20 +138,37 @@ func TestLoad_notFound(t *testing.T) {
 	}
 }
 
-func TestLoad_rejectsUnknownSchemaInRule(t *testing.T) {
+func TestLoad_rejectsUnknownSchemaInCollection(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "**/*.md"
+collections:
+  notes:
+    path: notes
     schema: nonexistent
 `)
 	_, err := config.Load(dir)
 	if err == nil {
-		t.Fatalf("expected error for rule referencing unknown schema")
+		t.Fatalf("expected error for collection referencing unknown schema")
 	}
 	if !strings.Contains(err.Error(), "nonexistent") {
 		t.Errorf("error should mention the bad name: %v", err)
+	}
+}
+
+func TestLoad_rejectsCollectionWithNoChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `schemas: {}
+collections:
+  notes:
+    path: notes
+`)
+	_, err := config.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for collection with no checks")
+	}
+	if !strings.Contains(err.Error(), "no checks") {
+		t.Errorf("expected 'no checks' message, got: %v", err)
 	}
 }
 
@@ -120,8 +176,9 @@ func TestLoad_parsesChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "notes/**/*.md"
+collections:
+  notes:
+    path: notes
     checks:
       - kind: object
         schema: book
@@ -162,10 +219,11 @@ rules:
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(cfg.Rules) != 1 {
-		t.Fatalf("expected 1 rule, got %d", len(cfg.Rules))
+	notes, ok := cfg.Collection("notes")
+	if !ok {
+		t.Fatal("expected notes collection")
 	}
-	got := cfg.Rules[0].Checks
+	got := notes.Checks
 	if len(got) != 18 {
 		t.Fatalf("expected 18 checks, got %d", len(got))
 	}
@@ -184,8 +242,9 @@ func TestLoad_rejectsUnknownCheckKind(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "**/*.md"
+collections:
+  notes:
+    path: notes
     checks:
       - kind: not-real
 `)
@@ -202,8 +261,9 @@ func TestLoad_rejectsMalformedCheckPayload(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "**/*.md"
+collections:
+  notes:
+    path: notes
     checks:
       - kind: object
 `)
@@ -216,66 +276,31 @@ rules:
 	}
 }
 
-func TestMatch_firstMatchingRuleWins(t *testing.T) {
-	dir := t.TempDir()
-	writeConfig(t, dir, `schemas:
-  book:    ./schemas/book.json
-  generic: ./schemas/generic.json
-rules:
-  - paths: "notes/books/**/*.md"
-    schema: book
-  - paths: "**/*.md"
-    schema: generic
-`)
-	cfg, err := config.Load(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cases := []struct {
-		path string
-		want string
-	}{
-		{filepath.Join(dir, "notes/books/dune.md"), "book"},
-		{filepath.Join(dir, "notes/random.md"), "generic"},
-		{filepath.Join(dir, "elsewhere/x.md"), "generic"},
-	}
-	for _, tc := range cases {
-		got, ok := cfg.Match(tc.path)
-		if !ok {
-			t.Errorf("Match(%q) returned no match", tc.path)
-			continue
-		}
-		if got != tc.want {
-			t.Errorf("Match(%q) = %q, want %q", tc.path, got, tc.want)
-		}
-	}
-}
-
-func TestMatch_noMatch(t *testing.T) {
+func TestCollection_unknownReturnsFalse(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   book: ./schemas/book.json
-rules:
-  - paths: "books/**/*.md"
+collections:
+  notes:
+    path: notes
     schema: book
 `)
 	cfg, err := config.Load(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := cfg.Match(filepath.Join(dir, "notes/whatever.md")); ok {
-		t.Errorf("expected no match")
+	if _, ok := cfg.Collection("missing"); ok {
+		t.Errorf("expected no collection named 'missing'")
 	}
 }
 
-func TestList_returnsSortedNames(t *testing.T) {
+func TestSchemaNames_returnsSortedNames(t *testing.T) {
 	dir := t.TempDir()
 	writeConfig(t, dir, `schemas:
   zebra:  ./z.json
   apple:  ./a.json
   middle: ./m.json
-rules: []
+collections: {}
 `)
 	cfg, err := config.Load(dir)
 	if err != nil {

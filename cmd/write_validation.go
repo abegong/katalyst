@@ -9,25 +9,25 @@ import (
 	"strings"
 
 	"github.com/katabase-ai/katalyst/internal/checks"
+	"github.com/katabase-ai/katalyst/internal/config"
 	"github.com/katabase-ai/katalyst/internal/frontmatter"
-	"github.com/katabase-ai/katalyst/internal/validator"
 	"gopkg.in/yaml.v3"
 )
 
-// validateWrite validates src as a markdown document for write-affecting
-// commands (create/update). When strict is false, it returns nil immediately.
-//
-// Validation uses the same schema-resolution precedence as `validate`:
-// --schema override, then inline schema key, then config rules.
-func validateWrite(path string, src []byte, schemaFlag string, strict bool) error {
-	if !strict {
-		return nil
-	}
-	r, err := newResolver(schemaFlag)
+// parseItem reads and parses a markdown file's frontmatter.
+func parseItem(path string) (*frontmatter.Document, error) {
+	src, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return frontmatter.Parse(src)
+}
 
+// validateItemWrite validates src against the checks for collection c,
+// using the engine's schema-resolution precedence (--schema, inline
+// "schema:" key, then the collection's object checks). It returns a
+// multi-line error describing every violation, or nil when valid.
+func validateItemWrite(e *engine, c config.Collection, path string, src []byte) error {
 	doc, err := frontmatter.Parse(src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
@@ -36,7 +36,7 @@ func validateWrite(path string, src []byte, schemaFlag string, strict bool) erro
 		return fmt.Errorf("%s: no frontmatter found", path)
 	}
 
-	checkList, err := r.checksFor(path, doc.Meta)
+	checkList, err := e.checksFor(c, doc.Meta)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
@@ -52,25 +52,18 @@ func validateWrite(path string, src []byte, schemaFlag string, strict bool) erro
 	}
 
 	var lines []string
-	for _, e := range result {
-		loc := e.Path
+	for _, v := range result {
+		loc := v.Path
 		if loc == "" {
 			loc = "/"
 		}
-		if e.Line > 0 {
-			lines = append(lines, fmt.Sprintf("%s:%d: %s: %s", path, e.Line, loc, e.Message))
+		if v.Line > 0 {
+			lines = append(lines, fmt.Sprintf("%s:%d: %s: %s", path, v.Line, loc, v.Message))
 		} else {
-			lines = append(lines, fmt.Sprintf("%s: %s: %s", path, loc, e.Message))
+			lines = append(lines, fmt.Sprintf("%s: %s: %s", path, loc, v.Message))
 		}
 	}
 	return errors.New(strings.Join(lines, "\n"))
-}
-
-// isMarkdownPath reports whether path appears to be a markdown file based
-// on extension only. Validation hooks use this to avoid forcing frontmatter
-// semantics on unrelated file types.
-func isMarkdownPath(path string) bool {
-	return strings.EqualFold(filepath.Ext(path), ".md")
 }
 
 // composeMarkdown builds a markdown document from frontmatter metadata and
@@ -129,28 +122,10 @@ func parseAssignment(s string) (key string, value any, err error) {
 		return "", nil, fmt.Errorf("invalid assignment %q (empty key)", s)
 	}
 	if raw == "" {
-		// Empty string is a legitimate scalar assignment.
 		return key, "", nil
 	}
 	if err := yaml.Unmarshal([]byte(raw), &value); err != nil {
 		return "", nil, fmt.Errorf("invalid value for %q: %w", key, err)
 	}
 	return key, value, nil
-}
-
-// flattenValidationErrors is used by callers that need structured errors.
-func flattenValidationErrors(path string, errs []validator.Error, lines map[string]int) []string {
-	out := make([]string, 0, len(errs))
-	for _, e := range errs {
-		loc := e.Path
-		if loc == "" {
-			loc = "/"
-		}
-		if line, ok := lookupLine(lines, e.Path); ok {
-			out = append(out, fmt.Sprintf("%s:%d: %s: %s", path, line, loc, e.Message))
-		} else {
-			out = append(out, fmt.Sprintf("%s: %s: %s", path, loc, e.Message))
-		}
-	}
-	return out
 }
