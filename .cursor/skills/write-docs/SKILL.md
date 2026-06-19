@@ -53,8 +53,9 @@ not `// This function loads the config.` Per `AGENTS.md`, comments explain
 ## Where each kind of doc lives
 
 See `docs/contributing/how-we-document.md` for the full taxonomy: `AGENTS.md`
-for code conventions, `docs/` for the published Hugo site (tutorials, how-to,
-reference, explanation, contributing), `product/specs/` for in-flight specs,
+for code conventions, `docs/` for the published Hugo site (getting-started,
+how-to, reference, explanation, contributing), `product/specs/` for in-flight
+specs,
 `README.md` for the overview, Go doc comments for the API. Rule reference pages
 under `docs/reference/rules/` are generated — never hand-edit them.
 

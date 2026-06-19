@@ -21,7 +21,9 @@ Katalyst has three homes for documentation.
 The durable home for everything a user **or** contributor needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
 
-- **`tutorials/`** — learning-oriented, guided lessons.
+- **Tutorials** — learning-oriented, guided lessons. A single top-level
+  `getting-started.md` today; promote to a `tutorials/` section once there's
+  more than one.
 - **`how-to/`** — task-oriented recipes.
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
@@ -71,7 +73,7 @@ comments, not in Markdown.
 | Why a choice was made | `docs/explanation/` (on the topic's page) |
 | How to use the CLI (lookup) | `docs/reference/` |
 | How to accomplish a task | `docs/how-to/` |
-| A first lesson for new users | `docs/tutorials/` |
+| A first lesson for new users | `docs/getting-started.md` (top-level) |
 | A change being designed, not yet merged | a spec in `product/specs/` |
 | An open design question | a GitHub issue, or the in-flight spec |
 | What a package/function does | Go doc comments |

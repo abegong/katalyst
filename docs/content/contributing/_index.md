@@ -1,6 +1,7 @@
 +++
 title = "Contributing"
 weight = 50
+bookCollapseSection = true
 +++
 
 # Contributing

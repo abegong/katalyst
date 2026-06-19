@@ -5,8 +5,9 @@ draft = true
 +++
 
 <!--
-TEMPLATE — copy this file into docs/tutorials/ and fill it in.
-Derived from tutorials/getting-started.md.
+TEMPLATE — copy this file into docs/ as a top-level tutorial (or a new
+docs/tutorials/ section once there's more than one) and fill it in.
+Derived from getting-started.md.
 
 This page IS: a learning-oriented lesson. The reader follows it start to
 finish and ends with something working. Every command is shown with its
@@ -43,4 +44,4 @@ A sentence of orientation — what just happened and why.
 ## Next steps
 
 - Link to the relevant how-to guides and reference pages the reader now
-  wants (use `relref` once you copy this into `docs/tutorials/`).
+  wants (use `relref` once you copy this into the docs tree).

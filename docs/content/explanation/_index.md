@@ -1,6 +1,7 @@
 +++
 title = "Explanation"
 weight = 40
+bookCollapseSection = true
 +++
 
 # Explanation

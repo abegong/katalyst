@@ -33,7 +33,7 @@ Walk the tree top to bottom; stop at the first match.
 
 | The reader is… | Quadrant | Folder |
 |---|---|---|
-| learning Katalyst by doing | **Tutorial** | `docs/tutorials/` |
+| learning Katalyst by doing | **Tutorial** | `docs/getting-started.md` (top-level; add a `docs/tutorials/` section once there's more than one) |
 | accomplishing a specific task | **How-to** | `docs/how-to/` |
 | looking up a fact (config keys, check kinds, terms) | **Reference** | `docs/reference/` |
 | trying to understand *why* | **Explanation** | `docs/explanation/` |

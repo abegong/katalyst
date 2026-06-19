@@ -68,7 +68,7 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
   locked decisions (including rejected alternatives and "why not X").
 - **`docs/reference/`** — the precise surface; for checks, regenerate
   `reference/rules/` with `make docs-gen`.
-- **`docs/how-to/` and `docs/tutorials/`** — user-facing usage.
+- **`docs/how-to/` and `docs/getting-started.md`** — user-facing usage.
 - **`docs/reference/glossary.md`** — new vocabulary.
 - **`README.md`** — pointer/overview updates.
 - **Go doc comments** — package/API-level behavior.
@@ -85,7 +85,7 @@ When moving a spec to **done**:
       locked decision rationale on the relevant topic page.
 - [ ] `docs/reference/` updated; `make docs-gen` run if a check changed.
 - [ ] New vocabulary added to the glossary.
-- [ ] User-facing changes reflected in `docs/how-to`/`tutorials` and the
-      `README.md`.
+- [ ] User-facing changes reflected in `docs/how-to`, `getting-started.md`,
+      and the `README.md`.
 - [ ] Open questions closed as issues or removed.
 - [ ] Spec/plan deleted (or marked **shelved**).

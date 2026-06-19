@@ -9,7 +9,7 @@ What `katalyst` is *about*: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.
 
 For *what* the commands do, see the [getting-started
-tutorial]({{< relref "../tutorials/getting-started.md" >}}) and the
+tutorial]({{< relref "../getting-started.md" >}}) and the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
 For *why* specific design choices were made, see the
 [configuration]({{< relref "configuration.md" >}}) and

@@ -17,8 +17,8 @@ These docs are organized along two tracks.
 
 For people validating content with the tool.
 
-1. **[Tutorials]({{< relref "tutorials/_index.md" >}})** — guided lessons.
-   Start with [Getting started]({{< relref "tutorials/getting-started.md" >}}).
+1. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
+   scaffold a project, and run your first checks.
 2. **[How-to guides]({{< relref "how-to/_index.md" >}})** — task-oriented
    recipes: [configure checks]({{< relref "how-to/configure-rules.md" >}}),
    [add a schema]({{< relref "how-to/add-a-schema.md" >}}),
