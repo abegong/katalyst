@@ -64,6 +64,9 @@ toolkit for *evolving* and *querying* schemas. Borrow these ideas:
 
 ## v0.6+ — Bridges (the "bridge" in katalyst)
 
+- A **connector** layer mapping non-filesystem backends (SQLite, CSV
+  directories, S3, hosted APIs) onto collections and items. SQLite is the
+  intended first stress test. See [`connectors.md`](connectors.md).
 - Export validated frontmatter as a queryable index (SQLite, DuckDB, JSON).
 - Watch mode for editor integration.
 - LSP server so editors can show schema errors inline.
