@@ -24,3 +24,5 @@ jobs:
         run: go test -race -count=1 ./...   # -race isn't in the Makefile target
       - name: Build
         run: make build                     # exercises the Makefile entry point
+      - name: Rule reference is generated and current
+        run: make docs-gen-check
