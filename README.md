@@ -204,7 +204,9 @@ katalyst completion zsh > "${fpath[1]}/_katalyst"   # persistent
 
 ## Documentation site (Hugo)
 
-User-facing docs live under `docs/` and are served/built by Hugo.
+User-facing docs live under `docs/` — its own Hugo site with a separate
+`docs/go.mod`, so the application module's `go mod tidy` never touches the
+theme. Content is `docs/content/`; the site config is `docs/hugo.yaml`.
 The site uses the [Hugo Book theme](https://github.com/alex-shpak/hugo-book)
 as a Hugo Module (no npm toolchain required).
 

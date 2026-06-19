@@ -2,7 +2,6 @@ baseURL: https://katabase-ai.github.io/katalyst/
 languageCode: en-us
 title: Katalyst Documentation
 theme: github.com/alex-shpak/hugo-book
-contentDir: docs
 cleanDestinationDir: true
 enableGitInfo: true
 module:

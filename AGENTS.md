@@ -27,7 +27,13 @@ internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 product/              roadmap, resolved decisions, open questions
+docs/                 Hugo docs site — its own module (docs/go.mod); content
+                      in docs/content/. Build with `make docs-build`.
 ```
+
+The docs are a **separate Hugo module** so the application's `go.mod` stays
+`go mod tidy`-clean. Never add the Hugo theme to the root `go.mod`; it lives
+in `docs/go.mod` and is managed by `make docs-deps` (`hugo mod get`).
 
 Production code stays in `internal/` unless something genuinely needs to be
 importable from outside the module.
