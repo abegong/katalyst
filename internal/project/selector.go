@@ -13,7 +13,7 @@ type UsageError struct{ Msg string }
 
 func (e *UsageError) Error() string { return e.Msg }
 
-// Selector identifies a target by depth (see product/cli-spec.md):
+// Selector identifies a target by depth (see docs/explanation/domain-model.md):
 //
 //	<collection>          → one collection (Item == "")
 //	<collection>/<item>   → one item

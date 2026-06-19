@@ -15,8 +15,8 @@ import (
 //   - exactly one trailing newline on the whole file
 //   - body bytes preserved verbatim
 //
-// Files without frontmatter are returned unchanged. See product/decisions.md
-// (D4) for why this is intentionally inflexible.
+// Files without frontmatter are returned unchanged. See
+// docs/explanation/formatting.md for why this is intentionally inflexible.
 func Format(src []byte) ([]byte, error) {
 	doc, err := Parse(src)
 	if err != nil {
@@ -111,4 +111,3 @@ func forceBlockStyle(n *yaml.Node) {
 		forceBlockStyle(c)
 	}
 }
-

@@ -11,7 +11,7 @@
 //	# Body starts here
 //
 // Only YAML frontmatter is supported in v0.1. TOML and JSON frontmatter
-// are tracked in product/roadmap.md.
+// are tracked in docs/contributing/roadmap.md.
 package frontmatter
 
 import (

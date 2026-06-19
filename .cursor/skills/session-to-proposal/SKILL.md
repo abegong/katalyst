@@ -57,9 +57,10 @@ stakes warrant it. Do not pad.
 ## Where it lands
 
 A proposal is the lightweight front end of katalyst's decision flow. When it's
-accepted, graduate it: open questions go to `product/decisions-to-make.md`, and
-the locked choice becomes a D-numbered entry in `product/decisions.md` (what was
-decided, why, when). See `product/how-we-plan.md`.
+accepted, graduate it: open questions become GitHub issues (or live in the
+in-flight spec), and the locked rationale folds into the relevant
+`docs/explanation/` page — there is no central decisions log. See
+`docs/contributing/how-we-plan.md`.
 
 ## Principles
 

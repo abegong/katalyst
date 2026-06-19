@@ -11,7 +11,7 @@ description: >-
 
 Drafts a new `product/specs/{slug}-plan.md`. A plan always references a finished
 spec — if the spec has open questions, resolve those first. For the full
-lifecycle, see `product/how-we-plan.md`.
+lifecycle, see `docs/contributing/how-we-plan.md`.
 
 ## Sections
 
@@ -28,7 +28,8 @@ This list is the template — there is no separate template file.
   `(new)`) and what to do and why.
 - **Key Files** — Table of File / Role for every file touched or created.
 - **Architecture Decisions** — Table of Decision / Choice / Rationale for
-  non-obvious choices. Mirror locked decisions into `product/decisions.md`.
+  non-obvious choices. At graduation, the locked rationale folds into the
+  relevant `docs/explanation/` page (there is no central decisions log).
 - **Out of Scope** — What this plan explicitly defers. Prevents scope creep.
 
 ## Tests first
@@ -69,7 +70,7 @@ specs — lean into that. Each sub-step is imperative and file-specific.
 
 ## Reference
 
-- Process: `product/how-we-plan.md`
+- Process: `docs/contributing/how-we-plan.md`
 - Testing conventions: `AGENTS.md`
 - Example spec to plan against: `product/specs/cli-spec.md`
 - Prose guide: `.cursor/skills/write-docs/SKILL.md`
