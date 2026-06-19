@@ -8,18 +8,17 @@ import (
 	"testing"
 )
 
-const fixNotesConfig = `schemas: {}
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
+const fixNotesConfig = `path: notes
+checks:
+  - kind: markdown_requires_h1
 `
 
 func setupFixRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), fixNotesConfig)
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": fixNotesConfig,
+	})
 	chdir(t, dir)
 	return dir
 }

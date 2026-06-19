@@ -1,7 +1,0 @@
-schemas:
-  book:        ./schemas/book.json
-  strict-book: ./schemas/strict-book.json
-collections:
-  notes:
-    path: notes
-    schema: book

@@ -51,24 +51,33 @@ func chdir(t *testing.T, dir string) {
 	}
 }
 
-// setupScaffoldRepo runs `init` into a temp dir and chdirs into it.
-func setupScaffoldRepo(t *testing.T) string {
+// schemaFormatJSON is a config.yaml that tells the schema loader to scan
+// for *.json files. The shared schema fixtures are JSON, so test projects
+// opt into the JSON format rather than the default YAML.
+const schemaFormatJSON = "schemas:\n  format: json\n"
+
+// writeProject scaffolds a .katalyst/ tree. Keys are paths relative to the
+// .katalyst/ directory (e.g. "schemas/book.json", "collections/notes.yaml",
+// "config.yaml"); values are file contents.
+func writeProject(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
-	dir := t.TempDir()
-	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
-		t.Fatalf("init: %v", err)
+	for rel, content := range files {
+		mustWrite(t, filepath.Join(dir, ".katalyst", rel), content)
 	}
-	chdir(t, dir)
-	return dir
 }
 
-// writeConfigDir writes the two-schema book-and-person config and its
-// schemas into a fresh temp dir, returning the dir.
+// writeConfigDir writes the two-schema book-and-person project (book and
+// person schemas, books and people collections) into a fresh temp dir,
+// returning the dir.
 func writeConfigDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	mustWrite(t, filepath.Join(dir, "katalyst.yaml"), bookAndPersonConfigFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/book.json"), bookSchemaFixture)
-	mustWrite(t, filepath.Join(dir, "schemas/person.json"), personSchemaFixture)
+	writeProject(t, dir, map[string]string{
+		"config.yaml":             schemaFormatJSON,
+		"schemas/book.json":       bookSchemaFixture,
+		"schemas/person.json":     personSchemaFixture,
+		"collections/books.yaml":  "path: notes/books\nschema: book\n",
+		"collections/people.yaml": "path: notes/people\nschema: person\n",
+	})
 	return dir
 }

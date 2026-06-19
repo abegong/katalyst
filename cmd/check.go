@@ -25,7 +25,7 @@ func newCheckCmd() *cobra.Command {
 		Use:   "check [selector ...]",
 		Short: "Run configured checks against the selected items.",
 		Long: `check parses YAML frontmatter from each selected item and runs the
-checks configured for its collection in katalyst.yaml.
+checks configured for its collection under .katalyst/collections/.
 
 Selectors (see product/cli-spec.md):
 

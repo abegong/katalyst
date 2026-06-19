@@ -1,8 +1,0 @@
-schemas:
-  book: ./schemas/book.json
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_title_matches_h1
-        field: title

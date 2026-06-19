@@ -27,16 +27,13 @@ func setup(t *testing.T) *project.Project {
 		}
 	}
 
-	write("katalyst.yaml", `schemas: {}
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-  people:
-    path: people
-    checks:
-      - kind: markdown_requires_h1
+	write(".katalyst/collections/notes.yaml", `path: notes
+checks:
+  - kind: markdown_requires_h1
+`)
+	write(".katalyst/collections/people.yaml", `path: people
+checks:
+  - kind: markdown_requires_h1
 `)
 	write("notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
 	write("notes/messiah.md", "---\ntitle: Messiah\n---\n# Messiah\n")

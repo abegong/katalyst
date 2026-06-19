@@ -15,7 +15,7 @@ import (
 func newSchemaCmd() *cobra.Command {
 	s := &cobra.Command{
 		Use:   "schema",
-		Short: "Inspect schemas registered in katalyst.yaml.",
+		Short: "Inspect schemas defined under .katalyst/schemas/.",
 	}
 	s.AddCommand(newSchemaListCmd(), newSchemaShowCmd())
 	return s
@@ -89,7 +89,7 @@ func loadConfigFromCWD() (*config.Config, error) {
 	cfg, err := config.Load(wd)
 	if err != nil {
 		if errors.Is(err, config.ErrNotFound) {
-			return nil, usageErr("no katalyst.yaml found in this directory or any ancestor (run `katalyst init`)")
+			return nil, usageErr("no .katalyst/ found in this directory or any ancestor (run `katalyst init`)")
 		}
 		return nil, err
 	}
