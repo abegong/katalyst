@@ -1,14 +1,16 @@
 +++
-title = "Profile an existing wiki"
+title = "Profile an existing wiki by hand"
 weight = 5
 +++
 
-# Profile an existing wiki
+# Profile an existing wiki by hand
 
 You have a directory of markdown — a vault, a docs tree, a knowledge base —
 and you want a Katalyst schema for it. Rather than guess the conventions,
 `inspect` measures them. This guide turns an existing corpus into a draft
-schema.
+schema **by reading the evidence yourself**. To hand that judgment to an agent
+instead, see [Profile an existing wiki with an
+agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}).
 
 `inspect` is read-only and needs no `.katalyst/` project. It reports
 **evidence** — counts and distributions — never recommendations. Reading the
@@ -98,6 +100,6 @@ draft → check → fix the holdouts* — is the whole onboarding.
 
 ## See also
 
+- [Profile an existing wiki with an agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}) — the same loop, driven by an agent.
 - [Inspectors reference]({{< relref "../reference/inspectors/_index.md" >}}) — every inspector and what it reports.
-- [Inspectors explained]({{< relref "../explanation/inspectors.md" >}}) — why evidence, not recommendations.
 - [Add a schema]({{< relref "add-a-schema.md" >}}) — bind the draft to a collection.

@@ -245,9 +245,11 @@ whoever reads the evidence — a human or an agent — not to the inspector. The
 [`inspect`]({{< relref "../reference/commands.md" >}}) command parses a
 directory once into a `Corpus`, runs each inspector over it, and renders the
 evidence as Markdown (default) or JSON. Inspectors have their own registry and
-parity test, mirroring checks, so none ships undocumented. See
-[Inspectors]({{< relref "inspectors.md" >}}) for the rationale and
-[the reference]({{< relref "../reference/inspectors/_index.md" >}}) for the set.
+parity test, mirroring checks, so none ships undocumented. The design rationale
+(evidence-not-verdicts, the determinism dividing line, the division of labor)
+lives in the package's own docs — `go doc ./internal/inspect` — next to the
+code; see [the reference]({{< relref "../reference/inspectors/_index.md" >}})
+for the inspector set.
 
 ## Lifecycle of `check`
 

@@ -1,11 +1,3 @@
-// Package inspect profiles a directory of markdown files. It measures their
-// shape — frontmatter fields, body structure, filename conventions — and
-// returns evidence, the descriptive dual of internal/checks. A check asserts a
-// predicate; an inspector reports the distribution that predicate would be
-// tested against. Inspectors never recommend; they report counts an agent or
-// human judges.
-//
-// See product/specs/inspect-spec.md.
 package inspect
 
 import (

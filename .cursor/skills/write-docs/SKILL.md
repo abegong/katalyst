@@ -63,14 +63,23 @@ with what the symbol *is*. `// Load finds katalyst.yaml by walking upward…` �
 not `// This function loads the config.` Per `AGENTS.md`, comments explain
 *why* (non-obvious intent, trade-offs, constraints), not *what*.
 
+A package's **architecture and design rationale** also lives here — in the
+package doc comment, a dedicated `doc.go` when it runs long
+(`internal/inspect/doc.go` is the example). Keep the *why* next to the code it
+explains, not in a per-feature `docs/explanation/` page; `explanation/` is for
+cross-cutting models (manifesto, general/domain model, connectors) only. Use
+godoc headings (`# Heading`), prose, and short lists — tables belong in the
+reference.
+
 ## Where each kind of doc lives
 
 See `docs/contributing/how-we-document.md` for the full taxonomy: `AGENTS.md`
 for code conventions, `docs/` for the published Hugo site (getting-started,
 how-to, reference, deep-dives, contributing), `product/specs/` for in-flight
 specs,
-`README.md` for the overview, Go doc comments for the API. Rule reference pages
-under `docs/reference/rules/` are generated — never hand-edit them.
+`README.md` for the overview, Go doc comments for the API **and package
+architecture/rationale**. Rule reference pages under `docs/reference/rules/` are
+generated — never hand-edit them.
 
 ## Exemplars
 
