@@ -56,6 +56,7 @@ directory of items plus the checks every item must pass.
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `schema` | no | — | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | — | List of checks (see below). |
+| `query` | no | — | `item list` query behavior for this collection (see [`query`](#query)). |
 
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match
@@ -76,6 +77,37 @@ checks:
   - kind: markdown_title_matches_h1
   - kind: filesystem_filename_matches_slug
 ```
+
+## `query`
+
+Two `item list` behaviors have configurable defaults. A `query:` block sets
+them project-wide in `.katalyst/config.yaml`, and a collection's file can
+override either key for that collection.
+
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `filterTypeMismatch` | `skip` · `error` | `skip` | A `--filter` comparison against an incompatible type either skips the item or exits 2. |
+| `sortMissing` | `last` · `lowest` | `last` | Where items lacking the `--sort` key land: at the end (both directions), or below any present value. |
+
+```yaml
+# .katalyst/config.yaml — project default
+query:
+  filterTypeMismatch: skip
+  sortMissing: last
+```
+
+```yaml
+# .katalyst/collections/books.yaml — override for one collection
+path: notes/books
+schema: book
+query:
+  filterTypeMismatch: error
+```
+
+Resolution is highest-precedence first: the `--on-type-mismatch` /
+`--sort-missing` flags, then the collection's `query:`, then the project
+`query:`, then the built-in default. An unset key falls through to the next
+level.
 
 ## Object-schema resolution precedence
 

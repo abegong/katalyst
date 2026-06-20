@@ -50,6 +50,10 @@ type Document struct {
 	Body           []byte
 	BodyLine       int
 	Lines          map[string]int
+	// Frontmatter is the raw YAML block between the fences (no fences),
+	// for text search; Meta is its parsed form. Nil when HasFrontmatter
+	// is false.
+	Frontmatter []byte
 }
 
 // fence is the literal opener/closer for YAML frontmatter.
@@ -109,6 +113,7 @@ func Parse(src []byte) (*Document, error) {
 		Body:           body,
 		BodyLine:       bodyLine,
 		Lines:          lines,
+		Frontmatter:    yamlBlock,
 	}, nil
 }
 

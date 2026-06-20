@@ -123,7 +123,29 @@ type Collection struct {
 	Schema string
 	// Checks to run against each item.
 	Checks []Check
+	// Query holds the resolved `item list` query behavior for this
+	// collection (collection config over project config over defaults).
+	Query QuerySettings
 }
+
+// QuerySettings configures the behavior of `item list` filtering and
+// sorting. Values are resolved at load time; see the `query:` block in
+// .katalyst/config.yaml (project default) and a collection's file (override).
+type QuerySettings struct {
+	// FilterTypeMismatch decides what happens when a --filter comparison
+	// hits an incompatible type: "skip" (item does not match) or "error".
+	FilterTypeMismatch string
+	// SortMissing decides where items lacking the sort key land: "last"
+	// (end, both directions) or "lowest" (below any present value).
+	SortMissing string
+}
+
+// Built-in query defaults, used when neither the collection nor the
+// project config sets a value.
+const (
+	defaultFilterTypeMismatch = "skip"
+	defaultSortMissing        = "last"
+)
 
 // rawConfig mirrors .katalyst/config.yaml. Both blocks are optional; an
 // absent file (or an absent block) means convention discovery with the
@@ -131,6 +153,14 @@ type Collection struct {
 type rawConfig struct {
 	Schemas     rawSchemaKind     `yaml:"schemas"`
 	Collections rawCollectionKind `yaml:"collections"`
+	Query       *rawQuery         `yaml:"query"`
+}
+
+// rawQuery mirrors a `query:` block. A nil pointer (or a nil field within)
+// means "unset" so resolution can fall through to the next level.
+type rawQuery struct {
+	FilterTypeMismatch string `yaml:"filterTypeMismatch"`
+	SortMissing        string `yaml:"sortMissing"`
 }
 
 // rawSchemaKind configures how schemas are discovered. Defs is consulted
@@ -154,6 +184,7 @@ type rawCollection struct {
 	Pattern string     `yaml:"pattern"`
 	Schema  string     `yaml:"schema"`
 	Checks  []rawCheck `yaml:"checks"`
+	Query   *rawQuery  `yaml:"query"`
 }
 
 type rawCheck struct {
@@ -195,7 +226,7 @@ func Load(start string) (*Config, error) {
 	if err := cfg.loadSchemas(raw.Schemas); err != nil {
 		return nil, err
 	}
-	if err := cfg.loadCollections(raw.Collections); err != nil {
+	if err := cfg.loadCollections(raw.Collections, raw.Query); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -251,7 +282,7 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 
 // loadCollections populates c.Collections (sorted by name) from either
 // the collections directory (convention) or an explicit defs map.
-func (c *Config) loadCollections(k rawCollectionKind) error {
+func (c *Config) loadCollections(k rawCollectionKind, projectQuery *rawQuery) error {
 	discovery, err := normDiscovery(k.Discovery)
 	if err != nil {
 		return fmt.Errorf("collections: %w", err)
@@ -292,7 +323,7 @@ func (c *Config) loadCollections(k rawCollectionKind) error {
 	sort.Strings(names)
 
 	for _, name := range names {
-		col, err := c.buildCollection(name, defs[name])
+		col, err := c.buildCollection(name, defs[name], projectQuery)
 		if err != nil {
 			return err
 		}
@@ -304,7 +335,7 @@ func (c *Config) loadCollections(k rawCollectionKind) error {
 // buildCollection turns one raw collection definition into a validated
 // Collection. The name comes from the source (filename stem in convention
 // mode, map key in explicit mode), never from the file body.
-func (c *Config) buildCollection(name string, rc rawCollection) (Collection, error) {
+func (c *Config) buildCollection(name string, rc rawCollection, projectQuery *rawQuery) (Collection, error) {
 	dirRel := rc.Path
 	if dirRel == "" {
 		// A collection without an explicit path defaults to a directory
@@ -342,6 +373,11 @@ func (c *Config) buildCollection(name string, rc rawCollection) (Collection, err
 		}
 	}
 
+	query, err := resolveQuery(name, rc.Query, projectQuery)
+	if err != nil {
+		return Collection{}, err
+	}
+
 	return Collection{
 		Name:    name,
 		Path:    dirRel,
@@ -349,7 +385,40 @@ func (c *Config) buildCollection(name string, rc rawCollection) (Collection, err
 		Pattern: pattern,
 		Schema:  schemaName,
 		Checks:  checks,
+		Query:   query,
 	}, nil
+}
+
+// resolveQuery merges a collection's query block over the project's over
+// the built-in defaults, key by key, then validates each value. An unset
+// key (empty string at a level) falls through to the next.
+func resolveQuery(name string, collQuery, projectQuery *rawQuery) (QuerySettings, error) {
+	q := QuerySettings{
+		FilterTypeMismatch: defaultFilterTypeMismatch,
+		SortMissing:        defaultSortMissing,
+	}
+	for _, raw := range []*rawQuery{projectQuery, collQuery} {
+		if raw == nil {
+			continue
+		}
+		if raw.FilterTypeMismatch != "" {
+			q.FilterTypeMismatch = raw.FilterTypeMismatch
+		}
+		if raw.SortMissing != "" {
+			q.SortMissing = raw.SortMissing
+		}
+	}
+	switch q.FilterTypeMismatch {
+	case "skip", "error":
+	default:
+		return QuerySettings{}, fmt.Errorf("collection %q: unknown filterTypeMismatch %q (want skip or error)", name, q.FilterTypeMismatch)
+	}
+	switch q.SortMissing {
+	case "last", "lowest":
+	default:
+		return QuerySettings{}, fmt.Errorf("collection %q: unknown sortMissing %q (want last or lowest)", name, q.SortMissing)
+	}
+	return q, nil
 }
 
 // normDiscovery validates and defaults a kind's discovery mode.

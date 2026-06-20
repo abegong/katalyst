@@ -177,6 +177,22 @@ katalyst item update books/dune year=1965             # merge keys
 katalyst item delete books/dune [books/other ...]     # remove
 ```
 
+`item list` filters, searches, sorts, and paginates with a MongoDB
+`find`-inspired pipeline (filter → grep → sort → skip → limit):
+
+```bash
+katalyst item list books --filter 'year>=1965' --filter 'status=draft'
+katalyst item list books --filter 'tags=sci-fi' --filter '!isbn'  # in / absent
+katalyst item list books --grep TODO --grep-in body -i
+katalyst item list books --sort -year --limit 10                  # 10 newest
+```
+
+`--filter` is `field OP value` (`= != > >= < <= =~`; comma RHS is `in`; a
+bare `field` tests existence, `!field` absence; dot paths reach nested
+keys). Repeated `--filter`/`--grep` are ANDed. See the
+[commands reference](docs/content/reference/commands.md) for the full flag
+list and the `query:` config defaults.
+
 `key=value` values are parsed as YAML scalars (`year=2026` → integer,
 `draft=true` → boolean, `title="New title"` → string).
 

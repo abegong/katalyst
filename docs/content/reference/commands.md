@@ -78,6 +78,55 @@ List, inspect, and mutate items. `add` creates an item with the given
 frontmatter and an empty body; `update` merges keys into an existing item
 without touching the body; `delete` removes one or more items.
 
+### `item list` query flags
+
+`item list` narrows, searches, and orders its output with a
+MongoDB-`find`-inspired pipeline: **filter → grep → sort → skip → limit**.
+
+```bash
+katalyst item list <collection>
+  [--filter EXPR ]...        # field predicate; repeatable, ANDed
+  [--grep PATTERN ]...       # regexp text search; repeatable, ANDed
+  [--grep-in all|body|frontmatter]   # region --grep searches (default all)
+  [-i | --ignore-case]       # case-insensitive --grep
+  [--sort KEY ]...           # KEY or -KEY (descending); comma-joinable
+  [--skip N] [--limit N]     # pagination, applied after sorting
+  [--on-type-mismatch skip|error]    # override config
+  [--sort-missing last|lowest]       # override config
+```
+
+`--filter` takes `field OP value`. The operator is the first one found
+scanning left to right:
+
+| Operator | Meaning |
+|---|---|
+| `=` | equals (against an array field, "contains") |
+| `!=` | not equals |
+| `>` `>=` `<` `<=` | numeric / lexicographic comparison |
+| `=~` | matches a Go regexp |
+| `=` with comma RHS | equals any of (`year=1965,1937`) |
+| `!=` with comma RHS | equals none of |
+| bare `field` | key exists |
+| `!field` | key absent |
+
+`field` uses dot notation for nested keys (`author.name`). Values are typed
+as YAML scalars, the same as `item add` (`year>=1965` is an integer
+compare). A comparison against an incompatible type is skipped by default;
+`--on-type-mismatch error` makes it exit 2.
+
+`--sort` keys are `id`, `status`, or any frontmatter field. Missing-field
+items sort last by default (`--sort-missing lowest` treats them as below any
+value). An empty result is a success (exit 0).
+
+```bash
+katalyst item list books --filter 'year>=1965' --filter 'status=draft'
+katalyst item list books --grep TODO --grep-in body -i
+katalyst item list books --sort -year --limit 10        # 10 newest
+```
+
+The `--on-type-mismatch` and `--sort-missing` defaults are configurable; see
+[`query`]({{< relref "configuration.md#query" >}}).
+
 ## `init`
 
 ```bash

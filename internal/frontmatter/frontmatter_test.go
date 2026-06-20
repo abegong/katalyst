@@ -46,6 +46,21 @@ func TestParse_extractsYAMLFrontmatter(t *testing.T) {
 	if string(doc.Body) != wantBody {
 		t.Errorf("Body mismatch:\n got: %q\nwant: %q", string(doc.Body), wantBody)
 	}
+
+	wantFM := "title: Dune\nyear: 1965\ntags:\n  - sci-fi\n  - classic\n"
+	if string(doc.Frontmatter) != wantFM {
+		t.Errorf("Frontmatter mismatch:\n got: %q\nwant: %q", string(doc.Frontmatter), wantFM)
+	}
+}
+
+func TestParse_noFrontmatter_nilRawBlock(t *testing.T) {
+	doc, err := frontmatter.Parse([]byte("# Just a heading\n"))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if doc.Frontmatter != nil {
+		t.Errorf("expected nil Frontmatter when no frontmatter present, got %q", doc.Frontmatter)
+	}
 }
 
 func TestParse_noFrontmatter(t *testing.T) {
