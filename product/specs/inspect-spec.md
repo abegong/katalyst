@@ -44,11 +44,11 @@ deterministic instruments; the agent supplies the non-deterministic judgment.
 ## Value
 
 - **Onboarding.** Turns `init` from a blank page into "here is a draft schema
-  for what you already have; review it." The first run after `inspect --write`
-  is `check`, and it passes on the files that already conform and lights up the
-  exact outliers the evidence already flagged. That round-trip — *inspect →
-  write → check → see the holdouts* — is the whole onboarding story in a few
-  commands.
+  for what you already have; review it." Once the agent has written the draft,
+  the next run is `check`: it passes on the files that already conform and
+  lights up the exact outliers the evidence already flagged. That round-trip —
+  *inspect → agent drafts a schema → check → see the holdouts* — is the whole
+  onboarding story in a few commands.
 - **A general primitive, not a one-off.** An inspector is the descriptive
   [operation](../../docs/content/explanation/general-model.md) the model has
   been missing. The same evidence powers profiling today and, later, schema
@@ -121,12 +121,19 @@ What belongs in an inspector versus the agent is decided by one test:
 - "Is 94% enough to call it required?", "are these two directories really one
   collection?", "what should this schema be named?" → **judgment → agent.**
 
-This resolves the open question of whether *"candidate collections"* is an
-inspector. It is **not** — boundary-drawing is judgment. But its deterministic
-sub-part is: a **shape-fingerprint inspector** returns, per file or per
-directory, a normalized fingerprint of the frontmatter key-set (and types). The
-agent clusters fingerprints into candidate collections and names them.
-Katalyst measures the fingerprints; the agent draws the boundaries.
+This resolves whether *"candidate collections"* is an inspector. It is
+**not** — drawing and naming collection boundaries is judgment. But the
+deterministic parts are fair game for an inspector: a **`frontmatter_shape`
+inspector** returns per-file fingerprints of the frontmatter key-set (and
+optionally types), and it may go further and **group files that share an
+identical fingerprint** — that grouping is deterministic, so it belongs to the
+inspector. What stays with the agent is the *judgment*: deciding that two
+near-but-not-identical groups are really one collection, where the boundary
+falls, and what to name it.
+
+So aggregation and clustering can be a capability an **individual inspector**
+owns; they are **not** a behavior the `inspect` command imposes on every
+inspector, and the fuzzy boundary calls remain the agent's.
 
 ### Inspector families (initial set)
 
@@ -166,56 +173,54 @@ enumerable and self-documenting, and so it cannot ship undocumented.
 
 ### Evidence (the return format)
 
-The primary consumer is an agent, so evidence is JSON. Every record is
-self-describing, scoped, and **always carries the denominator `n`** so the
-consumer computes confidence itself:
+Evidence is an internal structure each inspector produces; `inspect` then
+*renders* it. **Markdown is the default rendering** — agents handle Markdown
+well and humans read it for free, so one format serves both. `--json` emits the
+same evidence as a structured object for callers that want to parse it
+mechanically. Neither is more "real" than the other: both are projections of
+one underlying evidence value — one source of truth, two serializations.
+
+Every record names its inspector and scope and **always carries the denominator
+`n`**, so the consumer computes confidence itself rather than trusting a
+baked-in threshold. The `--json` form of two records:
 
 ```json
-{
-  "inspector": "object_field_frequency",
-  "scope": "notes/books",
-  "n": 142,
-  "evidence": {
-    "title":  { "present": 142 },
-    "rating": { "present": 133 },
-    "status": { "present": 142 }
-  }
-}
+{ "inspector": "object_field_frequency", "scope": "notes/books", "n": 142,
+  "evidence": { "title": {"present": 142}, "status": {"present": 142} } }
+{ "inspector": "object_field_values", "scope": "notes/books", "n": 142,
+  "evidence": { "status": {"cardinality": 3,
+                "values": {"read": 80, "reading": 12, "to-read": 50}} } }
 ```
 
-```json
-{
-  "inspector": "object_field_values",
-  "scope": "notes/books",
-  "n": 142,
-  "evidence": {
-    "status": { "cardinality": 3, "values": {"read": 80, "reading": 12, "to-read": 50} }
-  }
-}
-```
-
-Properties the format must hold: machine-readable; names the inspector and
-scope; reports observations not conclusions (no `→ required` arrows — those
-were a mistake in early sketches); composable so multiple inspector records
-combine into one profile. A run over a scope emits one record per inspector.
+The default Markdown rendering of the same run is shown in
+[The `inspect` command](#the-inspect-command) below. Properties either
+rendering must hold: names the inspector and scope; carries `n`; reports
+observations not conclusions (no `→ required` arrows — those were a mistake in
+early sketches); composable, so records combine into one profile. A run over a
+scope emits one record per inspector.
 
 ### The `inspect` command
 
 ```
-katalyst inspect <path> [--inspector <name> ...] [--json]
+katalyst inspect <path> [--inspector <name> ...] [--json] [-o <file>]
 ```
 
-- Reads the scope, runs the selected inspectors (default: all), returns
-  evidence. **Writes nothing** — `inspect` is a diagnosis, never a mutation.
-- `--json` emits the evidence records above (the agent path). Without it, the
-  command renders the same records as a human-readable profile (the agent-less
-  path) — frequencies, detected conventions, outliers. **One source of truth:**
-  the human report is a thin renderer over the same evidence the agent gets.
-- Note what is **absent**: no `--strictness`/`--threshold` flag. Thresholds are
-  recommendation policy, and recommendations are the agent's job, not the
-  command's. `inspect` only measures.
+- Reads the scope, runs the selected inspectors (default: all), and renders
+  their evidence. **Writes no schema** — `inspect` is a diagnosis, never a
+  mutation of the project. Drafting `.katalyst/` files from the evidence is the
+  agent's job (see workflow below).
+- **Default output is Markdown**; `--json` emits the same evidence as a
+  structured object. One source of truth, two serializations.
+- `-o <file>` saves the rendered report to a file. Pure convenience — the bytes
+  are identical to stdout (equivalent to a shell redirect), not a separate
+  artifact.
+- Note what is **absent**: no `--strictness`/`--threshold` flag and no
+  `--write`. Thresholds are recommendation policy and writing a schema is a
+  judgment call; both belong to the agent, not the command. `inspect` only
+  measures and reports.
 
-Illustrative human rendering (a *projection* of evidence, not new data):
+The default Markdown rendering groups evidence by family (a *projection* of the
+records, not new data):
 
 ```
 notes/books/  (142 files, 142 parsed, 0 errors)
@@ -250,8 +255,11 @@ schema):
 2. **Ephemeral full-config dry-run.** `--schema` only swaps the *object*
    schema. The counterfactual needs to test a whole candidate spec (object +
    markdown + filesystem checks) against a `<path>` that is **not yet a
-   registered collection**, writing nothing. (Flag spelling is an open
-   question — e.g. `check --try <collection-def-file> <path>`.)
+   registered collection**, writing nothing. The candidate must be
+   **self-contained** — schema inline or by path, never by name, since nothing
+   is installed to resolve a name against. (Leading grammar: `check --try <def>
+   <path>`, with `--try -` reading the candidate from stdin so the agent needn't
+   write temp files; see open questions.)
 3. **Holdouts, not just counts.** "139/142 pass" is far weaker signal than
    *which 3 fail and why*. The refinement loop lives in the holdouts: they tell
    the agent whether to tighten the schema or flag genuinely bad files. Per-item
@@ -267,8 +275,8 @@ schema):
 3. `check --json --try <draft> <path>` → per-item holdouts.
 4. Agent inspects holdouts: tighten the draft, loosen a field to optional, or
    leave outliers to be fixed. Repeat 2–4 until satisfied.
-5. `inspect --write` (or the agent writes the files) materializes the draft;
-   the user reviews the diff and runs the real `check`.
+5. The agent writes the draft `.katalyst/` files; the user reviews the diff and
+   runs the real `check`. (`inspect` itself never writes a schema.)
 
 Two cautions shape the loop:
 
@@ -296,26 +304,38 @@ Two cautions shape the loop:
 
 ## Open Questions
 
-- **Verb name.** `inspect` (this spec) vs the `cli-spec.md` placeholder
-  `infer`/`profile`. `inspect` reads as descriptive ("look and report") rather
-  than generative ("produce a schema"), which matches "evidence, not verdicts."
-  Leaning `inspect`; not locked.
-- **Counterfactual flag surface.** How to pass an ephemeral full-collection
-  definition to `check` (`--try <file>`? `--config`? stdin?) and how it
-  composes with `--schema`. Needs a concrete grammar.
-- **Fingerprint granularity.** Does `frontmatter_shape` fingerprint on key-set
-  only, or key-set + types? Types catch "same keys, different meaning"; key-set
-  alone is cheaper and clusters more aggressively. Probably key-set first,
-  types as a second signal.
-- **Where clustering lives.** Pure agent reasoning over fingerprints, or a thin
-  deterministic `--cluster` helper that proposes groupings the agent accepts or
-  overrides? The determinism line says agent, but a deterministic *suggestion*
-  might cut agent rounds.
-- **`--write` target.** Does `inspect --write` exist at all, or is writing
-  purely the agent's job (it has the judgment)? If it exists, what does it emit
-  when the corpus is multi-collection?
-- **Evidence schema versioning.** The evidence format is a public contract for
-  agents; it likely needs a version field from day one.
+Resolved (folded into the design above):
+
+- **Verb name → `inspect`.** Reads as descriptive ("look and report") rather
+  than generative, matching "evidence, not verdicts." Supersedes the
+  `cli-spec.md` `infer`/`profile` placeholder.
+- **Default output → Markdown, `--json` optional.** Agents handle Markdown well
+  and humans read it for free; there is no reason to make JSON the default. Both
+  render the same evidence.
+- **No `--write`.** `inspect` never writes a schema — that is the agent's
+  judgment call. A `-o <file>` convenience may save a copy of the report, but
+  that is just the rendered output, not a new artifact.
+- **Evidence versioning is out of scope.** Versioning the evidence contract
+  drags in versioning the schema format, the config, and the check registry
+  with it — a separate, larger decision. Defer the whole question; do not add a
+  version field now.
+- **Clustering can live inside an inspector.** Deterministic grouping (files
+  with identical `frontmatter_shape` fingerprints) is a capability the
+  individual inspector may own; only fuzzy boundary-drawing is reserved for the
+  agent. It is not a property of the `inspect` command.
+
+Still open:
+
+- **Counterfactual flag grammar.** Leading proposal `check --try <def> <path>`
+  (with `--try -` for stdin); `--as` is the grammatical alternative. Open
+  points: exact spelling, and how it composes with `--schema` when both appear.
+- **Fingerprint granularity** (a `frontmatter_shape` internal detail, not a
+  command property). Key-set only, or key-set + types? Key-set is cheaper and
+  clusters more aggressively; types catch "same keys, different meaning."
+  Leaning key-set first, types as an optional second signal.
+- **Per-inspector aggregation surface.** If individual inspectors may aggregate
+  or group, do they expose that via descriptor options (like checks take
+  `field:`), and how does the registry describe an inspector's parameters?
 
 ## Rejected alternatives
 
@@ -360,14 +380,17 @@ Evidence format:
 - [ ] records from multiple inspectors compose into one profile
 
 `inspect` command:
-- [ ] writes nothing (read-only); exit 0 on a readable scope
-- [ ] `--json` emits evidence records; default emits the human projection
-- [ ] human projection is derived from the same evidence (one source of truth)
+- [ ] writes no schema/project files (read-only); exit 0 on a readable scope
+- [ ] default output is Markdown; `--json` emits the same evidence as JSON
+- [ ] both renderings derive from the same evidence (one source of truth)
+- [ ] `-o <file>` writes bytes identical to stdout
 - [ ] `--inspector` narrows to the named inspectors
 
 Counterfactual `check`:
 - [ ] `check --json` emits per-item pass/fail + violations + an aggregate
-- [ ] ephemeral candidate config runs against an unregistered `<path>`,
+- [ ] ephemeral candidate (`--try <def>`) runs against an unregistered `<path>`,
       writes nothing, mutates no `.katalyst/`
+- [ ] `--try -` reads the candidate definition from stdin
+- [ ] a candidate referencing a schema by name (not inline/path) is rejected
 - [ ] per-item holdouts identify exactly the failing files and reasons
 - [ ] parsed documents are reused across repeated counterfactual runs (cache)
