@@ -56,10 +56,10 @@ Rules:
 
 ## Config (v0)
 
-Config lives in a `.katalyst/` directory at the project root (see
-[`decisions.md`](../decisions.md) D1 and
-[`project-layout-spec.md`](./project-layout-spec.md)). Schemas and
-collections are each **one named file** — the filename stem is the name.
+Config lives in a `.katalyst/` directory at the project root (see the
+[configuration reference](../../docs/content/reference/configuration.md)).
+Schemas and collections are each **one named file** — the filename stem is the
+name.
 
 ```
 .katalyst/
@@ -92,8 +92,8 @@ schema: note           # a schema name from .katalyst/schemas/; OR use `checks:`
 Prepare the current directory as a katalyst project: create `.katalyst/`
 with empty `schemas/` and `collections/` directories and a commented
 `config.yaml`. Writes **no example content**, and refuses to run if a
-`.katalyst/` directory already exists. See
-[`project-layout-spec.md`](./project-layout-spec.md).
+`.katalyst/` directory already exists. See the
+[configuration reference](../../docs/content/reference/configuration.md).
 
 ### `katalyst check [selector ...]`
 
