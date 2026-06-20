@@ -2,9 +2,11 @@
 
 > Spec: [Inspect — profiling a directory into a draft schema](./inspect-spec.md)
 >
-> **Status: planning.** Builds the inspector layer (`internal/inspect`) and the
-> `inspect` command. The counterfactual half of `check` (`--try`, `check
-> --json`) is **deferred to a follow-up spec** (see Out of Scope), and the agent
+> **Status: implementing.** Phases 1–5 implemented; `make all` green and the
+> inspector reference is generated. Graduation (deleting this spec/plan) waits
+> on merge. Builds the inspector layer (`internal/inspect`) and the `inspect`
+> command; the counterfactual half of `check` (`--try`, `check --json`) is
+> **deferred to a follow-up spec** (see Out of Scope), and the agent
 > orchestration that drives these instruments is the harness's job, not katalyst
 > code.
 

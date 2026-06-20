@@ -25,6 +25,10 @@ how each term maps onto today's code is documented in the per-package
 | **Rule** | A check *kind* — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …). `katalyst rules` lists them. |
 | **Check** | A single rule run against an item (object, markdown, or filesystem family). |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
+| **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
+| **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |
+| **Corpus** | The set of markdown files under an inspected path, parsed once and shared across inspectors. |
+| **Fingerprint** | The sorted set of a file's frontmatter keys, used by `frontmatter_shape` to group files into candidate collections. |
 | **Repo root** | The directory containing `katalyst.yaml`; the base for all path resolution. |
 | **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas. |
 | **Connector** | (Future) the two-way mapping between a backend store and the domain model. The filesystem is the only one today. |

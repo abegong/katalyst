@@ -216,12 +216,15 @@ as `check`.)
 
 ## Out of scope for v0 (named so the boundary is explicit)
 
-- `item diff` / `schema diff`, `query`, `aggregate`, `infer`/`profile`,
-  `migrate`.
+- `item diff` / `schema diff`, `query`, `aggregate`, `migrate`.
+  (`infer`/`profile` shipped as the `inspect` command — see
+  [`inspect-spec.md`](./inspect-spec.md).)
 - `schema check`/`validate`, `schema infer`, etc. (the `schema` noun stays at
   `list`/`show`).
 - Non-filesystem backends / the connector layer ([`connectors.md`](../connectors.md)).
-- Machine-readable output (`--json`), `--unset`, bulk-add, watch mode.
+- Machine-readable output (`--json`) on `check`, `--unset`, bulk-add, watch
+  mode. (`inspect` ships `--json`; `check --json` stays deferred with the
+  counterfactual follow-up.)
 - Multiple-collection ergonomics beyond addressing (it works, but v0 ships
   the single-collection case).
 

@@ -1,6 +1,6 @@
 # Inspect — profiling a directory into a draft schema
 
-> **Status: planning.** Introduces **inspectors**: a descriptive (read-only)
+> **Status: implementing.** Introduces **inspectors**: a descriptive (read-only)
 > operation family that measures an existing directory and returns *evidence*
 > about its shape — frontmatter fields, markdown structure, filename
 > conventions. Inspectors are the dual of [checks](../../docs/content/explanation/general-model.md):
