@@ -17,7 +17,7 @@ Katalyst domain model. It answers: *what collections and items does this
 store contain, and where does each one live?* — in both directions.
 
 It is Katalyst's realization of the **data interface** concept from
-the [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one backend;
+the [core concepts]({{< relref "../core-concepts.md" >}}): the filesystem is one backend;
 SQLite, directories of CSVs, S3 buckets, and hosted APIs are others. The
 first real stress test will be **SQLite**, because it is the first backend
 that forces the granularity question below.
@@ -143,4 +143,4 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 | **Coordinates** | The captured fields that identify a unit within its collection. |
 | **Granularity** | The level (item vs. collection) at which a connector attaches a store's units to the domain model. |
 
-[addressing]: {{< relref "core-concepts.md" >}}
+[addressing]: {{< relref "../core-concepts.md" >}}

@@ -11,32 +11,38 @@ starting slice, not the full intended scope — over time Katalyst aims to
 support richer validation across structured and unstructured content,
 multiple storage backends, and migrations between them.
 
-These docs are organized along two tracks.
+These docs get you oriented first, then go deep.
+
+## Get oriented
+
+1. **[Why Katalyst]({{< relref "why-katalyst.md" >}})** — the problem it solves
+   and where it's headed.
+2. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
+   scaffold a project, and run your first checks.
+3. **[Core concepts]({{< relref "core-concepts.md" >}})** — the
+   backend-agnostic model the tool is built on.
 
 ## Use Katalyst
 
 For people validating content with the tool.
 
-1. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
-   scaffold a project, and run your first checks.
-2. **[How-to guides]({{< relref "how-to/_index.md" >}})** — task-oriented
-   recipes: [configure checks]({{< relref "how-to/configure-rules.md" >}}),
-   [add a schema]({{< relref "how-to/add-a-schema.md" >}}),
-   [validate in CI]({{< relref "how-to/validate-in-ci.md" >}}).
-3. **[Reference]({{< relref "reference/_index.md" >}})** — the
-   [configuration]({{< relref "reference/configuration.md" >}}) surface, the
-   generated [rule reference]({{< relref "reference/rules/_index.md" >}}),
-   and the [glossary]({{< relref "reference/glossary.md" >}}).
+- **[How-to guides]({{< relref "how-to/_index.md" >}})** — task-oriented
+  recipes: [configure checks]({{< relref "how-to/configure-rules.md" >}}),
+  [add a schema]({{< relref "how-to/add-a-schema.md" >}}),
+  [validate in CI]({{< relref "how-to/validate-in-ci.md" >}}).
+- **[Reference]({{< relref "reference/_index.md" >}})** — the
+  [configuration]({{< relref "reference/configuration.md" >}}) surface, the
+  generated [rule reference]({{< relref "reference/rules/_index.md" >}}),
+  and the [glossary]({{< relref "reference/glossary.md" >}}).
 
-## Contribute
+## Go deeper
 
 For people working on Katalyst, and anyone who wants the bigger picture.
 
-- **[Explanation]({{< relref "explanation/_index.md" >}})** — the *why*:
-  [why Katalyst exists]({{< relref "explanation/why-katalyst.md" >}}), the
-  [core concepts]({{< relref "explanation/core-concepts.md" >}}), and the
-  cross-cutting design rationale. Subsystem rationale lives next to the code
-  in the per-package `README.md` files under `internal/`.
+- **[Deep dives]({{< relref "deep-dives/_index.md" >}})** — the cross-cutting
+  *why*: connectors, progressive operations, and design rationale that no single
+  package owns. Subsystem rationale lives next to the code in the per-package
+  `README.md` files under `internal/`.
 - **[Contributing]({{< relref "contributing/_index.md" >}})** — how we
   [document]({{< relref "contributing/how-we-document.md" >}}) and
   [plan]({{< relref "contributing/how-we-plan.md" >}}) changes.

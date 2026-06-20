@@ -24,9 +24,9 @@ will do.
 
 There is **no `decisions.md`** and no ADR log. When a change locks in a
 choice, its rationale graduates into the
-[`explanation/`]({{< relref "../explanation/_index.md" >}}) page for the
+[`deep-dives/`]({{< relref "../deep-dives/_index.md" >}}) page for the
 topic it affects — written into the prose, next to what it explains. When the
-choice supersedes an earlier approach, the explanation page notes the old
+choice supersedes an earlier approach, that page notes the old
 approach and why it changed.
 
 Open questions get no standing file. While a change is in flight they live in
@@ -47,7 +47,7 @@ Track status as a line at the top of the spec/plan.
 
 1. **Write the spec.** Problem, design, open questions. Status: **planning**.
 2. **Resolve open questions.** Fold each resolution into the design. The
-   locked rationale is destined for the relevant `explanation/` page (it
+   locked rationale is destined for the relevant `deep-dives/` page (it
    lands there at graduation, not in a separate log).
 3. **Write the plan.** Phases and steps that reference the spec.
 4. **Implement, tests first.** Per `AGENTS.md`, new behavior arrives with a
@@ -63,7 +63,7 @@ and retire the spec. Targets — see [How we
 document]({{< relref "how-we-document.md" >}}) for what belongs where:
 
 - **`AGENTS.md`** — new code conventions, required patterns, gotchas.
-- **`docs/explanation/`** — domain/subsystem changes and the *why* behind
+- **`docs/deep-dives/`** — domain/subsystem changes and the *why* behind
   locked decisions (including rejected alternatives and "why not X").
 - **`docs/reference/`** — the precise surface; for checks, regenerate
   `reference/rules/` with `make docs-gen`.
@@ -72,7 +72,7 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
 - **`README.md`** — pointer/overview updates.
 - **Go doc comments** — package/API-level behavior.
 
-Evergreen explanation docs (core concepts, connectors) and the per-package
+Evergreen deep-dive docs (connectors, progressive operations) and the per-package
 `README.md` files under `internal/` are *not* specs and don't get retired —
 they're updated in place.
 
@@ -81,7 +81,7 @@ they're updated in place.
 When moving a spec to **done**:
 
 - [ ] `AGENTS.md` updated with any new conventions/gotchas.
-- [ ] `docs/explanation/` reflects domain/model changes and absorbs the
+- [ ] `docs/deep-dives/` reflects domain/model changes and absorbs the
       locked decision rationale on the relevant topic page.
 - [ ] `docs/reference/` updated; `make docs-gen` run if a check changed.
 - [ ] New vocabulary added to the glossary.

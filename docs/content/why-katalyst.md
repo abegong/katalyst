@@ -87,7 +87,7 @@ The same DSL is intended to be exposed through several form factors:
 These form factors share one core idea: schemas and linters are closely
 related and should compose across storage boundaries. The conceptual basis —
 why each backend tier unlocks new operations — is in
-[Progressive operations]({{< relref "progressive-operations.md" >}}) and the
+[Progressive operations]({{< relref "deep-dives/progressive-operations.md" >}}) and the
 [core concepts]({{< relref "core-concepts.md" >}}).
 
 ## Current implementation status

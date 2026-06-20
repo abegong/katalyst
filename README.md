@@ -9,8 +9,8 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 > **Status:** v0. The command surface is `init`, `check`, `fix`,
 > `collection list/get`, `item list/get/add/update/delete`, and
 > `schema list/show` (see [`docs/reference/commands.md`](docs/reference/commands.md)).
-> See the explanation pages under
-> [`docs/explanation/`](docs/explanation/) for the design rationale.
+> See the deep-dive pages under
+> [`docs/deep-dives/`](docs/deep-dives/) for the design rationale.
 
 ## Install
 
@@ -138,7 +138,7 @@ Apply the deterministic, safe subset of fixes: normalize frontmatter
 (top-level keys sorted alphabetically, default block style, exactly one
 trailing newline). Body preserved verbatim. `fix` never invents semantic
 values for missing keys — see
-[`docs/explanation/formatting.md`](docs/explanation/formatting.md).
+[`internal/frontmatter/README.md`](internal/frontmatter/README.md).
 
 ```
 katalyst fix                       # rewrites the whole project in place
