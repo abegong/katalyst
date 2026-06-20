@@ -30,5 +30,5 @@ It writes no example content. Add a schema under `.katalyst/schemas/` and a
 collection under `.katalyst/collections/`, then run `katalyst check`.
 
 Next:
-- [Configuration]({{< relref "configuration.md" >}})
-- [Rules Reference]({{< relref "rules/_index.md" >}})
+- [Configuration]({{< relref "reference/configuration.md" >}})
+- [Rules Reference]({{< relref "reference/rules/_index.md" >}})

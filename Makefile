@@ -35,8 +35,10 @@ clean:
 	rm -rf bin
 
 # Docs are their own Hugo module under $(DOCS_DIR)/ (separate go.mod), so
-# the application module's `go mod tidy` never strips the theme. All Hugo
-# invocations target that source root with -s.
+# the application module's `go mod tidy` never strips the theme. Hugo
+# invocations target that source root with -s, except `hugo mod get`, which
+# forwards all trailing args straight to `go get` (so -s would reach go get
+# and error) — it must run from within $(DOCS_DIR) instead.
 # docs-gen regenerates the rule reference from the checks registry.
 docs-gen:
 	go run ./cmd/gendocs
@@ -47,7 +49,7 @@ docs-gen-check: docs-gen
 	git diff --exit-code -- docs/content/reference/rules
 
 docs-deps:
-	$(HUGO) mod get -u $(HUGO_BOOK_MODULE) -s $(DOCS_DIR)
+	cd $(DOCS_DIR) && $(HUGO) mod get -u $(HUGO_BOOK_MODULE)
 
 docs-serve: docs-deps
 	$(HUGO) server -s $(DOCS_DIR) --buildDrafts --disableFastRender
