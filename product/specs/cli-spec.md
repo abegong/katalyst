@@ -134,7 +134,9 @@ depth = 1. Exit `0`/`2`.
 ### `katalyst item list <collection>`
 
 List items in a collection: id and check status (`ok` / `n errors`).
-Selector depth = 1. Exit `0`/`2`.
+Selector depth = 1. Exit `0`/`2`. Supports `--filter`/`--grep`/`--sort`/
+`--skip`/`--limit` (MongoDB-`find`-inspired); see the
+[commands reference](../../docs/content/reference/commands.md#item-list-query-flags).
 
 ### `katalyst item get <collection>/<item> [--frontmatter | --body]`
 
