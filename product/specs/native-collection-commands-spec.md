@@ -49,9 +49,15 @@ These are decided; recorded here so the eventual plan has a foundation.
    `item` verbs and shares one implementation: `list`, `get`, `add`, `update`,
    `delete`. Native commands are sugar over the same code path, not a fork.
 2. **Reserved names error at load time.** A collection whose name collides with
-   a built-in command (`init`, `check`, `fix`, `item`, `schema`, `collection`)
-   — or, TBD, a persistent global flag — is rejected when config loads, with a
-   clear message. This is a new validation (today there is none; see below).
+   a built-in *subcommand* is rejected when config loads, with a clear message.
+   The reserved set is the bare-token subcommands a user could type in that
+   position: our own (`init`, `check`, `fix`, `item`, `schema`, `collection`)
+   plus Cobra's auto-generated `help` and `completion`. **Global flags are *not*
+   reserved** — they are always written with a leading `-`/`--` (`katalyst
+   --help`), so Cobra never confuses a bare command token (`katalyst help`) for
+   a flag; the lexical shape disambiguates them. The collision risk is purely
+   between subcommands, which share the bare-token slot. This is a new
+   validation (today there is none; see below).
 3. **The custom command names are toggleable** via a boolean in
    `.katalyst/config.yaml`:
 
@@ -74,6 +80,25 @@ These are decided; recorded here so the eventual plan has a foundation.
 4. **Outside a configured project**, no native commands are registered, and the
    CLI shows a generic note that it is running outside a configured katalyst
    directory.
+5. **Valid-name pattern is its own definition** — *not* a reuse of the
+   `filesystem_filename_kebab_case` check. It is **minimally restrictive while
+   still yielding a usable CLI token**: `^[A-Za-z0-9][A-Za-z0-9._-]*$` (must
+   start with a letter or digit; thereafter letters, digits, `.`, `_`, `-`).
+   The exclusions are exactly what breaks at the command line — a leading `-`
+   (parsed as a flag), whitespace and shell metacharacters (`/ * ? | & ; $ ( )`
+   …, which force quoting), and `/` in particular (the selector separator in
+   `<collection>/<item>`). Mixed case and underscores are **allowed** — unlike
+   the stricter kebab-only filename rule — because they work fine as tokens; we
+   are not imposing a house style here, only ruling out names that won't work.
+   Non-ASCII is excluded for shell/locale safety. See the open question on case
+   for the one residual footgun.
+6. **The `command:` alias ships in v1**, not as a fast-follow. The slugify
+   suggestion in the load error points straight at it, so the strict gate and
+   its escape hatch arrive together.
+7. **Custom commands render in their own `--help` group**, a "Collections"
+   section distinct from the built-in commands, so a project's data-shaped
+   commands stay visually separate from tool machinery and scale when there are
+   many. (Cobra command groups.)
 
 ### Cobra feasibility (settled in principle)
 
@@ -323,107 +348,108 @@ constraint a ramp rather than a wall.
 
 ## Open questions
 
-### 1. The exact "valid command name" pattern
+The valid-name pattern, alias timing, the reserved set, and help grouping are
+resolved and folded into [Settled decisions](#settled-decisions) (5, 6, 2, 7).
+What remains:
 
-**Context.** Alternative 5 rejects names that aren't valid command tokens, so we
-have to define *valid* precisely — this regex is the rule users will see quoted
-in error messages, and the same pattern feeds the slugify suggestion. The repo
-already has a check, `filesystem_filename_kebab_case` (see
-`internal/config/config.go` and `docs/.../rules/filesystem/filename-kebab-case.md`),
-that defines kebab-case for *filenames*. The question is whether "valid
-collection name" should be *literally the same definition*.
+### 1. The config key name
 
-**Choices & tradeoffs.**
+**Context.** Decision 3 settled the *shape* — a boolean under `cli:`, default
+`true`, that controls whether each collection is also exposed as a top-level
+command. What's unsettled is the **key's name**. It's public config surface, so
+renaming it after release is a breaking change; worth feeling out now. The
+current draft, `includeCustomCommandNames`, also drifts from the prose, which
+calls these "collection commands" — so picking the key is partly picking the
+**term** we use everywhere (config, `--help` group heading, docs).
 
-- **Reuse the existing kebab-case definition (preferred).** One concept of
-  "kebab-case" across the product; a user who learns it for filenames already
-  knows it for collection names; one regex to maintain. Risk: that check's rule
-  was written for filenames and may allow/forbid edge cases (leading digits,
-  trailing hyphens) we'd want to revisit anyway — so we inherit its choices.
-- **Define a fresh, command-specific pattern.** Lets us tune it exactly for CLI
-  tokens (e.g. forbid leading digits so a collection can't shadow a numeric
-  flag value, require a leading letter). Cost: a second, subtly different
-  definition of "kebab-case" in the product, which is its own confusion.
+**Candidates, in a sentence and in config.** Read each as the line a user writes
+and the way we'd describe it in docs:
 
-**Sub-decision — leading digits.** `2024` is a plausible collection (a year of
-notes). As a command token it's harmless to Cobra, but it reads oddly and could
-collide with how we someday parse positional values. Allow it, or require a
-leading letter (`y2024`, or force an alias)?
+- **`includeCustomCommandNames`** — *"Set `includeCustomCommandNames: false` to
+  turn off the per-collection commands."* Accurate but wordy, and "custom" is
+  vague — custom how? It doesn't say *collections*.
 
-### 2. When the `command:` alias ships
+  ```yaml
+  cli:
+    includeCustomCommandNames: true
+  ```
 
-**Context.** Alternative 5 is "strict default *plus* explicit alias." The alias
-is what makes it Alternative 5 rather than plain Alternative 1, but it is also
-extra surface (a new config field, plus collision-checking that spans names
-*and* aliases). We could build both together, or ship strict first and add the
-alias when a real project needs it.
+- **`includeCollectionCommands`** — *"Each collection becomes a command unless
+  you set `includeCollectionCommands: false`."* Says exactly what it does;
+  matches the "Collections" help group and the prose. Slightly long.
 
-**Choices & tradeoffs.**
+  ```yaml
+  cli:
+    includeCollectionCommands: true
+  ```
 
-- **Ship the alias with v1.** Delivers the decided design whole; the slugify
-  suggestion can point users straight at `command:` from day one. Cost: more to
-  build and test up front, for a hatch most projects won't use.
-- **Defer the alias; ship strict-only first.** Smaller first cut; lets us see
-  whether strict names actually hurt before adding the field. Cost: until it
-  lands, a user with a constrained name has *no* path to a native command except
-  renaming — the suggestion can only say "rename," not "or alias." Also a later
-  add means a second round of collision-rule changes.
+- **`collectionCommands`** — *"`collectionCommands: false` disables
+  `katalyst blog-posts list`."* Shortest; reads cleanly as a feature name. The
+  boolean-ness is implicit, which some readers dislike for a `true/false` key.
 
-### 3. What counts as "reserved"
+  ```yaml
+  cli:
+    collectionCommands: true
+  ```
 
-**Context.** Decision 2 reserves built-in command names so a collection can't
-shadow `init`, `check`, etc. But the reserved set has fuzzy edges, and getting it
-wrong means either a user collection silently shadows real functionality, or we
-over-reserve and reject harmless names.
+- **`collectionShortcuts`** — *"Turn off `collectionShortcuts` to require the
+  generic `item …` form."* Frames them honestly as sugar over the generic
+  commands; "shortcut" reads friendly. Slightly undersells them (they're
+  first-class commands, not just aliases).
 
-**Choices & tradeoffs.**
+  ```yaml
+  cli:
+    collectionShortcuts: true
+  ```
 
-- **Just the built-in command names** (`init`, `check`, `fix`, `item`, `schema`,
-  `collection`). Simplest; smallest reserved set, so it rejects the fewest user
-  names. Risk: a collection named after a *global flag* token, or a command's
-  alias, could still produce a confusing parse.
-- **Commands + persistent global flags (and their shorthands).** Closes the
-  flag-collision gap. Cost: users must know the flag list too, and adding a
-  global flag later could retroactively invalidate an existing collection name.
-- **Reserve a forward-compat namespace.** Beyond today's names, decide how to
-  protect *future* built-ins: e.g. promise built-ins will always live under a
-  prefix, or reserve a small vocabulary now. Without this, shipping a new
-  built-in someday could shadow a collection a user already has — a silent
-  breaking change. Cost: constrains our own future naming, or asks users to
-  avoid a reserved word list that doesn't do anything yet.
+- **`exposeCollectionsAsCommands`** — *"`exposeCollectionsAsCommands: false`
+  hides them."* Most self-documenting; verb-y and the longest. Reads more like a
+  sentence than a setting.
 
-### 4. The config key for the toggle
+  ```yaml
+  cli:
+    exposeCollectionsAsCommands: true
+  ```
 
-**Context.** Decision 3 settled on a boolean, `cli.includeCustomCommandNames`
-(default `true`), replacing the earlier abstract `both | native | explicit`
-enum. This confirms the final spelling/placement, since it becomes public config
-surface that's costly to rename later:
+**Lean.** `includeCollectionCommands` or `collectionCommands` — both name the
+thing precisely ("collection") and let the whole doc drop "custom/native" in
+favor of one word. Pick one and the prose + help heading follow.
 
-```yaml
-cli:
-  includeCustomCommandNames: true   # default
-```
+### 2. Forward-compat for future built-ins (minor)
 
-**Choices & tradeoffs.** The remaining wording call is "custom" — the prose
-elsewhere calls these "native collection commands," so the doc and the config
-key currently use two words for one thing. Either rename the key (e.g.
-`includeCollectionCommands`) or settle on "custom command names" as the term and
-align the prose to it. Worth picking one vocabulary before release so the docs
-and the config agree.
-
-### 5. How native commands appear in `--help`
-
-**Context.** When `includeCustomCommandNames` is `true`, a project's collections
-become top-level commands. A project with twenty collections would dump twenty entries
-into the root help listing, intermixed with `init`/`check`/`fix`. Cobra supports
-grouping commands into labeled sections.
+**Context.** The reserved set (decision 2) covers *today's* subcommands. If we
+later add a new built-in — say `katalyst sync` — and some project already has a
+`sync` collection, the new built-in would collide with (and could shadow) their
+command. This is the one residual collision risk strict validation can't catch
+at authoring time, because the conflicting name doesn't exist yet.
 
 **Choices & tradeoffs.**
 
-- **Separate group** (e.g. a "Collections" heading distinct from the built-in
-  commands). Keeps the user's data-shaped commands visually distinct from tool
-  machinery, and scales when there are many. Cost: a little wiring per command
-  group; native commands look "different," which is arguably correct.
-- **Flat list.** Zero extra work; every command is peer to every other. Cost:
-  built-ins get buried among collections in a busy project, and the help no
-  longer signals which commands are tool primitives vs. user collections.
+- **Accept the risk (lean).** Adding a built-in is *our* deliberate act; we
+  check the name against common collection names and pick non-colliding verbs,
+  and the load-time error catches it for any project that does collide (their
+  collection name simply joins the reserved set on upgrade, with a clear
+  message). Zero cost now. Cost: a project can be forced to rename on a katalyst
+  upgrade — a real but rare and loud breakage.
+- **Reserve a namespace now.** E.g. promise built-ins never collide by routing
+  future ones under a prefix, or publish a reserved-word list. Removes the
+  upgrade-breakage risk entirely. Cost: constrains our own naming forever, or
+  burdens users with a reserved list that does nothing visible today.
+
+### 3. Case sensitivity (minor)
+
+**Context.** The decided pattern (decision 5) allows mixed case, so `Contacts`
+and `contacts` are both valid names — and Cobra treats them as **distinct**
+commands. On a case-insensitive filesystem the *files* `Contacts.yaml` and
+`contacts.yaml` already collide (caught by the existing duplicate-stem check),
+but two collections differing only in case from an explicit `defs` map would
+produce two near-identical commands — a footgun.
+
+**Choices & tradeoffs.**
+
+- **Allow mixed case, add no special handling (lean — matches "minimally
+  restrictive").** Simplest; consistent with the pattern. Cost: leaves the
+  case-twin footgun for the rare explicit-defs project.
+- **Lower-case-fold for collision detection.** Treat names that differ only in
+  case as colliding and error at load. Closes the footgun. Cost: a little extra
+  validation, and it quietly forbids a (weird but legal) name pair.
