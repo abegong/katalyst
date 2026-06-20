@@ -41,3 +41,8 @@ public/
 
 # macOS
 .DS_Store
+
+# AI agent tooling (local, not part of the project)
+.claude/
+.codex/
+CLAUDE.md
