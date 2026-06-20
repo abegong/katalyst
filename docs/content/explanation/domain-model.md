@@ -245,7 +245,9 @@ whoever reads the evidence — a human or an agent — not to the inspector. The
 [`inspect`]({{< relref "../reference/commands.md" >}}) command parses a
 directory once into a `Corpus`, runs each inspector over it, and renders the
 evidence as Markdown (default) or JSON. Inspectors have their own registry and
-parity test, mirroring checks, so none ships undocumented.
+parity test, mirroring checks, so none ships undocumented. See
+[Inspectors]({{< relref "inspectors.md" >}}) for the rationale and
+[the reference]({{< relref "../reference/inspectors/_index.md" >}}) for the set.
 
 ## Lifecycle of `check`
 

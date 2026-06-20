@@ -1,7 +1,8 @@
-// Command gendocs renders the rule reference under docs/reference/rules/
-// from the check descriptors in internal/checks/registry.go. Run via
-// `make docs-gen`. CI fails if the working tree drifts from its output, so
-// the descriptors are the single source of truth for rule documentation.
+// Command gendocs renders the rule reference under docs/reference/rules/ from
+// the check descriptors in internal/checks/registry.go, and the inspector
+// reference under docs/reference/inspectors/ from internal/inspect/registry.go.
+// Run via `make docs-gen`. CI fails if the working tree drifts from its output,
+// so the registries are the single source of truth for that documentation.
 package main
 
 import (
