@@ -4,14 +4,10 @@ title = "Katalyst Documentation"
 
 # Katalyst
 
-Katalyst is an experimental framework for content validation in AI-native
-systems. Today the implementation validates markdown frontmatter against
-JSON Schema and a registry of structural checks, driven by a CLI. That is a
-starting slice, not the full intended scope — over time Katalyst aims to
-support richer validation across structured and unstructured content,
-multiple storage backends, and migrations between them.
-
-These docs get you oriented first, then go deep.
+Katalyst is a **content consistency layer**: schemas and checks that live with
+your content and keep its structure steady as it grows — built for the content
+AI agents manage. [Why Katalyst]({{< relref "why-katalyst.md" >}}) makes the
+case; these docs get you oriented, then go deep.
 
 ## Get oriented
 

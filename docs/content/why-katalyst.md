@@ -5,11 +5,19 @@ weight = 10
 
 # Why Katalyst?
 
-If you've pointed an AI agent at a wiki, knowledge base, or memory store, you
-know the wall: the agent won't keep it consistent, and you can't fully hand the
-job off. Katalyst gives that content an enforceable shape — schemas and checks
-that live with the files — so the rules hold without you restating them every
-session.
+Katalyst is a **content consistency layer**, built especially with agent memory,
+wikis, and knowledge bases in mind. The bet: structure should be *light* — cheap
+to add, cheap to change — so an agent stays consistent without you restating the
+rules every session. For the full argument, see
+[Vision and scope]({{< relref "deep-dives/vision.md" >}}).
+
+{{% hint info %}}
+**New to Katalyst?** [Get started]({{< relref "getting-started.md" >}}) — install
+the CLI, scaffold a `.katalyst/` project, and run your first checks in a few
+minutes.
+{{% /hint %}}
+
+## What problems does it solve?
 
 - **"I've told it how to organize things — more than once — and it's still
   inconsistent."** Encode the conventions as checks instead of repeating them in
@@ -22,5 +30,18 @@ session.
   details I care about."** Rules pin down where things go and what each item
   must capture.
 
-For the bigger picture, see [Vision and scope]({{< relref "deep-dives/vision.md" >}})
-and [Core concepts]({{< relref "deep-dives/core-concepts.md" >}}).
+## Who is it for?
+
+<!-- TODO: refine personas before publishing -->
+
+- **Agent builders** handing an agent a memory store, wiki, or knowledge base to
+  maintain.
+- **Teams with growing semi-structured content** that needs to stay navigable
+  and safe to change.
+- _More personas to come._
+
+## Get started
+
+- [Build the CLI and run your first checks]({{< relref "getting-started.md" >}}).
+- [Contribute]({{< relref "contributing/_index.md" >}}) — how we plan and
+  document changes.
