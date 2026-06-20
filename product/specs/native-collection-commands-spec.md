@@ -52,20 +52,25 @@ These are decided; recorded here so the eventual plan has a foundation.
    a built-in command (`init`, `check`, `fix`, `item`, `schema`, `collection`)
    — or, TBD, a persistent global flag — is rejected when config loads, with a
    clear message. This is a new validation (today there is none; see below).
-3. **Coexistence is configurable** via `.katalyst/config.yaml`:
+3. **The custom command names are toggleable** via a boolean in
+   `.katalyst/config.yaml`:
 
    ```yaml
    cli:
-     collectionCommands: both   # both | native | explicit
+     includeCustomCommandNames: true   # default
    ```
 
-   - `both` *(default)* — native names **and** `item …`/`collection …` both
-     work. Native is additive sugar; the generic forms remain the stable,
-     scriptable surface.
-   - `native` — only `katalyst <collection> <verb>`; the generic `item` /
-     `collection` commands are hidden.
-   - `explicit` — native names off entirely (today's behavior; an escape
-     hatch).
+   - `true` *(default)* — each collection is exposed as a top-level command
+     (`katalyst blog-posts list`) **in addition to** the generic
+     `item …`/`collection …` forms. The custom names are additive sugar; the
+     generic forms remain the stable, scriptable surface.
+   - `false` — no custom commands; only the generic `item`/`collection` forms
+     (today's behavior; the escape hatch).
+
+   The generic commands are *always* present — the toggle only controls whether
+   the per-collection names are layered on top. (This drops the earlier
+   third "hide the generics" mode; if a real need for it shows up, it can come
+   back as a separate setting.)
 4. **Outside a configured project**, no native commands are registered, and the
    CLI shows a generic note that it is running outside a configured katalyst
    directory.
@@ -387,28 +392,29 @@ over-reserve and reject harmless names.
   breaking change. Cost: constrains our own future naming, or asks users to
   avoid a reserved word list that doesn't do anything yet.
 
-### 4. The config key for coexistence mode
+### 4. The config key for the toggle
 
-**Context.** Decision 3 introduced a `both | native | explicit` setting; this
-just confirms its spelling/placement in `.katalyst/config.yaml`, since it becomes
-public config surface that's costly to rename later. Current strawman:
+**Context.** Decision 3 settled on a boolean, `cli.includeCustomCommandNames`
+(default `true`), replacing the earlier abstract `both | native | explicit`
+enum. This confirms the final spelling/placement, since it becomes public config
+surface that's costly to rename later:
 
 ```yaml
 cli:
-  collectionCommands: both   # both | native | explicit
+  includeCustomCommandNames: true   # default
 ```
 
-**Choices & tradeoffs.** Confirm `cli.collectionCommands`, or pick a clearer
-key. Worth a moment because the three values are a bit abstract: `explicit`
-means "only the explicit `item …` form" (native off), which a reader could just
-as easily misread as "only explicitly-aliased collections." Renaming the values
-(e.g. `off | only | both`, or `generic | native | both`) is cheap now and
-expensive after release.
+**Choices & tradeoffs.** The remaining wording call is "custom" — the prose
+elsewhere calls these "native collection commands," so the doc and the config
+key currently use two words for one thing. Either rename the key (e.g.
+`includeCollectionCommands`) or settle on "custom command names" as the term and
+align the prose to it. Worth picking one vocabulary before release so the docs
+and the config agree.
 
 ### 5. How native commands appear in `--help`
 
-**Context.** In `both` and `native` modes, a project's collections become
-top-level commands. A project with twenty collections would dump twenty entries
+**Context.** When `includeCustomCommandNames` is `true`, a project's collections
+become top-level commands. A project with twenty collections would dump twenty entries
 into the root help listing, intermixed with `init`/`check`/`fix`. Cobra supports
 grouping commands into labeled sections.
 
