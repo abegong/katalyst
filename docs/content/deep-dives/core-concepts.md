@@ -1,6 +1,6 @@
 +++
 title = "Core concepts"
-weight = 30
+weight = 20
 +++
 
 # Core concepts

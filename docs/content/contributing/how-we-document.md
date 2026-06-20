@@ -25,10 +25,10 @@ The durable home for everything a user needs, organized by
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
 - **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
-  quadrant): connectors, progressive operations, and cross-cutting **design
-  rationale**. The orientation pages — Why Katalyst, Core concepts — sit at the
-  top level. Subsystem-specific rationale lives in per-package `README.md` files
-  under `internal/`.
+  quadrant): the vision and scope, the core concepts, connectors, progressive
+  operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
+  orientation page sits at the top level. Subsystem-specific rationale lives in
+  per-package `README.md` files under `internal/`.
 - **`contributing/`** — project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.

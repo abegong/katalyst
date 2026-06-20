@@ -15,12 +15,10 @@ These docs get you oriented first, then go deep.
 
 ## Get oriented
 
-1. **[Why Katalyst]({{< relref "why-katalyst.md" >}})** — the problem it solves
-   and where it's headed.
+1. **[Why Katalyst]({{< relref "why-katalyst.md" >}})** — the problems it
+   solves.
 2. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
    scaffold a project, and run your first checks.
-3. **[Core concepts]({{< relref "core-concepts.md" >}})** — the
-   backend-agnostic model the tool is built on.
 
 ## Use Katalyst
 
@@ -39,10 +37,12 @@ For people validating content with the tool.
 
 For people working on Katalyst, and anyone who wants the bigger picture.
 
-- **[Deep dives]({{< relref "deep-dives/_index.md" >}})** — the cross-cutting
-  *why*: connectors, progressive operations, and design rationale that no single
-  package owns. Subsystem rationale lives next to the code in the per-package
-  `README.md` files under `internal/`.
+- **[Deep dives]({{< relref "deep-dives/_index.md" >}})** — the *why*: the
+  [vision and scope]({{< relref "deep-dives/vision.md" >}}), the [core
+  concepts]({{< relref "deep-dives/core-concepts.md" >}}), connectors,
+  progressive operations, and design rationale that no single package owns.
+  Subsystem rationale lives next to the code in the per-package `README.md`
+  files under `internal/`.
 - **[Contributing]({{< relref "contributing/_index.md" >}})** — how we
   [document]({{< relref "contributing/how-we-document.md" >}}) and
   [plan]({{< relref "contributing/how-we-plan.md" >}}) changes.

@@ -1,6 +1,6 @@
 +++
 title = "How-to guides"
-weight = 40
+weight = 30
 bookCollapseSection = true
 +++
 

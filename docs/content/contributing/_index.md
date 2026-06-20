@@ -1,6 +1,6 @@
 +++
 title = "Contributing"
-weight = 70
+weight = 60
 bookCollapseSection = true
 +++
 
