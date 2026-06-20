@@ -257,9 +257,10 @@ schema):
    markdown + filesystem checks) against a `<path>` that is **not yet a
    registered collection**, writing nothing. The candidate must be
    **self-contained** — schema inline or by path, never by name, since nothing
-   is installed to resolve a name against. (Leading grammar: `check --try <def>
-   <path>`, with `--try -` reading the candidate from stdin so the agent needn't
-   write temp files; see open questions.)
+   is installed to resolve a name against. Grammar: `check --try <def> <path>`;
+   `--try -` reads the candidate from stdin so the agent needn't write temp
+   files; `--try` and `--schema` are mutually exclusive (a candidate already
+   supplies its own object check).
 3. **Holdouts, not just counts.** "139/142 pass" is far weaker signal than
    *which 3 fail and why*. The refinement loop lives in the holdouts: they tell
    the agent whether to tighten the schema or flag genuinely bad files. Per-item
@@ -324,18 +325,21 @@ Resolved (folded into the design above):
   individual inspector may own; only fuzzy boundary-drawing is reserved for the
   agent. It is not a property of the `inspect` command.
 
-Still open:
+- **Counterfactual flag grammar → `check --try <def> <path>`.** `--try -` reads
+  the candidate from stdin; `--try` and `--schema` are mutually exclusive (the
+  candidate already carries its object check). `--try` over `--as` because it
+  names the throwaway-hypothesis intent. A rename is mechanical if it flips.
+- **Fingerprint identity → key-set.** `frontmatter_shape` fingerprints on the
+  sorted set of frontmatter keys; observed per-key types ship as *adjacent*
+  evidence but are not part of the grouping identity. Key-set is cheaper and
+  clusters more aggressively, and the agent has the types alongside if it wants
+  to split a group. (Internal to that one inspector, not a command property.)
+- **Initial inspectors are parameterless.** No descriptor options in v1; the
+  only aggregation is `frontmatter_shape`'s identical-fingerprint grouping,
+  hardcoded in that inspector. A parameter mechanism (like checks' `field:`) is
+  deferred until an inspector needs one.
 
-- **Counterfactual flag grammar.** Leading proposal `check --try <def> <path>`
-  (with `--try -` for stdin); `--as` is the grammatical alternative. Open
-  points: exact spelling, and how it composes with `--schema` when both appear.
-- **Fingerprint granularity** (a `frontmatter_shape` internal detail, not a
-  command property). Key-set only, or key-set + types? Key-set is cheaper and
-  clusters more aggressively; types catch "same keys, different meaning."
-  Leaning key-set first, types as an optional second signal.
-- **Per-inspector aggregation surface.** If individual inspectors may aggregate
-  or group, do they expose that via descriptor options (like checks take
-  `field:`), and how does the registry describe an inspector's parameters?
+Still open: _None._
 
 ## Rejected alternatives
 
