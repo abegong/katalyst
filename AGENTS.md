@@ -2,10 +2,14 @@
 
 Conventions for anyone — human or AI — making changes in this repo.
 
-For *what* the project does and how to use the CLI, see [`README.md`](README.md).
-For *why* the design is the way it is, see [`product/decisions.md`](product/decisions.md).
-For *how we plan and document* changes, see [`product/how-we-plan.md`](product/how-we-plan.md)
-and [`product/how-we-document.md`](product/how-we-document.md).
+For *what* the project does and how to use the CLI, see [`README.md`](README.md)
+and the user docs under `docs/`.
+For *why* the design is the way it is, see the explanation pages under
+`docs/explanation/` — rationale lives on each topic's page; there is no central
+decisions log.
+For *how we plan and document* changes, see
+[`docs/contributing/how-we-plan.md`](docs/contributing/how-we-plan.md) and
+[`docs/contributing/how-we-document.md`](docs/contributing/how-we-document.md).
 
 ## Commands
 
@@ -26,9 +30,9 @@ internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
-product/              roadmap, resolved decisions, open questions
-docs/                 Hugo docs site — its own module (docs/go.mod); content
-                      in docs/content/. Build with `make docs-build`.
+cmd/gendocs           generates docs/content/reference/rules/ from the checks registry
+docs/                 Hugo docs site — users + contributors (content in docs/content/)
+product/specs/        in-flight specs only (deleted when their work lands)
 ```
 
 The docs are a **separate Hugo module** so the application's `go.mod` stays

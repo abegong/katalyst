@@ -1,4 +1,4 @@
-.PHONY: all build test vet fmt tidy run clean docs-deps docs-serve docs-build
+.PHONY: all build test vet fmt tidy run clean docs-deps docs-serve docs-build docs-gen docs-gen-check
 
 BINARY := katalyst
 DOCS_DIR := docs
@@ -37,6 +37,15 @@ clean:
 # Docs are their own Hugo module under $(DOCS_DIR)/ (separate go.mod), so
 # the application module's `go mod tidy` never strips the theme. All Hugo
 # invocations target that source root with -s.
+# docs-gen regenerates the rule reference from the checks registry.
+docs-gen:
+	go run ./cmd/gendocs
+
+# docs-gen-check fails if the generated rule reference is out of date.
+# Run in CI so a new check can't ship without its generated page.
+docs-gen-check: docs-gen
+	git diff --exit-code -- docs/content/reference/rules
+
 docs-deps:
 	$(HUGO) mod get -u $(HUGO_BOOK_MODULE) -s $(DOCS_DIR)
 

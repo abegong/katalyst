@@ -1,7 +1,7 @@
 // Package project sits on top of internal/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
-// reverse id→path resolution. See product/cli-spec.md ("Selector
-// grammar", "Config").
+// reverse id→path resolution. See docs/explanation/domain-model.md
+// (selectors, collections, items).
 package project
 
 import (
@@ -77,7 +77,7 @@ func (p *Project) Items(c config.Collection) ([]Item, error) {
 
 // Unmatched lists files inside a collection's directory that do NOT match
 // its pattern. These are reported as errors by `check` (cf.
-// product/decisions.md D2). Paths are returned relative to Dir.
+// docs/explanation/configuration.md). Paths are returned relative to Dir.
 func (p *Project) Unmatched(c config.Collection) ([]string, error) {
 	info, err := os.Stat(c.Dir)
 	if err != nil || !info.IsDir() {

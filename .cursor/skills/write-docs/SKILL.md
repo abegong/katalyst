@@ -2,9 +2,9 @@
 name: write-docs
 description: >-
   Tone and style guide for writing or revising any developer-facing prose in
-  this repo — AGENTS.md, design and reference docs under product/, the Hugo
-  user-docs site under docs/, the project README, skill SKILL.md files, and Go
-  doc comments. Use whenever editing or adding prose to a `.md` file, writing a
+  this repo — AGENTS.md, the explanation and reference docs under docs/, the
+  Hugo user-docs site under docs/, the project README, skill SKILL.md files, and
+  Go doc comments. Use whenever editing or adding prose to a `.md` file, writing a
   package doc comment, or when asked to "document this", "write a README",
   "update the docs", or the equivalent.
 ---
@@ -30,7 +30,7 @@ at a developer with work to do.
   document what the code already shows. Don't pad for symmetry.
 - **Link sideways.** Point at the source file or the sibling doc; don't inline
   their contents.
-- **Add names sparingly.** Reuse the vocabulary in `product/domain-model.md`
+- **Add names sparingly.** Reuse the vocabulary in `docs/reference/glossary.md`
   before coining a term; add one only when the concept needs it. Descriptive for
   internal abstractions; evocative names reserved for user-facing features.
 
@@ -52,9 +52,12 @@ not `// This function loads the config.` Per `AGENTS.md`, comments explain
 
 ## Where each kind of doc lives
 
-See `product/how-we-document.md` for the full taxonomy: `AGENTS.md` for
-conventions, `product/` for design/reference, `docs/` for the Hugo user site,
-`README.md` for the overview, Go doc comments for the API.
+See `docs/contributing/how-we-document.md` for the full taxonomy: `AGENTS.md`
+for code conventions, `docs/` for the published Hugo site (getting-started,
+how-to, reference, explanation, contributing), `product/specs/` for in-flight
+specs,
+`README.md` for the overview, Go doc comments for the API. Rule reference pages
+under `docs/reference/rules/` are generated — never hand-edit them.
 
 ## Exemplars
 

@@ -6,12 +6,11 @@ files. Inspired by [JSON Schema][js] and the [MongoDB validation API][mv].
 [js]: https://json-schema.org/
 [mv]: https://www.mongodb.com/docs/manual/core/schema-validation/
 
-> **Status:** v0. The command surface follows
-> [`product/cli-spec.md`](product/cli-spec.md): `init`, `check`, `fix`,
+> **Status:** v0. The command surface is `init`, `check`, `fix`,
 > `collection list/get`, `item list/get/add/update/delete`, and
-> `schema list/show`. See [`product/roadmap.md`](product/roadmap.md) for
-> what's next and [`product/decisions.md`](product/decisions.md) for
-> what's already locked in.
+> `schema list/show` (see [`docs/reference/commands.md`](docs/reference/commands.md)).
+> See the explanation pages under
+> [`docs/explanation/`](docs/explanation/) for the design rationale.
 
 ## Install
 
@@ -138,8 +137,8 @@ item.
 Apply the deterministic, safe subset of fixes: normalize frontmatter
 (top-level keys sorted alphabetically, default block style, exactly one
 trailing newline). Body preserved verbatim. `fix` never invents semantic
-values for missing keys — see [`product/decisions.md`](product/decisions.md)
-D3/D4.
+values for missing keys — see
+[`docs/explanation/formatting.md`](docs/explanation/formatting.md).
 
 ```
 katalyst fix                       # rewrites the whole project in place
@@ -274,7 +273,9 @@ internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
-product/              roadmap, resolved decisions, open questions
+cmd/gendocs           generates docs/reference/rules/ from the checks registry
+docs/                 published Hugo site (users + contributors)
+product/specs/        in-flight specs only (deleted when their work lands)
 ```
 
 See [`AGENTS.md`](AGENTS.md) for conventions on tests, fixtures, and code style.
