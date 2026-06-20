@@ -2,10 +2,11 @@
 
 > Spec: [Inspect — profiling a directory into a draft schema](./inspect-spec.md)
 >
-> **Status: planning.** Builds the inspector layer (`internal/inspect`), the
-> `inspect` command, and the counterfactual half of `check` (`--try`, `--json`).
-> The agent orchestration that drives these instruments is the harness's job,
-> not katalyst code (see Out of Scope).
+> **Status: planning.** Builds the inspector layer (`internal/inspect`) and the
+> `inspect` command. The counterfactual half of `check` (`--try`, `check
+> --json`) is **deferred to a follow-up spec** (see Out of Scope), and the agent
+> orchestration that drives these instruments is the harness's job, not katalyst
+> code.
 
 ## Current State
 
@@ -22,17 +23,9 @@
 - **Item enumeration exists.** `internal/project/project.go` `Items(c)` globs a
   collection directory with its pattern; `Unmatched(c)` lists non-matching
   files. Both stat the dir and no-op when it is absent.
-- **`check` loads config from CWD and prints human lines.** `cmd/check.go`
-  `newCheckCmd` builds an `engine` (`cmd/engine.go` `newEngine(schemaFlag)`),
-  resolves selectors, and `checkItem` prints `path: OK` or
-  `path:line: /ptr: msg`. Exit codes `exitOK/exitValidationFail/exitUsage`
-  (0/1/2) live in `cmd/check.go`. `--schema <path>` already runs an
-  **un-installed** object schema, and `engine.compile` caches by path and
-  decodes `.yaml`/`.yml` vs JSON. There is **no machine-readable output** and
-  no way to run against a directory that is not a registered collection.
-- **The engine requires a project.** `newEngine` calls `loadConfigFromCWD`;
-  `engine.checksFor` resolves object schemas by **name** via `cfg.SchemaPath`.
-  Nothing today builds a one-off collection from an external definition.
+- **`check` exists but isn't reused here.** `cmd/check.go` and `cmd/engine.go`
+  hold the evaluative path; the counterfactual extensions to them are deferred
+  (see Out of Scope), so this plan touches neither.
 - **Commands attach to a constructor root.** `cmd/root.go` `NewRootCmd()` adds
   each subcommand; CLI tests drive it via `SetArgs`/`Execute` (`AGENTS.md`).
 
@@ -44,15 +37,13 @@
 | 2 | Inspector set | remaining inspectors across all families, incl. `frontmatter_shape` grouping |
 | 3 | Rendering | Markdown (default) + JSON renderers over `[]Evidence` |
 | 4 | `inspect` command | wire to root; `--inspector` / `--json` / `-o`; read-only profile |
-| 5 | Counterfactual `check` | `check --json` structured output; `check --try <def> <path>` (stdin, self-contained def) against an unregistered path |
-| 6 | Docs & graduation | glossary, explanation pages, `cli-spec.md` scope move, README, generated inspector reference; retire spec/plan |
+| 5 | Docs & graduation | glossary, explanation pages, `cli-spec.md` scope move, README, generated inspector reference; retire spec/plan |
 
-Phases 1–4 build and expose the descriptive engine bottom-up. Phase 5 is the
-counterfactual half of `check`; it depends only on the **existing** engine, not
-on 1–4, so it can proceed in parallel. Each phase is **tests-first internally**:
-write the failing test sub-step, then the code that makes it pass — a single
-up-front scaffolding phase doesn't work in Go, where a test referencing an
-unbuilt symbol breaks the whole package's compilation.
+Phases 1–4 build and expose the descriptive engine bottom-up; Phase 5
+graduates. Each phase is **tests-first internally**: write the failing test
+sub-step, then the code that makes it pass — a single up-front scaffolding phase
+doesn't work in Go, where a test referencing an unbuilt symbol breaks the whole
+package's compilation.
 
 ## Phases
 
@@ -159,44 +150,7 @@ their evidence; writes nothing.
    `AddCommand` list.
 4. **Gate:** `go test ./cmd -run TestInspect` green.
 
-### Phase 5 — Counterfactual `check`
-
-**Goal:** `check` emits structured results and can run a self-contained
-candidate definition against an unregistered path, writing nothing.
-
-1. **File:** `cmd/check_json_test.go` *(new, failing first)* — `check --json`
-   over a known fixture project asserts a structured document: per-item
-   `{path, ok, violations:[{path,line,message}]}` plus an aggregate
-   `{n, passed, failed}`. Holdouts (the failing files + reasons) are present.
-2. **File:** `cmd/check.go` — add `--json`. Refactor `checkItem` to return a
-   result value (item path, ok, `[]checks.Violation`) instead of writing inline;
-   the human path renders it as today, the `--json` path collects results and
-   marshals once at the end. Keep exit codes unchanged.
-3. **File:** `cmd/check_try_test.go` *(new, failing first)* — `check --try <def>
-   <path>` against a temp dir that is **not** a katalyst project: passes
-   conforming files, reports holdouts, writes nothing, creates no `.katalyst/`.
-   Assert `--try -` reads the def from stdin (`cmd.SetIn`); `--try` with
-   `--schema` → exit 2; a `--try` def whose object check names a schema (rather
-   than inline/path) → error.
-4. **File:** `internal/config/config.go` — allow a collection's object check to
-   carry a schema **by path or inline** (e.g. `schema_path:` / inline `schema:`
-   mapping), not only by name. Reuse the existing per-collection
-   build/validate; the spec's self-contained requirement means name-resolution
-   is *unavailable* in the `--try` path, so the loader must reject a bare name
-   there.
-5. **File:** `cmd/engine.go` — add `newTryEngine(defReader io.Reader, path
-   string) (*engine, error)`: parse the candidate into one `config.Collection`
-   rooted at `path` (no config discovery), compile its object schema from
-   path/inline, and build a synthetic single-collection `config.Config` so
-   `project.Items` enumerates `path`. Reuse `engine.compile`'s cache and
-   `checksFor`'s non-object dispatch unchanged.
-6. **File:** `cmd/check.go` — branch in `RunE`: when `--try` is set, build the
-   try-engine from the def (file or stdin) and the positional `<path>`, reject a
-   co-set `--schema`, and run the same `checkItem`/holdout loop. Otherwise the
-   existing config-based path.
-7. **Gate:** `make all` green.
-
-### Phase 6 — Docs & graduation
+### Phase 5 — Docs & graduation
 
 **Goal:** Reconcile durable docs, generate the inspector reference, retire the
 spec.
@@ -209,16 +163,16 @@ spec.
    **inspector** realizes the long-listed `aggregate` operation: a descriptive
    read that reports a distribution, the dual of a check.
 3. **File:** `docs/content/explanation/domain-model.md` — add the inspector
-   concept and the `inspect`/`check --try` data flows; absorb the locked
-   decisions (evidence-not-verdicts, determinism dividing line, Markdown
-   default) into the prose, per `how-we-plan.md` (no separate decisions log).
+   concept and the `inspect` data flow; absorb the locked decisions
+   (evidence-not-verdicts, determinism dividing line, Markdown default) into the
+   prose, per `how-we-plan.md` (no separate decisions log).
 4. **File:** `docs/content/reference/glossary.md` — add *inspector*, *evidence*,
-   *corpus*, *fingerprint*, *counterfactual check*.
+   *corpus*, *fingerprint*.
 5. **File:** `product/specs/cli-spec.md` — move `inspect` (was `infer`/`profile`)
-   and `--json` out of the v0 "out of scope" list, pointing at the shipped
-   surface.
+   out of the v0 "out of scope" list, pointing at the shipped surface. Leave
+   `check --json` deferred with the counterfactual follow-up.
 6. **File:** `docs/content/reference/commands.md`,
-   `docs/content/how-to/`, `README.md` — document `inspect` and `check --try`.
+   `docs/content/how-to/`, `README.md` — document `inspect`.
 7. **Graduation:** set the spec Status to **done**, run the
    `how-we-plan.md` graduation checklist, delete spec + plan.
 8. **Gate:** `make all` and `make docs-gen` clean; no stale references.
@@ -236,10 +190,6 @@ spec.
 | `cmd/inspect.go` | `inspect` command: flags, run, render (new) |
 | `cmd/inspect_test.go` | `inspect` CLI behavior (new) |
 | `cmd/root.go` | Attach `newInspectCmd()` (edited) |
-| `cmd/check.go` | `--json` structured output; `--try` branch (edited) |
-| `cmd/engine.go` | `newTryEngine` for an ephemeral collection (edited) |
-| `internal/config/config.go` | Object schema by path/inline for `--try` defs (edited) |
-| `cmd/check_*_test.go` | `--json` and `--try` coverage (new) |
 | `cmd/gendocs/main.go` | Generate inspector reference (edited) |
 | `docs/.../general-model.md`, `domain-model.md`, `glossary.md`, `commands.md`, `README.md`, `cli-spec.md` | Graduation targets (edited) |
 
@@ -253,13 +203,14 @@ spec.
 | Markdown default | Render Markdown unless `--json` | Spec: agents handle Markdown well, humans read it for free |
 | Evidence carries no verdicts | Counts + `n` only | Keeps threshold judgment in the agent; evidence stays trustable |
 | Fingerprint identity | Sorted key-set; types adjacent | Spec: cheaper, clusters aggressively, types available to split a group |
-| Counterfactual on `check` | `check --try <def> <path>`, not a new verb | Reuses the whole engine + output; only the config source and target differ |
-| `--try` self-contained | Object schema by path/inline; bare name rejected | Nothing is installed to resolve a name against |
-| `--try` ⊥ `--schema` | Both set → exit 2 | The candidate already supplies its object check; combining is ambiguous |
 | Inspector reference | Generated from the registry, like rules | A new inspector cannot ship undocumented (mirrors the checks invariant) |
 
 ## Out of Scope
 
+- **Counterfactual `check` (`--try`, `check --json`).** Deferred to a follow-up
+  spec. The grammar is recorded in `inspect-spec.md`, but this plan touches
+  neither `cmd/check.go` nor `cmd/engine.go` and adds no ephemeral-collection
+  path. The inspectors stand on their own without it.
 - **The agent orchestration loop.** Forming hypotheses, picking thresholds,
   clustering near-miss fingerprint groups, naming collections, and writing the
   draft `.katalyst/` files are the harness's job — not katalyst code. This plan
@@ -278,6 +229,7 @@ spec.
 
 ## Test checklist
 
-The spec's [Test checklist](./inspect-spec.md) is the contract. The pending
-tests are scaffolded across phases: inspector + evidence (1–2),
-rendering (3), the `inspect` command (4), and counterfactual `check` (5).
+The spec's [Test checklist](./inspect-spec.md) is the contract for this branch.
+The pending tests are scaffolded across phases: inspector + evidence (1–2),
+rendering (3), and the `inspect` command (4). The counterfactual `check`
+checklist is deferred with that follow-up spec.

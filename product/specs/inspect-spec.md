@@ -6,10 +6,11 @@
 > conventions. Inspectors are the dual of [checks](../../docs/content/explanation/general-model.md):
 > a check asserts a predicate; an inspector reports the distribution that
 > predicate would be tested against. The deliverable is not a magic
-> "auto-schema" button but a set of **instruments an agent drives** — combining
-> `inspect` (form hypotheses) with counterfactual `check` runs (test
-> hypotheses) to profile a wiki and draft a `.katalyst/` schema for it. No
-> plan yet; open questions below.
+> "auto-schema" button but a set of **instruments an agent drives** to profile a
+> wiki and draft a `.katalyst/` schema for it. **This branch ships the
+> inspectors and the `inspect` command.** The counterfactual `check` that
+> completes the agent loop is captured below but **deferred to a follow-up
+> spec**. Plan: [inspect-plan.md](./inspect-plan.md).
 
 ## Overview
 
@@ -40,6 +41,13 @@ Katalyst provides the instruments; the agent is the profiler. This matches the
 katalyst as "infrastructure for AI harnesses and agentic systems" supporting
 "deterministic and non-deterministic rule evaluation" — inspectors are the
 deterministic instruments; the agent supplies the non-deterministic judgment.
+
+**Scope of this branch:** the inspectors and the `inspect` command — the
+deterministic measurement half. The counterfactual `check` the agent uses to
+*test* hypotheses (sketched under "Counterfactual `check`" below) is deferred to
+a follow-up spec. Nothing here depends on it shipping first: the inspectors
+stand on their own, and an agent can already draft a schema from their evidence
+and validate it with the normal installed `check`.
 
 ## Value
 
@@ -79,7 +87,9 @@ deterministic instruments; the agent supplies the non-deterministic judgment.
   caches compiled schemas so "check 10,000 files" costs one compile.
 - **`infer`/`profile` is explicitly deferred.** `cli-spec.md` lists
   "`infer`/`profile`" and "machine-readable output (`--json`)" as out of scope
-  for v0. This spec is that deferred work; it renames the verb to `inspect`.
+  for v0. This spec picks up `infer`/`profile` as `inspect` and brings `--json`
+  to it; machine-readable `check --json` stays deferred with the counterfactual
+  follow-up.
 
 ## Design
 
@@ -241,13 +251,15 @@ notes/books/  (142 files, 142 parsed, 0 errors)
     notes/books/Dune Messiah.md   spaces in filename; missing 'author'
 ```
 
-### Counterfactual `check` (the agent's other instrument)
+### Counterfactual `check` (deferred to a follow-up spec)
 
-Profiling is a loop: *inspect* to form a hypothesis, then test the hypothesis
-by running a **throwaway** schema and seeing what breaks. "What would happen if
-the schema were this?" Three extensions to `check` make that possible; the
-first capability half-exists already (`--schema <path>` runs an un-installed
-schema):
+**Out of scope for this branch.** Captured here so the follow-up spec starts
+from it, and because it explains *why* the evidence format is shaped the way it
+is. Profiling is a loop: *inspect* to form a hypothesis, then test the
+hypothesis by running a **throwaway** schema and seeing what breaks. "What would
+happen if the schema were this?" Three extensions to `check` would make that
+possible; the first capability half-exists already (`--schema <path>` runs an
+un-installed schema):
 
 1. **Structured output** (`check --json`). Today `check` emits human text and
    an exit code. The agent needs machine-readable results: per-item
@@ -269,27 +281,31 @@ schema):
 
 ### The agent workflow this enables
 
+This branch delivers steps 1–2 and 5; steps 3–4 are the tighter loop the
+deferred counterfactual `check` unlocks. Until it ships, the agent drafts from
+inspector evidence and validates with the normal installed `check`.
+
 1. `inspect <path> --json` → evidence for every candidate collection
    (clustered from `frontmatter_shape` fingerprints).
 2. Agent drafts a candidate `.katalyst/schemas/*` + `collections/*` from the
    evidence, applying its own thresholds.
-3. `check --json --try <draft> <path>` → per-item holdouts.
-4. Agent inspects holdouts: tighten the draft, loosen a field to optional, or
-   leave outliers to be fixed. Repeat 2–4 until satisfied.
+3. *(deferred)* `check --json --try <draft> <path>` → per-item holdouts without
+   installing the draft.
+4. *(deferred)* Agent inspects holdouts: tighten the draft, loosen a field to
+   optional, or leave outliers to be fixed. Repeat 2–4 until satisfied.
 5. The agent writes the draft `.katalyst/` files; the user reviews the diff and
    runs the real `check`. (`inspect` itself never writes a schema.)
 
-Two cautions shape the loop:
+Two cautions, the first of which applies once the deferred loop lands:
 
 - **Inspect-heavy, check-light.** If the agent brute-forces dozens of schema
   variants over thousands of files, the loop is slow and expensive. Evidence
   must be rich enough that the agent forms *good* hypotheses up front and needs
   few counterfactual rounds. Inspectors exist to *reduce* the search, not just
   enable it.
-- **Determinism + caching.** `walk_parse` should parse the corpus once and
-  cache `Document`s; repeated counterfactual checks re-evaluate predicates
-  against parsed evidence rather than re-reading disk. This also keeps
-  inspectors pure and testable.
+- **Determinism + caching.** `walk_parse` parses the corpus once and the
+  `Corpus` is reused across inspectors, which evaluate over parsed evidence
+  rather than re-reading disk. This also keeps inspectors pure and testable.
 
 ### Domain-model impact
 
@@ -297,11 +313,9 @@ Two cautions shape the loop:
   Added to the [general model](../../docs/content/explanation/general-model.md)
   (it realizes the long-listed `aggregate` operation) and the
   [glossary](../../docs/content/reference/glossary.md).
-- **`check` gains a machine-readable, collection-less mode.** Reconciles with
-  the [domain model](../../docs/content/explanation/domain-model.md) lifecycle
-  of `check`, which currently assumes a loaded config and human output.
-- **Out-of-scope list updates.** `cli-spec.md` moves `infer`/`profile` and
-  `--json` from "out of scope" into this spec (under the name `inspect`).
+- **Out-of-scope list updates.** `cli-spec.md` moves `infer`/`profile` out of
+  "out of scope" into this spec (under the name `inspect`). `check --json` and
+  the counterfactual mode stay deferred with the follow-up spec.
 
 ## Open Questions
 
@@ -325,10 +339,11 @@ Resolved (folded into the design above):
   individual inspector may own; only fuzzy boundary-drawing is reserved for the
   agent. It is not a property of the `inspect` command.
 
-- **Counterfactual flag grammar → `check --try <def> <path>`.** `--try -` reads
-  the candidate from stdin; `--try` and `--schema` are mutually exclusive (the
-  candidate already carries its object check). `--try` over `--as` because it
-  names the throwaway-hypothesis intent. A rename is mechanical if it flips.
+- **Counterfactual flag grammar (recorded for the deferred follow-up) → `check
+  --try <def> <path>`.** Captured now so the follow-up spec starts from it:
+  `--try -` reads the candidate from stdin; `--try` and `--schema` are mutually
+  exclusive (the candidate already carries its object check); `--try` over
+  `--as` because it names the throwaway-hypothesis intent.
 - **Fingerprint identity → key-set.** `frontmatter_shape` fingerprints on the
   sorted set of frontmatter keys; observed per-key types ship as *adjacent*
   evidence but are not part of the grouping identity. Key-set is cheaper and
@@ -390,11 +405,5 @@ Evidence format:
 - [ ] `-o <file>` writes bytes identical to stdout
 - [ ] `--inspector` narrows to the named inspectors
 
-Counterfactual `check`:
-- [ ] `check --json` emits per-item pass/fail + violations + an aggregate
-- [ ] ephemeral candidate (`--try <def>`) runs against an unregistered `<path>`,
-      writes nothing, mutates no `.katalyst/`
-- [ ] `--try -` reads the candidate definition from stdin
-- [ ] a candidate referencing a schema by name (not inline/path) is rejected
-- [ ] per-item holdouts identify exactly the failing files and reasons
-- [ ] parsed documents are reused across repeated counterfactual runs (cache)
+Counterfactual `check` (`--try`, `check --json`) is **deferred to a follow-up
+spec** and asserts nothing here.
