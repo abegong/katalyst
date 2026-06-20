@@ -57,7 +57,12 @@ These are decided; recorded here so the eventual plan has a foundation.
    --help`), so Cobra never confuses a bare command token (`katalyst help`) for
    a flag; the lexical shape disambiguates them. The collision risk is purely
    between subcommands, which share the bare-token slot. This is a new
-   validation (today there is none; see below).
+   validation (today there is none; see below). The reserved set covers only
+   *today's* built-ins; we **accept the small forward-compat risk** that a
+   future built-in (e.g. a later `sync`) could collide with an existing
+   collection of the same name. Adding a built-in is our deliberate act — we
+   pick non-colliding verbs — and any project that does collide gets the same
+   clear load-time error on upgrade rather than a silent shadowing.
 3. **The custom command names are toggleable** via a boolean in
    `.katalyst/config.yaml`:
 
@@ -90,8 +95,9 @@ These are decided; recorded here so the eventual plan has a foundation.
    `<collection>/<item>`). Mixed case and underscores are **allowed** — unlike
    the stricter kebab-only filename rule — because they work fine as tokens; we
    are not imposing a house style here, only ruling out names that won't work.
-   Non-ASCII is excluded for shell/locale safety. See the open question on case
-   for the one residual footgun.
+   Non-ASCII is excluded for shell/locale safety. The minimal pattern is a
+   *floor* — see decision 8 for opt-in stricter conventions and the
+   near-collision warning that handle the residual case/separator footguns.
 6. **The `command:` alias ships in v1**, not as a fast-follow. The slugify
    suggestion in the load error points straight at it, so the strict gate and
    its escape hatch arrive together.
@@ -99,6 +105,23 @@ These are decided; recorded here so the eventual plan has a foundation.
    section distinct from the built-in commands, so a project's data-shaped
    commands stay visually separate from tool machinery and scale when there are
    many. (Cobra command groups.)
+8. **The minimal pattern is a floor; strictness is configurable, and
+   near-collisions warn.** Two layers sit on top of decision 5's hard floor:
+   - **Near-collision *warnings* (always on).** When two collection names would
+     be confusably similar — they collide once case-folded and separator-
+     normalized (i.e. they slugify to the same token, so `Contacts`/`contacts`,
+     or `blog-posts`/`blog_posts`) — the load emits a **warning**, not an error.
+     The names still resolve to distinct commands (they're lexically different
+     to Cobra), but the user is told they're a footgun. Warn, don't block: the
+     floor only rejects names that genuinely won't work; ambiguity that *works*
+     but invites mistakes is advisory.
+   - **Opt-in stricter conventions.** Users can tighten naming beyond the floor
+     — e.g. require kebab-case — via config, turning the advisory case/separator
+     situations into hard errors *for projects that ask for it*. This reuses the
+     existing kebab-case definition (`filesystem_filename_kebab_case`) as a
+     selectable convention rather than baking it into the floor. Exact config
+     surface (a `naming:`/convention setting, its values, and where it lives)
+     rides along with the config-key decision in the open questions.
 
 ### Cobra feasibility (settled in principle)
 
@@ -348,9 +371,11 @@ constraint a ramp rather than a wall.
 
 ## Open questions
 
-The valid-name pattern, alias timing, the reserved set, and help grouping are
-resolved and folded into [Settled decisions](#settled-decisions) (5, 6, 2, 7).
-What remains:
+The valid-name pattern, alias timing, the reserved set (including forward-compat
+for future built-ins), help grouping, and case/near-collision handling are
+resolved and folded into [Settled decisions](#settled-decisions) (5, 6, 2, 7,
+8). What remains is naming — both the config key and the strictness surface,
+which are one entangled decision:
 
 ### 1. The config key name
 
@@ -413,43 +438,29 @@ and the way we'd describe it in docs:
 
 **Lean.** `includeCollectionCommands` or `collectionCommands` — both name the
 thing precisely ("collection") and let the whole doc drop "custom/native" in
-favor of one word. Pick one and the prose + help heading follow.
+favor of one word. Pick one and the prose + help heading follow. This choice
+also fixes the **term** for the help-group heading and the strictness setting
+from decision 8 (e.g. a `collections:` block would host both the toggle and the
+`naming:` convention).
 
-### 2. Forward-compat for future built-ins (minor)
+### 2. The strictness config surface (rides with #1)
 
-**Context.** The reserved set (decision 2) covers *today's* subcommands. If we
-later add a new built-in — say `katalyst sync` — and some project already has a
-`sync` collection, the new built-in would collide with (and could shadow) their
-command. This is the one residual collision risk strict validation can't catch
-at authoring time, because the conflicting name doesn't exist yet.
-
-**Choices & tradeoffs.**
-
-- **Accept the risk (lean).** Adding a built-in is *our* deliberate act; we
-  check the name against common collection names and pick non-colliding verbs,
-  and the load-time error catches it for any project that does collide (their
-  collection name simply joins the reserved set on upgrade, with a clear
-  message). Zero cost now. Cost: a project can be forced to rename on a katalyst
-  upgrade — a real but rare and loud breakage.
-- **Reserve a namespace now.** E.g. promise built-ins never collide by routing
-  future ones under a prefix, or publish a reserved-word list. Removes the
-  upgrade-breakage risk entirely. Cost: constrains our own naming forever, or
-  burdens users with a reserved list that does nothing visible today.
-
-### 3. Case sensitivity (minor)
-
-**Context.** The decided pattern (decision 5) allows mixed case, so `Contacts`
-and `contacts` are both valid names — and Cobra treats them as **distinct**
-commands. On a case-insensitive filesystem the *files* `Contacts.yaml` and
-`contacts.yaml` already collide (caught by the existing duplicate-stem check),
-but two collections differing only in case from an explicit `defs` map would
-produce two near-identical commands — a footgun.
+**Context.** Decision 8 settled that naming strictness is *configurable* (the
+minimal pattern is a floor; users can require e.g. kebab-case on top). What's
+unsettled is the exact config surface, which is entangled with the key-name
+decision above — they should be designed together so the keys read as a family.
 
 **Choices & tradeoffs.**
 
-- **Allow mixed case, add no special handling (lean — matches "minimally
-  restrictive").** Simplest; consistent with the pattern. Cost: leaves the
-  case-twin footgun for the rare explicit-defs project.
-- **Lower-case-fold for collision detection.** Treat names that differ only in
-  case as colliding and error at load. Closes the footgun. Cost: a little extra
-  validation, and it quietly forbids a (weird but legal) name pair.
+- **A named-convention value** — e.g. `naming: kebab` (or `relaxed` for the
+  floor). Compact; extensible to other conventions (`snake`, `lower`) later.
+  Cost: invents a small vocabulary we must document and keep stable.
+- **Point at an existing check** — reuse `filesystem_filename_kebab_case` by
+  name as the selectable rule, so "strict collection naming" and "kebab
+  filenames" are visibly the same rule. Cost: couples the setting's spelling to
+  the checks system.
+- **A boolean** — e.g. `requireKebabCase: true`. Simplest to read; but it
+  hard-codes one convention and doesn't extend to others without more booleans.
+
+Where it lives (flat under `cli:` vs. a `collections:` block) follows whatever
+shape #1 lands on.
