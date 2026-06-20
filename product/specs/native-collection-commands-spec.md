@@ -2,10 +2,11 @@
 
 > **Status: planning.** Exploration for exposing each configured collection as
 > a top-level CLI command (`katalyst blog-posts list`) instead of requiring the
-> generic noun form (`katalyst item list blog-posts`). Most of the design is
-> settled (below); the **open question is name normalization** — how a
-> collection's name becomes a CLI command token. This doc works through the
-> alternatives for that question and recommends one.
+> generic noun form (`katalyst item list blog-posts`). The design is settled
+> (below), including the **name-normalization approach**: strict names by
+> default with an optional explicit `command:` alias (Alternative 5). The
+> alternatives that led there are kept for the record; what remains are the
+> sub-questions in [Open questions](#open-questions).
 
 ## Overview
 
@@ -272,41 +273,151 @@ doesn't fit.
 | **4 Alias field**   | ⚠️ opt-in two  | ✅ none       | ✅ explicit only | spans names+aliases | 🟡 medium |
 | **5 Hybrid (1+4)**  | ✅ by default  | ⚠️ default yes / hatch no | ✅ explicit only | validation + alias | 🟡 medium |
 
-### Recommendation
+### Decision: Alternative 5, with slug-powered suggestions
 
-**Start with Alternative 1 (strict), and keep Alternative 4 (`command:` alias)
-on the table as a fast-follow if friction shows up — i.e. land on Alternative 5
-incrementally.**
+**We take Alternative 5 — strict validation by default, with an optional,
+always-explicit `command:` alias as the escape hatch.** The slug logic from
+Alternative 2 is reused, but **only to *suggest* a name, never to apply one**.
 
-Reasoning: the deciding factor is that the collection name is *already* a CLI
-token in the selector grammar. Auto-slugging (Alt 2) buys "no rename" at the
-price of a permanent split between the selector token and the command token,
-which is exactly the kind of two-identities confusion the rest of the model
-avoids. Strict validation makes the name mean one thing everywhere, folds the
-reserved-word check (decision 2) into the same gate, and is the least code. Its
-one real cost — forcing renames — is softened by the fact that we are *adding*
-validation to a surface that has none today, so we can ship it with a clear
-error that names the offending collection and states the rule, and revisit the
-opt-in alias (Alt 4) only if real projects hit the wall.
+The two pieces:
 
-One sub-question to settle inside Alternative 1: the exact allowed pattern —
-specifically whether to permit leading digits (`2024`) and a trailing/edge
-hyphen, and whether the rule should be *identical* to the existing
-`filesystem_filename_kebab_case` check so "valid collection name" and "valid
-kebab filename" are the same definition in the user's head.
+1. **Strict by default (Alt 1).** A collection name must already be a valid
+   command token or config load fails. This keeps the single identity — name =
+   selector token = command token = config key — and folds the reserved-word
+   check (decision 2) into the same gate.
+2. **Explicit alias as the hatch (Alt 4).** A collection may set `command:`
+   to give its native command a different token than its name. This is the
+   *only* way the on-CLI token ever differs from the name, and it is always
+   written by hand, so the divergence is visible and intentional — never the
+   silent name-vs-token split that sank Alternative 2.
+
+**Slug logic earns its keep in the error message, not in dispatch.** When a name
+fails strict validation, we run the Alternative 2 slugify on it to compute a
+*suggested* token and put it in the error:
+
+```
+collection "Reading List" is not a valid command name (must be kebab-case:
+lowercase letters, digits, hyphens). Rename the file to "reading-list.yaml",
+or keep the name and add `command: reading-list` to the collection.
+```
+
+So the user gets the convenience of auto-slug (they don't have to invent the
+token) without the cost (nothing diverges behind their back — they either rename
+to the suggestion or paste it into an explicit `command:`). Auto-slug becomes a
+*recommendation engine*, not a runtime transform.
+
+Why this over the others: the collection name is *already* a CLI token in the
+selector grammar, so pure auto-slug (Alt 2) would permanently split the selector
+token from the command token — the exact two-identities confusion the rest of
+the model avoids. Strict-by-default keeps one identity for the common case and
+is the least code; the explicit alias covers the genuine outliers (constrained
+legacy names, a deliberately different display vs. CLI name) without reopening
+the silent-divergence door. We are *adding* validation to a surface that has
+none today, so the strict gate ships with the suggestion above to make the new
+constraint a ramp rather than a wall.
 
 ## Open questions
 
-- **Name pattern** — exact regex for Alternative 1; reuse the kebab-case
-  definition already used by `filesystem_filename_kebab_case`? Allow leading
-  digits?
-- **Alias timing** — ship the `command:` escape hatch (Alt 4) now as part of
-  Alternative 5, or defer until strict validation proves too rigid?
-- **Reserved set** — built-in command names are clearly reserved; are persistent
-  global flags / their shorthands reserved too? What about future built-ins
-  (forward-compat: reserve a namespace, or accept that adding a built-in could
-  someday shadow a user's collection)?
-- **`config.yaml` shape** — confirm `cli.collectionCommands: both|native|explicit`
-  as the key for decision 3.
-- **Help grouping** — in `both`/`native` mode, should native collection commands
-  render in their own `--help` group, separate from built-ins?
+### 1. The exact "valid command name" pattern
+
+**Context.** Alternative 5 rejects names that aren't valid command tokens, so we
+have to define *valid* precisely — this regex is the rule users will see quoted
+in error messages, and the same pattern feeds the slugify suggestion. The repo
+already has a check, `filesystem_filename_kebab_case` (see
+`internal/config/config.go` and `docs/.../rules/filesystem/filename-kebab-case.md`),
+that defines kebab-case for *filenames*. The question is whether "valid
+collection name" should be *literally the same definition*.
+
+**Choices & tradeoffs.**
+
+- **Reuse the existing kebab-case definition (preferred).** One concept of
+  "kebab-case" across the product; a user who learns it for filenames already
+  knows it for collection names; one regex to maintain. Risk: that check's rule
+  was written for filenames and may allow/forbid edge cases (leading digits,
+  trailing hyphens) we'd want to revisit anyway — so we inherit its choices.
+- **Define a fresh, command-specific pattern.** Lets us tune it exactly for CLI
+  tokens (e.g. forbid leading digits so a collection can't shadow a numeric
+  flag value, require a leading letter). Cost: a second, subtly different
+  definition of "kebab-case" in the product, which is its own confusion.
+
+**Sub-decision — leading digits.** `2024` is a plausible collection (a year of
+notes). As a command token it's harmless to Cobra, but it reads oddly and could
+collide with how we someday parse positional values. Allow it, or require a
+leading letter (`y2024`, or force an alias)?
+
+### 2. When the `command:` alias ships
+
+**Context.** Alternative 5 is "strict default *plus* explicit alias." The alias
+is what makes it Alternative 5 rather than plain Alternative 1, but it is also
+extra surface (a new config field, plus collision-checking that spans names
+*and* aliases). We could build both together, or ship strict first and add the
+alias when a real project needs it.
+
+**Choices & tradeoffs.**
+
+- **Ship the alias with v1.** Delivers the decided design whole; the slugify
+  suggestion can point users straight at `command:` from day one. Cost: more to
+  build and test up front, for a hatch most projects won't use.
+- **Defer the alias; ship strict-only first.** Smaller first cut; lets us see
+  whether strict names actually hurt before adding the field. Cost: until it
+  lands, a user with a constrained name has *no* path to a native command except
+  renaming — the suggestion can only say "rename," not "or alias." Also a later
+  add means a second round of collision-rule changes.
+
+### 3. What counts as "reserved"
+
+**Context.** Decision 2 reserves built-in command names so a collection can't
+shadow `init`, `check`, etc. But the reserved set has fuzzy edges, and getting it
+wrong means either a user collection silently shadows real functionality, or we
+over-reserve and reject harmless names.
+
+**Choices & tradeoffs.**
+
+- **Just the built-in command names** (`init`, `check`, `fix`, `item`, `schema`,
+  `collection`). Simplest; smallest reserved set, so it rejects the fewest user
+  names. Risk: a collection named after a *global flag* token, or a command's
+  alias, could still produce a confusing parse.
+- **Commands + persistent global flags (and their shorthands).** Closes the
+  flag-collision gap. Cost: users must know the flag list too, and adding a
+  global flag later could retroactively invalidate an existing collection name.
+- **Reserve a forward-compat namespace.** Beyond today's names, decide how to
+  protect *future* built-ins: e.g. promise built-ins will always live under a
+  prefix, or reserve a small vocabulary now. Without this, shipping a new
+  built-in someday could shadow a collection a user already has — a silent
+  breaking change. Cost: constrains our own future naming, or asks users to
+  avoid a reserved word list that doesn't do anything yet.
+
+### 4. The config key for coexistence mode
+
+**Context.** Decision 3 introduced a `both | native | explicit` setting; this
+just confirms its spelling/placement in `.katalyst/config.yaml`, since it becomes
+public config surface that's costly to rename later. Current strawman:
+
+```yaml
+cli:
+  collectionCommands: both   # both | native | explicit
+```
+
+**Choices & tradeoffs.** Confirm `cli.collectionCommands`, or pick a clearer
+key. Worth a moment because the three values are a bit abstract: `explicit`
+means "only the explicit `item …` form" (native off), which a reader could just
+as easily misread as "only explicitly-aliased collections." Renaming the values
+(e.g. `off | only | both`, or `generic | native | both`) is cheap now and
+expensive after release.
+
+### 5. How native commands appear in `--help`
+
+**Context.** In `both` and `native` modes, a project's collections become
+top-level commands. A project with twenty collections would dump twenty entries
+into the root help listing, intermixed with `init`/`check`/`fix`. Cobra supports
+grouping commands into labeled sections.
+
+**Choices & tradeoffs.**
+
+- **Separate group** (e.g. a "Collections" heading distinct from the built-in
+  commands). Keeps the user's data-shaped commands visually distinct from tool
+  machinery, and scales when there are many. Cost: a little wiring per command
+  group; native commands look "different," which is arguably correct.
+- **Flat list.** Zero extra work; every command is peer to every other. Cost:
+  built-ins get buried among collections in a busy project, and the help no
+  longer signals which commands are tool primitives vs. user collections.
