@@ -37,6 +37,21 @@ This list is the template — there is no separate template file.
   when long) or, for cross-cutting concepts, into the relevant
   `docs/deep-dives/` page when the work ships; there is no central decisions
   log. A spec isn't done until this section is empty or `_None._`.
+
+  Each open question must be **self-explanatory to a reader who isn't already
+  in your head** — a terse one-liner forces the user to reconstruct the
+  problem before they can answer. Per question, include:
+  - **Context** — what the question is about and why it's unresolved. Define
+    any term, config key, file, or concept the question leans on; don't assume
+    the reader remembers it from elsewhere in the spec.
+  - **Choices & tradeoffs** — the concrete options, each with its impact: what
+    it costs, what it buys, what it forecloses. Make the alternatives
+    *comparable*, not just listed. Worked examples beat description.
+  - A **recommendation** when you have one, with the reasoning — but still
+    frame it as the user's call.
+
+  Prefer a short `**Context.** … **Choices & tradeoffs.** …` shape over a bare
+  bullet. When options multiply, a small comparison table earns its space.
 - **Documentation updates** — The docs the work touches, listed so they land in
   the same change instead of drifting after (see
   `docs/contributing/how-we-document.md`). Cover **developer docs** — `AGENTS.md`
