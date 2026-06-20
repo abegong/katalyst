@@ -3,10 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"text/tabwriter"
 
+	"github.com/katabase-ai/katalyst/internal/config"
 	"github.com/katabase-ai/katalyst/internal/frontmatter"
 	"github.com/katabase-ai/katalyst/internal/project"
+	"github.com/katabase-ai/katalyst/internal/query"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -39,10 +42,24 @@ func itemSelector(arg string) (project.Selector, error) {
 }
 
 func newItemListCmd() *cobra.Command {
-	return &cobra.Command{
+	var filters, greps, sorts []string
+	var grepIn string
+	var ignoreCase bool
+	var skip, limit int
+	var typeMismatch, sortMissing string
+
+	c := &cobra.Command{
 		Use:   "list <collection>",
 		Short: "List items in a collection with their check status.",
-		Args:  cobra.ExactArgs(1),
+		Long: `List items in a collection with their check status.
+
+Narrow, search, and order the result (MongoDB find-inspired):
+  --filter 'year>=1965'   field predicate (= != > >= < <= =~; comma RHS = in;
+                          bare field = exists, !field = absent). Repeatable, ANDed.
+  --grep TODO             regexp search; --grep-in all|body|frontmatter; -i.
+  --sort -year,title      sort keys (id, status, or a field); leading - is desc.
+  --skip N / --limit N    pagination, applied after sort.`,
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			e, err := newEngine("")
 			if err != nil {
@@ -55,27 +72,163 @@ func newItemListCmd() *cobra.Command {
 			if sel.IsItem() {
 				return usageErr(fmt.Sprintf("item list expects <collection>, got item selector %q", args[0]))
 			}
-			c, ok := e.proj.Collection(sel.Collection)
+			col, ok := e.proj.Collection(sel.Collection)
 			if !ok {
 				return usageErr(fmt.Sprintf("unknown collection %q", sel.Collection))
 			}
-			items, err := e.proj.Items(c)
+			items, err := e.proj.Items(col)
 			if err != nil {
 				return asUsageErr(err)
 			}
 
-			tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+			opts, err := buildQueryOptions(col, queryFlags{
+				filters: filters, greps: greps, sorts: sorts,
+				grepIn: grepIn, ignoreCase: ignoreCase,
+				skip: skip, limit: limit,
+				typeMismatch: typeMismatch, sortMissing: sortMissing,
+			})
+			if err != nil {
+				return err
+			}
+
+			records := make([]query.Record, 0, len(items))
+			statuses := make(map[string]string, len(items))
 			for _, item := range items {
-				n, err := itemStatus(e, c, item)
-				status := statusLabel(n)
-				if err != nil {
-					status = "error: " + err.Error()
-				}
-				fmt.Fprintf(tw, "%s\t%s\n", item.ID, status)
+				rec, label := itemRecord(e, col, item)
+				records = append(records, rec)
+				statuses[item.ID] = label
+			}
+
+			out, err := query.Apply(records, opts)
+			if err != nil {
+				// The only error Apply returns is a filter type mismatch,
+				// which the spec treats as a usage error (exit 2).
+				return usageErr(err.Error())
+			}
+
+			tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+			for _, rec := range out {
+				fmt.Fprintf(tw, "%s\t%s\n", rec.ID, statuses[rec.ID])
 			}
 			return tw.Flush()
 		},
 	}
+
+	c.Flags().StringArrayVar(&filters, "filter", nil, "Keep items matching a field predicate (repeatable, ANDed)")
+	c.Flags().StringArrayVar(&greps, "grep", nil, "Keep items whose text matches a regexp (repeatable, ANDed)")
+	c.Flags().StringVar(&grepIn, "grep-in", "all", "Region --grep searches: all, body, or frontmatter")
+	c.Flags().BoolVarP(&ignoreCase, "ignore-case", "i", false, "Make --grep patterns case-insensitive")
+	c.Flags().StringArrayVar(&sorts, "sort", nil, "Sort by key(s); leading - is descending (e.g. -year,title)")
+	c.Flags().IntVar(&skip, "skip", 0, "Drop the first N results (after sorting)")
+	c.Flags().IntVar(&limit, "limit", 0, "Keep at most N results (0 = no cap)")
+	c.Flags().StringVar(&typeMismatch, "on-type-mismatch", "", "Override filterTypeMismatch: skip or error")
+	c.Flags().StringVar(&sortMissing, "sort-missing", "", "Override sortMissing: last or lowest")
+	return c
+}
+
+// queryFlags collects the raw --filter/--grep/--sort flag values for the
+// item list query.
+type queryFlags struct {
+	filters, greps, sorts     []string
+	grepIn                    string
+	ignoreCase                bool
+	skip, limit               int
+	typeMismatch, sortMissing string
+}
+
+// buildQueryOptions parses and validates the query flags into a
+// query.Options, resolving the configurable defaults flag-over-collection.
+// Any parse or validation failure is a usage error (exit 2).
+func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, error) {
+	opts := query.Options{}
+
+	for _, expr := range f.filters {
+		p, err := query.ParseFilter(expr)
+		if err != nil {
+			return query.Options{}, usageErr(err.Error())
+		}
+		opts.Filters = append(opts.Filters, p)
+	}
+
+	for _, pat := range f.greps {
+		if f.ignoreCase {
+			pat = "(?i)" + pat
+		}
+		re, err := regexp.Compile(pat)
+		if err != nil {
+			return query.Options{}, usageErr(fmt.Sprintf("--grep: %v", err))
+		}
+		opts.Greps = append(opts.Greps, re)
+	}
+
+	switch f.grepIn {
+	case "", "all":
+		opts.GrepIn = query.RegionAll
+	case "body":
+		opts.GrepIn = query.RegionBody
+	case "frontmatter":
+		opts.GrepIn = query.RegionFrontmatter
+	default:
+		return query.Options{}, usageErr(fmt.Sprintf("--grep-in: unknown region %q (want all, body, or frontmatter)", f.grepIn))
+	}
+
+	for _, spec := range f.sorts {
+		keys, err := query.ParseSort(spec)
+		if err != nil {
+			return query.Options{}, usageErr(err.Error())
+		}
+		opts.Sorts = append(opts.Sorts, keys...)
+	}
+
+	if f.skip < 0 {
+		return query.Options{}, usageErr("--skip must not be negative")
+	}
+	if f.limit < 0 {
+		return query.Options{}, usageErr("--limit must not be negative")
+	}
+	opts.Skip = f.skip
+	opts.Limit = f.limit
+
+	opts.TypeMismatch = col.Query.FilterTypeMismatch
+	if f.typeMismatch != "" {
+		if f.typeMismatch != "skip" && f.typeMismatch != "error" {
+			return query.Options{}, usageErr(fmt.Sprintf("--on-type-mismatch: want skip or error, got %q", f.typeMismatch))
+		}
+		opts.TypeMismatch = f.typeMismatch
+	}
+
+	opts.SortMissing = col.Query.SortMissing
+	if f.sortMissing != "" {
+		if f.sortMissing != "last" && f.sortMissing != "lowest" {
+			return query.Options{}, usageErr(fmt.Sprintf("--sort-missing: want last or lowest, got %q", f.sortMissing))
+		}
+		opts.SortMissing = f.sortMissing
+	}
+
+	return opts, nil
+}
+
+// itemRecord assembles a query.Record for one item and its display status
+// label. A parse error still yields a record (raw bytes for --grep, empty
+// Meta) so the listing stays robust; the label reports the error.
+func itemRecord(e *engine, col config.Collection, item project.Item) (query.Record, string) {
+	raw := mustRead(item.Path)
+	rec := query.Record{ID: item.ID, Raw: raw, Body: raw}
+
+	if doc, err := parseItem(item.Path); err == nil && doc != nil {
+		rec.Meta = doc.Meta
+		rec.Body = doc.Body
+		rec.Frontmatter = doc.Frontmatter
+	}
+
+	n, err := itemStatus(e, col, item)
+	if err != nil {
+		// Sort errored items after clean ones; surface the error in the label.
+		rec.Status = 1 << 30
+		return rec, "error: " + err.Error()
+	}
+	rec.Status = n
+	return rec, statusLabel(n)
 }
 
 func newItemGetCmd() *cobra.Command {

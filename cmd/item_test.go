@@ -228,3 +228,163 @@ func TestItemList_wrongDepth_exit2(t *testing.T) {
 		t.Errorf("expected exit code 2, got: %v", err)
 	}
 }
+
+// seedBooks writes three valid items into the notes collection.
+func seedBooks(t *testing.T, dir string) {
+	t.Helper()
+	mustWrite(t, filepath.Join(dir, "notes/dune.md"),
+		"---\ntitle: Dune\nyear: 1965\nstatus: published\ntags: [sci-fi]\n---\n# Dune\n\nSpice TODO.\n")
+	mustWrite(t, filepath.Join(dir, "notes/hobbit.md"),
+		"---\ntitle: The Hobbit\nyear: 1937\nstatus: published\n---\n# The Hobbit\n")
+	mustWrite(t, filepath.Join(dir, "notes/wip.md"),
+		"---\ntitle: WIP\nyear: 2025\nstatus: draft\n---\n# WIP\n")
+}
+
+// listIDs returns the first column (item id) of each non-empty output line.
+func listIDs(out string) []string {
+	var got []string
+	for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+		if line == "" {
+			continue
+		}
+		got = append(got, strings.Fields(line)[0])
+	}
+	return got
+}
+
+func TestItemList_filter(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+
+	stdout, _, err := runRoot(t, "item", "list", "notes", "--filter", "year>=1965")
+	if err != nil {
+		t.Fatalf("item list: %v", err)
+	}
+	if got := strings.Join(listIDs(stdout), ","); got != "dune,wip" {
+		t.Errorf("filter year>=1965 = %q, want dune,wip", got)
+	}
+
+	// Two filters are ANDed.
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--filter", "status=published", "--filter", "year>=1950")
+	if got := strings.Join(listIDs(stdout), ","); got != "dune" {
+		t.Errorf("ANDed filters = %q, want dune", got)
+	}
+
+	// Membership and absence.
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--filter", "tags=sci-fi")
+	if got := strings.Join(listIDs(stdout), ","); got != "dune" {
+		t.Errorf("tags membership = %q, want dune", got)
+	}
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--filter", "!tags")
+	if got := strings.Join(listIDs(stdout), ","); got != "hobbit,wip" {
+		t.Errorf("!tags = %q, want hobbit,wip", got)
+	}
+}
+
+func TestItemList_grep(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+
+	// Body grep: only dune's body has TODO.
+	stdout, _, err := runRoot(t, "item", "list", "notes", "--grep", "TODO", "--grep-in", "body")
+	if err != nil {
+		t.Fatalf("item list: %v", err)
+	}
+	if got := strings.Join(listIDs(stdout), ","); got != "dune" {
+		t.Errorf("grep body TODO = %q, want dune", got)
+	}
+
+	// Case-insensitive grep on frontmatter status.
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--grep", "DRAFT", "-i", "--grep-in", "frontmatter")
+	if got := strings.Join(listIDs(stdout), ","); got != "wip" {
+		t.Errorf("grep -i frontmatter = %q, want wip", got)
+	}
+}
+
+func TestItemList_sortAndLimit(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+
+	stdout, _, err := runRoot(t, "item", "list", "notes", "--sort", "-year", "--limit", "2")
+	if err != nil {
+		t.Fatalf("item list: %v", err)
+	}
+	if got := strings.Join(listIDs(stdout), ","); got != "wip,dune" {
+		t.Errorf("sort -year limit 2 = %q, want wip,dune", got)
+	}
+
+	// Skip after sort.
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--sort", "-year", "--skip", "1")
+	if got := strings.Join(listIDs(stdout), ","); got != "dune,hobbit" {
+		t.Errorf("sort -year skip 1 = %q, want dune,hobbit", got)
+	}
+}
+
+func TestItemList_emptyResult_exit0(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+	stdout, _, err := runRoot(t, "item", "list", "notes", "--filter", "year=9999")
+	if err != nil {
+		t.Fatalf("empty result should be exit 0, got: %v", err)
+	}
+	if strings.TrimSpace(stdout) != "" {
+		t.Errorf("expected empty output, got: %q", stdout)
+	}
+}
+
+func TestItemList_badQuery_exit2(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+	cases := [][]string{
+		{"item", "list", "notes", "--filter", "=oops"},
+		{"item", "list", "notes", "--grep", "("},
+		{"item", "list", "notes", "--limit", "-1"},
+		{"item", "list", "notes", "--grep-in", "nowhere", "--grep", "x"},
+		{"item", "list", "notes", "--sort", "-"},
+	}
+	for _, args := range cases {
+		_, _, err := runRoot(t, args...)
+		var coded interface{ Code() int }
+		if !errors.As(err, &coded) || coded.Code() != 2 {
+			t.Errorf("%v: expected exit 2, got: %v", args, err)
+		}
+	}
+}
+
+func TestItemList_typeMismatch_flagAndConfig(t *testing.T) {
+	dir := setupItemRepo(t)
+	seedBooks(t, dir)
+	// A non-numeric year breaks the schema (so it's an "error" item) but
+	// we only care that filtering tolerates or rejects the mismatch.
+	mustWrite(t, filepath.Join(dir, "notes/odd.md"), "---\ntitle: Odd\nyear: \"sometime\"\n---\n# Odd\n")
+
+	// Default skip: the odd item is silently excluded, exit 0.
+	if _, _, err := runRoot(t, "item", "list", "notes", "--filter", "year>=1900"); err != nil {
+		t.Fatalf("default skip should not error: %v", err)
+	}
+
+	// --on-type-mismatch error → exit 2.
+	_, _, err := runRoot(t, "item", "list", "notes", "--filter", "year>=1900", "--on-type-mismatch", "error")
+	var coded interface{ Code() int }
+	if !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit 2 under error mode, got: %v", err)
+	}
+}
+
+func TestItemList_sortMissing_flag(t *testing.T) {
+	dir := setupItemRepo(t)
+	mustWrite(t, filepath.Join(dir, "notes/has.md"), "---\ntitle: Has\nyear: 2000\n---\n# Has\n")
+	mustWrite(t, filepath.Join(dir, "notes/none.md"), "---\ntitle: None\nyear: 1\nrank: 5\n---\n# None\n")
+	// has.md lacks rank; sort by rank ascending.
+	stdout, _, err := runRoot(t, "item", "list", "notes", "--sort", "rank", "--sort-missing", "last")
+	if err != nil {
+		t.Fatalf("item list: %v", err)
+	}
+	if got := strings.Join(listIDs(stdout), ","); got != "none,has" {
+		t.Errorf("sort-missing last = %q, want none,has", got)
+	}
+	stdout, _, _ = runRoot(t, "item", "list", "notes", "--sort", "rank", "--sort-missing", "lowest")
+	if got := strings.Join(listIDs(stdout), ","); got != "has,none" {
+		t.Errorf("sort-missing lowest = %q, want has,none", got)
+	}
+}

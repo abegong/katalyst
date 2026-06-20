@@ -412,6 +412,90 @@ func TestLoad_rejectsBadDiscovery(t *testing.T) {
 	}
 }
 
+func TestLoad_queryDefaults_whenUnset(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":      minimalSchema,
+		"collections/notes.yaml": "schema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if notes.Query.FilterTypeMismatch != "skip" {
+		t.Errorf("FilterTypeMismatch = %q, want default skip", notes.Query.FilterTypeMismatch)
+	}
+	if notes.Query.SortMissing != "last" {
+		t.Errorf("SortMissing = %q, want default last", notes.Query.SortMissing)
+	}
+}
+
+func TestLoad_query_projectDefaultApplies(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"config.yaml": `query:
+  filterTypeMismatch: error
+  sortMissing: lowest
+`,
+		"collections/notes.yaml": "schema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if notes.Query.FilterTypeMismatch != "error" {
+		t.Errorf("FilterTypeMismatch = %q, want error from project default", notes.Query.FilterTypeMismatch)
+	}
+	if notes.Query.SortMissing != "lowest" {
+		t.Errorf("SortMissing = %q, want lowest from project default", notes.Query.SortMissing)
+	}
+}
+
+func TestLoad_query_collectionOverridesPerKey(t *testing.T) {
+	// The collection sets only filterTypeMismatch; sortMissing must fall
+	// through to the project default, not back to the built-in.
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"config.yaml": `query:
+  sortMissing: lowest
+`,
+		"collections/notes.yaml": `schema: book
+query:
+  filterTypeMismatch: error
+`,
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if notes.Query.FilterTypeMismatch != "error" {
+		t.Errorf("FilterTypeMismatch = %q, want error from collection", notes.Query.FilterTypeMismatch)
+	}
+	if notes.Query.SortMissing != "lowest" {
+		t.Errorf("SortMissing = %q, want lowest from project (fall-through)", notes.Query.SortMissing)
+	}
+}
+
+func TestLoad_query_rejectsUnknownValue(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"collections/notes.yaml": `schema: book
+query:
+  filterTypeMismatch: bogus
+`,
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "filterTypeMismatch") {
+		t.Fatalf("expected filterTypeMismatch validation error, got: %v", err)
+	}
+}
+
 func TestCollection_unknownReturnsFalse(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
