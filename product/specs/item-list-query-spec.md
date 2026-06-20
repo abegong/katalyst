@@ -5,8 +5,8 @@
 > **filtering**, **grep**, **sort**, **skip**, and **limit**. No other
 > `list` command (`collection list`, `schema list`) is touched.
 >
-> Open questions are flagged inline as **[OPEN]**. Delete this file when the
-> work lands (per `product/specs/` convention).
+> Design decisions are settled; this is ready to drive implementation.
+> Delete this file when the work lands (per `product/specs/` convention).
 
 ## Motivation
 
@@ -29,6 +29,8 @@ katalyst item list <collection>
   [--sort KEY ]...           # repeatable; KEY or -KEY (desc); comma-joinable
   [--skip N]
   [--limit N]
+  [--on-type-mismatch MODE]  # skip (default) | error   -- overrides config
+  [--sort-missing MODE]      # last (default) | lowest  -- overrides config
 ```
 
 Selector depth stays **1** (`<collection>`); wrong depth is a usage error
@@ -107,14 +109,15 @@ Comparison semantics:
 - **Numbers** compare numerically; **strings** lexicographically; booleans
   by `false < true`.
 - A **type mismatch** between the field's value and `VALUE` (e.g. `>` on a
-  boolean, or comparing a number field to a string literal) is **not an
-  error** — the item simply does not match. Filters stay forgiving so a
-  stray non-conforming item never aborts the listing. **[OPEN]** alt:
-  treat type mismatch as a usage error (exit 2).
+  boolean, or comparing a number field to a string literal) is governed by
+  the **`filterTypeMismatch`** setting (see [Configuration](#configuration)).
+  Default `skip`: the item simply does not match, so a stray non-conforming
+  item never aborts the listing. Set to `error` to make a mismatch a usage
+  error (exit 2). `--on-type-mismatch` overrides it per invocation.
 - `=~` coerces the field value to its canonical string form and tests it
-  against a **Go `regexp`** pattern. `-i` / `--ignore-case` does **not**
-  apply to `=~`; use an inline `(?i)` flag instead. **[OPEN]** confirm
-  scope of `-i`.
+  against a **Go `regexp`** pattern. `-i` / `--ignore-case` applies to
+  `--grep` **only**, not to `=~`; for a case-insensitive filter regex use an
+  inline `(?i)` flag (`title=~(?i)^the`).
 - `in` / `nin` (comma RHS): for a scalar field, true iff the value is (not)
   among the listed values; for an **array** field, true iff the array
   shares (shares no) element with the list. Each comma-separated token is
@@ -173,9 +176,11 @@ katalyst item list books --sort -year --sort title
 - **Default** (no `--sort`): `id` ascending — today's order.
 - Comparison uses the same number/string/bool rules as `--filter`. Across
   mixed types, a stable type ordering applies (numbers < strings, etc.).
-  **[OPEN]** confirm cross-type ordering is acceptable / specify exactly.
-- **Missing** fields sort **last** in both ascending and descending
-  directions. **[OPEN]** alt: missing = lowest value.
+- **Missing** fields are placed per the **`sortMissing`** setting (see
+  [Configuration](#configuration)). Default `last`: missing-field items go to
+  the end in **both** directions. `lowest`: a missing field is treated as
+  less than any present value (so first under ascending, last under
+  descending). `--sort-missing` overrides it per invocation.
 - The sort is **stable**; ties (including equal/missing keys) break by `id`
   ascending.
 
@@ -184,14 +189,45 @@ katalyst item list books --sort -year --sort title
 Applied after sorting, in that order (Mongo semantics).
 
 - `--skip N` (N ≥ 0) drops the first `N` results. `0`/absent = drop none.
-- `--limit N` (N ≥ 1) keeps at most `N` results. `0`/absent = no cap.
-  Negative `--limit` is a usage error. **[OPEN]** Mongo treats `limit 0` as
-  "no limit" — we adopt the same.
+- `--limit N` (N ≥ 1) keeps at most `N` results. `0`/absent = no cap
+  (matching Mongo's `limit 0`). Negative `--limit` is a usage error.
 
 ```bash
 katalyst item list books --sort -year --limit 10        # 10 newest
 katalyst item list books --sort -year --skip 10 --limit 10   # next page
 ```
+
+## Configuration
+
+Two behaviors have configurable defaults. They live in a `query:` block,
+which may appear in **both** the project config and an individual
+collection's config:
+
+```yaml
+# .katalyst/config.yaml — project-wide default
+query:
+  filterTypeMismatch: skip   # skip (default) | error
+  sortMissing: last          # last (default) | lowest
+```
+
+```yaml
+# .katalyst/collections/books.yaml — overrides the project default for books
+path: notes/books
+schema: book
+query:
+  filterTypeMismatch: error
+```
+
+Resolution precedence, highest first:
+
+1. CLI flag (`--on-type-mismatch`, `--sort-missing`) — this invocation only.
+2. The selected collection's `query:` block.
+3. The project `query:` block in `.katalyst/config.yaml`.
+4. Built-in default (`skip` / `last`).
+
+A `query:` block may set either key independently; an unset key falls
+through to the next level. Schema files (`.katalyst/schemas/*.yaml`) stay
+pure JSON Schema — they hold **no** query settings.
 
 ## Exit codes
 
@@ -203,8 +239,7 @@ Unchanged from `item list` today:
 | `2`  | Usage error: bad selector/depth, unknown collection, malformed `--filter`/`--sort` expression, invalid regex, negative `--limit`/`--skip`, or IO error |
 
 A filter/grep matching nothing is a successful empty list (exit 0), **not**
-grep's "exit 1 on no match". **[OPEN]** confirm we don't want grep's
-no-match convention.
+grep's "exit 1 on no match".
 
 ## Out of scope (named so the boundary is explicit)
 
@@ -238,7 +273,8 @@ no-match convention.
 - [ ] bare `FIELD` (exists) and `!FIELD` (absent)
 - [ ] dot-notation nested field
 - [ ] multiple `--filter` are ANDed
-- [ ] type mismatch → no match (no error)
+- [ ] type mismatch, default `skip` → no match (no error)
+- [ ] type mismatch, `filterTypeMismatch: error` / `--on-type-mismatch error` → exit 2
 - [ ] unparseable frontmatter → matches `!FIELD`, fails positive predicates
 
 `--grep`:
@@ -252,7 +288,14 @@ no-match convention.
 - [ ] ascending default by id; `-KEY` descending
 - [ ] multi-key precedence (comma and repeated forms)
 - [ ] sort by `status` and by frontmatter field
-- [ ] missing field sorts last; ties break by id; stable
+- [ ] missing field, default `last`; `sortMissing: lowest` / `--sort-missing lowest` flips placement
+- [ ] ties break by id; stable
 - [ ] `--skip`/`--limit` applied after sort, in order
 - [ ] empty result → exit 0
 - [ ] negative `--limit`/`--skip` → exit 2
+
+Configuration:
+- [ ] project `query:` default applies
+- [ ] collection `query:` overrides project default
+- [ ] CLI flag overrides both; unset keys fall through each level
+- [ ] schema files carry no query settings
