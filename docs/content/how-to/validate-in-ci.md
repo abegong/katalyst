@@ -48,7 +48,7 @@ katalyst fix --check
 
 The `check` step enforces schema and structural rules; the `fix --check`
 step enforces canonical frontmatter without modifying files. See
-[Formatting]({{< relref "../explanation/formatting.md" >}}) for why `fix` is
+`internal/frontmatter/README.md` for why `fix` is opinionated and
 non-destructive in this mode.
 
 ## See also

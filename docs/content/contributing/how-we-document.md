@@ -24,8 +24,10 @@ The durable home for everything a user needs, organized by
 - **`how-to/`** — task-oriented recipes.
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
-- **`explanation/`** — understanding-oriented "why": the manifesto, the
-  general and domain models, connectors, and **design rationale**.
+- **`explanation/`** — understanding-oriented "why": why Katalyst exists, the
+  core concepts, connectors, and cross-cutting **design rationale**.
+  Subsystem-specific rationale lives in per-package `README.md` files under
+  `internal/`.
 - **`contributing/`** — project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.

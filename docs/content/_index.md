@@ -32,11 +32,11 @@ For people validating content with the tool.
 
 For people working on Katalyst, and anyone who wants the bigger picture.
 
-- **[Explanation]({{< relref "explanation/_index.md" >}})** — the *why*: the
-  [manifesto]({{< relref "explanation/manifesto.md" >}}), the
-  [general model]({{< relref "explanation/general-model.md" >}}), the
-  [domain model]({{< relref "explanation/domain-model.md" >}}), and the
-  design rationale behind each command.
+- **[Explanation]({{< relref "explanation/_index.md" >}})** — the *why*:
+  [why Katalyst exists]({{< relref "explanation/why-katalyst.md" >}}), the
+  [core concepts]({{< relref "explanation/core-concepts.md" >}}), and the
+  cross-cutting design rationale. Subsystem rationale lives next to the code
+  in the per-package `README.md` files under `internal/`.
 - **[Contributing]({{< relref "contributing/_index.md" >}})** — how we
   [document]({{< relref "contributing/how-we-document.md" >}}) and
   [plan]({{< relref "contributing/how-we-plan.md" >}}) changes.

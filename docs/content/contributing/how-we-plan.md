@@ -72,8 +72,9 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
 - **`README.md`** — pointer/overview updates.
 - **Go doc comments** — package/API-level behavior.
 
-Evergreen explanation docs (domain model, general model, connectors) are
-*not* specs and don't get retired — they're updated in place.
+Evergreen explanation docs (core concepts, connectors) and the per-package
+`README.md` files under `internal/` are *not* specs and don't get retired —
+they're updated in place.
 
 ### Graduation checklist
 
