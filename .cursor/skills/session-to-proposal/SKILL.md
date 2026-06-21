@@ -59,7 +59,7 @@ stakes warrant it. Do not pad.
 A proposal is the lightweight front end of katalyst's decision flow. When it's
 accepted, graduate it: open questions become GitHub issues (or live in the
 in-flight spec), and the locked rationale folds into the relevant
-`docs/explanation/` page — there is no central decisions log. See
+`docs/deep-dives/` page — there is no central decisions log. See
 `docs/contributing/how-we-plan.md`.
 
 ## Principles
@@ -92,7 +92,7 @@ Proposal: replace the anonymous `rules:` list in katalyst.yaml with named
 - Addressing (`notes/dune`) needs named collections to resolve against; the CLI
   spec depends on it (`product/specs/cli-spec.md`).
 - It makes `collection` a first-class noun, matching the domain model
-  (`product/domain-model.md`) instead of an implicit glob.
+  (`docs/reference/glossary.md`) instead of an implicit glob.
 ```
 
 ## Workflow

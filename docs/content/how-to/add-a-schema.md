@@ -82,7 +82,8 @@ katalyst check books --schema ./schemas/strict-book.json
 
 The precedence is `--schema` > inline `schema:` key > the collection's object
 check. See the [configuration
-rationale]({{< relref "../explanation/configuration.md" >}}) for why.
+reference]({{< relref "../reference/configuration.md" >}}) for the key surface,
+or `internal/config/README.md` for why.
 
 ## See also
 

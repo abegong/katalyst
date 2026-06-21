@@ -24,8 +24,11 @@ The durable home for everything a user needs, organized by
 - **`how-to/`** — task-oriented recipes.
 - **`reference/`** — information-oriented lookup: configuration, the
   generated rule reference, the glossary, the command surface.
-- **`explanation/`** — understanding-oriented "why": the manifesto, the
-  general and domain models, connectors, and **design rationale**.
+- **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
+  quadrant): the vision and scope, the core concepts, connectors, progressive
+  operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
+  orientation page sits at the top level. Subsystem-specific rationale lives in
+  per-package `README.md` files under `internal/`.
 - **`contributing/`** — project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
@@ -42,7 +45,7 @@ staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 Rules for anyone *writing code* in the repo: commands, layout, testing
 style, code style. **What goes here:** naming conventions, required
 patterns, gotchas, and the *why* behind a code constraint. **What doesn't:**
-conceptual explanations of how the system works (→ `docs/explanation/`),
+conceptual explanations of how the system works (→ `docs/deep-dives/`),
 user-facing usage (→ `docs/`), or API-level detail (→ Go doc comments).
 
 Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where

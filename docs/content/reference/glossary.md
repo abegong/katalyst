@@ -6,9 +6,10 @@ weight = 50
 # Glossary
 
 The canonical vocabulary for Katalyst. Use these terms consistently in code,
-docs, and user-facing copy. They are defined conceptually in the [domain
-model]({{< relref "../explanation/domain-model.md" >}}); this page is the
-quick lookup.
+docs, and user-facing copy. The general, backend-agnostic vocabulary is
+introduced in [core concepts]({{< relref "../deep-dives/core-concepts.md" >}});
+how each term maps onto today's code is documented in the per-package
+`README.md` files under `internal/`. This page is the quick lookup.
 
 | Term | Meaning |
 |---|---|

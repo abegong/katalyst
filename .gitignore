@@ -43,8 +43,6 @@ public/
 .DS_Store
 
 # Generated agent-link mirrors (source of truth: .cursor/skills + AGENTS.md)
+.claude/
+.codex/
 **/CLAUDE.md
-CLAUDE.local.md
-.codex/skills/
-.claude/skills/
-.claude/settings.local.json

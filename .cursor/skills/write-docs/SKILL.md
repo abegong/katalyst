@@ -2,7 +2,7 @@
 name: write-docs
 description: >-
   Tone and style guide for writing or revising any developer-facing prose in
-  this repo — AGENTS.md, the explanation and reference docs under docs/, the
+  this repo — AGENTS.md, the deep-dive and reference docs under docs/, the
   Hugo user-docs site under docs/, the project README, skill SKILL.md files, and
   Go doc comments. Use whenever editing or adding prose to a `.md` file, writing a
   package doc comment, or when asked to "document this", "write a README",
@@ -34,6 +34,19 @@ at a developer with work to do.
   before coining a term; add one only when the concept needs it. Descriptive for
   internal abstractions; evocative names reserved for user-facing features.
 
+## Conventions
+
+Mechanical choices — apply them consistently across every page.
+
+- **Product vs. command.** Write the product as **Katalyst** in prose; reserve
+  the code form `katalyst` for the CLI command or binary (`run katalyst check`).
+  "Katalyst validates frontmatter" — not "`katalyst` validates frontmatter."
+- **Em dashes.** Use the `—` character with a space on each side
+  (`a term — its definition`). Don't write `---` or `--` in source.
+- **Person.** Second person ("you") and declarative by default. Reserve the
+  first person ("I", "my") for the About-me and other named-author sections;
+  never the editorial "we" (see Voice).
+
 ## Shape
 
 Default to this order. Cut any section that doesn't earn its tokens.
@@ -54,7 +67,7 @@ not `// This function loads the config.` Per `AGENTS.md`, comments explain
 
 See `docs/contributing/how-we-document.md` for the full taxonomy: `AGENTS.md`
 for code conventions, `docs/` for the published Hugo site (getting-started,
-how-to, reference, explanation, contributing), `product/specs/` for in-flight
+how-to, reference, deep-dives, contributing), `product/specs/` for in-flight
 specs,
 `README.md` for the overview, Go doc comments for the API. Rule reference pages
 under `docs/reference/rules/` are generated — never hand-edit them.

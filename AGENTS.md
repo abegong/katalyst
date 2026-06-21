@@ -4,8 +4,8 @@ Conventions for anyone — human or AI — making changes in this repo.
 
 For *what* the project does and how to use the CLI, see [`README.md`](README.md)
 and the user docs under `docs/`.
-For *why* the design is the way it is, see the explanation pages under
-`docs/explanation/` — rationale lives on each topic's page; there is no central
+For *why* the design is the way it is, see the deep-dive pages under
+`docs/deep-dives/` — rationale lives on each topic's page; there is no central
 decisions log.
 For *how we plan and document* changes, see
 [`docs/contributing/how-we-plan.md`](docs/contributing/how-we-plan.md) and

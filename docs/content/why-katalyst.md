@@ -1,4 +1,9 @@
-# Katalyst
++++
+title = "Why Katalyst?"
+weight = 10
++++
+
+# Why Katalyst?
 
 Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
@@ -13,8 +18,13 @@ Katalyst gives you and your agent tools to solve problems like these:
 
 If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
 
-> [!TIP]
-> **New to Katalyst?** [Get started »](https://katabase-ai.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
+{{% hint info %}}
+**New to Katalyst?**
+
+[Get started »]({{< relref "getting-started.md" >}}) — install
+the CLI, scaffold a `.katalyst/` project, and run your first checks in a few
+minutes.
+{{% /hint %}}
 
 ## Key features
 
@@ -30,16 +40,17 @@ Curation always requires shared language and consistent structure. Katalyst prov
 
 - *Markdown content* — required sections, naming conventions, templates, etc.
 - *File structure* — naming conventions, preferred and required extensions, directory structures, etc.
-- *Metadata* — required fields, types, enums, numeric ranges, and full JSON Schema validation of frontmatter.
+- *Metadata* — required fields, types, enums, numeric ranges, and full
+  JSON Schema validation of frontmatter.
 - *Object relationships* — links, summaries, tables of contents, sequential numbering, etc.
 
 ### Reshape as needed
 
 As your content evolves, Katalyst gives you tools to navigate change.
 
-- *Add or change checks*
-- *Change the structure of your content*
-- *Change your storage layer*
+  - *Add or change checks*
+  - *Change the structure of your content*
+  - *Change your storage layer*
 
 ## Design principles
 
@@ -61,10 +72,10 @@ Express the same rules in a project's own vocabulary and conventions.
 
 Ergonomics matter — especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
 
-- *Speed* — fast enough to run on every write.
-- *Discoverability* — an agent can find the schemas and structure on its own.
-- *Readability* — rules and content stay legible to humans and agents alike.
-- *Extensibility* — add new checks and rule kinds as needs grow.
+  - *Speed* — fast enough to run on every write.
+  - *Discoverability* — an agent can find the schemas and structure on its own.
+  - *Readability* — rules and content stay legible to humans and agents alike.
+  - *Extensibility* — add new checks and rule kinds as needs grow.
 
 ## What if structure was light?
 
@@ -80,13 +91,18 @@ In a world of unbounded creative collaboration with agents, the limiting factor 
 
 ## No, really, you should try it out
 
-- [Build the CLI and run your first checks](https://katabase-ai.github.io/katalyst/getting-started/).
-- [Contribute](https://katabase-ai.github.io/katalyst/contributing/) — how we plan and document changes.
+- [Build the CLI and run your first checks]({{< relref "getting-started.md" >}}).
+- [Contribute]({{< relref "contributing/_index.md" >}}) — how we plan and
+  document changes.
 
 ## About me
 
-I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great Expectations](https://greatexpectations.io), the leading open-source tool for data quality.
+I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great
+Expectations](https://greatexpectations.io), the leading open-source tool for
+data quality.
 
-I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously — if you're trying Katalyst, I'd love to hear from you.
+I'm fascinated by AI and the way it's changing how we work and collaborate, and
+I'm building Katalyst in the open to explore it. I take user feedback
+seriously — if you're trying Katalyst, I'd love to hear from you.
 
 More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).

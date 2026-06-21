@@ -1,16 +1,14 @@
 +++
-title = "A general model for data systems"
+title = "Core concepts"
 weight = 20
 +++
 
-# A general model for data systems
+# Core concepts
 
 > **Status: work in progress.** This is a deliberately abstract sketch,
 > captured as concepts are introduced. It is not about `katalyst`
-> specifically — katalyst is one instantiation among many. See
-> [Domain model mapping]({{< relref "domain-model-mapping.md" >}}) for how the
-> concepts here translate to today's code. Expect breaking revisions
-> until the concepts settle.
+> specifically — katalyst is one instantiation among many. Expect breaking
+> revisions until the concepts settle.
 
 ## Goal
 
@@ -133,3 +131,7 @@ Here are a few more examples, to help ground these concepts.
 - SQL engines enforce a variety of upfront checks: columns, typed fields, NOT NULL, uniqueness, foreign keys.
 - These checks are required in order to guarantee that the system can provide its catalog of operations.
 - In other words, schemas and structuredness are a means to an end. They're about enforcing checks in order to provide a catalog of operations.
+
+For how these concepts translate to today's code, see the per-package
+`README.md` files under `internal/` (notably `internal/config`,
+`internal/frontmatter`, and `internal/checks`).

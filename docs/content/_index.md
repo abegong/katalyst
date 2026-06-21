@@ -4,39 +4,41 @@ title = "Katalyst Documentation"
 
 # Katalyst
 
-Katalyst is an experimental framework for content validation in AI-native
-systems. Today the implementation validates markdown frontmatter against
-JSON Schema and a registry of structural checks, driven by a CLI. That is a
-starting slice, not the full intended scope — over time Katalyst aims to
-support richer validation across structured and unstructured content,
-multiple storage backends, and migrations between them.
+Katalyst is a **content consistency layer**: schemas and checks that live with
+your content and keep its structure steady as it grows — built for the content
+AI agents manage. [Why Katalyst]({{< relref "why-katalyst.md" >}}) makes the
+case; these docs get you oriented, then go deep.
 
-These docs are organized along two tracks.
+## Get oriented
+
+1. **[Why Katalyst]({{< relref "why-katalyst.md" >}})** — the problems it
+   solves.
+2. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
+   scaffold a project, and run your first checks.
 
 ## Use Katalyst
 
 For people validating content with the tool.
 
-1. **[Getting started]({{< relref "getting-started.md" >}})** — build the CLI,
-   scaffold a project, and run your first checks.
-2. **[How-to guides]({{< relref "how-to/_index.md" >}})** — task-oriented
-   recipes: [configure checks]({{< relref "how-to/configure-rules.md" >}}),
-   [add a schema]({{< relref "how-to/add-a-schema.md" >}}),
-   [validate in CI]({{< relref "how-to/validate-in-ci.md" >}}).
-3. **[Reference]({{< relref "reference/_index.md" >}})** — the
-   [configuration]({{< relref "reference/configuration.md" >}}) surface, the
-   generated [rule reference]({{< relref "reference/rules/_index.md" >}}),
-   and the [glossary]({{< relref "reference/glossary.md" >}}).
+- **[How-to guides]({{< relref "how-to/_index.md" >}})** — task-oriented
+  recipes: [configure checks]({{< relref "how-to/configure-rules.md" >}}),
+  [add a schema]({{< relref "how-to/add-a-schema.md" >}}),
+  [validate in CI]({{< relref "how-to/validate-in-ci.md" >}}).
+- **[Reference]({{< relref "reference/_index.md" >}})** — the
+  [configuration]({{< relref "reference/configuration.md" >}}) surface, the
+  generated [rule reference]({{< relref "reference/rules/_index.md" >}}),
+  and the [glossary]({{< relref "reference/glossary.md" >}}).
 
-## Contribute
+## Go deeper
 
 For people working on Katalyst, and anyone who wants the bigger picture.
 
-- **[Explanation]({{< relref "explanation/_index.md" >}})** — the *why*: the
-  [manifesto]({{< relref "explanation/manifesto.md" >}}), the
-  [general model]({{< relref "explanation/general-model.md" >}}), the
-  [domain model]({{< relref "explanation/domain-model.md" >}}), and the
-  design rationale behind each command.
+- **[Deep dives]({{< relref "deep-dives/_index.md" >}})** — the *why*: the
+  [vision and scope]({{< relref "deep-dives/vision.md" >}}), the [core
+  concepts]({{< relref "deep-dives/core-concepts.md" >}}), connectors,
+  progressive operations, and design rationale that no single package owns.
+  Subsystem rationale lives next to the code in the per-package `README.md`
+  files under `internal/`.
 - **[Contributing]({{< relref "contributing/_index.md" >}})** — how we
   [document]({{< relref "contributing/how-we-document.md" >}}) and
   [plan]({{< relref "contributing/how-we-plan.md" >}}) changes.

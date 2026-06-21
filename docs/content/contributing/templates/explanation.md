@@ -5,7 +5,7 @@ draft = true
 +++
 
 <!--
-TEMPLATE — copy this file into docs/explanation/ and fill it in.
+TEMPLATE — copy this file into docs/deep-dives/ and fill it in.
 
 This page IS: an understanding-oriented discussion of *why* — the concepts,
 the design rationale, the trade-offs, the alternatives considered and
@@ -41,5 +41,5 @@ What was given up, and which alternatives were considered and rejected.
 ## See also
 
 - The reference page for the precise surface (link with `relref` once you
-  copy this into `docs/explanation/`)
+  copy this into `docs/deep-dives/`)
 - Related explanation pages
