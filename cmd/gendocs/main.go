@@ -80,7 +80,7 @@ func inspectorsIndex() string {
 	fmt.Fprint(&b, "\n# Inspectors reference\n\n")
 	fmt.Fprint(&b, "Inspectors describe the shape of a markdown corpus and return evidence — ")
 	fmt.Fprint(&b, "counts and distributions, never recommendations. They are the descriptive ")
-	fmt.Fprint(&b, "dual of [rules]({{< relref \"rules/_index.md\" >}}) and drive the ")
+	fmt.Fprint(&b, "dual of [rules]({{< relref \"../rules/_index.md\" >}}) and drive the ")
 	fmt.Fprint(&b, "[`inspect`]({{< relref \"commands.md\" >}}) command. This page is generated ")
 	fmt.Fprint(&b, "from the inspector registry, so it always matches the shipped engine.\n")
 	for _, fam := range inspect.Families() {

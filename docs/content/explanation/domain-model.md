@@ -236,7 +236,7 @@ this item satisfy a predicate?" and returns violations; an **inspector** asks
 "what is the distribution of this aspect across the corpus?" and returns
 **evidence** — counts and distributions with the file count `n` as the
 denominator. It realizes the `aggregate` operation from the [general
-model]({{< relref "general-model.md" >}}).
+model]({{< relref "core-concepts.md" >}}).
 
 Inspectors are read-only and never recommend. They report that `status` is
 present in 142 of 142 files with three distinct values; deciding that this
