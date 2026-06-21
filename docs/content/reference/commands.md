@@ -127,6 +127,34 @@ katalyst item list books --sort -year --limit 10        # 10 newest
 The `--on-type-mismatch` and `--sort-missing` defaults are configurable; see
 [`query`]({{< relref "configuration.md#query" >}}).
 
+## `rules`
+
+```bash
+katalyst rules [kind]
+katalyst rules --family <family>
+katalyst rules --kind <kind>
+katalyst rules ... --json
+```
+
+List the check kinds the engine can enforce, read from its registry — the
+same catalog the [rules reference]({{< relref "rules/_index.md" >}}) is
+generated from. Takes no selector and reads no project, so it runs in any
+directory. The three levels mirror the docs: the whole catalog, one family,
+one rule page.
+
+- `katalyst rules` — every kind grouped by family (objects, markdown,
+  filesystem): kind, purpose, required keys, optional keys.
+- `katalyst rules --family <family>` — narrow the list to one family.
+- `katalyst rules <kind>` (or `--kind <kind>`) — a docs-style readout for one
+  kind: family context, purpose, full key table, example config, and the
+  other kinds in its family.
+- `--json` — at any level, a machine-readable descriptor array (or a single
+  object for one kind), so an editor or skill reads the catalog instead of
+  hardcoding it.
+
+`--family` and a kind are mutually exclusive. Exits `0`, or `2` for an
+unknown family or kind.
+
 ## `init`
 
 ```bash
