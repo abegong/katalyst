@@ -1,6 +1,6 @@
 // Package project sits on top of internal/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
-// reverse id→path resolution. See docs/explanation/domain-model.md
+// reverse id→path resolution. See docs/reference/glossary.md
 // (selectors, collections, items).
 package project
 

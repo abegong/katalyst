@@ -27,7 +27,7 @@ func newCheckCmd() *cobra.Command {
 		Long: `check parses YAML frontmatter from each selected item and runs the
 checks configured for its collection under .katalyst/collections/.
 
-Selectors (see docs/explanation/domain-model.md):
+Selectors (see docs/reference/glossary.md):
 
   (none)                the whole project (every collection)
   <collection>          one collection (all its items)

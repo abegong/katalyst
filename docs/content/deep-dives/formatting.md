@@ -18,9 +18,8 @@ else untouched. The canonical form is deliberately narrow: top-level keys
 sorted alphabetically, yaml.v3 default block style, exactly one trailing
 newline on the file, and body bytes preserved verbatim.
 
-The full per-item data flow lives in the [domain model]({{< relref
-"domain-model.md" >}}) under *Lifecycle of `fix`*. This page is about the
-*why*.
+This page is about the *why*; for the exact rewrite steps and flags, see the
+[`fix` command reference]({{< relref "../reference/commands.md" >}}).
 
 ## Design rationale
 
@@ -44,8 +43,8 @@ documents' mouths. Reporting the missing field is `check`'s job; supplying a
 value is the author's.
 
 **Body bytes are sacred.** This is a system-wide invariant, not a local
-choice (see the [domain model]({{< relref "domain-model.md" >}}) invariants).
-`fix` touches only the frontmatter region and the file's trailing newline;
+choice. `fix` touches only the frontmatter region and the file's trailing
+newline;
 interior body bytes round-trip exactly. A formatter you cannot trust with
 your prose is a formatter you will not run.
 
@@ -70,7 +69,7 @@ changed nothing but shape.
 
 - [`fix` command reference]({{< relref "../reference/commands.md" >}}) — the
   precise command surface and flags.
-- [Domain model]({{< relref "domain-model.md" >}}) — the *Lifecycle of
-  `fix`* steps and the body-bytes invariant.
+- [Core concepts]({{< relref "core-concepts.md" >}}) — the general model
+  behind collections, items, and operations.
 - [Configuration]({{< relref "../reference/configuration.md" >}}) — how
   collections and checks are declared.
