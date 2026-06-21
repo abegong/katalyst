@@ -33,7 +33,16 @@ mean. Long output is truncated per inspector to --max-lines (Markdown only;
 --json is always complete); -v shows everything.
 
 Output is Markdown by default; --json emits the same evidence as JSON.`,
-		Args: cobra.ExactArgs(1),
+		Args: func(_ *cobra.Command, args []string) error {
+			switch len(args) {
+			case 1:
+				return nil
+			case 0:
+				return usageErr("inspect: provide a directory to inspect, e.g. `katalyst inspect ./wiki`")
+			default:
+				return usageErr(fmt.Sprintf("inspect: expected one directory, got %d", len(args)))
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := args[0]
 			if info, err := os.Stat(path); err != nil || !info.IsDir() {

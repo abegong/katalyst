@@ -164,6 +164,22 @@ func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
 	}
 }
 
+func TestInspect_missingDirectoryGivesHelpfulError(t *testing.T) {
+	_, stderr, err := runRoot(t, "inspect")
+	var coded interface{ Code() int }
+	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Fatalf("expected exit code 2, got: %v", err)
+	}
+	// The message should name the missing directory, not Cobra's "accepts 1 arg(s)".
+	combined := err.Error() + stderr
+	if !strings.Contains(combined, "directory") {
+		t.Errorf("error should mention a directory: %q", combined)
+	}
+	if strings.Contains(combined, "arg(s)") {
+		t.Errorf("should not surface Cobra's default arity message: %q", combined)
+	}
+}
+
 // countFiles counts regular files under root.
 func countFiles(t *testing.T, root string) int {
 	t.Helper()
