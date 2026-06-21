@@ -1,10 +1,11 @@
 # Error message standards
 
-> **Status: planning.** Defines a style guide for the CLI's user-facing error
-> and diagnostic messages, then brings every message up to it. Today the
-> messages are individually fine but collectively inconsistent — prefixes,
-> quoting, capitalization, and Cobra's defaults all diverge. This spec sets one
-> grammar and normalizes every site in `cmd/` and `internal/project/`.
+> **Status: implementing.** Style guide defined and applied; the durable
+> convention now lives in [`cmd/AGENTS.md`](../../cmd/AGENTS.md), with shared
+> helpers (`cmd/usage.go`) and a root `FlagErrorFunc`. `make all` green.
+> Graduation (deleting this spec) waits on merge. Defines one grammar for the
+> CLI's user-facing error and diagnostic messages and normalizes every site in
+> `cmd/`.
 
 ## Overview
 
@@ -187,8 +188,8 @@ Invariants preserved:
 The normalization target for each current site. Grouped by file; `→` shows the
 standardized form. Sites already conformant are omitted.
 
-**`cmd/inspect.go`** — drop the `inspect:` prefix:
-- `inspect: provide a directory to inspect, e.g. …` → `missing directory (usage: katalyst inspect <path>)`
+**`cmd/inspect.go`** — drop the `inspect:` prefix; arity via the shared helper:
+- `inspect: provide a directory to inspect, e.g. …` → `missing argument(s) (usage: katalyst inspect <path>)`
 - `inspect: expected one directory, got %d` → `too many arguments (usage: katalyst inspect <path>)`
 - `inspect: %q is not a readable directory` → `%s: not a readable directory`
 - `inspect: unknown inspector %q` → `unknown inspector %q (try \`katalyst inspect --help\`)`

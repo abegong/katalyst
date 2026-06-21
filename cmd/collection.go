@@ -49,7 +49,7 @@ func newCollectionGetCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "get <collection>",
 		Short: "Show one collection's detail.",
-		Args:  cobra.ExactArgs(1),
+		Args:  exactArgs(1, "collection get <collection>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -62,11 +62,11 @@ func newCollectionGetCmd() *cobra.Command {
 				return asUsageErr(err)
 			}
 			if sel.IsItem() {
-				return usageErr(fmt.Sprintf("collection get expects <collection>, got item selector %q", args[0]))
+				return usageErr(fmt.Sprintf("expected <collection>, got item selector %q", args[0]))
 			}
 			c, ok := p.Collection(sel.Collection)
 			if !ok {
-				return usageErr(fmt.Sprintf("unknown collection %q", sel.Collection))
+				return unknownCollectionErr(sel.Collection)
 			}
 			items, err := p.Items(c)
 			if err != nil {

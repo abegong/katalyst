@@ -28,7 +28,7 @@ one family with --family, or zero in on a single kind — positionally or via
 --kind — for a detailed, docs-style readout of its keys, example, and
 siblings. It reads no project, so it runs in any directory; --json emits
 machine-readable descriptors at any level.`,
-		Args: cobra.MaximumNArgs(1),
+		Args: maxArgs(1, "rules [kind]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// A kind may come positionally or via --kind; treat them as
 			// synonyms and reject a contradiction.
@@ -59,8 +59,8 @@ func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
 	if family != "" {
 		fam, ok := findFamily(family)
 		if !ok {
-			return usageErr(fmt.Sprintf("unknown family %q; valid families: %s",
-				family, strings.Join(familyIDs(), ", ")))
+			return usageErr(fmt.Sprintf("--family: must be one of %s (got %q)",
+				strings.Join(familyIDs(), ", "), family))
 		}
 		families = []checks.Family{fam}
 		descriptors = familyDescriptors(fam.ID)
@@ -97,7 +97,7 @@ func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
 func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
 	d, ok := findDescriptor(kind)
 	if !ok {
-		return usageErr(fmt.Sprintf("unknown check kind %q", kind))
+		return usageErr(fmt.Sprintf("unknown check kind %q (try `katalyst rules`)", kind))
 	}
 	if asJSON {
 		return writeRulesJSON(cmd, jsonDescriptor(d))

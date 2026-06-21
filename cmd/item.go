@@ -59,7 +59,7 @@ Narrow, search, and order the result (MongoDB find-inspired):
   --grep TODO             regexp search; --grep-in all|body|frontmatter; -i.
   --sort -year,title      sort keys (id, status, or a field); leading - is desc.
   --skip N / --limit N    pagination, applied after sort.`,
-		Args: cobra.ExactArgs(1),
+		Args: exactArgs(1, "item list <collection>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			e, err := newEngine("")
 			if err != nil {
@@ -70,11 +70,11 @@ Narrow, search, and order the result (MongoDB find-inspired):
 				return asUsageErr(err)
 			}
 			if sel.IsItem() {
-				return usageErr(fmt.Sprintf("item list expects <collection>, got item selector %q", args[0]))
+				return usageErr(fmt.Sprintf("expected <collection>, got item selector %q", args[0]))
 			}
 			col, ok := e.proj.Collection(sel.Collection)
 			if !ok {
-				return usageErr(fmt.Sprintf("unknown collection %q", sel.Collection))
+				return unknownCollectionErr(sel.Collection)
 			}
 			items, err := e.proj.Items(col)
 			if err != nil {
@@ -169,7 +169,7 @@ func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, erro
 	case "frontmatter":
 		opts.GrepIn = query.RegionFrontmatter
 	default:
-		return query.Options{}, usageErr(fmt.Sprintf("--grep-in: unknown region %q (want all, body, or frontmatter)", f.grepIn))
+		return query.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or frontmatter (got %q)", f.grepIn))
 	}
 
 	for _, spec := range f.sorts {
@@ -181,10 +181,10 @@ func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, erro
 	}
 
 	if f.skip < 0 {
-		return query.Options{}, usageErr("--skip must not be negative")
+		return query.Options{}, usageErr("--skip: must not be negative")
 	}
 	if f.limit < 0 {
-		return query.Options{}, usageErr("--limit must not be negative")
+		return query.Options{}, usageErr("--limit: must not be negative")
 	}
 	opts.Skip = f.skip
 	opts.Limit = f.limit
@@ -192,7 +192,7 @@ func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, erro
 	opts.TypeMismatch = col.Query.FilterTypeMismatch
 	if f.typeMismatch != "" {
 		if f.typeMismatch != "skip" && f.typeMismatch != "error" {
-			return query.Options{}, usageErr(fmt.Sprintf("--on-type-mismatch: want skip or error, got %q", f.typeMismatch))
+			return query.Options{}, usageErr(fmt.Sprintf("--on-type-mismatch: must be skip or error (got %q)", f.typeMismatch))
 		}
 		opts.TypeMismatch = f.typeMismatch
 	}
@@ -200,7 +200,7 @@ func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, erro
 	opts.SortMissing = col.Query.SortMissing
 	if f.sortMissing != "" {
 		if f.sortMissing != "last" && f.sortMissing != "lowest" {
-			return query.Options{}, usageErr(fmt.Sprintf("--sort-missing: want last or lowest, got %q", f.sortMissing))
+			return query.Options{}, usageErr(fmt.Sprintf("--sort-missing: must be last or lowest (got %q)", f.sortMissing))
 		}
 		opts.SortMissing = f.sortMissing
 	}
@@ -237,7 +237,7 @@ func newItemGetCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "get <collection>/<item>",
 		Short: "Print an item (frontmatter and body by default).",
-		Args:  cobra.ExactArgs(1),
+		Args:  exactArgs(1, "item get <collection>/<item>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if frontmatterOnly && bodyOnly {
 				return usageErr("--frontmatter and --body are mutually exclusive")
@@ -301,7 +301,7 @@ Assignments are YAML-decoded, so numbers/booleans/arrays are supported:
   katalyst item add notes/dune title=Dune year=1965 tags='[sci-fi,classic]'
 
 The result is validated before writing (use --no-validate to bypass).`,
-		Args: cobra.MinimumNArgs(1),
+		Args: minArgs(1, "item add <collection>/<item> [key=value ...]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			e, err := newEngine(schemaFlag)
 			if err != nil {
@@ -313,11 +313,11 @@ The result is validated before writing (use --no-validate to bypass).`,
 			}
 			c, ok := e.proj.Collection(sel.Collection)
 			if !ok {
-				return usageErr(fmt.Sprintf("unknown collection %q", sel.Collection))
+				return unknownCollectionErr(sel.Collection)
 			}
 			path := project.ItemPath(c, sel.Item)
 			if _, err := os.Stat(path); err == nil {
-				return usageErr(fmt.Sprintf("%s/%s already exists; refusing to overwrite", c.Name, sel.Item))
+				return usageErr(fmt.Sprintf("%q already exists; refusing to overwrite", c.Name+"/"+sel.Item))
 			}
 
 			meta := map[string]any{}
@@ -371,7 +371,7 @@ Values are YAML-decoded, so numbers/booleans/arrays are supported:
 
 The resulting document is validated before writing (use --no-validate to
 bypass). Key removal (--unset) is out of scope for v0.`,
-		Args: cobra.MinimumNArgs(2),
+		Args: minArgs(2, "item update <collection>/<item> key=value [key=value ...]"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			e, err := newEngine(schemaFlag)
 			if err != nil {
@@ -436,7 +436,7 @@ func newItemDeleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete <collection>/<item> [<collection>/<item> ...]",
 		Short: "Delete one or more items.",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  minArgs(1, "item delete <collection>/<item> ..."),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -461,7 +461,7 @@ func newItemDeleteCmd() *cobra.Command {
 
 			for _, item := range items {
 				if err := os.Remove(item.Path); err != nil {
-					return usageErr(fmt.Sprintf("delete: %v", err))
+					return usageErr(fmt.Sprintf("delete %s: %v", item.Path, err))
 				}
 			}
 			return nil

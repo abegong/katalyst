@@ -33,20 +33,11 @@ mean. Long output is truncated per inspector to --max-lines (Markdown only;
 --json is always complete); -v shows everything.
 
 Output is Markdown by default; --json emits the same evidence as JSON.`,
-		Args: func(_ *cobra.Command, args []string) error {
-			switch len(args) {
-			case 1:
-				return nil
-			case 0:
-				return usageErr("inspect: provide a directory to inspect, e.g. `katalyst inspect ./wiki`")
-			default:
-				return usageErr(fmt.Sprintf("inspect: expected one directory, got %d", len(args)))
-			}
-		},
+		Args: exactArgs(1, "inspect <path>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := args[0]
 			if info, err := os.Stat(path); err != nil || !info.IsDir() {
-				return usageErr(fmt.Sprintf("inspect: %q is not a readable directory", path))
+				return usageErr(fmt.Sprintf("%s: not a readable directory", path))
 			}
 
 			selected, err := selectInspectors(inspectors)
@@ -56,7 +47,7 @@ Output is Markdown by default; --json emits the same evidence as JSON.`,
 
 			corpus, err := inspect.Load(path)
 			if err != nil {
-				return usageErr(fmt.Sprintf("inspect: %v", err))
+				return usageErr(fmt.Sprintf("%s: %v", path, err))
 			}
 
 			evidence := make([]inspect.Evidence, 0, len(selected))
@@ -75,7 +66,7 @@ Output is Markdown by default; --json emits the same evidence as JSON.`,
 
 			if outFile != "" {
 				if err := os.WriteFile(outFile, rendered, 0o644); err != nil {
-					return usageErr(fmt.Sprintf("inspect: write %s: %v", outFile, err))
+					return usageErr(fmt.Sprintf("write %s: %v", outFile, err))
 				}
 				return nil
 			}
@@ -105,7 +96,7 @@ func selectInspectors(names []string) ([]inspect.Inspector, error) {
 	for _, n := range names {
 		ins, ok := inspect.ByName(n)
 		if !ok {
-			return nil, usageErr(fmt.Sprintf("inspect: unknown inspector %q", n))
+			return nil, usageErr(fmt.Sprintf("unknown inspector %q (try `katalyst inspect --help`)", n))
 		}
 		out = append(out, ins)
 	}

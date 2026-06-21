@@ -170,10 +170,10 @@ func TestInspect_missingDirectoryGivesHelpfulError(t *testing.T) {
 	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
 		t.Fatalf("expected exit code 2, got: %v", err)
 	}
-	// The message should name the missing directory, not Cobra's "accepts 1 arg(s)".
+	// A usage hint with the arg spec, not Cobra's "accepts 1 arg(s)".
 	combined := err.Error() + stderr
-	if !strings.Contains(combined, "directory") {
-		t.Errorf("error should mention a directory: %q", combined)
+	if !strings.Contains(combined, "usage: katalyst inspect <path>") {
+		t.Errorf("error should carry a usage hint: %q", combined)
 	}
 	if strings.Contains(combined, "arg(s)") {
 		t.Errorf("should not surface Cobra's default arity message: %q", combined)
