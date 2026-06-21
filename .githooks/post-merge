@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refresh agent links only if a synced path changed in the merge.
+old=""; new=""
+if git rev-parse --verify --quiet ORIG_HEAD >/dev/null; then old="ORIG_HEAD"; new="HEAD"; fi
+"$(git rev-parse --show-toplevel)/scripts/agent-links-hook.sh" "$old" "$new"

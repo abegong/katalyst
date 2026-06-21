@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refresh agent links only on branch checkouts ($3=1), never file checkouts ($3=0).
+[ "$3" = "1" ] || exit 0
+"$(git rev-parse --show-toplevel)/scripts/agent-links-hook.sh" "$1" "$2"

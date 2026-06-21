@@ -42,7 +42,7 @@ public/
 # macOS
 .DS_Store
 
-# AI agent tooling (local, not part of the project)
+# Generated agent-link mirrors (source of truth: .cursor/skills + AGENTS.md)
 .claude/
 .codex/
-CLAUDE.md
+**/CLAUDE.md
