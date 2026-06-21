@@ -1,12 +1,13 @@
 # internal/checks
 
-The check engine: the set of rules run against an item, and the result those
-rules produce.
+The check engine: the set of checks run against an item, and the result those
+checks produce.
 
 ## Check
 
-A single rule run against an item — a type constraint, a heading rule, a
-filename convention. Katalyst ships an **18-check engine** in three families:
+A single check run against an item — a type constraint, a heading requirement,
+a filename convention. Each comes from one of the **18 check types** Katalyst
+ships, in three families:
 
 - **Object** (6): `object` (full JSON Schema), plus targeted
   `object_required_field`, `object_field_type`, `object_field_enum`,
@@ -19,10 +20,10 @@ filename convention. Katalyst ships an **18-check engine** in three families:
   `filesystem_no_spaces_in_path`, `filesystem_parent_dir_in`,
   `filesystem_filename_prefix`.
 
-Each implements one `checks.Check` interface (`Run(Context) []Violation`)
-and is documented, per kind, in the generated rule reference. The per-kind
-descriptors in `registry.go` are the source of truth for that reference, so
-a new check cannot ship undocumented.
+Each check type implements one `checks.Check` interface (`Run(Context)
+[]Violation`) and is documented, per check type, in the generated check-types
+reference. The per-check-type descriptors in `registry.go` are the source of
+truth for that reference, so a new check type cannot ship undocumented.
 
 ## Validation result
 

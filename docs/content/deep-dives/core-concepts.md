@@ -101,7 +101,9 @@ Examples:
 
 ### Check
 
-A **check** is a rule that asserts a condition on items or their attributes.
+A **check** asserts a condition on items or their attributes. A **check type**
+is a reusable definition of such a condition; a **check instance** is one check
+type configured for a collection.
 
 Examples:
 

@@ -10,36 +10,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newRulesCmd builds the `rules` resource noun: a read-only view of the check
-// registry (checks.Descriptors() / checks.Families()) — the same catalog
-// cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
+// newCheckTypesCmd builds the `check-types` resource noun: a read-only view of
+// the check registry (checks.Descriptors() / checks.Families()) — the same
+// catalog cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
 // CRUD-shaped sub-verbs (list, show) rather than acting when invoked bare, so
 // it matches the collection/item/schema nouns. It loads no project, so its
-// sub-verbs run in any directory.
-func newRulesCmd() *cobra.Command {
+// sub-verbs run in any directory. `rules` is kept as a deprecated alias.
+func newCheckTypesCmd() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "rules",
-		Short: "Inspect the check kinds the engine can enforce, grouped by family.",
-		Long: `rules is a read-only view of the engine's check registry — the same
-catalog cmd/gendocs renders. List every kind grouped by family, or show one
-kind's docs-style readout. It reads no project, so it runs in any directory.`,
+		Use:     "check-types",
+		Aliases: []string{"rules"},
+		Short:   "Inspect the check types the engine can enforce, grouped by family.",
+		Long: `check-types is a read-only view of the engine's check registry — the same
+catalog cmd/gendocs renders. List every check type grouped by family, or show one
+check type's docs-style readout. It reads no project, so it runs in any directory.`,
 	}
-	c.AddCommand(newRulesListCmd(), newRulesShowCmd())
+	c.AddCommand(newCheckTypesListCmd(), newCheckTypesShowCmd())
 	return c
 }
 
-func newRulesListCmd() *cobra.Command {
+func newCheckTypesListCmd() *cobra.Command {
 	var asJSON bool
 	var family string
 	c := &cobra.Command{
 		Use:   "list",
-		Short: "List check kinds grouped by family.",
-		Long: `list prints the catalog of check kinds from the engine registry,
+		Short: "List check types grouped by family.",
+		Long: `list prints the catalog of check types from the engine registry,
 grouped by family. Narrow to one family with --family; --json emits
 machine-readable descriptors.`,
-		Args: maxArgs(0, "rules list"),
+		Args: maxArgs(0, "check-types list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRulesList(cmd, family, asJSON)
+			return runCheckTypesList(cmd, family, asJSON)
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
@@ -47,24 +48,24 @@ machine-readable descriptors.`,
 	return c
 }
 
-func newRulesShowCmd() *cobra.Command {
+func newCheckTypesShowCmd() *cobra.Command {
 	var asJSON bool
 	c := &cobra.Command{
-		Use:   "show <kind>",
-		Short: "Show one check kind's keys, example, and siblings.",
-		Long: `show prints a detailed, docs-style readout for one check kind: its
+		Use:   "show <check-type>",
+		Short: "Show one check type's keys, example, and siblings.",
+		Long: `show prints a detailed, docs-style readout for one check type: its
 family context, purpose, full configuration-key table, example, and the other
-kinds in its family. --json emits the machine-readable descriptor.`,
-		Args: exactArgs(1, "rules show <kind>"),
+check types in its family. --json emits the machine-readable descriptor.`,
+		Args: exactArgs(1, "check-types show <check-type>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRulesDetail(cmd, args[0], asJSON)
+			return runCheckTypesDetail(cmd, args[0], asJSON)
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
 	return c
 }
 
-func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
+func runCheckTypesList(cmd *cobra.Command, family string, asJSON bool) error {
 	descriptors := checks.Descriptors()
 	families := checks.Families()
 	if family != "" {
@@ -78,7 +79,7 @@ func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
 	}
 
 	if asJSON {
-		return writeRulesJSON(cmd, jsonDescriptors(descriptors))
+		return writeCheckTypesJSON(cmd, jsonDescriptors(descriptors))
 	}
 
 	byFamily := map[string][]checks.Descriptor{}
@@ -93,10 +94,10 @@ func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
 		}
 		fmt.Fprintln(out, fam.Title)
 		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "KIND\tPURPOSE\tREQUIRED\tOPTIONAL")
+		fmt.Fprintln(tw, "CHECK TYPE\tPURPOSE\tREQUIRED\tOPTIONAL")
 		for _, d := range byFamily[fam.ID] {
 			req, opt := splitFields(d.Fields)
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", d.Kind, plainSummary(d.Summary), req, opt)
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", d.CheckType, plainSummary(d.Summary), req, opt)
 		}
 		if err := tw.Flush(); err != nil {
 			return err
@@ -105,20 +106,20 @@ func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
 	return nil
 }
 
-func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
-	d, ok := findDescriptor(kind)
+func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) error {
+	d, ok := findDescriptor(checkType)
 	if !ok {
-		return usageErr(fmt.Sprintf("unknown check kind %q (try `katalyst rules`)", kind))
+		return usageErr(fmt.Sprintf("unknown check type %q (try `katalyst check-types`)", checkType))
 	}
 	if asJSON {
-		return writeRulesJSON(cmd, jsonDescriptor(d))
+		return writeCheckTypesJSON(cmd, jsonDescriptor(d))
 	}
 
 	fam, _ := findFamily(d.Family)
 	out := cmd.OutOrStdout()
-	// Breadcrumb header, echoing how the docs nest family → rule page.
+	// Breadcrumb header, echoing how the docs nest family → check-type page.
 	fmt.Fprintf(out, "%s › %s\n\n", fam.Title, d.Title)
-	fmt.Fprintf(out, "kind:    %s\n", d.Kind)
+	fmt.Fprintf(out, "kind:    %s\n", d.CheckType)
 	fmt.Fprintf(out, "family:  %s\n", d.Family)
 	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
 	fmt.Fprintf(out, "\n%s\n", fam.Intro)
@@ -142,7 +143,7 @@ func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
 			return err
 		}
 	} else {
-		fmt.Fprint(out, "\nThis rule takes no configuration keys.\n")
+		fmt.Fprint(out, "\nThis check type takes no configuration keys.\n")
 	}
 
 	fmt.Fprintf(out, "\nexample:\n%s\n", indentLines(d.ConfigExample, "  "))
@@ -153,10 +154,10 @@ func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
 	return nil
 }
 
-// findDescriptor returns the descriptor whose Kind equals kind.
-func findDescriptor(kind string) (checks.Descriptor, bool) {
+// findDescriptor returns the descriptor whose CheckType equals checkType.
+func findDescriptor(checkType string) (checks.Descriptor, bool) {
 	for _, d := range checks.Descriptors() {
-		if string(d.Kind) == kind {
+		if string(d.CheckType) == checkType {
 			return d, true
 		}
 	}
@@ -194,18 +195,18 @@ func familyDescriptors(id string) []checks.Descriptor {
 	return out
 }
 
-// familySiblings returns the other kinds in d's family, in registry order.
+// familySiblings returns the other check types in d's family, in registry order.
 func familySiblings(d checks.Descriptor) []string {
 	var out []string
 	for _, o := range checks.Descriptors() {
-		if o.Family == d.Family && o.Kind != d.Kind {
-			out = append(out, string(o.Kind))
+		if o.Family == d.Family && o.CheckType != d.CheckType {
+			out = append(out, string(o.CheckType))
 		}
 	}
 	return out
 }
 
-// splitFields partitions a check's fields into comma-joined required and
+// splitFields partitions a check type's fields into comma-joined required and
 // optional name lists, using an em dash when a side is empty.
 func splitFields(fields []checks.Field) (required, optional string) {
 	var req, opt []string
@@ -226,7 +227,7 @@ func joinOrDash(names []string) string {
 	return strings.Join(names, ", ")
 }
 
-func writeRulesJSON(cmd *cobra.Command, v any) error {
+func writeCheckTypesJSON(cmd *cobra.Command, v any) error {
 	enc := json.NewEncoder(cmd.OutOrStdout())
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)

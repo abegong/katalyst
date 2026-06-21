@@ -84,7 +84,7 @@ Every error message is one line:
 1. **Lowercase, no trailing period.** Go error convention; errors compose into
    larger ones. Hints may contain a backticked command verbatim.
 2. **Quote user-supplied tokens with `%q`** — identifiers (collection, item,
-   schema, inspector, check kind), selectors, flag *values*. Never quote the
+   schema, inspector, check type), selectors, flag *values*. Never quote the
    flag name itself (it's literal: `--limit`, not `"--limit"`).
 3. **Paths are bare** in the leading "diagnostic" position
    (`notes/dune.md: not a directory`) and in IO errors (`write report.md: …`),
@@ -171,7 +171,7 @@ Grammar (representative sites; the rule applies to all):
 - [ ] too many args → standard arity message, exit 2
 - [ ] unknown flag → lowercased usage error, exit 2 (not Cobra's exit 1)
 - [ ] `unknown collection %q` carries a `try \`katalyst collection list\`` hint
-- [ ] `unknown schema` / `unknown inspector` / `unknown check kind` carry their
+- [ ] `unknown schema` / `unknown inspector` / `unknown check type` carry their
       discovery hints
 - [ ] refuse-overwrite quotes the selector (`%q`), exit 2
 - [ ] flag enumeration errors read `must be a, b, or c (got %q)`
@@ -206,8 +206,8 @@ standardized form. Sites already conformant are omitted.
 
 **`cmd/schema.go`**: already close; ensure `unknown schema %q (try …)` hint kept; `read %s: %w` conforms.
 
-**`cmd/rules.go`**: enumeration/`unknown` messages aligned to the grammar
-(`unknown check kind %q (try \`katalyst rules\`)`).
+**`cmd/check_types.go`**: enumeration/`unknown` messages aligned to the grammar
+(`unknown check type %q (try \`katalyst check-types\`)`).
 
 **Arity validators** (`collection get`, `item list/get/add/update/delete`,
 `schema show`): replace `cobra.ExactArgs`/`MinimumNArgs` with the shared helper.

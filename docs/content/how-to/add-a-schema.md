@@ -87,5 +87,5 @@ or `internal/config/README.md` for why.
 
 ## See also
 
-- [Object validation reference]({{< relref "../reference/rules/objects/object.md" >}})
+- [Object validation reference]({{< relref "../reference/check-types/objects/object.md" >}})
 - [Inspect schemas]: `katalyst schema list` and `katalyst schema show <name>`.

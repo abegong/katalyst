@@ -33,10 +33,10 @@ depth:
 ```bash
 katalyst collection list          # the set
 katalyst item get notes/dune      # one item, depth 2
-katalyst rules show object_required_field
+katalyst check-types show object_required_field
 ```
 
-`collection`, `item`, `schema`, and `rules` are resource nouns. A noun
+`check-types`, `collection`, `item`, and `schema` are resource nouns. A noun
 invoked bare (`katalyst item`) prints help — it is never itself an action.
 
 ## The placement rule
@@ -79,6 +79,7 @@ The grouping is visible at the surface: `katalyst` with no arguments lists
 **Verbs** and **Resources** under separate headings rather than one
 alphabetized blob, so the grammar reads off the help screen.
 
-`rules` was the last command brought into this scheme: it began as a bare noun
-that listed when invoked directly, and was split into `rules list` /
-`rules show` so it matches the other resource nouns.
+`check-types` (originally `rules`) was the last command brought into this
+scheme: it began as a bare noun that listed when invoked directly, and was
+split into `check-types list` / `check-types show` so it matches the other
+resource nouns.

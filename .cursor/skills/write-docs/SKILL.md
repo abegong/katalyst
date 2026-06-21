@@ -78,8 +78,8 @@ for code conventions, `docs/` for the published Hugo site (getting-started,
 how-to, reference, deep-dives, contributing), `product/specs/` for in-flight
 specs,
 `README.md` for the overview, Go doc comments for the API **and package
-architecture/rationale**. Rule reference pages under `docs/reference/rules/` are
-generated — never hand-edit them.
+architecture/rationale**. Check-type reference pages under
+`docs/reference/check-types/` are generated — never hand-edit them.
 
 ## Exemplars
 

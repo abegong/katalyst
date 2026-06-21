@@ -32,4 +32,4 @@ collection under `.katalyst/collections/`, then run `katalyst check`.
 
 Next:
 - [Configuration]({{< relref "reference/configuration.md" >}})
-- [Rules Reference]({{< relref "reference/rules/_index.md" >}})
+- [Check types reference]({{< relref "reference/check-types/_index.md" >}})

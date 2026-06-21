@@ -66,38 +66,43 @@ type Config struct {
 	Collections []Collection
 }
 
-// CheckKind identifies the check implementation attached to a collection.
-type CheckKind string
+// CheckType identifies the reusable check definition attached to a
+// collection. Its string value is the `kind:` selector in YAML.
+type CheckType string
 
 const (
-	CheckObject                        CheckKind = "object"
-	CheckObjectRequiredField           CheckKind = "object_required_field"
-	CheckObjectFieldType               CheckKind = "object_field_type"
-	CheckObjectFieldEnum               CheckKind = "object_field_enum"
-	CheckObjectNumberRange             CheckKind = "object_number_range"
-	CheckObjectStringLength            CheckKind = "object_string_length"
-	CheckMarkdownTitleMatchesH1        CheckKind = "markdown_title_matches_h1"
-	CheckMarkdownRequiresH1            CheckKind = "markdown_requires_h1"
-	CheckMarkdownSingleH1              CheckKind = "markdown_single_h1"
-	CheckMarkdownNoHeadingLevelJumps   CheckKind = "markdown_no_heading_level_jumps"
-	CheckMarkdownRequiredSection       CheckKind = "markdown_required_section"
-	CheckMarkdownCodeFenceHasLanguage  CheckKind = "markdown_code_fence_language_required"
-	CheckFilesystemFilenameMatchesSlug CheckKind = "filesystem_filename_matches_slug"
-	CheckFilesystemExtensionIn         CheckKind = "filesystem_extension_in"
-	CheckFilesystemFilenameKebabCase   CheckKind = "filesystem_filename_kebab_case"
-	CheckFilesystemNoSpacesInPath      CheckKind = "filesystem_no_spaces_in_path"
-	CheckFilesystemParentDirIn         CheckKind = "filesystem_parent_dir_in"
-	CheckFilesystemFilenamePrefix      CheckKind = "filesystem_filename_prefix"
+	CheckObject                        CheckType = "object"
+	CheckObjectRequiredField           CheckType = "object_required_field"
+	CheckObjectFieldType               CheckType = "object_field_type"
+	CheckObjectFieldEnum               CheckType = "object_field_enum"
+	CheckObjectNumberRange             CheckType = "object_number_range"
+	CheckObjectStringLength            CheckType = "object_string_length"
+	CheckMarkdownTitleMatchesH1        CheckType = "markdown_title_matches_h1"
+	CheckMarkdownRequiresH1            CheckType = "markdown_requires_h1"
+	CheckMarkdownSingleH1              CheckType = "markdown_single_h1"
+	CheckMarkdownNoHeadingLevelJumps   CheckType = "markdown_no_heading_level_jumps"
+	CheckMarkdownRequiredSection       CheckType = "markdown_required_section"
+	CheckMarkdownCodeFenceHasLanguage  CheckType = "markdown_code_fence_language_required"
+	CheckFilesystemFilenameMatchesSlug CheckType = "filesystem_filename_matches_slug"
+	CheckFilesystemExtensionIn         CheckType = "filesystem_extension_in"
+	CheckFilesystemFilenameKebabCase   CheckType = "filesystem_filename_kebab_case"
+	CheckFilesystemNoSpacesInPath      CheckType = "filesystem_no_spaces_in_path"
+	CheckFilesystemParentDirIn         CheckType = "filesystem_parent_dir_in"
+	CheckFilesystemFilenamePrefix      CheckType = "filesystem_filename_prefix"
 	defaultMarkdownTitleField                    = "title"
 	defaultFilesystemSlugField                   = "slug"
 )
 
-// Check configures one validation check.
-type Check struct {
-	Kind      CheckKind
+// CheckInstance is one configured check attached to a collection (one YAML
+// object inside `checks:`). Type selects the check type; the remaining
+// fields are its arguments.
+type CheckInstance struct {
+	Type CheckType
+	// FieldType is the JSON type required by object_field_type (the `type:`
+	// key); it is not the check type itself, which is Type.
+	FieldType string
 	Schema    string
 	Field     string
-	Type      string
 	Value     string
 	Values    []string
 	Min       *float64
@@ -122,7 +127,7 @@ type Collection struct {
 	// mirrors the first object check's schema, for display.
 	Schema string
 	// Checks to run against each item.
-	Checks []Check
+	Checks []CheckInstance
 	// Query holds the resolved `item list` query behavior for this
 	// collection (collection config over project config over defaults).
 	Query QuerySettings
@@ -347,12 +352,12 @@ func (c *Config) buildCollection(name string, rc rawCollection, projectQuery *ra
 		pattern = defaultPattern
 	}
 
-	checks := make([]Check, 0, len(rc.Checks)+1)
+	checks := make([]CheckInstance, 0, len(rc.Checks)+1)
 	if rc.Schema != "" {
 		if _, ok := c.Schemas[rc.Schema]; !ok {
 			return Collection{}, fmt.Errorf("collection %q: unknown schema %q", name, rc.Schema)
 		}
-		checks = append(checks, Check{Kind: CheckObject, Schema: rc.Schema})
+		checks = append(checks, CheckInstance{Type: CheckObject, Schema: rc.Schema})
 	}
 	for j, raw := range rc.Checks {
 		ch, err := normalizeCheck(raw, c.Schemas)
@@ -367,7 +372,7 @@ func (c *Config) buildCollection(name string, rc rawCollection, projectQuery *ra
 
 	schemaName := ""
 	for _, ch := range checks {
-		if ch.Kind == CheckObject {
+		if ch.Type == CheckObject {
 			schemaName = ch.Schema
 			break
 		}
@@ -571,110 +576,110 @@ func resolve(root, p string) string {
 	return filepath.Clean(filepath.Join(root, p))
 }
 
-func normalizeCheck(raw rawCheck, schemas map[string]string) (Check, error) {
-	kind := CheckKind(strings.TrimSpace(raw.Kind))
-	switch kind {
+func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, error) {
+	checkType := CheckType(strings.TrimSpace(raw.Kind))
+	switch checkType {
 	case CheckObject:
 		if raw.Schema == "" {
-			return Check{}, errors.New(`object check requires "schema"`)
+			return CheckInstance{}, errors.New(`object check requires "schema"`)
 		}
 		if _, ok := schemas[raw.Schema]; !ok {
-			return Check{}, fmt.Errorf("unknown schema %q", raw.Schema)
+			return CheckInstance{}, fmt.Errorf("unknown schema %q", raw.Schema)
 		}
 		if raw.Field != "" {
-			return Check{}, errors.New(`object check does not support "field"`)
+			return CheckInstance{}, errors.New(`object check does not support "field"`)
 		}
-		return Check{Kind: CheckObject, Schema: raw.Schema}, nil
+		return CheckInstance{Type: CheckObject, Schema: raw.Schema}, nil
 	case CheckObjectRequiredField:
 		if raw.Field == "" {
-			return Check{}, errors.New(`object_required_field requires "field"`)
+			return CheckInstance{}, errors.New(`object_required_field requires "field"`)
 		}
-		return Check{Kind: kind, Field: raw.Field}, nil
+		return CheckInstance{Type: checkType, Field: raw.Field}, nil
 	case CheckObjectFieldType:
 		if raw.Field == "" {
-			return Check{}, errors.New(`object_field_type requires "field"`)
+			return CheckInstance{}, errors.New(`object_field_type requires "field"`)
 		}
 		if raw.Type == "" {
-			return Check{}, errors.New(`object_field_type requires "type"`)
+			return CheckInstance{}, errors.New(`object_field_type requires "type"`)
 		}
-		return Check{Kind: kind, Field: raw.Field, Type: raw.Type}, nil
+		return CheckInstance{Type: checkType, Field: raw.Field, FieldType: raw.Type}, nil
 	case CheckObjectFieldEnum:
 		if raw.Field == "" {
-			return Check{}, errors.New(`object_field_enum requires "field"`)
+			return CheckInstance{}, errors.New(`object_field_enum requires "field"`)
 		}
 		if len(raw.Values) == 0 {
-			return Check{}, errors.New(`object_field_enum requires "values"`)
+			return CheckInstance{}, errors.New(`object_field_enum requires "values"`)
 		}
-		return Check{Kind: kind, Field: raw.Field, Values: raw.Values}, nil
+		return CheckInstance{Type: checkType, Field: raw.Field, Values: raw.Values}, nil
 	case CheckObjectNumberRange:
 		if raw.Field == "" {
-			return Check{}, errors.New(`object_number_range requires "field"`)
+			return CheckInstance{}, errors.New(`object_number_range requires "field"`)
 		}
 		if raw.Min == nil && raw.Max == nil {
-			return Check{}, errors.New(`object_number_range requires "min" or "max"`)
+			return CheckInstance{}, errors.New(`object_number_range requires "min" or "max"`)
 		}
-		return Check{Kind: kind, Field: raw.Field, Min: raw.Min, Max: raw.Max}, nil
+		return CheckInstance{Type: checkType, Field: raw.Field, Min: raw.Min, Max: raw.Max}, nil
 	case CheckObjectStringLength:
 		if raw.Field == "" {
-			return Check{}, errors.New(`object_string_length requires "field"`)
+			return CheckInstance{}, errors.New(`object_string_length requires "field"`)
 		}
 		if raw.MinLength == 0 && raw.MaxLength == 0 {
-			return Check{}, errors.New(`object_string_length requires "min_length" or "max_length"`)
+			return CheckInstance{}, errors.New(`object_string_length requires "min_length" or "max_length"`)
 		}
-		return Check{Kind: kind, Field: raw.Field, MinLength: raw.MinLength, MaxLength: raw.MaxLength}, nil
+		return CheckInstance{Type: checkType, Field: raw.Field, MinLength: raw.MinLength, MaxLength: raw.MaxLength}, nil
 	case CheckMarkdownTitleMatchesH1:
 		if raw.Schema != "" {
-			return Check{}, errors.New(`markdown_title_matches_h1 does not support "schema"`)
+			return CheckInstance{}, errors.New(`markdown_title_matches_h1 does not support "schema"`)
 		}
 		field := raw.Field
 		if field == "" {
 			field = defaultMarkdownTitleField
 		}
-		return Check{Kind: CheckMarkdownTitleMatchesH1, Field: field}, nil
+		return CheckInstance{Type: CheckMarkdownTitleMatchesH1, Field: field}, nil
 	case CheckMarkdownRequiresH1:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckMarkdownSingleH1:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckMarkdownNoHeadingLevelJumps:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckMarkdownRequiredSection:
 		if raw.Heading == "" {
-			return Check{}, errors.New(`markdown_required_section requires "heading"`)
+			return CheckInstance{}, errors.New(`markdown_required_section requires "heading"`)
 		}
-		return Check{Kind: kind, Heading: raw.Heading}, nil
+		return CheckInstance{Type: checkType, Heading: raw.Heading}, nil
 	case CheckMarkdownCodeFenceHasLanguage:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckFilesystemFilenameMatchesSlug:
 		if raw.Schema != "" {
-			return Check{}, errors.New(`filesystem_filename_matches_slug does not support "schema"`)
+			return CheckInstance{}, errors.New(`filesystem_filename_matches_slug does not support "schema"`)
 		}
 		field := raw.Field
 		if field == "" {
 			field = defaultFilesystemSlugField
 		}
-		return Check{Kind: CheckFilesystemFilenameMatchesSlug, Field: field}, nil
+		return CheckInstance{Type: CheckFilesystemFilenameMatchesSlug, Field: field}, nil
 	case CheckFilesystemExtensionIn:
 		if len(raw.Values) == 0 {
-			return Check{}, errors.New(`filesystem_extension_in requires "values"`)
+			return CheckInstance{}, errors.New(`filesystem_extension_in requires "values"`)
 		}
-		return Check{Kind: kind, Values: raw.Values}, nil
+		return CheckInstance{Type: checkType, Values: raw.Values}, nil
 	case CheckFilesystemFilenameKebabCase:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckFilesystemNoSpacesInPath:
-		return Check{Kind: kind}, nil
+		return CheckInstance{Type: checkType}, nil
 	case CheckFilesystemParentDirIn:
 		if len(raw.Values) == 0 {
-			return Check{}, errors.New(`filesystem_parent_dir_in requires "values"`)
+			return CheckInstance{}, errors.New(`filesystem_parent_dir_in requires "values"`)
 		}
-		return Check{Kind: kind, Values: raw.Values}, nil
+		return CheckInstance{Type: checkType, Values: raw.Values}, nil
 	case CheckFilesystemFilenamePrefix:
 		if raw.Value == "" {
-			return Check{}, errors.New(`filesystem_filename_prefix requires "value"`)
+			return CheckInstance{}, errors.New(`filesystem_filename_prefix requires "value"`)
 		}
-		return Check{Kind: kind, Value: raw.Value}, nil
+		return CheckInstance{Type: checkType, Value: raw.Value}, nil
 	case "":
-		return Check{}, errors.New(`check kind is required`)
+		return CheckInstance{}, errors.New(`check type is required`)
 	default:
-		return Check{}, fmt.Errorf("unknown check kind %q", raw.Kind)
+		return CheckInstance{}, fmt.Errorf("unknown check type %q", raw.Kind)
 	}
 }

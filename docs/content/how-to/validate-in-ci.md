@@ -46,7 +46,7 @@ katalyst fix --check
     ./bin/katalyst fix --check
 ```
 
-The `check` step enforces schema and structural rules; the `fix --check`
+The `check` step enforces schema and structural checks; the `fix --check`
 step enforces canonical frontmatter without modifying files. See
 `internal/frontmatter/README.md` for why `fix` is opinionated and
 non-destructive in this mode.

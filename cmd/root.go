@@ -45,10 +45,10 @@ markdown files against JSON Schema documents.`,
 		newInspectCmd(),
 	)
 	addGrouped(root, "resources",
+		newCheckTypesCmd(),
 		newCollectionCmd(),
 		newItemCmd(),
 		newSchemaCmd(),
-		newRulesCmd(),
 	)
 
 	return root

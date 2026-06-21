@@ -35,8 +35,8 @@ This list is the template — there is no separate template file.
   the spec's Documentation updates and made concrete: which doc changes in which
   phase. Developer docs (`AGENTS.md`, agent skills under `.cursor/skills/`, Go
   doc comments) and user docs (the Hugo pages under `docs/`) appear as phase
-  sub-steps with **File:** lines and in Key Files; for a new check, regenerate
-  the rule reference with `make docs-gen`. `_None._` only when the change is
+  sub-steps with **File:** lines and in Key Files; for a new check type,
+  regenerate the check-types reference with `make docs-gen`. `_None._` only when the change is
   purely internal.
 - **Out of Scope** — What this plan explicitly defers. Prevents scope creep.
 

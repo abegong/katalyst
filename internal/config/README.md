@@ -58,7 +58,7 @@ collections replaced it for three reasons:
   one collection — the one whose directory contains it — so there is no
   "first match wins" to reason about.
 - **More than schemas.** A collection carries a whole `checks:` list
-  (markdown and filesystem rules, not just an object schema), which the old
+  (markdown and filesystem checks, not just an object schema), which the old
   `{paths, schema}` shape could not express cleanly.
 
 The `schema: <name>` shorthand on a collection is the one piece of the old
