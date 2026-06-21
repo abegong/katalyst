@@ -34,6 +34,19 @@ at a developer with work to do.
   before coining a term; add one only when the concept needs it. Descriptive for
   internal abstractions; evocative names reserved for user-facing features.
 
+## Conventions
+
+Mechanical choices — apply them consistently across every page.
+
+- **Product vs. command.** Write the product as **Katalyst** in prose; reserve
+  the code form `katalyst` for the CLI command or binary (`run katalyst check`).
+  "Katalyst validates frontmatter" — not "`katalyst` validates frontmatter."
+- **Em dashes.** Use the `—` character with a space on each side
+  (`a term — its definition`). Don't write `---` or `--` in source.
+- **Person.** Second person ("you") and declarative by default. Reserve the
+  first person ("I", "my") for the About-me and other named-author sections;
+  never the editorial "we" (see Voice).
+
 ## Shape
 
 Default to this order. Cut any section that doesn't earn its tokens.
