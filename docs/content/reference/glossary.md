@@ -22,7 +22,7 @@ how each term maps onto today's code is documented in the per-package
 | **Collection** | A named entry in `collections:` — a directory, a filename `pattern`, and the checks its items must pass. |
 | **Item** | One file in a collection that matches its pattern. Its id is the filename stem. |
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |
-| **Rule** | A check *kind* — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …). `katalyst rules` lists them. |
+| **Rule** | A check *kind* — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …). `katalyst rules list` lists them. |
 | **Check** | A single rule run against an item (object, markdown, or filesystem family). |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
 | **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
@@ -37,8 +37,8 @@ how each term maps onto today's code is documented in the per-package
 
 - A **rule** is the kind/definition; a **check** is that rule running against
   a specific item, and a **violation** is a check that failed. The [rules
-  reference]({{< relref "rules/_index.md" >}}) and `katalyst rules` enumerate
-  rules.
+  reference]({{< relref "rules/_index.md" >}}) and `katalyst rules list`
+  enumerate rules.
 - Prefer **schema** for what users author and **validator** only for the
   runtime check itself — never "validator" as a thing users write.
 - Use **frontmatter** for the on-disk block and **metadata** for the parsed

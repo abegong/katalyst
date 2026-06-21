@@ -3,6 +3,34 @@
 Conventions specific to the CLI layer. Root standards live in the repo
 [`AGENTS.md`](../AGENTS.md); don't repeat them here.
 
+## Command placement
+
+The command surface is two grammars, kept apart (the full rationale is in
+[docs/deep-dives/command-organization.md](../docs/content/deep-dives/command-organization.md)).
+When adding a top-level command, decide which family it joins:
+
+- **Blessed verb** — `katalyst <verb> [selector ...]` — a cross-cutting
+  operation over content, accepting a selector at any depth and multiple
+  selectors (`check`, `fix`). `init` and `inspect` are verbs too — they take
+  flags or a path rather than a selector.
+- **Resource noun** — `katalyst <noun> <verb> <selector>` — a group whose
+  CRUD-shaped sub-verbs act on one resource at a fixed depth (`collection`,
+  `item`, `schema`, `rules`).
+
+The rule, concretely:
+
+- No top-level CRUD verbs — CRUD lives under its noun (`item add`, not `add`).
+- No cross-cutting verb under a noun — `check` stays a blessed verb, never
+  `item check`.
+- A resource noun is built with no `RunE`, so invoking it bare prints help
+  rather than running a default action. See `rules.go` / `collection.go` for
+  the pattern: a parent command that only `AddCommand`s its sub-verbs.
+
+When you change the no-args help surface (a new command, a renamed group, a
+changed `Short`), update the golden string in `root_test.go`. Register a new
+command in its help group in `root.go` (`addGrouped`), not a bare
+`AddCommand` — an ungrouped command falls to "Additional Commands".
+
 ## Error messages
 
 One grammar for every user-facing error:

@@ -98,8 +98,8 @@ you add a fixture.
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.
 - The check registry (`internal/checks/registry.go`) is the single source of
-  truth for check kinds. Both `cmd/gendocs` and `katalyst rules` read it, and
-  `registry_test.go` fails if a dispatched kind has no descriptor — a new
+  truth for check kinds. Both `cmd/gendocs` and `katalyst rules list` read it,
+  and `registry_test.go` fails if a dispatched kind has no descriptor — a new
   check ships with its descriptor. The `json:` tags on `Descriptor`/`Field`
-  are the published wire contract for `katalyst rules --json`; keep them
+  are the published wire contract for `katalyst rules list --json`; keep them
   stable.

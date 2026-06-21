@@ -9,7 +9,7 @@ import "github.com/katabase-ai/katalyst/internal/config"
 // ship undocumented.
 
 // Field describes one configuration key accepted by a check. The json tags
-// are the published wire contract for `katalyst rules --json`; keep them
+// are the published wire contract for `katalyst rules list --json`; keep them
 // stable and snake_case (matching the config keys they describe) even if the
 // Go field names change.
 type Field struct {
@@ -20,7 +20,7 @@ type Field struct {
 }
 
 // Descriptor is the machine-readable record for one check kind. Its json tags
-// are the wire contract for `katalyst rules --json`; see Field.
+// are the wire contract for `katalyst rules list --json`; see Field.
 type Descriptor struct {
 	// Kind is the value used as `kind:` in katalyst.yaml.
 	Kind config.CheckKind `json:"kind"`
