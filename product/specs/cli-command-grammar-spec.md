@@ -210,10 +210,17 @@ and the grouped-help model. Supporting moves at graduation:
 
 - **`docs/reference/commands.md`** — document the `rules list` / `rules show`
   surface, and group the page's command list to mirror the grouped help.
-- **`AGENTS.md`** — a one-line pointer under "Adding code": new top-level
-  commands obey the placement rule; see the deep-dive.
+- **A new co-located `cmd/AGENTS.md`** — the actionable placement rule,
+  next to where commands are added. The repo has only the root `AGENTS.md`
+  today; this realizes the co-located-per-package pattern that
+  [how-we-document](../../docs/content/contributing/how-we-document.md)
+  already describes ("rules that don't belong at the root"). The placement
+  rule is `cmd`-specific — it only fires when someone adds a Cobra command —
+  so it lives there, not duplicated at the root.
 
 The rationale for splitting it this way: the deep-dive is the single source of
-truth for the *why* and the mental model (read once, understood); `AGENTS.md`
-only needs the actionable pointer so a contributor adding a command knows the
-rule exists and where to read it.
+truth for the *why* and the mental model (read once, understood); `cmd/AGENTS.md`
+carries only the actionable pointer so a contributor editing `cmd/` knows the
+rule exists and where to read it. The root `AGENTS.md` needs no new line —
+its "Layout" section already points at `cmd/`, and per how-we-document a
+co-located file should not repeat root standards.
