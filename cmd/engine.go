@@ -140,18 +140,18 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 			checkList = append(checkList, checks.MarkdownRequiredSection{Heading: ch.Heading})
 		case config.CheckMarkdownCodeFenceHasLanguage:
 			checkList = append(checkList, checks.MarkdownCodeFenceHasLanguage{})
-		case config.CheckFilesystemFilenameMatchesSlug:
-			checkList = append(checkList, checks.FilenameMatchesSlug{Field: ch.Field})
 		case config.CheckFilesystemExtensionIn:
 			checkList = append(checkList, checks.FilesystemExtensionIn{Values: ch.Values})
-		case config.CheckFilesystemFilenameKebabCase:
-			checkList = append(checkList, checks.FilesystemFilenameKebabCase{})
-		case config.CheckFilesystemNoSpacesInPath:
-			checkList = append(checkList, checks.FilesystemNoSpacesInPath{})
 		case config.CheckFilesystemParentDirIn:
 			checkList = append(checkList, checks.FilesystemParentDirIn{Values: ch.Values})
-		case config.CheckFilesystemFilenamePrefix:
-			checkList = append(checkList, checks.FilesystemFilenamePrefix{Value: ch.Value})
+		case config.CheckFilesystemNameCase:
+			checkList = append(checkList, checks.NameCase{Style: ch.Style, Target: ch.Target})
+		case config.CheckFilesystemNameMatchesField:
+			checkList = append(checkList, checks.NameMatchesField{Field: ch.Field, Transform: ch.Transform, Target: ch.Target})
+		case config.CheckFilesystemNameAffix:
+			checkList = append(checkList, checks.NameAffix{Prefix: ch.Prefix, Suffix: ch.Suffix, Target: ch.Target})
+		case config.CheckFilesystemPathCharset:
+			checkList = append(checkList, checks.PathCharset{Allow: ch.Allow, Deny: ch.Deny})
 		}
 	}
 

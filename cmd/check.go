@@ -115,9 +115,10 @@ func checkItem(out, errOut io.Writer, e *engine, item project.Item) (bool, error
 	instance := dropKey(doc.Meta, "schema")
 
 	result := checks.RunAll(checks.Context{
-		FilePath: item.Path,
-		Doc:      doc,
-		Meta:     instance,
+		FilePath:       item.Path,
+		CollectionRoot: item.Collection.Dir,
+		Doc:            doc,
+		Meta:           instance,
 	}, checkList)
 	if len(result) == 0 {
 		fmt.Fprintf(out, "%s: OK\n", item.Path)
@@ -153,7 +154,7 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 		return 0, err
 	}
 	instance := dropKey(doc.Meta, "schema")
-	result := checks.RunAll(checks.Context{FilePath: item.Path, Doc: doc, Meta: instance}, checkList)
+	result := checks.RunAll(checks.Context{FilePath: item.Path, CollectionRoot: c.Dir, Doc: doc, Meta: instance}, checkList)
 	return len(result), nil
 }
 

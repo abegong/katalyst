@@ -5,8 +5,13 @@ import "github.com/katabase-ai/katalyst/internal/frontmatter"
 // Context carries all data a check may need.
 type Context struct {
 	FilePath string
-	Doc      *frontmatter.Document
-	Meta     map[string]any
+	// CollectionRoot is the absolute directory of the item's collection.
+	// Path/filename targets that span directories (path-segments, path
+	// depth) are resolved relative to it. Empty falls back to FilePath's
+	// own directory.
+	CollectionRoot string
+	Doc            *frontmatter.Document
+	Meta           map[string]any
 }
 
 // Violation is one failed check.

@@ -230,15 +230,17 @@ checks:
   - kind: markdown_required_section
     heading: Summary
   - kind: markdown_code_fence_language_required
-  - kind: filesystem_filename_matches_slug
+  - kind: filesystem_name_matches_field
   - kind: filesystem_extension_in
     values: [.md]
-  - kind: filesystem_filename_kebab_case
-  - kind: filesystem_no_spaces_in_path
+  - kind: filesystem_name_case
+    style: kebab
+  - kind: filesystem_path_charset
+    deny: [" "]
   - kind: filesystem_parent_dir_in
     values: [books, notes]
-  - kind: filesystem_filename_prefix
-    value: book-
+  - kind: filesystem_name_affix
+    prefix: book-
 `,
 	})
 	cfg, err := config.Load(dir)
@@ -259,8 +261,11 @@ checks:
 	if got[6].Type != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
 		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
 	}
-	if got[12].Type != config.CheckFilesystemFilenameMatchesSlug || got[12].Field != "slug" {
-		t.Fatalf("check[12] = %+v, want filesystem default field slug", got[12])
+	if got[12].Type != config.CheckFilesystemNameMatchesField || got[12].Field != "slug" || got[12].Transform != "none" {
+		t.Fatalf("check[12] = %+v, want name_matches_field default field slug, transform none", got[12])
+	}
+	if got[14].Type != config.CheckFilesystemNameCase || got[14].Style != "kebab" {
+		t.Fatalf("check[14] = %+v, want name_case style kebab", got[14])
 	}
 }
 
