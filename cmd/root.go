@@ -29,11 +29,22 @@ markdown files against JSON Schema documents.`,
 		return usageErr(err.Error())
 	})
 
-	root.AddCommand(
+	// The command tree is two grammars (see cmd/AGENTS.md and
+	// docs/deep-dives/command-organization.md): verbs operate over content via
+	// selectors; resource nouns carry CRUD sub-verbs. Grouping the help output
+	// makes that split visible rather than alphabetizing them together.
+	root.AddGroup(
+		&cobra.Group{ID: "verbs", Title: "Verbs:"},
+		&cobra.Group{ID: "resources", Title: "Resources:"},
+	)
+
+	addGrouped(root, "verbs",
 		newInitCmd(),
 		newCheckCmd(),
 		newFixCmd(),
 		newInspectCmd(),
+	)
+	addGrouped(root, "resources",
 		newCollectionCmd(),
 		newItemCmd(),
 		newSchemaCmd(),
@@ -41,4 +52,12 @@ markdown files against JSON Schema documents.`,
 	)
 
 	return root
+}
+
+// addGrouped attaches each command to root under the given help group.
+func addGrouped(root *cobra.Command, groupID string, cmds ...*cobra.Command) {
+	for _, c := range cmds {
+		c.GroupID = groupID
+		root.AddCommand(c)
+	}
 }

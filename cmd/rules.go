@@ -10,46 +10,57 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newRulesCmd builds `katalyst rules`, a read-only view of the check registry
-// (checks.Descriptors() / checks.Families()) — the same catalog cmd/gendocs
-// renders. It mirrors the way the docs nest: the whole catalog, one family,
-// or one kind's rule page. It loads no project, so it runs in any directory.
+// newRulesCmd builds the `rules` resource noun: a read-only view of the check
+// registry (checks.Descriptors() / checks.Families()) — the same catalog
+// cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
+// CRUD-shaped sub-verbs (list, show) rather than acting when invoked bare, so
+// it matches the collection/item/schema nouns. It loads no project, so its
+// sub-verbs run in any directory.
 func newRulesCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "rules",
+		Short: "Inspect the check kinds the engine can enforce, grouped by family.",
+		Long: `rules is a read-only view of the engine's check registry — the same
+catalog cmd/gendocs renders. List every kind grouped by family, or show one
+kind's docs-style readout. It reads no project, so it runs in any directory.`,
+	}
+	c.AddCommand(newRulesListCmd(), newRulesShowCmd())
+	return c
+}
+
+func newRulesListCmd() *cobra.Command {
 	var asJSON bool
 	var family string
-	var kind string
 	c := &cobra.Command{
-		Use:   "rules [kind]",
-		Short: "List the check kinds the engine can enforce, grouped by family.",
-		Long: `rules prints the catalog of check kinds from the engine registry.
-
-With no arguments it lists every kind grouped by family. Narrow the list to
-one family with --family, or zero in on a single kind — positionally or via
---kind — for a detailed, docs-style readout of its keys, example, and
-siblings. It reads no project, so it runs in any directory; --json emits
-machine-readable descriptors at any level.`,
-		Args: maxArgs(1, "rules [kind]"),
+		Use:   "list",
+		Short: "List check kinds grouped by family.",
+		Long: `list prints the catalog of check kinds from the engine registry,
+grouped by family. Narrow to one family with --family; --json emits
+machine-readable descriptors.`,
+		Args: maxArgs(0, "rules list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// A kind may come positionally or via --kind; treat them as
-			// synonyms and reject a contradiction.
-			if len(args) == 1 {
-				if kind != "" && kind != args[0] {
-					return usageErr(fmt.Sprintf("conflicting kinds: %q and --kind %q", args[0], kind))
-				}
-				kind = args[0]
-			}
-			if kind != "" {
-				if family != "" {
-					return usageErr("--family narrows the list; pass a kind (or --kind) for detail, not both")
-				}
-				return runRulesDetail(cmd, kind, asJSON)
-			}
 			return runRulesList(cmd, family, asJSON)
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
 	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (objects, markdown, filesystem).")
-	c.Flags().StringVar(&kind, "kind", "", "Show the detailed readout for one check kind.")
+	return c
+}
+
+func newRulesShowCmd() *cobra.Command {
+	var asJSON bool
+	c := &cobra.Command{
+		Use:   "show <kind>",
+		Short: "Show one check kind's keys, example, and siblings.",
+		Long: `show prints a detailed, docs-style readout for one check kind: its
+family context, purpose, full configuration-key table, example, and the other
+kinds in its family. --json emits the machine-readable descriptor.`,
+		Args: exactArgs(1, "rules show <kind>"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runRulesDetail(cmd, args[0], asJSON)
+		},
+	}
+	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
 	return c
 }
 

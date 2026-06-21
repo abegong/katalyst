@@ -13,9 +13,9 @@ func TestRules_listsEveryKindGroupedByFamily(t *testing.T) {
 	// No project on disk: rules reads the engine registry, not config.
 	chdir(t, t.TempDir())
 
-	stdout, _, err := runRoot(t, "rules")
+	stdout, _, err := runRoot(t, "rules", "list")
 	if err != nil {
-		t.Fatalf("rules: %v", err)
+		t.Fatalf("rules list: %v", err)
 	}
 
 	for _, d := range checks.Descriptors() {
@@ -41,9 +41,9 @@ func TestRules_listsEveryKindGroupedByFamily(t *testing.T) {
 
 func TestRules_splitsRequiredAndOptionalKeys(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules")
+	stdout, _, err := runRoot(t, "rules", "list")
 	if err != nil {
-		t.Fatalf("rules: %v", err)
+		t.Fatalf("rules list: %v", err)
 	}
 
 	// object_number_range: field required, min/max optional.
@@ -62,11 +62,11 @@ func TestRules_splitsRequiredAndOptionalKeys(t *testing.T) {
 	}
 }
 
-func TestRulesKind_showsDetail(t *testing.T) {
+func TestRulesShow_showsDetail(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "object_required_field")
+	stdout, _, err := runRoot(t, "rules", "show", "object_required_field")
 	if err != nil {
-		t.Fatalf("rules object_required_field: %v", err)
+		t.Fatalf("rules show object_required_field: %v", err)
 	}
 	for _, want := range []string{
 		"object_required_field",      // kind id
@@ -81,9 +81,9 @@ func TestRulesKind_showsDetail(t *testing.T) {
 	}
 }
 
-func TestRulesKind_unknown_exit2(t *testing.T) {
+func TestRulesShow_unknown_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "no_such_kind")
+	_, _, err := runRoot(t, "rules", "show", "no_such_kind")
 	if err == nil {
 		t.Fatalf("expected error for unknown kind")
 	}
@@ -93,11 +93,11 @@ func TestRulesKind_unknown_exit2(t *testing.T) {
 	}
 }
 
-func TestRules_familyFiltersList(t *testing.T) {
+func TestRulesList_familyFiltersList(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "--family", "markdown")
+	stdout, _, err := runRoot(t, "rules", "list", "--family", "markdown")
 	if err != nil {
-		t.Fatalf("rules --family markdown: %v", err)
+		t.Fatalf("rules list --family markdown: %v", err)
 	}
 	if !strings.Contains(stdout, "Markdown Rules") {
 		t.Errorf("expected Markdown Rules heading, got: %q", stdout)
@@ -113,9 +113,9 @@ func TestRules_familyFiltersList(t *testing.T) {
 	}
 }
 
-func TestRules_unknownFamily_exit2(t *testing.T) {
+func TestRulesList_unknownFamily_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "--family", "nope")
+	_, _, err := runRoot(t, "rules", "list", "--family", "nope")
 	if err == nil {
 		t.Fatalf("expected error for unknown family")
 	}
@@ -125,11 +125,11 @@ func TestRules_unknownFamily_exit2(t *testing.T) {
 	}
 }
 
-func TestRules_familyJSONFiltersToFamily(t *testing.T) {
+func TestRulesList_familyJSONFiltersToFamily(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "--family", "filesystem", "--json")
+	stdout, _, err := runRoot(t, "rules", "list", "--family", "filesystem", "--json")
 	if err != nil {
-		t.Fatalf("rules --family filesystem --json: %v", err)
+		t.Fatalf("rules list --family filesystem --json: %v", err)
 	}
 	var got []struct {
 		Kind   string `json:"kind"`
@@ -148,26 +148,31 @@ func TestRules_familyJSONFiltersToFamily(t *testing.T) {
 	}
 }
 
-func TestRulesKind_flagMatchesPositional(t *testing.T) {
+// TestRules_bare_printsHelpNotList pins the grammar rule: a resource noun
+// invoked bare prints help and never silently lists (see cmd/AGENTS.md). It
+// must show its sub-verbs and not the catalog a `list` would print.
+func TestRules_bare_printsHelpNotList(t *testing.T) {
 	chdir(t, t.TempDir())
-	viaFlag, _, err := runRoot(t, "rules", "--kind", "object_field_enum")
+	stdout, _, err := runRoot(t, "rules")
 	if err != nil {
-		t.Fatalf("rules --kind: %v", err)
+		t.Fatalf("rules: %v", err)
 	}
-	viaArg, _, err := runRoot(t, "rules", "object_field_enum")
-	if err != nil {
-		t.Fatalf("rules <kind>: %v", err)
+	for _, want := range []string{"Usage:", "list", "show"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected help to mention %q, got: %q", want, stdout)
+		}
 	}
-	if viaFlag != viaArg {
-		t.Errorf("--kind and positional differ:\n--kind:\n%s\npositional:\n%s", viaFlag, viaArg)
+	// The catalog must not leak: bare `rules` is not an action.
+	if strings.Contains(stdout, "object_required_field") {
+		t.Errorf("bare rules listed kinds instead of printing help: %q", stdout)
 	}
 }
 
-func TestRulesDetail_showsFamilyContextAndSiblings(t *testing.T) {
+func TestRulesShow_showsFamilyContextAndSiblings(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "object_field_enum")
+	stdout, _, err := runRoot(t, "rules", "show", "object_field_enum")
 	if err != nil {
-		t.Fatalf("rules object_field_enum: %v", err)
+		t.Fatalf("rules show object_field_enum: %v", err)
 	}
 	// Breadcrumb + family intro give the docs-traversal context.
 	if !strings.Contains(stdout, "Object Rules › Field Enum") {
@@ -182,38 +187,14 @@ func TestRulesDetail_showsFamilyContextAndSiblings(t *testing.T) {
 	}
 }
 
-func TestRulesDetail_noFieldKindStatesSo(t *testing.T) {
+func TestRulesShow_noFieldKindStatesSo(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "markdown_single_h1")
+	stdout, _, err := runRoot(t, "rules", "show", "markdown_single_h1")
 	if err != nil {
-		t.Fatalf("rules markdown_single_h1: %v", err)
+		t.Fatalf("rules show markdown_single_h1: %v", err)
 	}
 	if !strings.Contains(stdout, "no configuration keys") {
 		t.Errorf("expected no-keys note, got: %q", stdout)
-	}
-}
-
-func TestRules_familyAndKindConflict_exit2(t *testing.T) {
-	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "--family", "objects", "--kind", "object")
-	if err == nil {
-		t.Fatalf("expected conflict error")
-	}
-	var coded interface{ Code() int }
-	if !errors.As(err, &coded) || coded.Code() != 2 {
-		t.Errorf("expected exit code 2, got: %v", err)
-	}
-}
-
-func TestRules_positionalAndKindConflict_exit2(t *testing.T) {
-	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "object", "--kind", "object_field_enum")
-	if err == nil {
-		t.Fatalf("expected conflict error")
-	}
-	var coded interface{ Code() int }
-	if !errors.As(err, &coded) || coded.Code() != 2 {
-		t.Errorf("expected exit code 2, got: %v", err)
 	}
 }
 
@@ -228,11 +209,11 @@ func familyKinds(family string) []string {
 	return out
 }
 
-func TestRules_jsonArrayCoversEveryDescriptor(t *testing.T) {
+func TestRulesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "--json")
+	stdout, _, err := runRoot(t, "rules", "list", "--json")
 	if err != nil {
-		t.Fatalf("rules --json: %v", err)
+		t.Fatalf("rules list --json: %v", err)
 	}
 
 	var got []struct {
@@ -273,11 +254,11 @@ func TestRules_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	}
 }
 
-func TestRulesKind_jsonObject(t *testing.T) {
+func TestRulesShow_jsonObject(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "object_number_range", "--json")
+	stdout, _, err := runRoot(t, "rules", "show", "object_number_range", "--json")
 	if err != nil {
-		t.Fatalf("rules object_number_range --json: %v", err)
+		t.Fatalf("rules show object_number_range --json: %v", err)
 	}
 
 	var got struct {

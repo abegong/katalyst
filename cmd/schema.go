@@ -43,6 +43,10 @@ func newSchemaListCmd() *cobra.Command {
 	}
 }
 
+// TODO: align the read verb with the other resource nouns — collection/item
+// use `get`, schema uses `show`. Per the command-grammar work, pick one word
+// for "read one" (likely `get`) and converge. See
+// docs/deep-dives/command-organization.md.
 func newSchemaShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show <name>",
