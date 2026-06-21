@@ -9,9 +9,8 @@ Katalyst reads a single `katalyst.yaml`, found by walking upward from the
 current working directory to the nearest ancestor that contains it. That
 directory is the repo root; all relative paths resolve against it.
 
-For *why* the config is shaped this way, see the [configuration
-rationale]({{< relref "../explanation/configuration.md" >}}). To set one up
-step by step, see [Configure checks for a
+For *why* the config is shaped this way, see `internal/config/README.md`. To
+set one up step by step, see [Configure checks for a
 collection]({{< relref "../how-to/configure-rules.md" >}}).
 
 ## Top-level keys
@@ -124,5 +123,5 @@ Markdown and filesystem checks always come from the collection, even when
 ## See also
 
 - [Rules reference]({{< relref "rules/_index.md" >}}) — every check kind.
-- [Configuration rationale]({{< relref "../explanation/configuration.md" >}})
-  — why named collections, three-tier resolution, unmatched-as-error.
+- `internal/config/README.md` — configuration rationale: why named
+  collections, three-tier resolution, unmatched-as-error.

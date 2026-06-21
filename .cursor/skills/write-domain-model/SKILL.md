@@ -89,11 +89,12 @@ operation truly spans the whole domain.
 Cut sections that don't earn their tokens. A domain model with three objects and
 one relationship table is a great domain model.
 
-katalyst already splits its model across files: `product/general-model.md` (the
-abstract, cross-system model), `product/domain-model.md` (the concrete katalyst
-model), and `product/domain-model-mapping.md` (the bridge between them). For a
-new large domain, follow that pattern — abstract + concrete + mapping, or one
-file per coherent sub-domain plus a short framing doc.
+katalyst keeps its model in two homes: `docs/deep-dives/core-concepts.md` (the
+abstract, cross-system model — data interface, item, collection, attribute,
+operation, check) and `docs/reference/glossary.md` (the concrete katalyst
+vocabulary). For a new large domain, split similarly — an abstract model plus a
+concrete vocabulary — or one file per coherent sub-domain plus a short framing
+doc.
 
 ## Workflow
 
@@ -114,11 +115,11 @@ file per coherent sub-domain plus a short framing doc.
 
 ## Exemplars
 
-- `product/domain-model.md` — the canonical in-repo shape: bold-term-em-dash
-  definitions, an entity table, an ASCII data-flow diagram, an Invariants
-  section, and a Vocabulary table.
-- `product/general-model.md` — the abstract model (data interface, item,
-  collection, attribute, operation, check) the concrete model maps onto.
+- `docs/reference/glossary.md` — the canonical katalyst vocabulary:
+  bold-term-em-dash definitions used across code, docs, and copy.
+- `docs/deep-dives/core-concepts.md` — the abstract, cross-system model (data
+  interface, item, collection, attribute, operation, check), with an examples
+  table mapping it onto Postgres, MongoDB, CSVs, and more.
 
 ## Anti-patterns
 

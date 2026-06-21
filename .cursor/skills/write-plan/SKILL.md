@@ -29,7 +29,7 @@ This list is the template — there is no separate template file.
 - **Key Files** — Table of File / Role for every file touched or created.
 - **Architecture Decisions** — Table of Decision / Choice / Rationale for
   non-obvious choices. At graduation, the locked rationale folds into the
-  relevant `docs/explanation/` page (there is no central decisions log).
+  relevant `docs/deep-dives/` page (there is no central decisions log).
 - **Out of Scope** — What this plan explicitly defers. Prevents scope creep.
 
 ## Tests first

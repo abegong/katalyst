@@ -1,6 +1,6 @@
 +++
 title = "Connectors"
-weight = 80
+weight = 40
 +++
 
 # Connectors
@@ -17,7 +17,7 @@ Katalyst domain model. It answers: *what collections and items does this
 store contain, and where does each one live?* — in both directions.
 
 It is Katalyst's realization of the **data interface** concept from
-the [general model]({{< relref "general-model.md" >}}): the filesystem is one backend;
+the [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one backend;
 SQLite, directories of CSVs, S3 buckets, and hosted APIs are others. The
 first real stress test will be **SQLite**, because it is the first backend
 that forces the granularity question below.
@@ -90,7 +90,7 @@ GX shipped both, and they map cleanly onto Katalyst verbs:
 
 GX tracked files that matched no pattern (`get_unmatched_data_references`)
 rather than silently dropping them. Katalyst already treats unmatched as an
-error (see [Configuration]({{< relref "configuration.md" >}})). GX's `self_check` — "here are
+error (see the rationale in `internal/config/README.md`). GX's `self_check` — "here are
 your collections, some examples, and the files that matched nothing" — is the
 template for a future `katalyst doctor` / `explain` that diagnoses a
 connector's mapping.
@@ -143,4 +143,4 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 | **Coordinates** | The captured fields that identify a unit within its collection. |
 | **Granularity** | The level (item vs. collection) at which a connector attaches a store's units to the domain model. |
 
-[addressing]: {{< relref "domain-model.md" >}}
+[addressing]: {{< relref "core-concepts.md" >}}
