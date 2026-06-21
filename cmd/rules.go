@@ -25,22 +25,22 @@ func newRulesCmd() *cobra.Command {
 
 With no arguments it lists every kind grouped by family. Narrow the list to
 one family with --family, or zero in on a single kind — positionally or via
---type — for a detailed, docs-style readout of its keys, example, and
+--kind — for a detailed, docs-style readout of its keys, example, and
 siblings. It reads no project, so it runs in any directory; --json emits
 machine-readable descriptors at any level.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// A kind may come positionally or via --type; treat them as
+			// A kind may come positionally or via --kind; treat them as
 			// synonyms and reject a contradiction.
 			if len(args) == 1 {
 				if kind != "" && kind != args[0] {
-					return usageErr(fmt.Sprintf("conflicting kinds: %q and --type %q", args[0], kind))
+					return usageErr(fmt.Sprintf("conflicting kinds: %q and --kind %q", args[0], kind))
 				}
 				kind = args[0]
 			}
 			if kind != "" {
 				if family != "" {
-					return usageErr("--family narrows the list; pass a kind (or --type) for detail, not both")
+					return usageErr("--family narrows the list; pass a kind (or --kind) for detail, not both")
 				}
 				return runRulesDetail(cmd, kind, asJSON)
 			}
@@ -49,7 +49,7 @@ machine-readable descriptors at any level.`,
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
 	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (objects, markdown, filesystem).")
-	c.Flags().StringVar(&kind, "type", "", "Show the detailed readout for one check kind.")
+	c.Flags().StringVar(&kind, "kind", "", "Show the detailed readout for one check kind.")
 	return c
 }
 

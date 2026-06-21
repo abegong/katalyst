@@ -233,7 +233,7 @@ $ katalyst rules object_number_range --json   # machine-readable, for tooling
 ```
 
 Drill down the way the docs nest: `--family markdown` narrows the list to one
-family, and `rules <kind>` (or `--type <kind>`) prints a docs-style readout —
+family, and `rules <kind>` (or `--kind <kind>`) prints a docs-style readout —
 family context, full key table, an example, and the kind's siblings. `--json`
 works at any level, emitting a descriptor array (or a single object) so a
 skill or editor reads the catalog instead of hardcoding it.

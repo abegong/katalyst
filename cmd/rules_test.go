@@ -148,18 +148,18 @@ func TestRules_familyJSONFiltersToFamily(t *testing.T) {
 	}
 }
 
-func TestRulesType_matchesPositional(t *testing.T) {
+func TestRulesKind_flagMatchesPositional(t *testing.T) {
 	chdir(t, t.TempDir())
-	viaFlag, _, err := runRoot(t, "rules", "--type", "object_field_enum")
+	viaFlag, _, err := runRoot(t, "rules", "--kind", "object_field_enum")
 	if err != nil {
-		t.Fatalf("rules --type: %v", err)
+		t.Fatalf("rules --kind: %v", err)
 	}
 	viaArg, _, err := runRoot(t, "rules", "object_field_enum")
 	if err != nil {
 		t.Fatalf("rules <kind>: %v", err)
 	}
 	if viaFlag != viaArg {
-		t.Errorf("--type and positional differ:\n--type:\n%s\npositional:\n%s", viaFlag, viaArg)
+		t.Errorf("--kind and positional differ:\n--kind:\n%s\npositional:\n%s", viaFlag, viaArg)
 	}
 }
 
@@ -193,9 +193,9 @@ func TestRulesDetail_noFieldKindStatesSo(t *testing.T) {
 	}
 }
 
-func TestRules_familyAndTypeConflict_exit2(t *testing.T) {
+func TestRules_familyAndKindConflict_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "--family", "objects", "--type", "object")
+	_, _, err := runRoot(t, "rules", "--family", "objects", "--kind", "object")
 	if err == nil {
 		t.Fatalf("expected conflict error")
 	}
@@ -205,9 +205,9 @@ func TestRules_familyAndTypeConflict_exit2(t *testing.T) {
 	}
 }
 
-func TestRules_positionalAndTypeConflict_exit2(t *testing.T) {
+func TestRules_positionalAndKindConflict_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "object", "--type", "object_field_enum")
+	_, _, err := runRoot(t, "rules", "object", "--kind", "object_field_enum")
 	if err == nil {
 		t.Fatalf("expected conflict error")
 	}

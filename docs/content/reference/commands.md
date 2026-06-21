@@ -132,7 +132,7 @@ The `--on-type-mismatch` and `--sort-missing` defaults are configurable; see
 ```bash
 katalyst rules [kind]
 katalyst rules --family <family>
-katalyst rules --type <kind>
+katalyst rules --kind <kind>
 katalyst rules ... --json
 ```
 
@@ -145,7 +145,7 @@ one rule page.
 - `katalyst rules` — every kind grouped by family (objects, markdown,
   filesystem): kind, purpose, required keys, optional keys.
 - `katalyst rules --family <family>` — narrow the list to one family.
-- `katalyst rules <kind>` (or `--type <kind>`) — a docs-style readout for one
+- `katalyst rules <kind>` (or `--kind <kind>`) — a docs-style readout for one
   kind: family context, purpose, full key table, example config, and the
   other kinds in its family.
 - `--json` — at any level, a machine-readable descriptor array (or a single
