@@ -1,63 +1,92 @@
-# katalyst
+# Katalyst
 
-Katalyst is a **content consistency layer**: schemas and checks that live with
-your content and keep its structure steady as it grows. It's built for the
-content AI agents manage — memory stores, wikis, knowledge bases. Today it
-validates markdown frontmatter against JSON Schema and a registry of structural
-checks, driven by a CLI. Inspired by [JSON Schema][js] and the
-[MongoDB validation API][mv].
+Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
-For the problems it solves, see [Why Katalyst](docs/content/why-katalyst.md);
-for where it's headed, [Vision and scope](docs/content/deep-dives/vision.md).
+Katalyst gives you and your agent tools to solve problems like these:
 
-[js]: https://json-schema.org/
-[mv]: https://www.mongodb.com/docs/manual/core/schema-validation/
+- "My agent takes a long time to find things, and sometimes burns a ton of tokens."
+- "I've repeatedly told my agent how to organize content and it still gets it wrong."
+- "Sometimes when I go back and look, I discover that my agent has completely lost important information."
+- "The content in my knowledge base isn't just text. It also includes metadata that I need to be able to categorize, score, filter, sort, etc."
+- "My agent is supposed to store and curate notes for me, but I spend way too much time checking its work."
+- "I want to change how I'm storing my data, but migration would be a big pain."
 
-> **Status:** v0. The command surface is `init`, `check`, `fix`,
-> `collection list/get`, `item list/get/add/update/delete`, and
-> `schema list/show`.
+If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
 
-## Install
+> [!TIP]
+> **New to Katalyst?** [Get started »](https://katabase-ai.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
 
-```
-go install github.com/katabase-ai/katalyst@latest
-```
+## Key features
 
-Or from source:
+### Catalog the content you already have
 
-```
-git clone https://github.com/katabase-ai/katalyst
-cd katalyst
-make build  # produces ./bin/katalyst
-```
+Katalyst comes with tools and skills to take stock of your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and — if needed — get more organized.
 
-## Quickstart
+Compared to having an LLM scan every file or write its own bash scripts, this approach can save a ton of tokens. It also lets you take advantage of skills, tools and strategies curated by a community of people who've faced similar challenges.
 
-```bash
-mkdir my-notes && cd my-notes
-katalyst init                  # prepares a .katalyst/ project directory
-katalyst check                 # check every item in the project
-```
+### Define the language and structure that work best for you
 
-The config is picked up automatically: every command discovers the nearest
-`.katalyst/` directory walking up from the working directory, then resolves
-**selectors** against the collections it declares.
+Curation always requires shared language and consistent structure. Katalyst provides tools for declaring structure and rules for your content in your knowledge base.
 
-## Documentation
+- *Markdown content* — required sections, naming conventions, templates, etc.
+- *File structure* — naming conventions, preferred and required extensions, directory structures, etc.
+- *Metadata* — required fields, types, enums, numeric ranges, and full JSON Schema validation of frontmatter.
+- *Object relationships* — links, summaries, tables of contents, sequential numbering, etc.
 
-Full docs are at the [Katalyst documentation site][docs] (source under
-`docs/content/`):
+### Reshape as needed
 
-- [Getting started](docs/content/getting-started.md) — install, scaffold a
-  project, run your first checks.
-- [How-to guides](docs/content/how-to/) — configure checks, add a schema,
-  validate in CI.
-- [Reference](docs/content/reference/) — selectors, the `.katalyst/`
-  configuration surface, the command surface, and the generated rule reference.
-- [Deep dives](docs/content/deep-dives/) — the vision, core concepts, and design
-  rationale.
+As your content evolves, Katalyst gives you tools to navigate change.
 
-Contributing conventions — tests, fixtures, code style, and project layout —
-live in [`AGENTS.md`](AGENTS.md).
+- *Add or change checks*
+- *Change the structure of your content*
+- *Change your storage layer*
 
-[docs]: https://katabase-ai.github.io/katalyst/
+## Design principles
+
+### Lightweight, deployable anywhere
+
+You can run Katalyst as a linter, a CLI, or a server. Use only the infrastructure that you need for your particular use case.
+
+### Model- and backend-agnostic
+
+I'm building Katalyst to work with a variety of filesystems and databases. It isn't tied to any one data store.
+
+Similarly, you choose which model to use.
+
+### Leans into shared language
+
+Express the same rules in a project's own vocabulary and conventions.
+
+### Built for both humans and agents
+
+Ergonomics matter — especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
+
+- *Speed* — fast enough to run on every write.
+- *Discoverability* — an agent can find the schemas and structure on its own.
+- *Readability* — rules and content stay legible to humans and agents alike.
+- *Extensibility* — add new checks and rule kinds as needs grow.
+
+## What if structure was light?
+
+Curating your content with the right structure makes it more useful, but it also takes work. Historically, defining the right structure for knowledge was heavy: high-cost, high-risk, and sometimes technically demanding. This was doubly true when changing needs required updates to structure.
+
+As a result, most structured data systems were rigid and hard to change. Most unstructured knowledge bases were either chronically outdated, or very limited in scope.
+
+As AI starts to infuse our work, curating knowledge is going to become even more important — a massive potential unlock for people who want to work more productively and creatively with agents.
+
+What if structure were light — easy to add, easy to maintain, easy to change?
+
+In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information — it's having a shared language and structure to organize what we've learned, and to act on it together.
+
+## No, really, you should try it out
+
+- [Build the CLI and run your first checks](https://katabase-ai.github.io/katalyst/getting-started/).
+- [Contribute](https://katabase-ai.github.io/katalyst/contributing/) — how we plan and document changes.
+
+## About me
+
+I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great Expectations](https://greatexpectations.io), the leading open-source tool for data quality.
+
+I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously — if you're trying Katalyst, I'd love to hear from you.
+
+More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).
