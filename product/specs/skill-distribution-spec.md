@@ -1,12 +1,13 @@
 # Skill distribution
 
 > **Status: planning.** A family of user-facing katalyst skills — one per
-> lifecycle stage (catalog, define, enforce, reshape) — committed under
-> `skills/` and versioned with the CLI. Two delivery channels: a `.skill`
-> artifact per skill attached to GitHub Releases for Git-free install today,
-> and marketplace plugins wrapping the same folders later. `make skills`
-> packages them; the tag-triggered release workflow builds the binaries and
-> uploads every skill alongside them.
+> lifecycle stage (catalog, define, enforce, reshape), with define split into
+> two cross-referencing skills (identify-collections, define-schemas) —
+> committed under `skills/` and versioned with the CLI. In scope: package each
+> as a `.skill` and attach it to GitHub Releases alongside cross-platform
+> binaries, which the skills' shared bootstrap fetches at install. `make skills`
+> packages them; a tag-triggered release workflow uploads them. Out of scope:
+> marketplace plugins (a later channel) and skill↔CLI version coupling.
 
 ## Overview
 
@@ -25,10 +26,16 @@ release artifact, so committing them never implies users need repo access.
 ## Scope
 
 This spec covers **katalyst's own release cycle** — how skills and binaries are
-sourced, packaged, and published. It does **not** cover the user's deployment
-cycle: how an adopter wires katalyst into their environment (a linter on every
-agent write, a gate in their CI). That is skill *content* — what the **enforce**
-skill teaches — and is authored with that skill, not here.
+sourced, packaged, and published through Channel 1 (the `.skill`-on-Releases
+download). Out of scope:
+
+- **The user's deployment cycle** — how an adopter wires katalyst into their
+  environment (a linter on every agent write, a gate in their CI). That is skill
+  *content* — what the **enforce** skill teaches — authored with that skill.
+- **Channel 2, marketplace plugins** — recorded below as the future direction,
+  but not built here.
+- **Skill ↔ CLI version coupling** — the bootstrap tracks the latest Release;
+  pinning a skill to a CLI version is a later concern.
 
 ## Value
 
@@ -79,7 +86,8 @@ One skill per lifecycle stage, mirroring the "Why Katalyst" feature set:
 | Skill | Lifecycle stage | What it teaches the agent to do |
 |---|---|---|
 | **catalog** | Catalog | Take stock of existing content, map the main concepts, get oriented. |
-| **define** | Define | Two steps: **identify collections** (the object types the knowledge base has repeatable instances of), then **define their schemas** (the properties and invariants of items within a collection). |
+| **identify-collections** | Define (1 of 2) | Identify the collections — the object types the knowledge base has repeatable instances of. Points to **define-schemas** as the next step. |
+| **define-schemas** | Define (2 of 2) | Define each collection's schema — the properties and invariants of its items. Points back to **identify-collections** as its prerequisite. |
 | **enforce** | Enforce | Run the day-to-day loop — `check`, `fix`, `item` — to keep content in good shape on every write. |
 | **reshape** | Reshape | Navigate change: add or change checks, restructure content, change the storage layer. |
 
@@ -88,9 +96,11 @@ skill — independently discoverable and installable. The set is additive:
 packaging and the release workflow take whatever skills exist under `skills/`,
 so stages can land one at a time without reworking the pipeline.
 
-The **define** stage carries two distinct steps (identify collections, then
-define schemas). Whether they are one `define` skill with two phases or two
-discrete skills (`identify-collections`, `define-schemas`) is Q4.
+The define stage is **two discrete skills**, not one: `identify-collections`
+(name the object types) precedes `define-schemas` (formalize each type's
+fields and invariants). They **cross-reference** each other — `identify-collections`
+points forward, `define-schemas` points back — so the two-step flow is explicit
+without merging two jobs an agent invokes at different times into one skill.
 
 ### Source of truth: `skills/{name}/`
 
@@ -98,13 +108,21 @@ Each skill lives at `skills/{name}/`, committed and versioned with the CLI:
 
 ```
 skills/
-  enforce/
+  catalog/
     SKILL.md          # at the directory root — the .skill entrypoint
     references/        # supporting reference material the skill loads
-  define/
+  identify-collections/
     SKILL.md
     references/
-  …
+  define-schemas/
+    SKILL.md
+    references/
+  enforce/
+    SKILL.md
+    references/
+  reshape/
+    SKILL.md
+    references/
   bootstrap.…          # shared CLI provisioning, reused by every skill
 ```
 
@@ -133,13 +151,15 @@ each tag, beside the CLI binaries. Users download the skill(s) they want from
 the releases page and install through the client's **Settings → Capabilities →
 "Save skill"**. No clone, no Git.
 
-### Channel 2 (later): marketplace plugins
+### Channel 2 (out of scope): marketplace plugins
 
-When one-click install is wanted, wrap the **same** `skills/{name}/` folders in
-marketplace plugins users add by URL. The plugin contains the folder verbatim,
-so this is additive — no rework of the source, and the `.skill` downloads keep
-working alongside it. Whether the family ships as one bundle plugin or one
-plugin per skill, plus timing and ownership, is Q3.
+Recorded as the future direction, not built here. When one-click install is
+wanted, wrap the **same** `skills/{name}/` folders in marketplace plugins users
+add by URL. The plugin contains the folder verbatim, so this is additive — no
+rework of the source, and the `.skill` downloads keep working alongside it. The
+single committed source is what makes Channel 2 a later add rather than a
+rewrite; its shape (one bundle plugin vs. one plugin per skill), timing, and
+ownership are deferred with it.
 
 ### Packaging: `make skills`
 
@@ -174,40 +194,35 @@ specifically (not all of `.claude/`), so the symlinks stay uncommitted.
 
 ### Binary provisioning: the shared bootstrap
 
-The skills' bootstrap installs or locates the CLI. Once binaries are published
-as release assets, the bootstrap should prefer fetching the matching binary from
-the Release (or `go install`) over embedding binaries in each `.skill`:
-embedding bloats every download and risks a skill whose bundled binary lags the
-Release. One shared bootstrap serves the whole family. The embed-vs-fetch
-decision is Q1.
+The skills' shared bootstrap installs or locates the CLI by **fetching the
+binary from the latest GitHub Release** (falling back to `go install`), not by
+embedding binaries in each `.skill`. Embedding would bloat every download and
+risk a skill whose bundled binary lags the Release; fetching keeps each `.skill`
+small and the binary current. One bootstrap serves the whole family.
 
-### Version coupling
-
-A downloaded skill should line up with the CLI it documents. Stamp each
-published skill with the CLI version, or declare a compatibility range the
-bootstrap checks. Exact policy is Q2.
+Tracking "latest" sidesteps version coupling for now (it's out of scope): the
+bootstrap pulls whatever the newest Release ships. Pinning a skill to a specific
+CLI version is a later concern, taken up when releases are cut often enough for
+skew to bite.
 
 ## Open Questions
 
-1. **Embed binaries in the `.skill`, or fetch from the Release?** Lean: fetch
-   (or `go install`) to keep each `.skill` small and the binary matched to the
-   Release. Confirm the bootstrap can reliably reach the Release in the target
-   client environments; if not, a bundled fallback may be unavoidable.
-2. **Skill ↔ CLI version coupling policy.** Pin each skill to one CLI version,
-   or declare a supported range? Where is the version stamped (a key in
-   `SKILL.md`, a file in `references/`, the artifact name), and does the
-   bootstrap enforce it or only warn on mismatch?
-3. **Marketplace shape, timing, and ownership.** One bundle plugin for the
-   family or one plugin per skill? When does Channel 2 land, and who owns the
-   plugin repo/listing? Additive, so it does not block Channel 1.
-4. **Is `define` one skill or two?** One skill with two phases (identify
-   collections, then define schemas), or two discrete skills. Affects only the
-   `skills/` layout and the artifact list, not the pipeline.
+_None — resolved or deferred._ For the record:
+
+- **Fetch, don't embed.** The shared bootstrap fetches the CLI binary from the
+  latest GitHub Release (falling back to `go install`); binaries are not bundled
+  in the `.skill`.
+- **`define` is two skills.** `identify-collections` and `define-schemas` are
+  discrete, cross-referencing skills rather than one merged `define` skill.
+- **Channel 1 only.** The `.skill`-on-Releases download is in scope; marketplace
+  plugins (Channel 2) are deferred.
+- **Versioning deferred.** Skill↔CLI version coupling is out of scope; the
+  bootstrap tracks the latest Release.
 
 ## Rejected alternatives
 
-- **One mega-skill for the whole lifecycle.** Buries three of the four jobs
-  behind whichever the `SKILL.md` leads with, and forces users to install
+- **One mega-skill for the whole lifecycle.** Buries most of the lifecycle
+  behind whichever job the `SKILL.md` leads with, and forces users to install
   catalog/reshape machinery to get day-to-day enforcement. A per-stage family
   matches the "tools and skills" framing in Why Katalyst and lets users install
   only what they need.
@@ -219,9 +234,10 @@ bootstrap checks. Exact policy is Q2.
   agent behavior to human docs and to the docs site being reachable at runtime;
   the two audiences diverge. Skills stay self-contained instead.
 - **Ship only marketplace plugins, skip the `.skill` download.** Defers all
-  distribution behind plugin infrastructure and ownership that isn't settled
-  (Q3). The `.skill` download works today against plain GitHub Releases and the
-  client's existing "Save skill" flow.
+  distribution behind unsettled plugin infrastructure and ownership. The
+  `.skill` download works today against plain GitHub Releases and the client's
+  existing "Save skill" flow, so it is Channel 1 and the marketplace is a later
+  add.
 - **Commit the skills under `.cursor/skills/` with the contributor skills.**
   Conflates two audiences in one tree and pulls shipped artifacts into the local
   agent-sync machinery. A separate top-level `skills/` keeps product and
