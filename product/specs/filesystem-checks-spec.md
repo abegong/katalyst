@@ -1,12 +1,17 @@
 # Filesystem checks: expanded & revised library
 
-> **Status: planning.** Revises the six ad-hoc `filesystem_*` checks into a
-> smaller, composable set of *name/path* checks, adds the conventions users
-> actually reach for (regex escape hatch, suffix, length, charset, depth,
-> directory-name rules), and opens a second tier of **collection-scoped**
-> checks (uniqueness, required index files, referenced-file existence) that the
-> current per-item check model cannot express. Pre-v0: existing kinds are
-> renamed/folded outright, not kept in parallel.
+> **Status: done.** All three tiers shipped (`make all` green) and the durable
+> content graduated: the `target × rule` model and the collection-scoped tier
+> are in `AGENTS.md`, the domain model, and the glossary; the rule reference is
+> regenerated. Revised the six ad-hoc `filesystem_*` checks into a smaller,
+> composable set of *name/path* checks, added the conventions users actually
+> reach for (regex escape hatch, suffix, length, charset, depth, directory-name
+> rules), and added a second tier of **collection-scoped** checks (uniqueness,
+> required index files, referenced-file existence) that the per-item model could
+> not express. Pre-v0: existing kinds were folded outright, not kept in
+> parallel. Retained for reference pending graduation cleanup (safe to delete
+> post-merge); the `explanation/` vs `deep-dives/` docs-home question is tracked
+> in issue #17.
 
 ## Overview
 
@@ -395,38 +400,38 @@ message so the user (or their editor) can rename deliberately.
 ## Test checklist (what the pending tests assert)
 
 Tier 1 (revised, per-item):
-- [ ] `name_case` accepts/rejects each `style` against a basename
-- [ ] `name_case` with `target: parent-dir` tests the parent, not the file
-- [ ] `name_case` with `target: path-segments` flags a bad mid-path segment *and* a bad basename (inclusive)
-- [ ] `name_case style: kebab, target: filename` matches old kebab-case behavior
-- [ ] `name_matches_field` with `transform: none` equals old matches-slug
-- [ ] `name_matches_field` with `transform: slugify` matches a slugified title
-- [ ] `name_affix` requires at least one of prefix/suffix (load error otherwise)
-- [ ] `name_affix prefix: book-` matches old filename-prefix behavior
-- [ ] `path_charset deny: [" "]` matches old no-spaces behavior
-- [ ] `path_charset` rejects configuring both `allow` and `deny`
-- [ ] `extension_in` / `parent_dir_in` behavior unchanged
+- [x] `name_case` accepts/rejects each `style` against a basename
+- [x] `name_case` with `target: parent-dir` tests the parent, not the file
+- [x] `name_case` with `target: path-segments` flags a bad mid-path segment *and* a bad basename (inclusive)
+- [x] `name_case style: kebab, target: filename` matches old kebab-case behavior
+- [x] `name_matches_field` with `transform: none` equals old matches-slug
+- [x] `name_matches_field` with `transform: slugify` matches a slugified title
+- [x] `name_affix` requires at least one of prefix/suffix (load error otherwise)
+- [x] `name_affix prefix: book-` matches old filename-prefix behavior
+- [x] `path_charset deny: [" "]` matches old no-spaces behavior
+- [x] `path_charset` rejects configuring both `allow` and `deny`
+- [x] `extension_in` / `parent_dir_in` behavior unchanged
 
 Tier 2 (new, per-item):
-- [ ] `name_regex` anchors the pattern (`^...$`) and respects `target`
-- [ ] `name_length` enforces min/max; requires at least one bound
-- [ ] `path_depth` counts depth relative to collection root; `max: 0` ⇒ flat
-- [ ] `parent_dir_matches_field` passes/fails on dir-vs-field equality
+- [x] `name_regex` anchors the pattern (`^...$`) and respects `target`
+- [x] `name_length` enforces min/max; requires at least one bound
+- [x] `path_depth` counts depth relative to collection root; `max: 0` ⇒ flat
+- [x] `parent_dir_matches_field` passes/fails on dir-vs-field equality
 
 Tier 3 (collection-scoped):
-- [ ] engine runs `CollectionCheck`s once per collection after the item pass
-- [ ] a single-item selector still re-scans the whole collection for the
+- [x] engine runs `CollectionCheck`s once per collection after the item pass
+- [x] a single-item selector still re-scans the whole collection for the
       collection-scoped pass (uniqueness verdict unaffected by selector)
-- [ ] per-item checks still honor the selector (only the collection pass widens)
-- [ ] `unique_filename` flags two items sharing a basename, names both paths
-- [ ] `unique_field` flags duplicate `field` values across items
-- [ ] `index_file_required` flags a subdirectory missing `_index.md`
-- [ ] `referenced_files_exist` flags a frontmatter path that resolves nowhere
-- [ ] `referenced_files_exist` resolves paths relative to the item's directory
-- [ ] `referenced_files_exist` accepts both a string and a list field value
+- [x] per-item checks still honor the selector (only the collection pass widens)
+- [x] `unique_filename` flags two items sharing a basename, names both paths
+- [x] `unique_field` flags duplicate `field` values across items
+- [x] `index_file_required` flags a subdirectory missing `_index.md`
+- [x] `referenced_files_exist` flags a frontmatter path that resolves nowhere
+- [x] `referenced_files_exist` resolves paths relative to the item's directory
+- [x] `referenced_files_exist` accepts both a string and a list field value
 
 Registry / docs:
-- [ ] every new kind has a Descriptor (parity test stays green)
-- [ ] retired kinds are absent from constants, dispatch, and Descriptors
-- [ ] `make docs-gen` regenerates the filesystem reference cleanly
-- [ ] Descriptor `Scope` distinguishes item vs collection checks in docs
+- [x] every new kind has a Descriptor (parity test stays green)
+- [x] retired kinds are absent from constants, dispatch, and Descriptors
+- [x] `make docs-gen` regenerates the filesystem reference cleanly
+- [x] Descriptor `Scope` distinguishes item vs collection checks in docs

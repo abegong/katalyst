@@ -2,10 +2,24 @@
 
 > Spec: [Filesystem checks: expanded & revised library](./filesystem-checks-spec.md)
 >
-> **Status: planning.** Phased implementation. Two shipments: **A** = Tiers 1–2
-> (revised + new per-item checks), a self-contained refactor+extension within
-> the existing `Check` contract; **B** = Tier 3 (collection-scoped checks),
-> gated on review of the `CollectionCheck` interface (spec Q1, still open).
+> **Status: done.** All five phases implemented in one PR; `make all` green.
+> Tiers 1–2 (revised + new per-item checks) and Tier 3 (collection-scoped via a
+> new `CollectionCheck` interface and a second engine pass) all shipped, with
+> the rule reference regenerated and the durable content graduated into
+> `AGENTS.md`, the domain model, and the glossary.
+>
+> **Deviations from the plan as written:**
+> - Integer-bounded checks (`name_length`, `path_depth`) reuse the shared
+>   `min`/`max` yaml keys but store dedicated `*int` fields (`MinInt`/`MaxInt`)
+>   on `Check`, converted from the yaml `*float64` — keeping them off
+>   `object_number_range`'s float `Min`/`Max`.
+> - `Violation` gained a `File` field so collection-scoped violations can name
+>   the offending path (the per-item reporter already knows the file).
+> - The empty-checks guard now also accepts a collection that configures *only*
+>   collection-scoped checks (`Collection.HasCollectionChecks`).
+> - Hand-authored docs targeted `explanation/domain-model.md` (the page that
+>   references kinds today); the `explanation/` vs `deep-dives/` question is
+>   issue #17. Spec/plan kept (not deleted) pending merge.
 
 ## Current State
 

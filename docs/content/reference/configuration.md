@@ -34,7 +34,7 @@ collections:
     schema: person
     checks:
       - kind: markdown_title_matches_h1
-      - kind: filesystem_filename_matches_slug
+      - kind: filesystem_name_matches_field
 ```
 
 ## `schemas`
@@ -74,7 +74,7 @@ checks:
     field: year
     type: integer
   - kind: markdown_title_matches_h1
-  - kind: filesystem_filename_matches_slug
+  - kind: filesystem_name_matches_field
 ```
 
 ## `query`

@@ -195,25 +195,31 @@ of how the object schema is resolved.
 ### Check
 
 A single check run against an item — a type constraint, a heading requirement,
-a filename convention. Each comes from one of the **18 check types** Katalyst
-ships, in three families:
+a filename convention. Each comes from one of the check types Katalyst ships,
+in three families:
 
-- **Object** (6): `object` (full JSON Schema), plus targeted
+- **Object**: `object` (full JSON Schema), plus targeted
   `object_required_field`, `object_field_type`, `object_field_enum`,
   `object_number_range`, `object_string_length`.
-- **Markdown** (6): `markdown_title_matches_h1`, `markdown_requires_h1`,
+- **Markdown**: `markdown_title_matches_h1`, `markdown_requires_h1`,
   `markdown_single_h1`, `markdown_no_heading_level_jumps`,
   `markdown_required_section`, `markdown_code_fence_language_required`.
-- **Filesystem** (6): `filesystem_filename_matches_slug`,
-  `filesystem_extension_in`, `filesystem_filename_kebab_case`,
-  `filesystem_no_spaces_in_path`, `filesystem_parent_dir_in`,
-  `filesystem_filename_prefix`.
+- **Filesystem**: name and path conventions built on a shared **target**
+  (`filename`, `filename-ext`, `parent-dir`, `path-segments`) — `name_case`,
+  `name_matches_field`, `name_affix`, `name_regex`, `name_length`,
+  `path_charset`, `path_depth`, `parent_dir_matches_field`, `extension_in`,
+  `parent_dir_in`, `referenced_files_exist`, plus **collection-scoped** checks
+  that reason across an entire collection (`unique_filename`, `unique_field`,
+  `index_file_required`).
 
-Each check type implements one `checks.Check` interface (`Run(Context)
-[]Violation`) and is documented, per check type, in the generated [check types
-reference]({{< relref "../reference/check-types/_index.md" >}}). The
-per-check-type descriptors in `internal/checks/registry.go` are the source of
-truth for that reference, so a new check type cannot ship undocumented.
+Most check types implement the `checks.Check` interface (`Run(Context)
+[]Violation`), one item at a time. **Collection-scoped** check types implement
+`checks.CollectionCheck` (`RunCollection(CollectionContext) []Violation`) and
+run once per collection over all its items, so a single-item selector still
+re-scans the whole collection. Each check type is documented in the generated
+[check types reference]({{< relref "../reference/check-types/_index.md" >}});
+the per-check-type descriptors in `internal/checks/registry.go` are the source
+of truth, so a new check type cannot ship undocumented.
 
 ### Validation result
 

@@ -36,7 +36,8 @@ collections:
       - kind: markdown_requires_h1
       - kind: markdown_title_matches_h1
         field: title
-      - kind: filesystem_filename_kebab_case
+      - kind: filesystem_name_case
+        style: kebab
 ```
 
 A collection must have at least one check — either a `schema` (see [Add a

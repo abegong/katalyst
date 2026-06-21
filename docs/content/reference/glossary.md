@@ -25,6 +25,8 @@ how each term maps onto today's code is documented in the per-package
 | **Check type** | The reusable definition of a constraint — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …), selected by its `kind:` id. `katalyst check-types list` lists them. |
 | **Check instance** | One configured check attached to a collection: a check type plus its arguments (one YAML object under `checks:`). It runs against each item (object, markdown, or filesystem family). |
 | **Check** | Shorthand for a check instance when context is unambiguous. |
+| **Collection-scoped check** | A check type that runs once per collection over all its items (e.g. `filesystem_unique_filename`), rather than per item. It re-scans the full collection even under a single-item selector. |
+| **Target** | The slice of a path a filesystem name/path check type tests: `filename`, `filename-ext`, `parent-dir`, or `path-segments` (every directory segment plus the basename). |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
 | **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
 | **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |
