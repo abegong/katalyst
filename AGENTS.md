@@ -25,7 +25,7 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 ## Layout
 
 ```
-cmd/                  cobra commands (root, init, check, fix, collection, item, schema)
+cmd/                  cobra commands (root, init, check, fix, collection, item, schema, rules)
 internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
@@ -96,3 +96,9 @@ you add a fixture.
 - Production code that needs a new test fixture: add it under the
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.
+- The check registry (`internal/checks/registry.go`) is the single source of
+  truth for check kinds. Both `cmd/gendocs` and `katalyst rules` read it, and
+  `registry_test.go` fails if a dispatched kind has no descriptor — a new
+  check ships with its descriptor. The `json:` tags on `Descriptor`/`Field`
+  are the published wire contract for `katalyst rules --json`; keep them
+  stable.

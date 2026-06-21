@@ -217,6 +217,25 @@ required: [title, year]
 ...
 ```
 
+### `katalyst rules [kind]`
+
+List the check kinds the engine can enforce, straight from its registry. No
+project needed.
+
+```
+$ katalyst rules
+Object Rules
+KIND                   PURPOSE                                   REQUIRED  OPTIONAL
+object_required_field  Require that a frontmatter field exists.  field     —
+...
+
+$ katalyst rules object_number_range --json   # machine-readable, for tooling
+```
+
+`rules <kind>` prints one kind's full key table and an example config;
+`--json` emits a descriptor array (or a single object) so a skill or editor
+reads the catalog instead of hardcoding it.
+
 ### `katalyst init [--dir <path>]`
 
 Prepare the current directory as a katalyst project: create `.katalyst/`
