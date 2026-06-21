@@ -37,6 +37,15 @@ This list is the template — there is no separate template file.
   when long) or, for cross-cutting concepts, into the relevant
   `docs/deep-dives/` page when the work ships; there is no central decisions
   log. A spec isn't done until this section is empty or `_None._`.
+- **Documentation updates** — The docs the work touches, listed so they land in
+  the same change instead of drifting after (see
+  `docs/contributing/how-we-document.md`). Cover **developer docs** — `AGENTS.md`
+  (root and any per-package file), agent skills under `.cursor/skills/`, and Go
+  doc comments (package docs; a `doc.go` when long) — and **user docs** — the
+  Hugo pages under `docs/` (how-to, reference, deep-dives, getting-started). Name
+  the specific pages and what changes on each. For a new check, regenerate the
+  rule reference with `make docs-gen` rather than editing it by hand. `_None._`
+  only when the change is purely internal.
 - **Test checklist** (optional) — When the spec doubles as the build contract
   (as `product/specs/cli-spec.md` does), end with a checklist of behaviors the
   pending tests assert. Otherwise this lives in the plan.
@@ -78,7 +87,8 @@ adjectives; skip the obvious.
    vocabulary the feature should extend.
 2. **Draft.** Fill Status, Overview, Current State, and Design. Add Value if not
    self-evident. Add Open Questions only for genuinely unresolved decisions, and
-   number each so answers can refer to it directly.
+   number each so answers can refer to it directly. List the Documentation
+   updates the work will require.
 3. **Write the file.** Create `product/specs/{slug}-spec.md`.
 4. **Sanity check.** Design captures expensive-to-reverse decisions with
    specific files cited. No section is filler.
@@ -94,6 +104,7 @@ doing X here because Y" beats silent inconsistency.
 ## Reference
 
 - Process: `docs/contributing/how-we-plan.md`
+- Documentation homes: `docs/contributing/how-we-document.md`
 - Example: `product/specs/cli-spec.md`
 - Prose guide: `.cursor/skills/write-docs/SKILL.md`
 - Vocabulary: `docs/reference/glossary.md` and `docs/deep-dives/core-concepts.md`
