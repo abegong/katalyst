@@ -97,7 +97,7 @@ In a world of unbounded creative collaboration with agents, the limiting factor 
 
 ## About me
 
-I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creater of [Great
+I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great
 Expectations](https://greatexpectations.io), the leading open-source tool for
 data quality.
 
