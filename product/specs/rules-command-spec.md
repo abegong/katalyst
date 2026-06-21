@@ -90,6 +90,23 @@ On `katalyst rules <kind>`, the single descriptor object. Each descriptor
 carries its `family`, so a consumer can group without a second call; family
 *ordering* and intro copy stay in `Families()` and are not part of this payload.
 
+The payload is a published contract, so the wire shape is pinned independent of
+Go identifiers. `Descriptor` and `Field` get explicit snake_case `json:` tags
+matching the config keys they describe (`kind`, `family`, `field`/`name`,
+`required`, `default`, `desc`, `config_example`). `config.CheckKind` is a string
+type and marshals as its value with no tag. Two emptiness rules:
+
+- **`default`** carries `,omitempty` — most checks have none, and a bare
+  `"default": ""` is noise.
+- **`fields`** is always an array, built as `[]Field{}` rather than left `nil`,
+  so a consumer iterates `fields` without a null-check even for a no-field check
+  like `markdown_single_h1`. No `omitempty` here.
+
+`config_example` is emitted verbatim as a JSON string (escaped newlines). The
+descriptor stays self-sufficient: the skill authoring a `katalyst.yaml` gets a
+runnable snippet inline, the same example `gendocs` renders under `## Example`,
+instead of scraping the docs site for it.
+
 This **diverges** from [`cli-spec.md`](./cli-spec.md), which lists `--json`
 machine-readable output as out of scope for v0. That decision concerns
 machine-readable output of *project data* — check results, item lists, which
@@ -111,21 +128,7 @@ state, only "printed it" or "you asked for a kind that doesn't exist".
 
 ## Open Questions
 
-1. **JSON wire contract — struct tags.** `Descriptor` and `Field` have no
-   `json:` tags, so today they would marshal with Go field names
-   (`Kind`, `Required`, …). Add explicit snake_case tags
-   (`kind`, `required`, `default`, `desc`) so the wire contract is stable
-   against Go field renames and reads like the YAML keys it describes?
-   Recommend yes — the payload is a published contract for the skill, and
-   coupling it to Go identifiers invites a silent break on the next refactor.
-   `config.CheckKind` is a string type and needs no tag to marshal as its
-   value.
-
-2. **`ConfigExample` in `--json`.** The example is a raw YAML string with
-   newlines. Emit it verbatim as a JSON string (a consumer re-parses or
-   displays it), or omit it from JSON and keep it human-output only? Recommend
-   emit verbatim — it is the one field that lets a consumer show a working
-   snippet, and dropping it forces the skill back to scraping docs for examples.
+_None._
 
 ## Test checklist (what the pending tests assert)
 
@@ -149,7 +152,10 @@ project on disk — proving `rules` needs none:
 - [ ] `rules --json` is a valid JSON array with one entry per descriptor
 - [ ] every kind and every field name appears in the JSON
 - [ ] `rules <kind> --json` is the single matching descriptor object
-- [ ] field keys are stable (per Open Question 1's resolution)
+- [ ] keys are snake_case (`kind`, `family`, `fields`, `config_example`, …)
+- [ ] a no-field check emits `"fields": []`, never `null`
+- [ ] a check with no default omits `default` rather than emitting `""`
+- [ ] `config_example` is present and non-empty for every descriptor
 
 Parity guard:
 - [ ] a test asserts the CLI catalog covers exactly `checks.Descriptors()`, so a
