@@ -5,9 +5,9 @@ weight = 10
 
 # Why Katalyst?
 
-`katalyst` is a *content consistency layer*, designed for agents that curate persistent memory, wikis, and knowledge bases.
+Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
-`katalyst` gives you and your agent tools to solve problems like these:
+Katalyst gives you and your agent tools to solve problems like these:
 
 - "My agent takes a long time to find things, and sometimes burns a ton of tokens."
 - "I've repeatedly told my agent how to organize content and it still gets it wrong."
@@ -16,12 +16,12 @@ weight = 10
 - "My agent is supposed to store and curate notes for me, but I spend way too much time checking its work."
 - "I want to change how I'm storing my data, but migration would be a big pain."
 
-If you want to be confident that your content/data/memory is always in good shape---even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans---then `katalyst` is for you.
+If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
 
 {{% hint info %}}
-**New to katalyst?**
+**New to Katalyst?**
 
-[Get started here >>.]({{< relref "getting-started.md" >}}) Install
+[Get started »]({{< relref "getting-started.md" >}}) — install
 the CLI, scaffold a `.katalyst/` project, and run your first checks in a few
 minutes.
 {{% /hint %}}
@@ -30,39 +30,37 @@ minutes.
 
 ### Catalog the content you already have
 
-`katalyst` comes with tools and skills to {wrong word: inspect} your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and---if needed---get more organized.
+Katalyst comes with tools and skills to take stock of your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and — if needed — get more organized.
 
-Compared to having an LLM scan every file or write its own bash scripts, this approach can save a ton of tokens. It also lets you take advantage of skills, tools and strategies curated by a community of who've faced similar challenges.
+Compared to having an LLM scan every file or write its own bash scripts, this approach can save a ton of tokens. It also lets you take advantage of skills, tools and strategies curated by a community of people who've faced similar challenges.
 
 ### Define the language and structure that work best for you
 
-Curation always requires shared language and consistent structure. `katalyst` provides tools for declaring structure and rules for your content in your knowledge base.
+Curation always requires shared language and consistent structure. Katalyst provides tools for declaring structure and rules for your content in your knowledge base.
 
 - *Markdown content* — required sections, naming conventions, templates, etc.
 - *File structure* — naming conventions, preferred and required extensions, directory structures, etc.
 - *Metadata* — required fields, types, enums, numeric ranges, and full
   JSON Schema validation of frontmatter.
-- *Object relationships* — {aspirational: text needed}
+- *Object relationships* — links, summaries, tables of contents, sequential numbering, etc.
 
 ### Reshape as needed
 
-As your content evolves, `katalyst` gives you tools to navigate change. {Refactoring or migrating your knowledge base doesn't need to...}
+As your content evolves, Katalyst gives you tools to navigate change.
 
-  - *Add or change checks* — add or modify rules, then re-validate in place.
-  - *Change the structure of your content* — reshape frontmatter or layout with
-    the checks as your guide.
-  - *Change your storage layer* — carry the same guarantees from files to a
-    database.
+  - *Add or change checks*
+  - *Change the structure of your content*
+  - *Change your storage layer*
 
 ## Design principles
 
 ### Lightweight, deployable anywhere
 
-You can run `katalyst` as a linter, a CLI, or a server. Use only the infrastructure that you need for your particular use case.
+You can run Katalyst as a linter, a CLI, or a server. Use only the infrastructure that you need for your particular use case.
 
 ### Model- and backend-agnostic
 
-I'm building `katalyst` to work with a variety of filesystems and databases. It isn't tied to any one data store.
+I'm building Katalyst to work with a variety of filesystems and databases. It isn't tied to any one data store.
 
 Similarly, you choose which model to use.
 
@@ -73,8 +71,6 @@ Express the same rules in a project's own vocabulary and conventions.
 ### Built for both humans and agents
 
 Ergonomics matter — especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
-
-In development, I take user feedback seriously
 
   - *Speed* — fast enough to run on every write.
   - *Discoverability* — an agent can find the schemas and structure on its own.
@@ -87,18 +83,26 @@ Curating your content with the right structure makes it more useful, but it also
 
 As a result, most structured data systems were rigid and hard to change. Most unstructured knowledge bases were either chronically outdated, or very limited in scope.
 
-As AI starts to infuse our work, curating knowledge is going to become even more important---a massive potential unlock for people who want to work more productively and creatively with agents.
+As AI starts to infuse our work, curating knowledge is going to become even more important — a massive potential unlock for people who want to work more productively and creatively with agents.
 
-What if structure were light---easy to add, easy to maintain, easy to change?
+What if structure were light — easy to add, easy to maintain, easy to change?
 
-## About me
+In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information — it's having a shared language and structure to organize what we've learned, and to act on it together.
 
-<!-- TODO: fill in — background, credentials, and motivation for building Katalyst. -->
-
-_Placeholder — to be written._
-
-## Get started
+## No, really, you should try it out
 
 - [Build the CLI and run your first checks]({{< relref "getting-started.md" >}}).
 - [Contribute]({{< relref "contributing/_index.md" >}}) — how we plan and
   document changes.
+
+## About me
+
+I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creater of [Great
+Expectations](https://greatexpectations.io), the leading open-source tool for
+data quality.
+
+I'm fascinated by AI and the way it's changing how we work and collaborate, and
+I'm building Katalyst in the open to explore it. I take user feedback
+seriously — if you're trying Katalyst, I'd love to hear from you.
+
+More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).
