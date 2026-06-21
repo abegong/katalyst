@@ -45,6 +45,9 @@ Rewrite each selected item's frontmatter in canonical form (keys sorted,
 block style, one trailing newline; body preserved verbatim). With `--check`,
 write nothing, print items that would change, and exit `1` — the CI form.
 
+For why `fix` is deliberately opinionated and never injects missing values,
+see the `internal/frontmatter` package docs (`internal/frontmatter/README.md`).
+
 ## `inspect`
 
 ```bash
