@@ -26,7 +26,7 @@ For people validating content with the tool.
   [validate in CI]({{< relref "how-to/validate-in-ci.md" >}}).
 - **[Reference]({{< relref "reference/_index.md" >}})** — the
   [configuration]({{< relref "reference/configuration.md" >}}) surface, the
-  generated [rule reference]({{< relref "reference/rules/_index.md" >}}),
+  generated [check types reference]({{< relref "reference/check-types/_index.md" >}}),
   and the [glossary]({{< relref "reference/glossary.md" >}}).
 
 ## Go deeper

@@ -79,7 +79,7 @@ func newCollectionGetCmd() *cobra.Command {
 			fmt.Fprintf(out, "pattern: %s\n", c.Pattern)
 			fmt.Fprintf(out, "schema:  %s\n", schemaLabel(c.Schema))
 			fmt.Fprintf(out, "items:   %d\n", len(items))
-			fmt.Fprintf(out, "checks:  %s\n", strings.Join(checkKinds(c), ", "))
+			fmt.Fprintf(out, "checks:  %s\n", strings.Join(checkTypes(c), ", "))
 			return nil
 		},
 	}
@@ -92,10 +92,10 @@ func schemaLabel(name string) string {
 	return name
 }
 
-func checkKinds(c config.Collection) []string {
-	kinds := make([]string, 0, len(c.Checks))
+func checkTypes(c config.Collection) []string {
+	types := make([]string, 0, len(c.Checks))
 	for _, ch := range c.Checks {
-		kinds = append(kinds, string(ch.Kind))
+		types = append(types, string(ch.Type))
 	}
-	return kinds
+	return types
 }

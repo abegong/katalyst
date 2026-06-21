@@ -43,8 +43,8 @@ This list is the template — there is no separate template file.
   (root and any per-package file), agent skills under `.cursor/skills/`, and Go
   doc comments (package docs; a `doc.go` when long) — and **user docs** — the
   Hugo pages under `docs/` (how-to, reference, deep-dives, getting-started). Name
-  the specific pages and what changes on each. For a new check, regenerate the
-  rule reference with `make docs-gen` rather than editing it by hand. `_None._`
+  the specific pages and what changes on each. For a new check type, regenerate
+  the check-types reference with `make docs-gen` rather than editing it by hand. `_None._`
   only when the change is purely internal.
 - **Test checklist** (optional) — When the spec doubles as the build contract
   (as `product/specs/cli-spec.md` does), end with a checklist of behaviors the

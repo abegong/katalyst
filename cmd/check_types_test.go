@@ -9,18 +9,18 @@ import (
 	"github.com/katabase-ai/katalyst/internal/checks"
 )
 
-func TestRules_listsEveryKindGroupedByFamily(t *testing.T) {
-	// No project on disk: rules reads the engine registry, not config.
+func TestCheckTypes_listsEveryTypeGroupedByFamily(t *testing.T) {
+	// No project on disk: check-types reads the engine registry, not config.
 	chdir(t, t.TempDir())
 
-	stdout, _, err := runRoot(t, "rules", "list")
+	stdout, _, err := runRoot(t, "check-types", "list")
 	if err != nil {
-		t.Fatalf("rules list: %v", err)
+		t.Fatalf("check-types list: %v", err)
 	}
 
 	for _, d := range checks.Descriptors() {
-		if !strings.Contains(stdout, string(d.Kind)) {
-			t.Errorf("expected kind %q in output", d.Kind)
+		if !strings.Contains(stdout, string(d.CheckType)) {
+			t.Errorf("expected check type %q in output", d.CheckType)
 		}
 	}
 
@@ -39,11 +39,24 @@ func TestRules_listsEveryKindGroupedByFamily(t *testing.T) {
 	}
 }
 
-func TestRules_splitsRequiredAndOptionalKeys(t *testing.T) {
+// TestCheckTypes_rulesAliasStillWorks pins the deprecated `rules` alias: it must
+// resolve to the same command so existing usage keeps working.
+func TestCheckTypes_rulesAliasStillWorks(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "rules", "list")
 	if err != nil {
-		t.Fatalf("rules list: %v", err)
+		t.Fatalf("rules list (alias): %v", err)
+	}
+	if !strings.Contains(stdout, "object_required_field") {
+		t.Errorf("alias output missing a known check type, got: %q", stdout)
+	}
+}
+
+func TestCheckTypes_splitsRequiredAndOptionalKeys(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "check-types", "list")
+	if err != nil {
+		t.Fatalf("check-types list: %v", err)
 	}
 
 	// object_number_range: field required, min/max optional.
@@ -62,14 +75,14 @@ func TestRules_splitsRequiredAndOptionalKeys(t *testing.T) {
 	}
 }
 
-func TestRulesShow_showsDetail(t *testing.T) {
+func TestCheckTypesShow_showsDetail(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "show", "object_required_field")
+	stdout, _, err := runRoot(t, "check-types", "show", "object_required_field")
 	if err != nil {
-		t.Fatalf("rules show object_required_field: %v", err)
+		t.Fatalf("check-types show object_required_field: %v", err)
 	}
 	for _, want := range []string{
-		"object_required_field",      // kind id
+		"object_required_field",      // check type id
 		"Require that a frontmatter", // purpose
 		"field",                      // key name
 		"yes",                        // required column
@@ -81,11 +94,11 @@ func TestRulesShow_showsDetail(t *testing.T) {
 	}
 }
 
-func TestRulesShow_unknown_exit2(t *testing.T) {
+func TestCheckTypesShow_unknown_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "show", "no_such_kind")
+	_, _, err := runRoot(t, "check-types", "show", "no_such_type")
 	if err == nil {
-		t.Fatalf("expected error for unknown kind")
+		t.Fatalf("expected error for unknown check type")
 	}
 	var coded interface{ Code() int }
 	if !errors.As(err, &coded) || coded.Code() != 2 {
@@ -93,29 +106,29 @@ func TestRulesShow_unknown_exit2(t *testing.T) {
 	}
 }
 
-func TestRulesList_familyFiltersList(t *testing.T) {
+func TestCheckTypesList_familyFiltersList(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "list", "--family", "markdown")
+	stdout, _, err := runRoot(t, "check-types", "list", "--family", "markdown")
 	if err != nil {
-		t.Fatalf("rules list --family markdown: %v", err)
+		t.Fatalf("check-types list --family markdown: %v", err)
 	}
-	if !strings.Contains(stdout, "Markdown Rules") {
-		t.Errorf("expected Markdown Rules heading, got: %q", stdout)
+	if !strings.Contains(stdout, "Markdown Check Types") {
+		t.Errorf("expected Markdown Check Types heading, got: %q", stdout)
 	}
-	if strings.Contains(stdout, "Object Rules") || strings.Contains(stdout, "Filesystem Rules") {
+	if strings.Contains(stdout, "Object Check Types") || strings.Contains(stdout, "Filesystem Check Types") {
 		t.Errorf("expected only the markdown family, got: %q", stdout)
 	}
 	if !strings.Contains(stdout, "markdown_single_h1") {
-		t.Errorf("expected a markdown kind, got: %q", stdout)
+		t.Errorf("expected a markdown check type, got: %q", stdout)
 	}
 	if strings.Contains(stdout, "object_required_field") {
-		t.Errorf("did not expect an object kind, got: %q", stdout)
+		t.Errorf("did not expect an object check type, got: %q", stdout)
 	}
 }
 
-func TestRulesList_unknownFamily_exit2(t *testing.T) {
+func TestCheckTypesList_unknownFamily_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "rules", "list", "--family", "nope")
+	_, _, err := runRoot(t, "check-types", "list", "--family", "nope")
 	if err == nil {
 		t.Fatalf("expected error for unknown family")
 	}
@@ -125,21 +138,21 @@ func TestRulesList_unknownFamily_exit2(t *testing.T) {
 	}
 }
 
-func TestRulesList_familyJSONFiltersToFamily(t *testing.T) {
+func TestCheckTypesList_familyJSONFiltersToFamily(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "list", "--family", "filesystem", "--json")
+	stdout, _, err := runRoot(t, "check-types", "list", "--family", "filesystem", "--json")
 	if err != nil {
-		t.Fatalf("rules list --family filesystem --json: %v", err)
+		t.Fatalf("check-types list --family filesystem --json: %v", err)
 	}
 	var got []struct {
-		Kind   string `json:"kind"`
-		Family string `json:"family"`
+		CheckType string `json:"check_type"`
+		Family    string `json:"family"`
 	}
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(familyKinds("filesystem")) {
-		t.Fatalf("got %d filesystem descriptors, want %d", len(got), len(familyKinds("filesystem")))
+	if len(got) != len(familyCheckTypes("filesystem")) {
+		t.Fatalf("got %d filesystem descriptors, want %d", len(got), len(familyCheckTypes("filesystem")))
 	}
 	for _, d := range got {
 		if d.Family != "filesystem" {
@@ -148,78 +161,79 @@ func TestRulesList_familyJSONFiltersToFamily(t *testing.T) {
 	}
 }
 
-// TestRules_bare_printsHelpNotList pins the grammar rule: a resource noun
+// TestCheckTypes_bare_printsHelpNotList pins the grammar rule: a resource noun
 // invoked bare prints help and never silently lists (see cmd/AGENTS.md). It
 // must show its sub-verbs and not the catalog a `list` would print.
-func TestRules_bare_printsHelpNotList(t *testing.T) {
+func TestCheckTypes_bare_printsHelpNotList(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules")
+	stdout, _, err := runRoot(t, "check-types")
 	if err != nil {
-		t.Fatalf("rules: %v", err)
+		t.Fatalf("check-types: %v", err)
 	}
 	for _, want := range []string{"Usage:", "list", "show"} {
 		if !strings.Contains(stdout, want) {
 			t.Errorf("expected help to mention %q, got: %q", want, stdout)
 		}
 	}
-	// The catalog must not leak: bare `rules` is not an action.
+	// The catalog must not leak: bare `check-types` is not an action.
 	if strings.Contains(stdout, "object_required_field") {
-		t.Errorf("bare rules listed kinds instead of printing help: %q", stdout)
+		t.Errorf("bare check-types listed types instead of printing help: %q", stdout)
 	}
 }
 
-func TestRulesShow_showsFamilyContextAndSiblings(t *testing.T) {
+func TestCheckTypesShow_showsFamilyContextAndSiblings(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "show", "object_field_enum")
+	stdout, _, err := runRoot(t, "check-types", "show", "object_field_enum")
 	if err != nil {
-		t.Fatalf("rules show object_field_enum: %v", err)
+		t.Fatalf("check-types show object_field_enum: %v", err)
 	}
 	// Breadcrumb + family intro give the docs-traversal context.
-	if !strings.Contains(stdout, "Object Rules › Field Enum") {
+	if !strings.Contains(stdout, "Object Check Types › Field Enum") {
 		t.Errorf("expected breadcrumb header, got: %q", stdout)
 	}
-	if !strings.Contains(stdout, "Object rules validate structured frontmatter") {
+	if !strings.Contains(stdout, "Object check types validate structured frontmatter") {
 		t.Errorf("expected family intro, got: %q", stdout)
 	}
 	// Siblings list points at the rest of the family.
 	if !strings.Contains(stdout, "object_required_field") {
-		t.Errorf("expected a sibling kind, got: %q", stdout)
+		t.Errorf("expected a sibling check type, got: %q", stdout)
 	}
 }
 
-func TestRulesShow_noFieldKindStatesSo(t *testing.T) {
+func TestCheckTypesShow_noFieldTypeStatesSo(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "show", "markdown_single_h1")
+	stdout, _, err := runRoot(t, "check-types", "show", "markdown_single_h1")
 	if err != nil {
-		t.Fatalf("rules show markdown_single_h1: %v", err)
+		t.Fatalf("check-types show markdown_single_h1: %v", err)
 	}
 	if !strings.Contains(stdout, "no configuration keys") {
 		t.Errorf("expected no-keys note, got: %q", stdout)
 	}
 }
 
-// familyKinds returns the registered kinds in a family, for test expectations.
-func familyKinds(family string) []string {
+// familyCheckTypes returns the registered check types in a family, for test
+// expectations.
+func familyCheckTypes(family string) []string {
 	var out []string
 	for _, d := range checks.Descriptors() {
 		if d.Family == family {
-			out = append(out, string(d.Kind))
+			out = append(out, string(d.CheckType))
 		}
 	}
 	return out
 }
 
-func TestRulesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
+func TestCheckTypesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "list", "--json")
+	stdout, _, err := runRoot(t, "check-types", "list", "--json")
 	if err != nil {
-		t.Fatalf("rules list --json: %v", err)
+		t.Fatalf("check-types list --json: %v", err)
 	}
 
 	var got []struct {
-		Kind   string `json:"kind"`
-		Family string `json:"family"`
-		Fields []struct {
+		CheckType string `json:"check_type"`
+		Family    string `json:"family"`
+		Fields    []struct {
 			Name string `json:"name"`
 		} `json:"fields"`
 		ConfigExample string `json:"config_example"`
@@ -231,11 +245,11 @@ func TestRulesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 		t.Fatalf("got %d descriptors, want %d", len(got), len(checks.Descriptors()))
 	}
 	for i, d := range checks.Descriptors() {
-		if got[i].Kind != string(d.Kind) {
-			t.Errorf("entry %d: got kind %q, want %q", i, got[i].Kind, d.Kind)
+		if got[i].CheckType != string(d.CheckType) {
+			t.Errorf("entry %d: got check type %q, want %q", i, got[i].CheckType, d.CheckType)
 		}
 		if got[i].ConfigExample == "" {
-			t.Errorf("entry %d (%s): empty config_example", i, d.Kind)
+			t.Errorf("entry %d (%s): empty config_example", i, d.CheckType)
 		}
 	}
 
@@ -243,27 +257,30 @@ func TestRulesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	if !strings.Contains(stdout, `"config_example"`) {
 		t.Errorf("expected snake_case config_example key")
 	}
+	if !strings.Contains(stdout, `"check_type"`) {
+		t.Errorf("expected snake_case check_type key")
+	}
 	if strings.Contains(stdout, `"fields": null`) {
-		t.Errorf("a no-field check emitted null instead of []")
+		t.Errorf("a no-field check type emitted null instead of []")
 	}
 	if !strings.Contains(stdout, `"fields": []`) {
-		t.Errorf("expected at least one no-field check to emit []")
+		t.Errorf("expected at least one no-field check type to emit []")
 	}
 	if strings.Contains(stdout, `"default": ""`) {
 		t.Errorf("empty default should be omitted, not emitted")
 	}
 }
 
-func TestRulesShow_jsonObject(t *testing.T) {
+func TestCheckTypesShow_jsonObject(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "rules", "show", "object_number_range", "--json")
+	stdout, _, err := runRoot(t, "check-types", "show", "object_number_range", "--json")
 	if err != nil {
-		t.Fatalf("rules show object_number_range --json: %v", err)
+		t.Fatalf("check-types show object_number_range --json: %v", err)
 	}
 
 	var got struct {
-		Kind   string `json:"kind"`
-		Fields []struct {
+		CheckType string `json:"check_type"`
+		Fields    []struct {
 			Name     string `json:"name"`
 			Required bool   `json:"required"`
 		} `json:"fields"`
@@ -271,8 +288,8 @@ func TestRulesShow_jsonObject(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if got.Kind != "object_number_range" {
-		t.Errorf("got kind %q, want object_number_range", got.Kind)
+	if got.CheckType != "object_number_range" {
+		t.Errorf("got check type %q, want object_number_range", got.CheckType)
 	}
 	if len(got.Fields) != 3 {
 		t.Fatalf("got %d fields, want 3", len(got.Fields))

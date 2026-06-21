@@ -31,7 +31,7 @@ internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
-cmd/gendocs           generates reference/rules/ and reference/inspectors/ from the registries
+cmd/gendocs           generates reference/check-types/ and reference/inspectors/ from the registries
 docs/                 Hugo docs site — users + contributors (content in docs/content/)
 product/specs/        in-flight specs only (deleted when their work lands)
 ```
@@ -98,8 +98,9 @@ you add a fixture.
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.
 - The check registry (`internal/checks/registry.go`) is the single source of
-  truth for check kinds. Both `cmd/gendocs` and `katalyst rules list` read it,
-  and `registry_test.go` fails if a dispatched kind has no descriptor — a new
-  check ships with its descriptor. The `json:` tags on `Descriptor`/`Field`
-  are the published wire contract for `katalyst rules list --json`; keep them
-  stable.
+  truth for check types. Both `cmd/gendocs` and `katalyst check-types list` read
+  it, and `registry_test.go` fails if a dispatched check type has no descriptor
+  — a new check type ships with its descriptor. The `json:` tags on
+  `Descriptor`/`Field`
+  are the published wire contract for `katalyst check-types list --json`; keep
+  them stable.

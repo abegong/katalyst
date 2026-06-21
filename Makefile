@@ -39,14 +39,14 @@ clean:
 # invocations target that source root with -s, except `hugo mod get`, which
 # forwards all trailing args straight to `go get` (so -s would reach go get
 # and error) — it must run from within $(DOCS_DIR) instead.
-# docs-gen regenerates the rule reference from the checks registry.
+# docs-gen regenerates the check-type reference from the checks registry.
 docs-gen:
 	go run ./cmd/gendocs
 
-# docs-gen-check fails if the generated rule reference is out of date.
-# Run in CI so a new check can't ship without its generated page.
+# docs-gen-check fails if the generated check-type reference is out of date.
+# Run in CI so a new check type can't ship without its generated page.
 docs-gen-check: docs-gen
-	git diff --exit-code -- docs/content/reference/rules
+	git diff --exit-code -- docs/content/reference/check-types
 
 docs-deps:
 	cd $(DOCS_DIR) && $(HUGO) mod get -u $(HUGO_BOOK_MODULE)

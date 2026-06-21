@@ -23,7 +23,7 @@ The durable home for everything a user needs, organized by
 
 - **`how-to/`** — task-oriented recipes.
 - **`reference/`** — information-oriented lookup: configuration, the
-  generated rule reference, the glossary, the command surface.
+  generated check-type reference, the glossary, the command surface.
 - **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
   quadrant): the vision and scope, the core concepts, connectors, progressive
   operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
@@ -69,11 +69,12 @@ the reference.
 
 ## Generated reference
 
-Rule pages under `docs/reference/rules/` are **generated** from the checks
-registry (`internal/checks/registry.go`) by `cmd/gendocs`. Do not edit them
-by hand — run `make docs-gen` and commit the result. CI fails if a
-registered check has no page, so a new check cannot ship undocumented. To add
-a rule, see [add-katalyst-rule](../../.cursor/skills/add-katalyst-rule/SKILL.md).
+Check-type pages under `docs/reference/check-types/` are **generated** from the
+checks registry (`internal/checks/registry.go`) by `cmd/gendocs`. Do not edit
+them by hand — run `make docs-gen` and commit the result. CI fails if a
+registered check type has no page, so a new check type cannot ship
+undocumented. To add a check type, see
+[add-katalyst-check-type](../../.cursor/skills/add-katalyst-check-type/SKILL.md).
 
 ## Templates
 

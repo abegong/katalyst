@@ -1,22 +1,22 @@
 ---
-name: add-katalyst-rule
-description: Add a new Katalyst rule/check kind end-to-end across config parsing, check execution, CLI validation, tests, fixtures, and Hugo rules reference docs. Use when the user asks to add, extend, or document a new rule kind in this repository.
+name: add-katalyst-check-type
+description: Add a new Katalyst check type end-to-end across config parsing, check execution, CLI validation, tests, fixtures, and the generated Hugo check-types reference docs. Use when the user asks to add, extend, or document a new check type in this repository.
 disable-model-invocation: true
 ---
 
-# Add Katalyst Rule
+# Add Katalyst Check Type
 
-Use this skill to implement a new rule/check kind in this repo.
+Use this skill to implement a new check type in this repo.
 
 ## Quick Start
 
-1. Define the new check kind and config payload in `internal/config/config.go`.
+1. Define the new check type and config payload in `internal/config/config.go`.
 2. Implement check behavior in `internal/checks/`.
 3. Wire check instantiation in `cmd/engine.go` (`checksFor`).
 4. Ensure write-path validation uses it via `cmd/write_validation.go`.
 5. Add unit + integration tests and fixtures.
 6. Register a `Descriptor` in `internal/checks/registry.go` and regenerate the
-   rule reference with `make docs-gen`.
+   check-types reference with `make docs-gen`.
 7. Run validation commands and report results.
 
 ## Required Workflow
@@ -24,7 +24,7 @@ Use this skill to implement a new rule/check kind in this repo.
 Copy this checklist and keep it updated:
 
 ```text
-Rule Task Progress:
+Check Type Task Progress:
 - [ ] 1) Config model updated
 - [ ] 2) Check implementation added
 - [ ] 3) CLI wiring updated
@@ -38,8 +38,8 @@ Rule Task Progress:
 
 Edit `internal/config/config.go`:
 
-- Add a `CheckKind` constant for the new rule.
-- Extend `rawCheck` parsing if the rule needs new fields.
+- Add a `CheckType` constant for the new check type.
+- Extend `rawCheck` parsing if the check type needs new fields.
 - Update `normalizeCheck(...)` validation and defaults.
 - Preserve the collection `schema:` shorthand (sugar for a leading `object`
   check).
@@ -48,7 +48,7 @@ Add/extend tests in `internal/config/config_test.go`:
 
 - Parses valid check payload.
 - Rejects malformed payload.
-- Rejects unknown kind.
+- Rejects unknown check type.
 
 ## 2) Check Implementation
 
@@ -64,7 +64,7 @@ Update `internal/checks/checks_test.go` with focused unit tests.
 
 Edit `cmd/engine.go` in `checksFor(...)`:
 
-- Map the new `config.CheckKind` to the new `checks.*` implementation.
+- Map the new `config.CheckType` to the new `checks.*` implementation.
 - Preserve precedence behavior:
   - `--schema` overrides object schema checks only.
   - non-object checks always come from the collection.
@@ -93,14 +93,14 @@ Follow `AGENTS.md` testing rules:
 
 ## 5) Docs
 
-The rule reference is **generated**, not hand-written. Do not edit
-`docs/reference/rules/` directly.
+The check-types reference is **generated**, not hand-written. Do not edit
+`docs/reference/check-types/` directly.
 
-- Add a `Descriptor` for the new kind in `internal/checks/registry.go`: kind,
-  family (`objects`/`markdown`/`filesystem`), slug, title, one-line summary,
-  any configuration `Fields`, and a `ConfigExample` snippet.
-- Run `make docs-gen` to regenerate `docs/reference/rules/`, and commit the
-  result.
+- Add a `Descriptor` for the new check type in `internal/checks/registry.go`:
+  check type, family (`objects`/`markdown`/`filesystem`), slug, title, one-line
+  summary, any configuration `Fields`, and a `ConfigExample` snippet.
+- Run `make docs-gen` to regenerate `docs/reference/check-types/`, and commit
+  the result.
 - `registry_test.go` enforces parity between `normalizeCheck`'s switch and the
   descriptors, so a missing `Descriptor` fails the build.
 

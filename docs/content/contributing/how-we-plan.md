@@ -71,7 +71,7 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
 - **`docs/deep-dives/`** — cross-cutting conceptual changes and rationale
   that no single package owns.
 - **`docs/reference/`** — the precise surface; for checks, regenerate
-  `reference/rules/` with `make docs-gen`.
+  `reference/check-types/` with `make docs-gen`.
 - **`docs/how-to/` and `docs/getting-started.md`** — user-facing usage.
 - **`docs/reference/glossary.md`** — new vocabulary.
 - **`README.md`** — pointer/overview updates.

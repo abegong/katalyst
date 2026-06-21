@@ -8,7 +8,7 @@ draft = true
 TEMPLATE — copy this file into docs/reference/ and fill it in.
 
 This page IS: an information-oriented description of one thing — a config
-key, a command, a check kind, a term. It is looked up, not read top to
+key, a command, a check type, a term. It is looked up, not read top to
 bottom. It is accurate, complete, and austere.
 
 This page is NOT: a tutorial (no "first, then, next"), a how-to (no

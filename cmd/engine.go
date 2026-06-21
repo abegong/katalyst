@@ -97,7 +97,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		checkList = append(checkList, checks.Object{Schema: schema})
 	default:
 		for _, ch := range c.Checks {
-			if ch.Kind != config.CheckObject {
+			if ch.Type != config.CheckObject {
 				continue
 			}
 			path := cfg.SchemaPath(ch.Schema)
@@ -113,11 +113,11 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	}
 
 	for _, ch := range c.Checks {
-		switch ch.Kind {
+		switch ch.Type {
 		case config.CheckObjectRequiredField:
 			checkList = append(checkList, checks.ObjectRequiredField{Field: ch.Field})
 		case config.CheckObjectFieldType:
-			checkList = append(checkList, checks.ObjectFieldType{Field: ch.Field, Type: ch.Type})
+			checkList = append(checkList, checks.ObjectFieldType{Field: ch.Field, Type: ch.FieldType})
 		case config.CheckObjectFieldEnum:
 			checkList = append(checkList, checks.ObjectFieldEnum{Field: ch.Field, Values: ch.Values})
 		case config.CheckObjectNumberRange:

@@ -75,7 +75,7 @@ Ergonomics matter — especially for agents. An agent should be able to read the
   - *Speed* — fast enough to run on every write.
   - *Discoverability* — an agent can find the schemas and structure on its own.
   - *Readability* — rules and content stay legible to humans and agents alike.
-  - *Extensibility* — add new checks and rule kinds as needs grow.
+  - *Extensibility* — add new check types as needs grow.
 
 ## What if structure was light?
 

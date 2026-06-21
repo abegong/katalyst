@@ -16,8 +16,8 @@
   `internal/checks/checks.go` defines `Check` (`Run(Context) []Violation`),
   `Context{FilePath, Doc, Meta}`, and `RunAll`. `internal/checks/registry.go`
   holds `Descriptor`/`Family` and `Descriptors()`/`Families()`; a parity test
-  asserts every dispatched kind has a descriptor, and `cmd/gendocs/main.go`
-  renders `docs/content/reference/rules/` from it. There is **no descriptive
+  asserts every dispatched check type has a descriptor, and `cmd/gendocs/main.go`
+  renders `docs/content/reference/check-types/` from it. There is **no descriptive
   counterpart** — nothing aggregates across a collection to *describe* it.
 - **Frontmatter parsing is reusable.** `internal/frontmatter` `Parse(src)`
   returns `*Document{HasFrontmatter, Meta map[string]any, Body, Lines}`.

@@ -7,7 +7,7 @@ weight = 45
 
 # Inspectors reference
 
-Inspectors describe the shape of a markdown corpus and return evidence — counts and distributions, never recommendations. They are the descriptive dual of [rules]({{< relref "rules/_index.md" >}}) and drive the [`inspect`]({{< relref "commands.md" >}}) command. This page is generated from the inspector registry, so it always matches the shipped engine.
+Inspectors describe the shape of a markdown corpus and return evidence — counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "commands.md" >}}) command. This page is generated from the inspector registry, so it always matches the shipped engine.
 
 ## Structural
 

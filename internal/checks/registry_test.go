@@ -8,17 +8,17 @@ import (
 	"testing"
 )
 
-// TestDescriptorParity is the no-orphan guarantee: every check kind
+// TestDescriptorParity is the no-orphan guarantee: every check type
 // dispatched in config.normalizeCheck's switch must have a Descriptor, and
-// every Descriptor must correspond to a dispatched kind. A new check added
-// to the switch without a registry entry (or vice versa) fails here, so a
-// check cannot ship undocumented.
+// every Descriptor must correspond to a dispatched check type. A new check type
+// added to the switch without a registry entry (or vice versa) fails here, so a
+// check type cannot ship undocumented.
 func TestDescriptorParity(t *testing.T) {
 	dispatched := dispatchedKinds(t)
 
 	registered := map[string]bool{}
 	for _, d := range Descriptors() {
-		k := string(d.Kind)
+		k := string(d.CheckType)
 		if registered[k] {
 			t.Errorf("duplicate descriptor for kind %q", k)
 		}
@@ -47,10 +47,10 @@ func TestDescriptorMetadata(t *testing.T) {
 	seenSlug := map[string]bool{}
 	for _, d := range Descriptors() {
 		if d.Family == "" || !families[d.Family] {
-			t.Errorf("kind %q has unknown family %q", d.Kind, d.Family)
+			t.Errorf("kind %q has unknown family %q", d.CheckType, d.Family)
 		}
 		if d.Slug == "" {
-			t.Errorf("kind %q has empty slug", d.Kind)
+			t.Errorf("kind %q has empty slug", d.CheckType)
 		}
 		key := d.Family + "/" + d.Slug
 		if seenSlug[key] {
@@ -58,13 +58,13 @@ func TestDescriptorMetadata(t *testing.T) {
 		}
 		seenSlug[key] = true
 		if d.Title == "" {
-			t.Errorf("kind %q has empty title", d.Kind)
+			t.Errorf("kind %q has empty title", d.CheckType)
 		}
 		if d.Summary == "" {
-			t.Errorf("kind %q has empty summary", d.Kind)
+			t.Errorf("kind %q has empty summary", d.CheckType)
 		}
 		if d.ConfigExample == "" {
-			t.Errorf("kind %q has empty config example", d.Kind)
+			t.Errorf("kind %q has empty config example", d.CheckType)
 		}
 	}
 }
@@ -80,7 +80,7 @@ func dispatchedKinds(t *testing.T) map[string]bool {
 		t.Fatalf("parse config.go: %v", err)
 	}
 
-	// Map every CheckKind constant name to its string value.
+	// Map every CheckType constant name to its string value.
 	values := map[string]string{}
 	for _, decl := range file.Decls {
 		gd, ok := decl.(*ast.GenDecl)

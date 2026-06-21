@@ -63,8 +63,8 @@ non-empty `checks` list, or both. Files in the directory that do not match
 
 ## `checks`
 
-Each entry has a `kind` and the keys that kind requires. The 18 kinds are
-documented one per page in the [rule reference]({{< relref "rules/_index.md" >}}):
+Each entry has a `kind` and the keys that check type requires. The 18 check
+types are documented one per page in the [check types reference]({{< relref "check-types/_index.md" >}}):
 
 ```yaml
 checks:
@@ -122,6 +122,6 @@ Markdown and filesystem checks always come from the collection, even when
 
 ## See also
 
-- [Rules reference]({{< relref "rules/_index.md" >}}) — every check kind.
+- [Check types reference]({{< relref "check-types/_index.md" >}}) — every check type.
 - `internal/config/README.md` — configuration rationale: why named
   collections, three-tier resolution, unmatched-as-error.

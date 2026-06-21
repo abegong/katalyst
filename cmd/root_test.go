@@ -19,9 +19,9 @@ Verbs:
   inspect     Profile a directory of markdown files and report its shape.
 
 Resources:
+  check-types Inspect the check types the engine can enforce, grouped by family.
   collection  Inspect collections defined under .katalyst/collections/.
   item        List, inspect, and mutate items within collections.
-  rules       Inspect the check kinds the engine can enforce, grouped by family.
   schema      Inspect schemas defined under .katalyst/schemas/.
 
 Additional Commands:

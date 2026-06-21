@@ -22,8 +22,9 @@ how each term maps onto today's code is documented in the per-package
 | **Collection** | A named entry in `collections:` — a directory, a filename `pattern`, and the checks its items must pass. |
 | **Item** | One file in a collection that matches its pattern. Its id is the filename stem. |
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |
-| **Rule** | A check *kind* — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …). `katalyst rules list` lists them. |
-| **Check** | A single rule run against an item (object, markdown, or filesystem family). |
+| **Check type** | The reusable definition of a constraint — one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, …), selected by its `kind:` id. `katalyst check-types list` lists them. |
+| **Check instance** | One configured check attached to a collection: a check type plus its arguments (one YAML object under `checks:`). It runs against each item (object, markdown, or filesystem family). |
+| **Check** | Shorthand for a check instance when context is unambiguous. |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
 | **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
 | **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |
@@ -35,10 +36,11 @@ how each term maps onto today's code is documented in the per-package
 
 ## Usage notes
 
-- A **rule** is the kind/definition; a **check** is that rule running against
-  a specific item, and a **violation** is a check that failed. The [rules
-  reference]({{< relref "rules/_index.md" >}}) and `katalyst rules list`
-  enumerate rules.
+- A **check type** is the definition; a **check instance** is that check type
+  configured in a collection and run against a specific item, and a
+  **violation** is a check that failed. The [check types
+  reference]({{< relref "check-types/_index.md" >}}) and `katalyst check-types
+  list` enumerate check types.
 - Prefer **schema** for what users author and **validator** only for the
   runtime check itself — never "validator" as a thing users write.
 - Use **frontmatter** for the on-disk block and **metadata** for the parsed

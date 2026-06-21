@@ -77,7 +77,7 @@ in-flight spec), and the locked rationale folds into the relevant
 ```markdown
 Proposal: name the conformance verb `check`, not `validate`.
 
-- The engine's primitive is already a `Check` (`internal/checks/`, `CheckKind`) —
+- The engine's primitive is already a `Check` (`internal/checks/`, `CheckType`) —
   `check` runs the checks; `validate` would be a second word for the same idea.
 - It covers the non-schema rules too (filename, headings), which "validate"
   (schema-conformance) doesn't connote.

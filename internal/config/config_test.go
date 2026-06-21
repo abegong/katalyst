@@ -96,7 +96,7 @@ schema: person
 	if books.Dir != filepath.Join(wantRoot, "notes/books") {
 		t.Errorf("books.Dir = %q", books.Dir)
 	}
-	if len(books.Checks) != 1 || books.Checks[0].Kind != config.CheckObject {
+	if len(books.Checks) != 1 || books.Checks[0].Type != config.CheckObject {
 		t.Fatalf("books schema shorthand should map to one object check, got %+v", books.Checks)
 	}
 
@@ -253,18 +253,18 @@ checks:
 	if len(got) != 18 {
 		t.Fatalf("expected 18 checks, got %d", len(got))
 	}
-	if got[0].Kind != config.CheckObject || got[0].Schema != "book" {
+	if got[0].Type != config.CheckObject || got[0].Schema != "book" {
 		t.Fatalf("check[0] = %+v, want object schema=book", got[0])
 	}
-	if got[6].Kind != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
+	if got[6].Type != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
 		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
 	}
-	if got[12].Kind != config.CheckFilesystemFilenameMatchesSlug || got[12].Field != "slug" {
+	if got[12].Type != config.CheckFilesystemFilenameMatchesSlug || got[12].Field != "slug" {
 		t.Fatalf("check[12] = %+v, want filesystem default field slug", got[12])
 	}
 }
 
-func TestLoad_rejectsUnknownCheckKind(t *testing.T) {
+func TestLoad_rejectsUnknownCheckType(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml": minimalSchema,
@@ -275,10 +275,10 @@ checks:
 	})
 	_, err := config.Load(dir)
 	if err == nil {
-		t.Fatalf("expected error for unknown check kind")
+		t.Fatalf("expected error for unknown check type")
 	}
-	if !strings.Contains(err.Error(), "unknown check kind") {
-		t.Fatalf("expected unknown check kind message, got: %v", err)
+	if !strings.Contains(err.Error(), "unknown check type") {
+		t.Fatalf("expected unknown check type message, got: %v", err)
 	}
 }
 
