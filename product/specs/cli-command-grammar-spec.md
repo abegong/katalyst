@@ -1,9 +1,10 @@
 # CLI command grammar — noun/verb separation
 
-> **Status: planning.** Establishes the rule that governs where a new
+> **Status: implementing.** Establishes the rule that governs where a new
 > top-level command goes. It refines, and does not replace, the surface
 > defined in [`cli-spec.md`](cli-spec.md); that spec lists the commands, this
-> one states the grammar they obey.
+> one states the grammar they obey. The grouped help (below) has landed; the
+> `rules` sub-verb split and the principles doc are pending.
 
 ## Principle
 
@@ -36,6 +37,34 @@ command should adopt. The concrete symptoms:
 This is a small, well-understood change to a convention, but it touches the
 whole command tree and the choice has been made implicitly more than once, so
 it earns a written rule.
+
+## Visible change: grouped help
+
+Before, `katalyst` (no args) printed one alphabetized list, interleaving the
+two grammars with no cue which was which. The command tree now declares two
+Cobra help groups, so the split is visible at the surface:
+
+```
+Verbs:
+  check       Run configured checks against the selected items.
+  fix         Apply deterministic, safe fixes to the selected items.
+  init        Prepare the current directory as a katalyst project.
+
+Resources:
+  collection  Inspect collections defined under .katalyst/collections/.
+  item        List, inspect, and mutate items within collections.
+  rules       List the check kinds the engine can enforce, grouped by family.
+  schema      Inspect schemas defined under .katalyst/schemas/.
+
+Additional Commands:
+  completion  ...
+  help        ...
+```
+
+Cobra's built-in `completion` and `help` fall to "Additional Commands"
+automatically. The grouping is presentation only — it changes no command
+behavior, and is the single user-visible artifact of this spec until the
+`rules` split lands.
 
 ## The two families
 
@@ -167,12 +196,24 @@ This is the only behavioral change the principle requires. `check`, `fix`,
 - [ ] No top-level command exists that is a bare CRUD verb.
 - [ ] Each resource noun, invoked bare, prints help rather than acting.
 
-## Graduation target
+## Graduation target — the principles doc
 
-When this lands, the durable rule moves into permanent docs (per
-[how-we-plan](../../docs/content/contributing/how-we-plan.md)):
+The principles in this spec ("how the core API commands are organized") are
+**cross-cutting CLI design rationale** that no single package owns, so per
+[how-we-document](../../docs/content/contributing/how-we-document.md) they
+belong in the *deep-dives* (understanding) quadrant — not in a per-package
+`internal/*/README.md`, which is reserved for subsystem-specific rationale.
 
-- **`docs/deep-dives/`** — the noun/verb grammar and the placement rule, as
-  CLI design rationale.
-- **`docs/reference/`** — the `rules list` / `rules show` surface.
-- **`AGENTS.md`** — a one-line pointer: new commands obey the placement rule.
+**Home: a new `docs/content/deep-dives/command-organization.md`** ("How the
+core commands are organized"), carrying the two families, the placement rule,
+and the grouped-help model. Supporting moves at graduation:
+
+- **`docs/reference/commands.md`** — document the `rules list` / `rules show`
+  surface, and group the page's command list to mirror the grouped help.
+- **`AGENTS.md`** — a one-line pointer under "Adding code": new top-level
+  commands obey the placement rule; see the deep-dive.
+
+The rationale for splitting it this way: the deep-dive is the single source of
+truth for the *why* and the mental model (read once, understood); `AGENTS.md`
+only needs the actionable pointer so a contributor adding a command knows the
+rule exists and where to read it.
