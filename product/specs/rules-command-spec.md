@@ -1,6 +1,6 @@
 # `rules` command spec
 
-> **Status: planning.** Adds a read-only `katalyst rules` command that exposes
+> **Status: implementing.** Adds a read-only `katalyst rules` command that exposes
 > the check registry — the catalog `cmd/gendocs` already renders — through the
 > CLI and as JSON. Additive to [`cli-spec.md`](./cli-spec.md); no engine change.
 

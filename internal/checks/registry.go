@@ -8,32 +8,37 @@ import "github.com/katabase-ai/katalyst/internal/config"
 // renders docs/reference/rules/ from these descriptors. A new check cannot
 // ship undocumented.
 
-// Field describes one configuration key accepted by a check.
+// Field describes one configuration key accepted by a check. The json tags
+// are the published wire contract for `katalyst rules --json`; keep them
+// stable and snake_case (matching the config keys they describe) even if the
+// Go field names change.
 type Field struct {
-	Name     string
-	Required bool
-	Default  string
-	Desc     string
+	Name     string `json:"name"`
+	Required bool   `json:"required"`
+	Default  string `json:"default,omitempty"`
+	Desc     string `json:"desc"`
 }
 
-// Descriptor is the machine-readable record for one check kind.
+// Descriptor is the machine-readable record for one check kind. Its json tags
+// are the wire contract for `katalyst rules --json`; see Field.
 type Descriptor struct {
 	// Kind is the value used as `kind:` in katalyst.yaml.
-	Kind config.CheckKind
+	Kind config.CheckKind `json:"kind"`
 	// Family groups the check on the docs site: "objects", "markdown", or
 	// "filesystem". It is also the subdirectory under reference/rules/.
-	Family string
+	Family string `json:"family"`
 	// Slug is the page basename under the family directory.
-	Slug string
+	Slug string `json:"slug"`
 	// Title is the human-readable page title.
-	Title string
+	Title string `json:"title"`
 	// Summary is a one-line statement of what the check enforces.
-	Summary string
-	// Fields documents the check's configuration keys, if any.
-	Fields []Field
+	Summary string `json:"summary"`
+	// Fields documents the check's configuration keys, if any. The rules
+	// command normalizes a nil slice to [] so consumers never see null.
+	Fields []Field `json:"fields"`
 	// ConfigExample is a complete katalyst.yaml snippet (YAML, no fence)
 	// showing the check in a collection.
-	ConfigExample string
+	ConfigExample string `json:"config_example"`
 }
 
 // Family identifies the three rule families and their intro copy. Order is

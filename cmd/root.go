@@ -29,6 +29,7 @@ markdown files against JSON Schema documents.`,
 		newCollectionCmd(),
 		newItemCmd(),
 		newSchemaCmd(),
+		newRulesCmd(),
 	)
 
 	return root
