@@ -26,3 +26,18 @@ jobs:
         run: make build                     # exercises the Makefile entry point
       - name: Rule reference is generated and current
         run: make docs-gen-check
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'   # match the go directive in go.mod
+          cache: true
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.163.3'
+          extended: true       # Makefile uses the local hugo when it is extended
+      - name: Build docs
+        run: make docs-build   # fails on REF_NOT_FOUND and other broken refs
