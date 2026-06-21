@@ -39,6 +39,9 @@ type Descriptor struct {
 	// ConfigExample is a complete katalyst.yaml snippet (YAML, no fence)
 	// showing the check in a collection.
 	ConfigExample string `json:"config_example"`
+	// Scope is "collection" for checks that run once per collection over all
+	// its items; empty means an ordinary per-item check.
+	Scope string `json:"scope,omitempty"`
 }
 
 // Family identifies the three check-type families and their intro copy. Order
@@ -420,6 +423,52 @@ collections:
     checks:
       - kind: filesystem_referenced_files_exist
         fields: [cover, attachments]`,
+		},
+		{
+			CheckType: config.CheckFilesystemUniqueFilename,
+			Family:    "filesystem",
+			Slug:      "unique-filename",
+			Title:     "Unique Filename",
+			Summary:   "Require that no two items in the collection share a basename.",
+			Scope:     "collection",
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_unique_filename`,
+		},
+		{
+			CheckType: config.CheckFilesystemUniqueField,
+			Family:    "filesystem",
+			Slug:      "unique-field",
+			Title:     "Unique Field",
+			Summary:   "Require that no two items share a value for a frontmatter field.",
+			Scope:     "collection",
+			Fields: []Field{
+				{Name: "field", Required: true, Desc: "Frontmatter key whose value must be unique across the collection."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_unique_field
+        field: slug`,
+		},
+		{
+			CheckType: config.CheckFilesystemIndexFileRequired,
+			Family:    "filesystem",
+			Slug:      "index-file-required",
+			Title:     "Index File Required",
+			Summary:   "Require that every directory containing items has an index file.",
+			Scope:     "collection",
+			Fields: []Field{
+				{Name: "name", Required: false, Default: "_index.md", Desc: "Index filename that must be present in each item directory."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_index_file_required`,
 		},
 		{
 			CheckType: config.CheckFilesystemExtensionIn,

@@ -95,6 +95,9 @@ const (
 	CheckFilesystemPathDepth           CheckType = "filesystem_path_depth"
 	CheckFilesystemParentDirMatchesFld CheckType = "filesystem_parent_dir_matches_field"
 	CheckFilesystemReferencedFiles     CheckType = "filesystem_referenced_files_exist"
+	CheckFilesystemUniqueFilename      CheckType = "filesystem_unique_filename"
+	CheckFilesystemUniqueField         CheckType = "filesystem_unique_field"
+	CheckFilesystemIndexFileRequired   CheckType = "filesystem_index_file_required"
 	defaultMarkdownTitleField                    = "title"
 	defaultFilesystemSlugField                   = "slug"
 )
@@ -127,6 +130,7 @@ type CheckInstance struct {
 	MinInt    *int
 	MaxInt    *int
 	Fields    []string
+	Name      string
 }
 
 // Collection is a named group of items backed by a directory of files.
@@ -230,6 +234,7 @@ type rawCheck struct {
 	Deny      []string `yaml:"deny"`
 	Pattern   string   `yaml:"pattern"`
 	Fields    []string `yaml:"fields"`
+	Name      string   `yaml:"name"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -616,6 +621,29 @@ var targetNames = map[string]bool{
 
 func validCaseStyle(s string) bool { return caseStyleNames[s] }
 
+// collectionScopedTypes are check types that run once per collection over all
+// its items, rather than per item.
+var collectionScopedTypes = map[CheckType]bool{
+	CheckFilesystemUniqueFilename:    true,
+	CheckFilesystemUniqueField:       true,
+	CheckFilesystemIndexFileRequired: true,
+}
+
+// CollectionScoped reports whether a check type runs per collection (vs. per
+// item).
+func CollectionScoped(t CheckType) bool { return collectionScopedTypes[t] }
+
+// HasCollectionChecks reports whether the collection configures any
+// collection-scoped check.
+func (c Collection) HasCollectionChecks() bool {
+	for _, ch := range c.Checks {
+		if CollectionScoped(ch.Type) {
+			return true
+		}
+	}
+	return false
+}
+
 // floatToIntPtr truncates a *float64 (the shared yaml min/max) to a *int for
 // integer-bounded checks. Nil in, nil out.
 func floatToIntPtr(f *float64) *int {
@@ -795,6 +823,15 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 			return CheckInstance{}, errors.New(`filesystem_referenced_files_exist requires "fields"`)
 		}
 		return CheckInstance{Type: checkType, Fields: raw.Fields}, nil
+	case CheckFilesystemUniqueFilename:
+		return CheckInstance{Type: checkType}, nil
+	case CheckFilesystemUniqueField:
+		if raw.Field == "" {
+			return CheckInstance{}, errors.New(`filesystem_unique_field requires "field"`)
+		}
+		return CheckInstance{Type: checkType, Field: raw.Field}, nil
+	case CheckFilesystemIndexFileRequired:
+		return CheckInstance{Type: checkType, Name: raw.Name}, nil
 	case "":
 		return CheckInstance{}, errors.New(`check type is required`)
 	default:

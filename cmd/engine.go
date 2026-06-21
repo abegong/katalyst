@@ -170,10 +170,27 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		}
 	}
 
-	if len(checkList) == 0 {
+	if len(checkList) == 0 && !c.HasCollectionChecks() {
 		return nil, errors.New("no checks configured for collection")
 	}
 	return checkList, nil
+}
+
+// collectionChecksFor builds the collection-scoped checks configured for a
+// collection. These run once per collection, after the per-item pass.
+func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionCheck {
+	var out []checks.CollectionCheck
+	for _, ch := range c.Checks {
+		switch ch.Type {
+		case config.CheckFilesystemUniqueFilename:
+			out = append(out, checks.UniqueFilename{})
+		case config.CheckFilesystemUniqueField:
+			out = append(out, checks.UniqueField{Field: ch.Field})
+		case config.CheckFilesystemIndexFileRequired:
+			out = append(out, checks.IndexFileRequired{Name: ch.Name})
+		}
+	}
+	return out
 }
 
 // projectFor wraps a loaded config in a project.

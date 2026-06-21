@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/katabase-ai/katalyst/internal/checks"
 	"github.com/katabase-ai/katalyst/internal/config"
@@ -77,6 +78,17 @@ reported as unmatched references (errors).`,
 					fmt.Fprintf(errOut, "%s/%s: unmatched file (does not match pattern %q)\n", c.Path, rel, c.Pattern)
 					anyInvalid = true
 				}
+			}
+
+			// Collection-scoped checks run once per collection over its FULL
+			// item set, independent of how the selector narrowed the per-item
+			// pass (a uniqueness verdict is only correct against every item).
+			bad, err := runCollectionChecks(errOut, e, selectedCollections(res))
+			if err != nil {
+				return err
+			}
+			if bad {
+				anyInvalid = true
 			}
 
 			if anyInvalid {
@@ -156,6 +168,63 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 	instance := dropKey(doc.Meta, "schema")
 	result := checks.RunAll(checks.Context{FilePath: item.Path, CollectionRoot: c.Dir, Doc: doc, Meta: instance}, checkList)
 	return len(result), nil
+}
+
+// selectedCollections returns the distinct collections touched by a
+// resolution — those selected wholesale and those owning a selected item —
+// in name order, so collection-scoped checks run once each, deterministically.
+func selectedCollections(res *project.Resolution) []config.Collection {
+	byName := map[string]config.Collection{}
+	for _, c := range res.Scan {
+		byName[c.Name] = c
+	}
+	for _, it := range res.Items {
+		byName[it.Collection.Name] = it.Collection
+	}
+	names := make([]string, 0, len(byName))
+	for n := range byName {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	out := make([]config.Collection, 0, len(names))
+	for _, n := range names {
+		out = append(out, byName[n])
+	}
+	return out
+}
+
+// runCollectionChecks runs each collection's collection-scoped checks over
+// its full item set. Returns whether any violation was reported.
+func runCollectionChecks(errOut io.Writer, e *engine, collections []config.Collection) (bool, error) {
+	bad := false
+	for _, c := range collections {
+		collChecks := e.collectionChecksFor(c)
+		if len(collChecks) == 0 {
+			continue
+		}
+		items, err := e.proj.Items(c)
+		if err != nil {
+			return false, asUsageErr(err)
+		}
+		ctx := checks.CollectionContext{Root: c.Dir, Items: make([]checks.ItemContext, 0, len(items))}
+		for _, it := range items {
+			doc, err := parseItem(it.Path)
+			if err != nil {
+				fmt.Fprintf(errOut, "%s: %v\n", it.Path, err)
+				bad = true
+				continue
+			}
+			ctx.Items = append(ctx.Items, checks.ItemContext{
+				FilePath: it.Path,
+				Meta:     dropKey(doc.Meta, "schema"),
+			})
+		}
+		for _, v := range checks.RunCollectionAll(ctx, collChecks) {
+			fmt.Fprintf(errOut, "%s: %s\n", v.File, v.Message)
+			bad = true
+		}
+	}
+	return bad, nil
 }
 
 // usageErr wraps a message so main exits with code 2 (usage error).

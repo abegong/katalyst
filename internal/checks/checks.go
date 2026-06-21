@@ -19,6 +19,10 @@ type Violation struct {
 	Path    string
 	Message string
 	Line    int
+	// File names the offending file for collection-scoped violations, which
+	// are not tied to the single item being processed. Empty for per-item
+	// checks (the caller already knows the file).
+	File string
 }
 
 // Check validates one concern against a document context.

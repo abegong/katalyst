@@ -20,5 +20,8 @@ Check types in this family:
 - [Path Depth]({{< relref "path-depth.md" >}}) — Bound directory nesting relative to the collection root.
 - [Parent Directory Matches Field]({{< relref "parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
 - [Referenced Files Exist]({{< relref "referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
+- [Unique Filename]({{< relref "unique-filename.md" >}}) — Require that no two items in the collection share a basename.
+- [Unique Field]({{< relref "unique-field.md" >}}) — Require that no two items share a value for a frontmatter field.
+- [Index File Required]({{< relref "index-file-required.md" >}}) — Require that every directory containing items has an index file.
 - [Extension In]({{< relref "extension-in.md" >}}) — Allow only specific file extensions.
 - [Parent Directory In]({{< relref "parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
