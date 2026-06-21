@@ -317,8 +317,14 @@ message so the user (or their editor) can rename deliberately.
   test-enforced); a `Scope` field on `Descriptor` (`item` | `collection`) so
   generated docs can note which checks run per-collection.
 - `cmd/gendocs` + `docs/content/reference/rules/filesystem/` — regenerate.
-- `AGENTS.md`, `docs/explanation/` — record the target×rule model and the
-  collection-check tier; `glossary.md` — "target," "collection-scoped check."
+- `cmd/rules.go` / `cmd/rules_test.go` — the `rules` command is registry-driven,
+  so new kinds appear automatically; the Tier 3 `Scope` field should be shown in
+  the per-kind detail readout (JSON tests ignore extra fields and count
+  dynamically, so they stay green).
+- `AGENTS.md`, `docs/content/deep-dives/` — record the target×rule model and the
+  collection-check tier (the domain content now lives in
+  `deep-dives/core-concepts.md`); `glossary.md` — "target," "collection-scoped
+  check."
 
 ## Open Questions
 
