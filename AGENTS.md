@@ -25,12 +25,13 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 ## Layout
 
 ```
-cmd/                  cobra commands (root, init, check, fix, collection, item, schema, rules)
+cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
 internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
 internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
-cmd/gendocs           generates docs/content/reference/rules/ from the checks registry
+internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
+cmd/gendocs           generates reference/rules/ and reference/inspectors/ from the registries
 docs/                 Hugo docs site — users + contributors (content in docs/content/)
 product/specs/        in-flight specs only (deleted when their work lands)
 ```

@@ -22,10 +22,18 @@ markdown files against JSON Schema documents.`,
 		SilenceErrors: true,
 	}
 
+	// Route flag-parse failures (unknown flag, missing value) through the
+	// project's usage-error machinery so they exit 2 in the standard voice
+	// instead of Cobra's default exit-1 text. Subcommands inherit this.
+	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
+		return usageErr(err.Error())
+	})
+
 	root.AddCommand(
 		newInitCmd(),
 		newCheckCmd(),
 		newFixCmd(),
+		newInspectCmd(),
 		newCollectionCmd(),
 		newItemCmd(),
 		newSchemaCmd(),

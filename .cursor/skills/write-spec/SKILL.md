@@ -33,9 +33,10 @@ This list is the template — there is no separate template file.
   Capture decisions that are expensive to reverse.
 - **Open Questions** — Numbered unresolved decisions that block finalizing
   Design. Surface them early; fold each resolution into Design. The locked
-  rationale graduates into the relevant `docs/deep-dives/` page when the work
-  ships — there is no central decisions log. A spec isn't done until this
-  section is empty or `_None._`.
+  rationale graduates into the code it explains (package docs, with `doc.go`
+  when long) or, for cross-cutting concepts, into the relevant
+  `docs/deep-dives/` page when the work ships; there is no central decisions
+  log. A spec isn't done until this section is empty or `_None._`.
 - **Test checklist** (optional) — When the spec doubles as the build contract
   (as `product/specs/cli-spec.md` does), end with a checklist of behaviors the
   pending tests assert. Otherwise this lives in the plan.
@@ -49,8 +50,9 @@ This list is the template — there is no separate template file.
 - **Rejected alternatives** — Include when you spent real time weighing
   options, so coworkers and your future self don't re-litigate them. One or two
   sentences per alternative — the option and why it lost. Skip strawmen. Note:
-  the relevant `docs/deep-dives/` page is katalyst's long-term home for
-  rejected alternatives once a spec is retired.
+  once the spec is retired, rejected alternatives live with the thing they
+  explain: package docs (`doc.go` when long) for subsystem choices, or the
+  relevant `docs/deep-dives/` page for cross-cutting concepts.
 
 ## Naming
 

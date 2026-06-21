@@ -47,7 +47,7 @@ func newSchemaShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show <name>",
 		Short: "Print the contents of a registered schema (pretty-printed JSON).",
-		Args:  cobra.ExactArgs(1),
+		Args:  exactArgs(1, "schema show <name>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			cfg, err := loadConfigFromCWD()

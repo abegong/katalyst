@@ -13,6 +13,11 @@ Katalyst gives you and your agent tools to solve problems like these:
 
 If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
 
+Need a quick shape profile of an existing wiki before authoring rules? Use
+`katalyst inspect <path>` to report frontmatter, markdown, and filename
+conventions as evidence. The full command surface (including `inspect`) is in
+the [command reference](https://katabase-ai.github.io/katalyst/reference/commands/).
+
 > [!TIP]
 > **New to Katalyst?** [Get started »](https://katabase-ai.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
 

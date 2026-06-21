@@ -27,8 +27,9 @@ The durable home for everything a user needs, organized by
 - **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
   quadrant): the vision and scope, the core concepts, connectors, progressive
   operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
-  orientation page sits at the top level. Subsystem-specific rationale lives in
-  per-package `README.md` files under `internal/`.
+  orientation page sits at the top level. Subsystem-specific rationale belongs
+  with the code (package docs, including `doc.go` when long, or a co-located
+  package `README.md`), not a per-feature explanation page that will drift.
 - **`contributing/`** — project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
@@ -53,10 +54,18 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### Go doc comments — code-level API docs
+### Go doc comments — code-level API docs **and package architecture**
 
 Package- and symbol-level documentation lives in the code as Go doc
-comments, not in Markdown.
+comments, not in Markdown. This is also the home for a package's
+**architecture and design rationale** — why it is shaped the way it is, the
+load-bearing decisions, and the alternatives rejected. When that narrative
+outgrows a leading file comment, give it a dedicated `doc.go`
+(`internal/inspect/doc.go` is the worked example). Co-locating the *why* with
+the code keeps it in the same diff and out of a separate `explanation/` page
+that drifts; it also surfaces in `go doc`. Use godoc headings (`# Heading`),
+prose, and short lists — not tables; if you reach for a table, it belongs in
+the reference.
 
 ## Generated reference
 
