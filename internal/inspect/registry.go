@@ -140,3 +140,14 @@ func ByName(name string) (Inspector, bool) {
 	}
 	return nil, false
 }
+
+// Summary returns the one-line description of what an inspector's results mean,
+// from its registry descriptor. The empty string if the name is unknown.
+func Summary(name string) string {
+	for _, d := range Descriptors() {
+		if d.Name == name {
+			return d.Summary
+		}
+	}
+	return ""
+}

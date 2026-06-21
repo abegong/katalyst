@@ -3,6 +3,7 @@ package cmd_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,6 +121,46 @@ func TestInspect_unknownInspectorIsUsageError(t *testing.T) {
 	var coded interface{ Code() int }
 	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
 		t.Errorf("expected exit code 2 for unknown inspector, got: %v", err)
+	}
+}
+
+func TestInspect_outputIncludesDescriptions(t *testing.T) {
+	stdout, _, err := runRoot(t, "inspect", inspectRepo(t))
+	if err != nil {
+		t.Fatalf("inspect: %v", err)
+	}
+	// The one-line description of object_field_frequency's results.
+	if !strings.Contains(stdout, "Report, per frontmatter key, how many files contain it.") {
+		t.Errorf("output missing inspector description\n%s", stdout)
+	}
+}
+
+func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
+	dir := t.TempDir()
+	var body strings.Builder
+	body.WriteString("---\ntitle: A\n---\n# A\n")
+	for i := 0; i < 30; i++ {
+		body.WriteString(fmt.Sprintf("## Section %02d\n", i))
+	}
+	writeFile(t, dir, "a.md", body.String())
+
+	truncated, _, err := runRoot(t, "inspect", "--inspector", "markdown_sections", "--max-lines", "5", dir)
+	if err != nil {
+		t.Fatalf("inspect --max-lines: %v", err)
+	}
+	if !strings.Contains(truncated, "truncated") {
+		t.Errorf("expected a truncation notice with --max-lines 5\n%s", truncated)
+	}
+
+	full, _, err := runRoot(t, "inspect", "--inspector", "markdown_sections", "-v", dir)
+	if err != nil {
+		t.Fatalf("inspect -v: %v", err)
+	}
+	if strings.Contains(full, "truncated") {
+		t.Errorf("-v should not truncate\n%s", full)
+	}
+	if got := strings.Count(full, "- Section "); got != 30 {
+		t.Errorf("-v rendered %d sections, want 30", got)
 	}
 }
 

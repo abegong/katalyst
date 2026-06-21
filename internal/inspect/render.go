@@ -7,20 +7,31 @@ import (
 )
 
 // RenderJSON serializes evidence as an indented JSON array — the machine form
-// for callers that parse results. It is one of two projections of the same
-// evidence; RenderMarkdown is the other.
+// for callers that parse results. Each record is enriched with its one-line
+// description from the registry. JSON is never truncated: it must stay complete
+// and parseable. One of two projections of the same evidence; RenderMarkdown is
+// the other.
 func RenderJSON(evs []Evidence) ([]byte, error) {
-	if evs == nil {
-		evs = []Evidence{}
+	enriched := make([]Evidence, len(evs))
+	for i, ev := range evs {
+		if ev.Description == "" {
+			ev.Description = Summary(ev.Inspector)
+		}
+		enriched[i] = ev
 	}
-	return json.MarshalIndent(evs, "", "  ")
+	return json.MarshalIndent(enriched, "", "  ")
 }
 
 // RenderMarkdown projects evidence into a human-readable report, grouped by
-// family in Families() order. It is the default rendering: agents read Markdown
-// well and humans read it for free. Same evidence as RenderJSON, one source of
-// truth.
-func RenderMarkdown(evs []Evidence) string {
+// family in Families() order, each inspector prefixed with a one-line
+// description of what its results mean. It is the default rendering: agents
+// read Markdown well and humans read it for free.
+//
+// maxLines caps each inspector's data output: an inspector that would print
+// more than maxLines lines is truncated with a notice, so one wide field can't
+// drown the report. maxLines <= 0 disables truncation. The cap is per
+// inspector, not for the whole report.
+func RenderMarkdown(evs []Evidence, maxLines int) string {
 	var b strings.Builder
 	scope := ""
 	if len(evs) > 0 {
@@ -41,12 +52,41 @@ func RenderMarkdown(evs []Evidence) string {
 		fmt.Fprintf(&b, "\n## %s\n", fam.Title)
 		for _, ev := range inFamily {
 			fmt.Fprintf(&b, "\n### %s (n=%d)\n\n", ev.Inspector, ev.N)
-			for _, k := range sortedKeys(ev.Data) {
-				renderKV(&b, 0, k, ev.Data[k])
+			if s := Summary(ev.Inspector); s != "" {
+				fmt.Fprintf(&b, "_%s_\n\n", s)
+			}
+			lines := dataLines(ev.Data)
+			if maxLines > 0 && len(lines) > maxLines {
+				hidden := len(lines) - maxLines
+				lines = lines[:maxLines]
+				for _, ln := range lines {
+					b.WriteString(ln)
+					b.WriteByte('\n')
+				}
+				fmt.Fprintf(&b, "- … %d more line(s) truncated (pass --max-lines 0 or -v to show all)\n", hidden)
+				continue
+			}
+			for _, ln := range lines {
+				b.WriteString(ln)
+				b.WriteByte('\n')
 			}
 		}
 	}
 	return b.String()
+}
+
+// dataLines renders one inspector's Data to individual Markdown lines, so the
+// caller can count and truncate them.
+func dataLines(data map[string]any) []string {
+	var b strings.Builder
+	for _, k := range sortedKeys(data) {
+		renderKV(&b, 0, k, data[k])
+	}
+	s := strings.TrimRight(b.String(), "\n")
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, "\n")
 }
 
 // familyOf looks up an inspector's family from the registry.

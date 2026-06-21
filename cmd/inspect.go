@@ -13,6 +13,8 @@ func newInspectCmd() *cobra.Command {
 		jsonOut    bool
 		outFile    string
 		inspectors []string
+		maxLines   int
+		verbose    bool
 	)
 
 	c := &cobra.Command{
@@ -25,6 +27,10 @@ types, markdown heading and section conventions, and filename conventions.
 Inspectors describe; they never recommend. The output is evidence — counts
 and distributions with the file count as denominator — for a human or agent
 to judge. inspect writes no schema and mutates nothing under <path>.
+
+Each inspector's results are prefixed with a one-line description of what they
+mean. Long output is truncated per inspector to --max-lines (Markdown only;
+--json is always complete); -v shows everything.
 
 Output is Markdown by default; --json emits the same evidence as JSON.`,
 		Args: cobra.ExactArgs(1),
@@ -49,7 +55,11 @@ Output is Markdown by default; --json emits the same evidence as JSON.`,
 				evidence = append(evidence, ins.Inspect(corpus))
 			}
 
-			rendered, err := render(evidence, jsonOut)
+			limit := maxLines
+			if verbose {
+				limit = 0
+			}
+			rendered, err := render(evidence, jsonOut, limit)
 			if err != nil {
 				return err
 			}
@@ -69,6 +79,10 @@ Output is Markdown by default; --json emits the same evidence as JSON.`,
 	c.Flags().StringVarP(&outFile, "output", "o", "", "Write the report to a file instead of stdout.")
 	c.Flags().StringArrayVar(&inspectors, "inspector", nil,
 		"Run only the named inspector(s); repeatable. Default: all.")
+	c.Flags().IntVar(&maxLines, "max-lines", 20,
+		"Truncate each inspector's Markdown output to N lines (0 = no limit).")
+	c.Flags().BoolVarP(&verbose, "verbose", "v", false,
+		"Show full output; do not truncate (same as --max-lines 0).")
 	return c
 }
 
@@ -91,7 +105,8 @@ func selectInspectors(names []string) ([]inspect.Inspector, error) {
 
 // render produces the report bytes in the requested format. Both formats are
 // projections of the same evidence, so -o and stdout write identical bytes.
-func render(evidence []inspect.Evidence, jsonOut bool) ([]byte, error) {
+// maxLines truncates Markdown only; JSON is always complete.
+func render(evidence []inspect.Evidence, jsonOut bool, maxLines int) ([]byte, error) {
 	if jsonOut {
 		out, err := inspect.RenderJSON(evidence)
 		if err != nil {
@@ -99,5 +114,5 @@ func render(evidence []inspect.Evidence, jsonOut bool) ([]byte, error) {
 		}
 		return append(out, '\n'), nil
 	}
-	return []byte(inspect.RenderMarkdown(evidence)), nil
+	return []byte(inspect.RenderMarkdown(evidence, maxLines)), nil
 }
