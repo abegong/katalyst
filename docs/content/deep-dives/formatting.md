@@ -1,6 +1,6 @@
 +++
 title = "Formatting"
-weight = 50
+weight = 60
 +++
 
 # Formatting
