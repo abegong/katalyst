@@ -15,5 +15,10 @@ Check types in this family:
 - [Name Matches Field]({{< relref "name-matches-field.md" >}}) — Require a name to equal a frontmatter field, optionally slugified.
 - [Name Affix]({{< relref "name-affix.md" >}}) — Require a name to start with a prefix and/or end with a suffix.
 - [Path Charset]({{< relref "path-charset.md" >}}) — Constrain the characters allowed in the item's path.
+- [Name Regex]({{< relref "name-regex.md" >}}) — Require a name to match a regular expression (anchored).
+- [Name Length]({{< relref "name-length.md" >}}) — Bound the character length of a name.
+- [Path Depth]({{< relref "path-depth.md" >}}) — Bound directory nesting relative to the collection root.
+- [Parent Directory Matches Field]({{< relref "parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
+- [Referenced Files Exist]({{< relref "referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
 - [Extension In]({{< relref "extension-in.md" >}}) — Allow only specific file extensions.
 - [Parent Directory In]({{< relref "parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.

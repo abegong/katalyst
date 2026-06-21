@@ -305,6 +305,56 @@ checks:
 	}
 }
 
+func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
+	cases := map[string]struct{ checks, want string }{
+		"name_case unknown style": {
+			"  - kind: filesystem_name_case\n    style: nope\n", "unknown style",
+		},
+		"name_case unknown target": {
+			"  - kind: filesystem_name_case\n    style: kebab\n    target: nope\n", "unknown target",
+		},
+		"name_affix needs prefix or suffix": {
+			"  - kind: filesystem_name_affix\n", `requires "prefix" or "suffix"`,
+		},
+		"path_charset both allow and deny": {
+			"  - kind: filesystem_path_charset\n    allow: [a]\n    deny: [b]\n", "not both",
+		},
+		"path_charset neither": {
+			"  - kind: filesystem_path_charset\n", `requires "allow" or "deny"`,
+		},
+		"name_matches_field bad transform": {
+			"  - kind: filesystem_name_matches_field\n    transform: shout\n", "must be none or slugify",
+		},
+		"name_regex bad pattern": {
+			"  - kind: filesystem_name_regex\n    pattern: '['\n", "invalid pattern",
+		},
+		"name_length needs a bound": {
+			"  - kind: filesystem_name_length\n", `requires "min" or "max"`,
+		},
+		"path_depth needs a bound": {
+			"  - kind: filesystem_path_depth\n", `requires "min" or "max"`,
+		},
+		"referenced_files needs fields": {
+			"  - kind: filesystem_referenced_files_exist\n", `requires "fields"`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeProject(t, dir, map[string]string{
+				"collections/notes.yaml": "path: notes\nchecks:\n" + tc.checks,
+			})
+			_, err := config.Load(dir)
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected error containing %q, got: %v", tc.want, err)
+			}
+		})
+	}
+}
+
 func TestLoad_explicitDiscovery_readsDefs(t *testing.T) {
 	// In explicit mode, the directory scan is ignored and the defs maps
 	// in config.yaml are authoritative.

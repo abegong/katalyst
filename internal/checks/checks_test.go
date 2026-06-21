@@ -1,6 +1,9 @@
 package checks_test
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -344,6 +347,81 @@ func TestFilesystemExtensionInRun_detectsDisallowed(t *testing.T) {
 	})
 	if len(violations) != 1 || !strings.Contains(violations[0].Message, "extension") {
 		t.Fatalf("expected extension violation, got %v", violations)
+	}
+}
+
+func TestNameRegexRun_anchored(t *testing.T) {
+	doc := mustParseDoc(t, "---\nslug: x\n---\n# x\n")
+	re := regexp.MustCompile(checks.AnchoredPattern(`[0-9]{4}-[a-z-]+`))
+	// "2024-dune" matches fully; "x-2024-dune" must NOT (anchored).
+	pass := checks.NameRegex{Re: re, Pattern: "p"}.Run(checks.Context{
+		FilePath: "notes/2024-dune.md", Doc: doc, Meta: map[string]any{"slug": "x"},
+	})
+	if len(pass) != 0 {
+		t.Fatalf("expected pass for anchored match, got %v", pass)
+	}
+	fail := checks.NameRegex{Re: re, Pattern: "p"}.Run(checks.Context{
+		FilePath: "notes/x-2024-dune.md", Doc: doc, Meta: map[string]any{"slug": "x"},
+	})
+	if len(fail) != 1 {
+		t.Fatalf("expected anchored mismatch to fail, got %v", fail)
+	}
+}
+
+func TestNameLengthRun_bounds(t *testing.T) {
+	doc := mustParseDoc(t, "---\nslug: x\n---\n# x\n")
+	max := 5
+	violations := checks.NameLength{Max: &max}.Run(checks.Context{
+		FilePath: "notes/toolongname.md", Doc: doc, Meta: map[string]any{"slug": "x"},
+	})
+	if len(violations) != 1 || !strings.Contains(violations[0].Message, "at most") {
+		t.Fatalf("expected max-length violation, got %v", violations)
+	}
+}
+
+func TestPathDepthRun_flat(t *testing.T) {
+	doc := mustParseDoc(t, "---\nslug: x\n---\n# x\n")
+	max := 0
+	// A nested file violates max depth 0; a root file does not.
+	nested := checks.PathDepth{Max: &max}.Run(checks.Context{
+		FilePath: "/proj/notes/sub/dune.md", CollectionRoot: "/proj/notes", Doc: doc, Meta: map[string]any{"slug": "x"},
+	})
+	if len(nested) != 1 || !strings.Contains(nested[0].Message, "depth") {
+		t.Fatalf("expected depth violation for nested file, got %v", nested)
+	}
+	flat := checks.PathDepth{Max: &max}.Run(checks.Context{
+		FilePath: "/proj/notes/dune.md", CollectionRoot: "/proj/notes", Doc: doc, Meta: map[string]any{"slug": "x"},
+	})
+	if len(flat) != 0 {
+		t.Fatalf("expected no violation for flat file, got %v", flat)
+	}
+}
+
+func TestParentDirMatchesFieldRun_detectsMismatch(t *testing.T) {
+	doc := mustParseDoc(t, "---\ncategory: recipes\n---\n# x\n")
+	violations := checks.ParentDirMatchesField{Field: "category"}.Run(checks.Context{
+		FilePath: "notes/books/dune.md", Doc: doc, Meta: map[string]any{"category": "recipes"},
+	})
+	if len(violations) != 1 || !strings.Contains(violations[0].Message, "must match field") {
+		t.Fatalf("expected parent-dir-matches-field violation, got %v", violations)
+	}
+}
+
+func TestReferencedFilesExistRun_missingAndList(t *testing.T) {
+	dir := t.TempDir()
+	itemPath := filepath.Join(dir, "dune.md")
+	if err := os.WriteFile(filepath.Join(dir, "cover.png"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	doc := mustParseDoc(t, "---\ncover: cover.png\nextras:\n  - a.png\n  - b.png\n---\n# x\n")
+	violations := checks.ReferencedFilesExist{Fields: []string{"cover", "extras"}}.Run(checks.Context{
+		FilePath: itemPath,
+		Doc:      doc,
+		Meta:     map[string]any{"cover": "cover.png", "extras": []any{"a.png", "b.png"}},
+	})
+	// cover.png exists; a.png and b.png do not → 2 violations.
+	if len(violations) != 2 {
+		t.Fatalf("expected 2 missing-file violations, got %d: %v", len(violations), violations)
 	}
 }
 

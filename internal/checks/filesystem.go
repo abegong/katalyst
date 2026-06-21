@@ -2,9 +2,11 @@ package checks
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // Target names the slice of an item's path a name/path rule tests. The zero
@@ -239,6 +241,200 @@ func (c PathCharset) Run(ctx Context) []Violation {
 		}
 	}
 	return nil
+}
+
+// NameRegex checks that the target matches an anchored pattern.
+type NameRegex struct {
+	Re      *regexp.Regexp
+	Pattern string
+	Target  string
+}
+
+// AnchoredPattern wraps a user pattern so it must match the whole string.
+func AnchoredPattern(p string) string { return "^(?:" + p + ")$" }
+
+func (c NameRegex) Run(ctx Context) []Violation {
+	if c.Re == nil {
+		return nil
+	}
+	var out []Violation
+	noun := targetNoun(c.Target)
+	for _, v := range resolveTarget(ctx, c.Target) {
+		if !c.Re.MatchString(v) {
+			out = append(out, Violation{
+				Path:    "/",
+				Message: fmt.Sprintf("%s %q must match pattern %q", noun, v, c.Pattern),
+			})
+		}
+	}
+	return out
+}
+
+// NameLength bounds the character length of the target. At least one of
+// Min/Max is set (enforced at config load).
+type NameLength struct {
+	Min    *int
+	Max    *int
+	Target string
+}
+
+func (c NameLength) Run(ctx Context) []Violation {
+	var out []Violation
+	noun := targetNoun(c.Target)
+	for _, v := range resolveTarget(ctx, c.Target) {
+		n := utf8.RuneCountInString(v)
+		if c.Min != nil && n < *c.Min {
+			out = append(out, Violation{
+				Path:    "/",
+				Message: fmt.Sprintf("%s %q must be at least %d characters", noun, v, *c.Min),
+			})
+		}
+		if c.Max != nil && n > *c.Max {
+			out = append(out, Violation{
+				Path:    "/",
+				Message: fmt.Sprintf("%s %q must be at most %d characters", noun, v, *c.Max),
+			})
+		}
+	}
+	return out
+}
+
+// PathDepth bounds directory nesting relative to the collection root. A file
+// directly in the collection root has depth 0.
+type PathDepth struct {
+	Min *int
+	Max *int
+}
+
+func (c PathDepth) Run(ctx Context) []Violation {
+	rel := ctx.FilePath
+	if ctx.CollectionRoot != "" {
+		if r, err := filepath.Rel(ctx.CollectionRoot, ctx.FilePath); err == nil {
+			rel = r
+		}
+	}
+	rel = filepath.ToSlash(rel)
+	depth := 0
+	for _, p := range strings.Split(rel, "/") {
+		if p == "" || p == "." {
+			continue
+		}
+		depth++
+	}
+	depth-- // last segment is the file itself
+	if depth < 0 {
+		depth = 0
+	}
+	var out []Violation
+	if c.Min != nil && depth < *c.Min {
+		out = append(out, Violation{
+			Path:    "/",
+			Message: fmt.Sprintf("path depth %d is below the minimum %d", depth, *c.Min),
+		})
+	}
+	if c.Max != nil && depth > *c.Max {
+		out = append(out, Violation{
+			Path:    "/",
+			Message: fmt.Sprintf("path depth %d exceeds the maximum %d", depth, *c.Max),
+		})
+	}
+	return out
+}
+
+// ParentDirMatchesField checks that the parent directory name equals a
+// frontmatter field.
+type ParentDirMatchesField struct {
+	Field string
+}
+
+func (c ParentDirMatchesField) Run(ctx Context) []Violation {
+	ptr := "/" + c.Field
+	raw, ok := ctx.Meta[c.Field]
+	if !ok {
+		return []Violation{{
+			Path:    ptr,
+			Message: fmt.Sprintf("missing frontmatter field %q", c.Field),
+			Line:    lookupLine(ctx.Doc.Lines, ptr),
+		}}
+	}
+	want, ok := raw.(string)
+	if !ok {
+		return []Violation{{
+			Path:    ptr,
+			Message: fmt.Sprintf("frontmatter field %q must be a string", c.Field),
+			Line:    lookupLine(ctx.Doc.Lines, ptr),
+		}}
+	}
+	parent := filepath.Base(filepath.Dir(ctx.FilePath))
+	if parent == want {
+		return nil
+	}
+	return []Violation{{
+		Path:    ptr,
+		Message: fmt.Sprintf("parent directory %q must match field %q (%q)", parent, c.Field, want),
+		Line:    lookupLine(ctx.Doc.Lines, ptr),
+	}}
+}
+
+// ReferencedFilesExist checks that path-valued frontmatter fields resolve to
+// real files, relative to the item's own directory.
+type ReferencedFilesExist struct {
+	Fields []string
+}
+
+func (c ReferencedFilesExist) Run(ctx Context) []Violation {
+	dir := filepath.Dir(ctx.FilePath)
+	var out []Violation
+	for _, field := range c.Fields {
+		raw, ok := ctx.Meta[field]
+		if !ok {
+			continue // absent field is not this check's concern
+		}
+		paths, ok := stringOrList(raw)
+		if !ok {
+			ptr := "/" + field
+			out = append(out, Violation{
+				Path:    ptr,
+				Message: fmt.Sprintf("frontmatter field %q must be a path string or list of strings", field),
+				Line:    lookupLine(ctx.Doc.Lines, ptr),
+			})
+			continue
+		}
+		for _, p := range paths {
+			if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(p))); err != nil {
+				ptr := "/" + field
+				out = append(out, Violation{
+					Path:    ptr,
+					Message: fmt.Sprintf("referenced file %q does not exist", p),
+					Line:    lookupLine(ctx.Doc.Lines, ptr),
+				})
+			}
+		}
+	}
+	return out
+}
+
+// stringOrList coerces a frontmatter value into a list of strings, accepting
+// a bare string or a list of strings. Returns false for any other shape.
+func stringOrList(v any) ([]string, bool) {
+	switch t := v.(type) {
+	case string:
+		return []string{t}, true
+	case []any:
+		out := make([]string, 0, len(t))
+		for _, e := range t {
+			s, ok := e.(string)
+			if !ok {
+				return nil, false
+			}
+			out = append(out, s)
+		}
+		return out, true
+	case []string:
+		return t, true
+	default:
+		return nil, false
+	}
 }
 
 // FilesystemExtensionIn checks that extension is in an allowed set.

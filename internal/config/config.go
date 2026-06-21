@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -71,26 +72,31 @@ type Config struct {
 type CheckType string
 
 const (
-	CheckObject                       CheckType = "object"
-	CheckObjectRequiredField          CheckType = "object_required_field"
-	CheckObjectFieldType              CheckType = "object_field_type"
-	CheckObjectFieldEnum              CheckType = "object_field_enum"
-	CheckObjectNumberRange            CheckType = "object_number_range"
-	CheckObjectStringLength           CheckType = "object_string_length"
-	CheckMarkdownTitleMatchesH1       CheckType = "markdown_title_matches_h1"
-	CheckMarkdownRequiresH1           CheckType = "markdown_requires_h1"
-	CheckMarkdownSingleH1             CheckType = "markdown_single_h1"
-	CheckMarkdownNoHeadingLevelJumps  CheckType = "markdown_no_heading_level_jumps"
-	CheckMarkdownRequiredSection      CheckType = "markdown_required_section"
-	CheckMarkdownCodeFenceHasLanguage CheckType = "markdown_code_fence_language_required"
-	CheckFilesystemExtensionIn        CheckType = "filesystem_extension_in"
-	CheckFilesystemParentDirIn        CheckType = "filesystem_parent_dir_in"
-	CheckFilesystemNameCase           CheckType = "filesystem_name_case"
-	CheckFilesystemNameMatchesField   CheckType = "filesystem_name_matches_field"
-	CheckFilesystemNameAffix          CheckType = "filesystem_name_affix"
-	CheckFilesystemPathCharset        CheckType = "filesystem_path_charset"
-	defaultMarkdownTitleField                   = "title"
-	defaultFilesystemSlugField                  = "slug"
+	CheckObject                        CheckType = "object"
+	CheckObjectRequiredField           CheckType = "object_required_field"
+	CheckObjectFieldType               CheckType = "object_field_type"
+	CheckObjectFieldEnum               CheckType = "object_field_enum"
+	CheckObjectNumberRange             CheckType = "object_number_range"
+	CheckObjectStringLength            CheckType = "object_string_length"
+	CheckMarkdownTitleMatchesH1        CheckType = "markdown_title_matches_h1"
+	CheckMarkdownRequiresH1            CheckType = "markdown_requires_h1"
+	CheckMarkdownSingleH1              CheckType = "markdown_single_h1"
+	CheckMarkdownNoHeadingLevelJumps   CheckType = "markdown_no_heading_level_jumps"
+	CheckMarkdownRequiredSection       CheckType = "markdown_required_section"
+	CheckMarkdownCodeFenceHasLanguage  CheckType = "markdown_code_fence_language_required"
+	CheckFilesystemExtensionIn         CheckType = "filesystem_extension_in"
+	CheckFilesystemParentDirIn         CheckType = "filesystem_parent_dir_in"
+	CheckFilesystemNameCase            CheckType = "filesystem_name_case"
+	CheckFilesystemNameMatchesField    CheckType = "filesystem_name_matches_field"
+	CheckFilesystemNameAffix           CheckType = "filesystem_name_affix"
+	CheckFilesystemPathCharset         CheckType = "filesystem_path_charset"
+	CheckFilesystemNameRegex           CheckType = "filesystem_name_regex"
+	CheckFilesystemNameLength          CheckType = "filesystem_name_length"
+	CheckFilesystemPathDepth           CheckType = "filesystem_path_depth"
+	CheckFilesystemParentDirMatchesFld CheckType = "filesystem_parent_dir_matches_field"
+	CheckFilesystemReferencedFiles     CheckType = "filesystem_referenced_files_exist"
+	defaultMarkdownTitleField                    = "title"
+	defaultFilesystemSlugField                   = "slug"
 )
 
 // CheckInstance is one configured check attached to a collection (one YAML
@@ -117,6 +123,10 @@ type CheckInstance struct {
 	Suffix    string
 	Allow     []string
 	Deny      []string
+	Pattern   string
+	MinInt    *int
+	MaxInt    *int
+	Fields    []string
 }
 
 // Collection is a named group of items backed by a directory of files.
@@ -218,6 +228,8 @@ type rawCheck struct {
 	Suffix    string   `yaml:"suffix"`
 	Allow     []string `yaml:"allow"`
 	Deny      []string `yaml:"deny"`
+	Pattern   string   `yaml:"pattern"`
+	Fields    []string `yaml:"fields"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -604,6 +616,16 @@ var targetNames = map[string]bool{
 
 func validCaseStyle(s string) bool { return caseStyleNames[s] }
 
+// floatToIntPtr truncates a *float64 (the shared yaml min/max) to a *int for
+// integer-bounded checks. Nil in, nil out.
+func floatToIntPtr(f *float64) *int {
+	if f == nil {
+		return nil
+	}
+	n := int(*f)
+	return &n
+}
+
 // validateTarget allows an empty target (defaults to filename) and rejects
 // any non-empty value outside the known set.
 func validateTarget(checkType, target string) error {
@@ -739,6 +761,40 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 			return CheckInstance{}, errors.New(`filesystem_path_charset requires "allow" or "deny"`)
 		}
 		return CheckInstance{Type: checkType, Allow: raw.Allow, Deny: raw.Deny}, nil
+	case CheckFilesystemNameRegex:
+		if raw.Pattern == "" {
+			return CheckInstance{}, errors.New(`filesystem_name_regex requires "pattern"`)
+		}
+		if _, err := regexp.Compile("^(?:" + raw.Pattern + ")$"); err != nil {
+			return CheckInstance{}, fmt.Errorf("filesystem_name_regex: invalid pattern %q: %w", raw.Pattern, err)
+		}
+		if err := validateTarget("filesystem_name_regex", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target}, nil
+	case CheckFilesystemNameLength:
+		if raw.Min == nil && raw.Max == nil {
+			return CheckInstance{}, errors.New(`filesystem_name_length requires "min" or "max"`)
+		}
+		if err := validateTarget("filesystem_name_length", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max), Target: raw.Target}, nil
+	case CheckFilesystemPathDepth:
+		if raw.Min == nil && raw.Max == nil {
+			return CheckInstance{}, errors.New(`filesystem_path_depth requires "min" or "max"`)
+		}
+		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max)}, nil
+	case CheckFilesystemParentDirMatchesFld:
+		if raw.Field == "" {
+			return CheckInstance{}, errors.New(`filesystem_parent_dir_matches_field requires "field"`)
+		}
+		return CheckInstance{Type: checkType, Field: raw.Field}, nil
+	case CheckFilesystemReferencedFiles:
+		if len(raw.Fields) == 0 {
+			return CheckInstance{}, errors.New(`filesystem_referenced_files_exist requires "fields"`)
+		}
+		return CheckInstance{Type: checkType, Fields: raw.Fields}, nil
 	case "":
 		return CheckInstance{}, errors.New(`check type is required`)
 	default:

@@ -338,6 +338,90 @@ collections:
         deny: [" "]`,
 		},
 		{
+			CheckType: config.CheckFilesystemNameRegex,
+			Family:    "filesystem",
+			Slug:      "name-regex",
+			Title:     "Name Regex",
+			Summary:   "Require a name to match a regular expression (anchored).",
+			Fields: []Field{
+				{Name: "pattern", Required: true, Desc: "Regular expression; matched anchored (`^pattern$`)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_regex
+        pattern: '[0-9]{4}-[a-z-]+'`,
+		},
+		{
+			CheckType: config.CheckFilesystemNameLength,
+			Family:    "filesystem",
+			Slug:      "name-length",
+			Title:     "Name Length",
+			Summary:   "Bound the character length of a name.",
+			Fields: []Field{
+				{Name: "min", Required: false, Desc: "Minimum length (at least one of min/max)."},
+				{Name: "max", Required: false, Desc: "Maximum length (at least one of min/max)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_length
+        max: 80`,
+		},
+		{
+			CheckType: config.CheckFilesystemPathDepth,
+			Family:    "filesystem",
+			Slug:      "path-depth",
+			Title:     "Path Depth",
+			Summary:   "Bound directory nesting relative to the collection root.",
+			Fields: []Field{
+				{Name: "min", Required: false, Desc: "Minimum depth (at least one of min/max)."},
+				{Name: "max", Required: false, Desc: "Maximum depth; `0` means a flat collection (at least one of min/max)."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_path_depth
+        max: 0`,
+		},
+		{
+			CheckType: config.CheckFilesystemParentDirMatchesFld,
+			Family:    "filesystem",
+			Slug:      "parent-dir-matches-field",
+			Title:     "Parent Directory Matches Field",
+			Summary:   "Require the parent directory name to equal a frontmatter field.",
+			Fields: []Field{
+				{Name: "field", Required: true, Desc: "Frontmatter key compared to the parent directory name."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_parent_dir_matches_field
+        field: category`,
+		},
+		{
+			CheckType: config.CheckFilesystemReferencedFiles,
+			Family:    "filesystem",
+			Slug:      "referenced-files-exist",
+			Title:     "Referenced Files Exist",
+			Summary:   "Require path-valued frontmatter fields to resolve to real files.",
+			Fields: []Field{
+				{Name: "fields", Required: true, Desc: "Frontmatter keys holding a path (string) or list of paths, resolved relative to the item."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_referenced_files_exist
+        fields: [cover, attachments]`,
+		},
+		{
 			CheckType: config.CheckFilesystemExtensionIn,
 			Family:    "filesystem",
 			Slug:      "extension-in",

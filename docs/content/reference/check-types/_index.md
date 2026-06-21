@@ -41,5 +41,10 @@ Filesystem check types validate filename and path conventions for markdown items
 - [Name Matches Field]({{< relref "filesystem/name-matches-field.md" >}}) — Require a name to equal a frontmatter field, optionally slugified.
 - [Name Affix]({{< relref "filesystem/name-affix.md" >}}) — Require a name to start with a prefix and/or end with a suffix.
 - [Path Charset]({{< relref "filesystem/path-charset.md" >}}) — Constrain the characters allowed in the item's path.
+- [Name Regex]({{< relref "filesystem/name-regex.md" >}}) — Require a name to match a regular expression (anchored).
+- [Name Length]({{< relref "filesystem/name-length.md" >}}) — Bound the character length of a name.
+- [Path Depth]({{< relref "filesystem/path-depth.md" >}}) — Bound directory nesting relative to the collection root.
+- [Parent Directory Matches Field]({{< relref "filesystem/parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
+- [Referenced Files Exist]({{< relref "filesystem/referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
 - [Extension In]({{< relref "filesystem/extension-in.md" >}}) — Allow only specific file extensions.
 - [Parent Directory In]({{< relref "filesystem/parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
