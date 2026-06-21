@@ -232,9 +232,11 @@ object_required_field  Require that a frontmatter field exists.  field     —
 $ katalyst rules object_number_range --json   # machine-readable, for tooling
 ```
 
-`rules <kind>` prints one kind's full key table and an example config;
-`--json` emits a descriptor array (or a single object) so a skill or editor
-reads the catalog instead of hardcoding it.
+Drill down the way the docs nest: `--family markdown` narrows the list to one
+family, and `rules <kind>` (or `--type <kind>`) prints a docs-style readout —
+family context, full key table, an example, and the kind's siblings. `--json`
+works at any level, emitting a descriptor array (or a single object) so a
+skill or editor reads the catalog instead of hardcoding it.
 
 ### `katalyst init [--dir <path>]`
 

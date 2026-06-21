@@ -93,6 +93,141 @@ func TestRulesKind_unknown_exit2(t *testing.T) {
 	}
 }
 
+func TestRules_familyFiltersList(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "rules", "--family", "markdown")
+	if err != nil {
+		t.Fatalf("rules --family markdown: %v", err)
+	}
+	if !strings.Contains(stdout, "Markdown Rules") {
+		t.Errorf("expected Markdown Rules heading, got: %q", stdout)
+	}
+	if strings.Contains(stdout, "Object Rules") || strings.Contains(stdout, "Filesystem Rules") {
+		t.Errorf("expected only the markdown family, got: %q", stdout)
+	}
+	if !strings.Contains(stdout, "markdown_single_h1") {
+		t.Errorf("expected a markdown kind, got: %q", stdout)
+	}
+	if strings.Contains(stdout, "object_required_field") {
+		t.Errorf("did not expect an object kind, got: %q", stdout)
+	}
+}
+
+func TestRules_unknownFamily_exit2(t *testing.T) {
+	chdir(t, t.TempDir())
+	_, _, err := runRoot(t, "rules", "--family", "nope")
+	if err == nil {
+		t.Fatalf("expected error for unknown family")
+	}
+	var coded interface{ Code() int }
+	if !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit code 2, got: %v", err)
+	}
+}
+
+func TestRules_familyJSONFiltersToFamily(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "rules", "--family", "filesystem", "--json")
+	if err != nil {
+		t.Fatalf("rules --family filesystem --json: %v", err)
+	}
+	var got []struct {
+		Kind   string `json:"kind"`
+		Family string `json:"family"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
+	}
+	if len(got) != len(familyKinds("filesystem")) {
+		t.Fatalf("got %d filesystem descriptors, want %d", len(got), len(familyKinds("filesystem")))
+	}
+	for _, d := range got {
+		if d.Family != "filesystem" {
+			t.Errorf("got non-filesystem family %q", d.Family)
+		}
+	}
+}
+
+func TestRulesType_matchesPositional(t *testing.T) {
+	chdir(t, t.TempDir())
+	viaFlag, _, err := runRoot(t, "rules", "--type", "object_field_enum")
+	if err != nil {
+		t.Fatalf("rules --type: %v", err)
+	}
+	viaArg, _, err := runRoot(t, "rules", "object_field_enum")
+	if err != nil {
+		t.Fatalf("rules <kind>: %v", err)
+	}
+	if viaFlag != viaArg {
+		t.Errorf("--type and positional differ:\n--type:\n%s\npositional:\n%s", viaFlag, viaArg)
+	}
+}
+
+func TestRulesDetail_showsFamilyContextAndSiblings(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "rules", "object_field_enum")
+	if err != nil {
+		t.Fatalf("rules object_field_enum: %v", err)
+	}
+	// Breadcrumb + family intro give the docs-traversal context.
+	if !strings.Contains(stdout, "Object Rules › Field Enum") {
+		t.Errorf("expected breadcrumb header, got: %q", stdout)
+	}
+	if !strings.Contains(stdout, "Object rules validate structured frontmatter") {
+		t.Errorf("expected family intro, got: %q", stdout)
+	}
+	// Siblings list points at the rest of the family.
+	if !strings.Contains(stdout, "object_required_field") {
+		t.Errorf("expected a sibling kind, got: %q", stdout)
+	}
+}
+
+func TestRulesDetail_noFieldKindStatesSo(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "rules", "markdown_single_h1")
+	if err != nil {
+		t.Fatalf("rules markdown_single_h1: %v", err)
+	}
+	if !strings.Contains(stdout, "no configuration keys") {
+		t.Errorf("expected no-keys note, got: %q", stdout)
+	}
+}
+
+func TestRules_familyAndTypeConflict_exit2(t *testing.T) {
+	chdir(t, t.TempDir())
+	_, _, err := runRoot(t, "rules", "--family", "objects", "--type", "object")
+	if err == nil {
+		t.Fatalf("expected conflict error")
+	}
+	var coded interface{ Code() int }
+	if !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit code 2, got: %v", err)
+	}
+}
+
+func TestRules_positionalAndTypeConflict_exit2(t *testing.T) {
+	chdir(t, t.TempDir())
+	_, _, err := runRoot(t, "rules", "object", "--type", "object_field_enum")
+	if err == nil {
+		t.Fatalf("expected conflict error")
+	}
+	var coded interface{ Code() int }
+	if !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit code 2, got: %v", err)
+	}
+}
+
+// familyKinds returns the registered kinds in a family, for test expectations.
+func familyKinds(family string) []string {
+	var out []string
+	for _, d := range checks.Descriptors() {
+		if d.Family == family {
+			out = append(out, string(d.Kind))
+		}
+	}
+	return out
+}
+
 func TestRules_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "rules", "--json")

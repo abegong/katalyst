@@ -12,40 +12,71 @@ import (
 
 // newRulesCmd builds `katalyst rules`, a read-only view of the check registry
 // (checks.Descriptors() / checks.Families()) — the same catalog cmd/gendocs
-// renders. It loads no project, so it runs in any directory.
+// renders. It mirrors the way the docs nest: the whole catalog, one family,
+// or one kind's rule page. It loads no project, so it runs in any directory.
 func newRulesCmd() *cobra.Command {
 	var asJSON bool
+	var family string
+	var kind string
 	c := &cobra.Command{
 		Use:   "rules [kind]",
 		Short: "List the check kinds the engine can enforce, grouped by family.",
-		Long: `rules prints the catalog of check kinds from the engine registry:
-their purpose and configuration keys. It reads no project, so it runs in
-any directory. With a kind argument it prints detail for that one kind;
-with --json it emits a machine-readable descriptor array (or object).`,
+		Long: `rules prints the catalog of check kinds from the engine registry.
+
+With no arguments it lists every kind grouped by family. Narrow the list to
+one family with --family, or zero in on a single kind — positionally or via
+--type — for a detailed, docs-style readout of its keys, example, and
+siblings. It reads no project, so it runs in any directory; --json emits
+machine-readable descriptors at any level.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// A kind may come positionally or via --type; treat them as
+			// synonyms and reject a contradiction.
 			if len(args) == 1 {
-				return runRulesDetail(cmd, args[0], asJSON)
+				if kind != "" && kind != args[0] {
+					return usageErr(fmt.Sprintf("conflicting kinds: %q and --type %q", args[0], kind))
+				}
+				kind = args[0]
 			}
-			return runRulesList(cmd, asJSON)
+			if kind != "" {
+				if family != "" {
+					return usageErr("--family narrows the list; pass a kind (or --type) for detail, not both")
+				}
+				return runRulesDetail(cmd, kind, asJSON)
+			}
+			return runRulesList(cmd, family, asJSON)
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
+	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (objects, markdown, filesystem).")
+	c.Flags().StringVar(&kind, "type", "", "Show the detailed readout for one check kind.")
 	return c
 }
 
-func runRulesList(cmd *cobra.Command, asJSON bool) error {
+func runRulesList(cmd *cobra.Command, family string, asJSON bool) error {
+	descriptors := checks.Descriptors()
+	families := checks.Families()
+	if family != "" {
+		fam, ok := findFamily(family)
+		if !ok {
+			return usageErr(fmt.Sprintf("unknown family %q; valid families: %s",
+				family, strings.Join(familyIDs(), ", ")))
+		}
+		families = []checks.Family{fam}
+		descriptors = familyDescriptors(fam.ID)
+	}
+
 	if asJSON {
-		return writeRulesJSON(cmd, jsonDescriptors(checks.Descriptors()))
+		return writeRulesJSON(cmd, jsonDescriptors(descriptors))
 	}
 
 	byFamily := map[string][]checks.Descriptor{}
-	for _, d := range checks.Descriptors() {
+	for _, d := range descriptors {
 		byFamily[d.Family] = append(byFamily[d.Family], d)
 	}
 
 	out := cmd.OutOrStdout()
-	for i, fam := range checks.Families() {
+	for i, fam := range families {
 		if i > 0 {
 			fmt.Fprintln(out)
 		}
@@ -72,10 +103,15 @@ func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
 		return writeRulesJSON(cmd, jsonDescriptor(d))
 	}
 
+	fam, _ := findFamily(d.Family)
 	out := cmd.OutOrStdout()
+	// Breadcrumb header, echoing how the docs nest family → rule page.
+	fmt.Fprintf(out, "%s › %s\n\n", fam.Title, d.Title)
 	fmt.Fprintf(out, "kind:    %s\n", d.Kind)
 	fmt.Fprintf(out, "family:  %s\n", d.Family)
 	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
+	fmt.Fprintf(out, "\n%s\n", fam.Intro)
+
 	if len(d.Fields) > 0 {
 		fmt.Fprint(out, "\nconfiguration keys:\n")
 		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
@@ -94,8 +130,15 @@ func runRulesDetail(cmd *cobra.Command, kind string, asJSON bool) error {
 		if err := tw.Flush(); err != nil {
 			return err
 		}
+	} else {
+		fmt.Fprint(out, "\nThis rule takes no configuration keys.\n")
 	}
+
 	fmt.Fprintf(out, "\nexample:\n%s\n", indentLines(d.ConfigExample, "  "))
+
+	if siblings := familySiblings(d); len(siblings) > 0 {
+		fmt.Fprintf(out, "\nother %s:\n  %s\n", strings.ToLower(fam.Title), strings.Join(siblings, ", "))
+	}
 	return nil
 }
 
@@ -107,6 +150,48 @@ func findDescriptor(kind string) (checks.Descriptor, bool) {
 		}
 	}
 	return checks.Descriptor{}, false
+}
+
+// findFamily returns the family with the given id.
+func findFamily(id string) (checks.Family, bool) {
+	for _, f := range checks.Families() {
+		if f.ID == id {
+			return f, true
+		}
+	}
+	return checks.Family{}, false
+}
+
+// familyIDs returns the family ids in display order, for error messages.
+func familyIDs() []string {
+	fams := checks.Families()
+	ids := make([]string, len(fams))
+	for i, f := range fams {
+		ids[i] = f.ID
+	}
+	return ids
+}
+
+// familyDescriptors returns the descriptors in one family, in registry order.
+func familyDescriptors(id string) []checks.Descriptor {
+	var out []checks.Descriptor
+	for _, d := range checks.Descriptors() {
+		if d.Family == id {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// familySiblings returns the other kinds in d's family, in registry order.
+func familySiblings(d checks.Descriptor) []string {
+	var out []string
+	for _, o := range checks.Descriptors() {
+		if o.Family == d.Family && o.Kind != d.Kind {
+			out = append(out, string(o.Kind))
+		}
+	}
+	return out
 }
 
 // splitFields partitions a check's fields into comma-joined required and
