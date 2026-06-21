@@ -305,7 +305,10 @@ message so the user (or their editor) can rename deliberately.
   `Transform`, `Prefix`, `Suffix`, `Pattern`, `Allow`, `Deny`, `Fields`,
   `Name` fields; add `normalizeCheck` cases with key validation (e.g.
   `name_affix` requires prefix or suffix; `path_charset` rejects both
-  `allow` and `deny`).
+  `allow` and `deny`). New validation messages follow the error grammar in
+  `cmd/AGENTS.md` (lowercase, no trailing period, `%q` around kind/field
+  values). Check **violations** keep the `path:line: /pointer: message`
+  diagnostic format, which that doc exempts from the prose rules.
 - `internal/checks/filesystem.go` — replace the four folded structs with
   `NameCase`, `NameMatchesField`, `NameAffix`, `PathCharset`; add Tier-2
   structs; add a shared `resolveTarget(ctx, target) []string` helper.
@@ -316,15 +319,35 @@ message so the user (or their editor) can rename deliberately.
 - `internal/checks/registry.go` — Descriptors for every new kind (parity is
   test-enforced); a `Scope` field on `Descriptor` (`item` | `collection`) so
   generated docs can note which checks run per-collection.
-- `cmd/gendocs` + `docs/content/reference/rules/filesystem/` — regenerate.
-- `cmd/rules.go` / `cmd/rules_test.go` — the `rules` command is registry-driven,
-  so new kinds appear automatically; the Tier 3 `Scope` field should be shown in
-  the per-kind detail readout (JSON tests ignore extra fields and count
-  dynamically, so they stay green).
-- `AGENTS.md`, `docs/content/deep-dives/` — record the target×rule model and the
-  collection-check tier (the domain content now lives in
-  `deep-dives/core-concepts.md`); `glossary.md` — "target," "collection-scoped
+- `cmd/rules.go` / `cmd/rules_test.go` — `rules` (now split into `rules list`
+  and `rules show <kind>`) is registry-driven, so new kinds appear
+  automatically; surface the Tier 3 `Scope` field in `runRulesDetail` (the
+  `rules show` readout). Its tests count dynamically and unmarshal a field
+  subset, so they stay green.
+
+## Documentation updates
+
+- **Generated reference** — `make docs-gen` regenerates
+  `docs/content/reference/rules/filesystem/` (do not hand-edit): the four folded
+  pages disappear, new per-kind pages appear, and the family `_index.md`
+  updates. Tier 3 pages carry `Scope: collection`.
+- **User docs (Hugo)** — `docs/content/how-to/configure-rules.md` and
+  `docs/content/reference/configuration.md` name the folded kinds and must move
+  to the `target × rule` model and new kind names. The domain model that
+  references check kinds currently lives in
+  `docs/content/explanation/domain-model.md` — see the note below.
+  `docs/content/reference/glossary.md` gains "target" and "collection-scoped
   check."
+- **Developer docs** — root `AGENTS.md` (and `internal/checks` package docs if
+  added): record the `target × rule` model, the `resolveTarget` helper, the
+  `Context.CollectionRoot` addition, and the `CollectionCheck` tier + its
+  full-collection re-scan. No `.cursor/skills/` changes.
+- **Docs-location risk (confirm at graduation).** main currently carries *both*
+  `docs/content/explanation/domain-model.md` and
+  `docs/content/deep-dives/core-concepts.md`; the `explanation/` page is the one
+  that references check kinds today, but the docs convention (write-spec skill)
+  treats `docs/deep-dives/` as canonical. Before graduating, confirm which page
+  is authoritative and update that one, rather than guessing now.
 
 ## Open Questions
 

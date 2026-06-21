@@ -22,21 +22,29 @@ phasing:
   `internal/checks/registry.go` (Descriptors), plus tests
   (`internal/checks/checks_test.go`, `internal/config/config_test.go`) and the
   **generated** reference pages under `docs/content/reference/rules/filesystem/`.
-  Hand-authored docs that name them: `docs/content/deep-dives/core-concepts.md`,
+  Hand-authored docs that name them: `docs/content/explanation/domain-model.md`,
   `docs/content/how-to/configure-rules.md`,
   `docs/content/reference/configuration.md`.
 - Pre-v0: the folded kinds are **removed outright**, not aliased.
 - `make all` = `vet test build`; `make docs-gen` regenerates the rules reference
   from `registry.go` Descriptors (parity enforced by `registry_test.go`).
-- The **`katalyst rules`** command (`cmd/rules.go`, `cmd/rules_test.go`, added on
-  main) is a read-only view over `checks.Descriptors()`/`checks.Families()` — the
-  same registry. New kinds surface automatically; its tests are dynamic (count
-  via `len(Descriptors())` / `familyKinds`, JSON unmarshals a field subset), so
-  adding/removing kinds won't break them. The Phase 4 `Descriptor.Scope` field
-  flows into its output and should show in the detail readout.
-- Docs reorg (on main): `docs/content/explanation/` is now
-  `docs/content/deep-dives/`; `domain-model.md` was consolidated into
-  `core-concepts.md`.
+- New config-validation messages follow the error grammar now durable in
+  `cmd/AGENTS.md` (lowercase, no trailing period, `%q` around kind/field
+  values); check violations keep the `path:line: /pointer: message` diagnostic
+  format (exempt). Use the `cmd/usage.go` helpers where a command-level error
+  is raised.
+- The **`rules`** command (added on main, then split into `rules list` /
+  `rules show <kind>`) is a read-only view over `checks.Descriptors()` /
+  `checks.Families()`. New kinds surface automatically; its tests are dynamic
+  (count via `len(Descriptors())` / `familyKinds`, JSON unmarshals a field
+  subset), so adding/removing kinds won't break them. The Phase 4
+  `Descriptor.Scope` field flows into its output and should show in
+  `rules show`.
+- Docs-location caveat: main carries **both** `docs/content/explanation/` and
+  `docs/content/deep-dives/`. The `explanation/domain-model.md` page is the one
+  that references check kinds today; the docs convention treats `deep-dives/` as
+  canonical. Phases 3/5 target the page that actually references kinds and
+  confirm authority at graduation rather than guessing.
 
 ## Sequencing
 
@@ -157,7 +165,8 @@ A.
    `docs/content/reference/rules/filesystem/`. The four old generated pages
    disappear; new pages appear. Verify the family `_index.md` reflects the new
    set.
-2. **Files:** `docs/content/deep-dives/core-concepts.md`,
+2. **Files:** `docs/content/explanation/domain-model.md` (the page referencing
+   check kinds today — confirm vs. `deep-dives/core-concepts.md` at graduation),
    `docs/content/how-to/configure-rules.md`,
    `docs/content/reference/configuration.md` — replace references to the four
    folded kinds with the `target × rule` model and the new kind names; add a
@@ -201,10 +210,11 @@ checks.
 5. **File:** `internal/checks/registry.go` — Descriptors for the three; add a
    `Scope` field (`item` | `collection`) to `Descriptor`, defaulting `item` for
    all existing entries.
-6. **File:** `cmd/rules.go` — show `Scope` in the per-kind detail readout
-   (`runRulesDetail`). The list and `--json` are registry-driven and need no
-   change beyond the new field flowing through; add a `rules_test.go` assertion
-   that a collection-scoped kind's detail names its scope.
+6. **File:** `cmd/rules.go` — show `Scope` in `runRulesDetail` (the
+   `rules show <kind>` readout). `rules list` and `--json` are registry-driven
+   and need no change beyond the new field flowing through; add a
+   `rules_test.go` assertion that `rules show` for a collection-scoped kind
+   names its scope.
 7. **File:** `cmd/check_test.go` (or equivalent) — assert: a single-item
    selector still re-scans the whole collection for the collection pass
    (uniqueness verdict unaffected); per-item checks still honor the selector.
@@ -214,9 +224,11 @@ checks.
 
 1. **File:** `make docs-gen` — regenerate the reference; generated pages note
    `Scope: collection` for the three.
-2. **Files:** `docs/content/deep-dives/` — document the collection-scoped check
-   tier and the full-collection re-scan behavior (a single-item selector still
-   reads siblings when a collection-scoped check is configured).
+2. **Files:** the authoritative domain/deep-dive page (confirm
+   `explanation/domain-model.md` vs. `deep-dives/`) — document the
+   collection-scoped check tier and the full-collection re-scan behavior (a
+   single-item selector still reads siblings when a collection-scoped check is
+   configured).
 3. **File:** `docs/content/reference/glossary.md` — add "collection-scoped check."
 4. **File:** `AGENTS.md` — record the `CollectionCheck` interface and the
    re-scan rule.
@@ -239,7 +251,7 @@ checks.
 | `cmd/rules.go`, `cmd/rules_test.go` | Registry-driven; show `Scope` in detail readout (Phase 4) |
 | `internal/checks/checks_test.go`, `internal/checks/collection_test.go`, `internal/config/config_test.go`, `cmd/check_test.go` | Coverage (tests-first each phase) |
 | `docs/content/reference/rules/filesystem/*` | Regenerated by `make docs-gen` (Phases 3, 5) |
-| `docs/content/deep-dives/*`, `how-to/configure-rules.md`, `reference/configuration.md`, `glossary.md`, `AGENTS.md` | Graduation targets (Phases 3, 5) |
+| `docs/content/explanation/domain-model.md` (vs. `deep-dives/`), `how-to/configure-rules.md`, `reference/configuration.md`, `glossary.md`, `AGENTS.md` | Graduation targets (Phases 3, 5) |
 
 ## Architecture Decisions
 
@@ -252,6 +264,7 @@ checks.
 | Collection pass + selectors | Re-scan the full collection regardless of selector | A uniqueness verdict is only correct against all items (see spec) |
 | Folded kinds | Removed outright, no alias | Pre-v0; the project-layout spec set the no-back-compat precedent |
 | Shipment split | A (Tiers 1–2) before B (Tier 3) | A is a contained refactor; B introduces a new interface gated on Q1 |
+| Error/violation messages | Follow `cmd/AGENTS.md` grammar; violations keep the diagnostic format | Match the standard now durable on main rather than inventing phrasing |
 
 ## Out of Scope
 
@@ -263,3 +276,6 @@ checks.
 - **L1/L2 (heuristic/judgment) checks** — this plan is L0 only; see the research
   brief for the broader landscape.
 - **Migrating configs that use the folded kinds** — no backward compatibility.
+- **`inspect` suggesting filesystem checks** — the new inspector layer profiles
+  a directory into a draft schema (object-shaped); teaching it to propose
+  filesystem/collection checks is a separate effort.
