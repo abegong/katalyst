@@ -31,6 +31,13 @@ This list is the template — there is no separate template file.
   non-obvious choices. At graduation, the locked rationale folds into the code
   it explains (package docs, with `doc.go` when long), or into a cross-cutting
   `docs/deep-dives/` page (there is no central decisions log).
+- **Documentation updates** — The doc edits this plan ships, carried forward from
+  the spec's Documentation updates and made concrete: which doc changes in which
+  phase. Developer docs (`AGENTS.md`, agent skills under `.cursor/skills/`, Go
+  doc comments) and user docs (the Hugo pages under `docs/`) appear as phase
+  sub-steps with **File:** lines and in Key Files; for a new check, regenerate
+  the rule reference with `make docs-gen`. `_None._` only when the change is
+  purely internal.
 - **Out of Scope** — What this plan explicitly defers. Prevents scope creep.
 
 ## Tests first
@@ -62,8 +69,9 @@ specs — lean into that. Each sub-step is imperative and file-specific.
 2. **Read the codebase.** Plans cite exact paths. Read the relevant files for
    real paths, current behavior, and patterns to follow.
 3. **Draft top-down.** Current State → Sequencing → Phases → Key Files →
-   Architecture Decisions → Out of Scope. Fill the Sequencing table before
-   expanding the Phases — it forces a clear phase structure before the detail.
+   Architecture Decisions → Documentation updates → Out of Scope. Fill the
+   Sequencing table before expanding the Phases — it forces a clear phase
+   structure before the detail.
 4. **Write the file.** Create `product/specs/{slug}-plan.md`.
 5. **Sanity check.** Every sub-step has a concrete path. Architecture Decisions
    capture choices a future reader might question. Out of Scope names anything
@@ -72,6 +80,7 @@ specs — lean into that. Each sub-step is imperative and file-specific.
 ## Reference
 
 - Process: `docs/contributing/how-we-plan.md`
+- Documentation homes: `docs/contributing/how-we-document.md`
 - Testing conventions: `AGENTS.md`
 - Example spec to plan against: `product/specs/cli-spec.md`
 - Prose guide: `.cursor/skills/write-docs/SKILL.md`
