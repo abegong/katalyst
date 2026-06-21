@@ -60,12 +60,27 @@ folderslint maps onto the Tier 3 structural checks.
 
 ## Current State
 
-- **Per-item, stateless model.** `internal/checks/checks.go` defines
+- **Two scopes today: configured per collection, evaluated per item.** Checks
+  are declared only in a collection's `.katalyst/collections/{name}.yaml` under
+  `checks:` — there is no project-wide or per-item declaration. But execution is
+  item-by-item: `cmd/check.go` resolves selectors into a **flat, selector-
+  narrowed** list (`res.Items`, each carrying its `Collection`), then for each
+  item calls `engine.checksFor(item.Collection, meta)` and
+  `checks.RunAll(Context{…}, checkList)`. Nothing holds a whole collection's
+  items at once during the check pass; items are processed independently. The
+  one collection-granularity operation, `Unmatched` (files not matching the
+  pattern), is deliberately **not** a check — it's a separate scan in the
+  command, which shows the codebase already reaches for a side-channel when it
+  needs collection-level information.
+- **Per-item, stateless `Check` contract.** `internal/checks/checks.go` defines
   `Check.Run(ctx Context) []Violation` where `Context = {FilePath string, Doc
   *frontmatter.Document, Meta map[string]any}`. A check sees exactly one item;
   there is no handle to the collection, its other items, or the filesystem
   beyond `FilePath`. `RunAll` flattens violations across a slice of checks for
   one item.
+- **The markdown layer does not parse links.** `frontmatter.Document` exposes
+  `Body []byte` (raw bytes) plus parsed headings/fences; there is no link or
+  image extractor. Any body-link check must write one.
 - **Six filesystem checks** in `internal/checks/filesystem.go`, each a struct
   with a `Run`. `filename_kebab_case` hardcodes `^[a-z0-9]+(?:-[a-z0-9]+)*$`;
   `no_spaces_in_path` is `strings.Contains(path, " ")`; `filename_prefix` is
@@ -103,8 +118,12 @@ special cases collapse.
 | `parent-dir` | immediate parent directory name |
 | `path-segments` | every directory segment from the collection root down, plus the basename — each tested independently |
 
-`path-segments` is the ls-lint `.dir`-plus-file idea: one rule, applied to the
-whole path, so `My Folder/note.md` can't pass a rule the file alone satisfies.
+`path-segments` is **inclusive** (resolved, was Q3): it tests every directory
+segment *and* the basename, so it's the ls-lint `.dir`-plus-file idea as one
+rule — `My Folder/note.md` can't pass a rule the file alone satisfies. The
+common ask ("kebab everywhere") is one line; when directories and files need
+*different* shapes (e.g. `PascalCase/` folders, `kebab.md` files), compose the
+disjoint `parent-dir` and `filename` targets instead.
 Targets are resolved relative to the **collection root**, never above it, so a
 project living under `/Users/abe/Documents/...` is not penalized for the
 ancestors katalyst doesn't own.
@@ -227,6 +246,17 @@ the other, never both. `Violation` is unchanged; collection-scoped violations
 carry the offending item's `FilePath` (and the partner path, in the message,
 for collisions).
 
+**Selector wrinkle (from how scoping works today).** `res.Items` is flat and
+**narrowed by the selector** — `katalyst check notes/dune` resolves to a single
+item. A `CollectionCheck` cannot consume that list: a uniqueness verdict is only
+correct against the collection's *full* item set. So the engine must, for each
+collection touched by the selection, **re-scan the whole collection** (via
+`project.Items(collection)`) to build `CollectionContext`, independent of how
+the selector narrowed the per-item pass. The visible consequence — worth a docs
+note — is that a single-item selector still reads every sibling when a
+collection-scoped check is configured. Per-item checks keep honoring the
+selector exactly as today; only the collection-scoped pass widens.
+
 The initial Tier-3 checks:
 
 | Kind | Fields | Purpose |
@@ -234,18 +264,30 @@ The initial Tier-3 checks:
 | `filesystem_unique_filename` | — | No two items in the collection share a basename. |
 | `filesystem_unique_field` | `field` (req) | No two items share a value for `field` (slug/id uniqueness). |
 | `filesystem_index_file_required` | `name` (opt, default `_index.md`) | Every subdirectory containing items also contains `name`. The folderslint "this dir must exist/contain" idea; ls-lint's `exists`. |
-| `filesystem_referenced_files_exist` | `fields` (req) | Each listed frontmatter field holds a path (string or list) that resolves to a real file under the project. Catches dead cover-image / attachment references. |
+| `filesystem_referenced_files_exist` | `fields` (req) | Each listed **frontmatter** field holds a path (string or list) that resolves to a real file. Catches dead cover-image / attachment references. |
 
 `unique_field` overlaps conceptually with the `object` family but is
 intrinsically cross-item, so it lives here, scoped to the collection.
 
-### Composition (deferred, see Open Questions)
+`referenced_files_exist` is **frontmatter-only** (resolved, was Q4): it reads
+the named `fields`, treats each value as a path, and resolves it **relative to
+the item's own directory** (how a human reads a relative path written in that
+file) before `os.Stat`. Body markdown links are deliberately *not* in scope
+here — they're a body-content concern with different resolution and skip rules
+(external `http(s)://`, `mailto:`, `#anchors`) and require a link extractor the
+markdown layer doesn't have yet. They become a separate future
+**`markdown_relative_links_resolve`** check, keeping each kind's semantics
+single. (`referenced_files_exist` is technically per-item — it needs no
+siblings — but is grouped with Tier 3 as a path-integrity check; it can ship on
+the per-item `Check` contract.)
 
-ls-lint allows `camelCase | PascalCase` (OR). Rather than per-check `|`
-parsing, the natural katalyst shape is a generic combinator —
-`kind: any_of` wrapping a list of checks, passing if any child passes. This is
-attractive but cross-cutting (it touches every family, not just filesystem),
-so it is **out of scope** here and recorded as an open question.
+### Composition (out of scope, resolved)
+
+ls-lint allows `camelCase | PascalCase` (OR). The natural katalyst shape would
+be a generic combinator — `kind: any_of` wrapping a list of checks, passing if
+any child passes — not per-check `|` parsing. This is **out of scope** for this
+spec: it's cross-cutting (touches every family, not just filesystem) and a
+config-language change that deserves its own spec. Tracked as a follow-up.
 
 ### `fix` interaction
 
@@ -280,22 +322,24 @@ message so the user (or their editor) can rename deliberately.
 
 ## Open Questions
 
-- **Q1 — Adopt the `CollectionCheck` interface, or defer Tier 3 entirely?**
-  Tiers 1–2 are pure refactor+extension within the existing model and could
-  ship alone. Tier 3 is the strategic value but introduces a second check
-  interface and a second engine pass. Recommendation: ship Tiers 1–2 first
-  (one plan/phase), then Tier 3 (second phase) once the interface is reviewed.
-- **Q2 — Generic `any_of` combinator?** Yes in principle (it subsumes
-  ls-lint's `|` and helps every family), but it is a config-language change
-  with its own spec. Out of scope here; tracked as a follow-up.
-- **Q3 — Does `path-segments` include the basename, or only directories?**
-  Proposed: include the basename (one rule for the whole path is the simplest
-  mental model). Alternative: keep `filename` and `path-segments` strictly
-  disjoint. Leaning toward "include."
-- **Q4 — Should `referenced_files_exist` follow body markdown links too, or
-  only frontmatter fields?** Frontmatter-only is well-defined and cheap; body
-  links need markdown parsing and a relative-resolution policy. Proposed:
-  frontmatter fields now, body links as a later markdown-family check.
+- **Q1 — Phasing of Tier 3 (open).** Tiers 1–2 are a pure refactor+extension
+  within the existing per-item model; Tier 3 adds the `CollectionCheck`
+  interface, a second engine pass, and the full-collection re-scan described
+  above. Recommendation: ship Tiers 1–2 first (one plan/phase), then Tier 3
+  (second phase) once the interface and the re-scan behavior are reviewed. The
+  scoping facts that informed this are now folded into Current State and the
+  Tier 3 design.
+- **Q2 — Generic `any_of` combinator. Resolved: out of scope.** A config-
+  language change touching every family; deserves its own spec. Tracked as a
+  follow-up.
+- **Q3 — `path-segments` target. Resolved: inclusive.** It tests every
+  directory segment *and* the basename. The "different shapes for dirs vs files"
+  case is served by composing the disjoint `parent-dir` and `filename` targets.
+- **Q4 — `referenced_files_exist` scope. Resolved: frontmatter-only.** Reads the
+  named `fields`, resolving each path relative to the item's own directory. Body
+  markdown links are split out into a future `markdown_relative_links_resolve`
+  check (different resolution + skip rules, and needs a link extractor the
+  markdown layer lacks).
 
 ## Rejected alternatives
 
@@ -324,7 +368,7 @@ message so the user (or their editor) can rename deliberately.
 Tier 1 (revised, per-item):
 - [ ] `name_case` accepts/rejects each `style` against a basename
 - [ ] `name_case` with `target: parent-dir` tests the parent, not the file
-- [ ] `name_case` with `target: path-segments` flags a bad mid-path segment
+- [ ] `name_case` with `target: path-segments` flags a bad mid-path segment *and* a bad basename (inclusive)
 - [ ] `name_case style: kebab, target: filename` matches old kebab-case behavior
 - [ ] `name_matches_field` with `transform: none` equals old matches-slug
 - [ ] `name_matches_field` with `transform: slugify` matches a slugified title
@@ -342,10 +386,14 @@ Tier 2 (new, per-item):
 
 Tier 3 (collection-scoped):
 - [ ] engine runs `CollectionCheck`s once per collection after the item pass
+- [ ] a single-item selector still re-scans the whole collection for the
+      collection-scoped pass (uniqueness verdict unaffected by selector)
+- [ ] per-item checks still honor the selector (only the collection pass widens)
 - [ ] `unique_filename` flags two items sharing a basename, names both paths
 - [ ] `unique_field` flags duplicate `field` values across items
 - [ ] `index_file_required` flags a subdirectory missing `_index.md`
 - [ ] `referenced_files_exist` flags a frontmatter path that resolves nowhere
+- [ ] `referenced_files_exist` resolves paths relative to the item's directory
 - [ ] `referenced_files_exist` accepts both a string and a list field value
 
 Registry / docs:
