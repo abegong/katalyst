@@ -1,0 +1,51 @@
+name: deploy-docs
+
+# Publishes the Hugo docs site to GitHub Pages on every push to main.
+# Pages must be configured with build_type=workflow (Settings > Pages >
+# Source: GitHub Actions). The existing ci.yml `docs` job still validates
+# the build on pull requests; this workflow only deploys from main.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'   # match the go directive in go.mod
+          cache: true
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.163.3'
+          extended: true
+      - uses: actions/configure-pages@v5
+      - name: Build docs
+        run: make docs-build   # outputs the minified site to docs/public
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
