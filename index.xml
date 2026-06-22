@@ -656,7 +656,7 @@ how each term maps onto today&amp;rsquo;s code is documented in the per-package
 	&lt;tbody&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Frontmatter&lt;/strong&gt;&lt;/td&gt;
-					&lt;td&gt;The on-disk YAML block delimited by &lt;code&gt;---&lt;/code&gt; fences at the top of a markdown file.&lt;/td&gt;
+					&lt;td&gt;The on-disk metadata block at the top of a markdown file, in YAML (&lt;code&gt;---&lt;/code&gt;), TOML (&lt;code&gt;+++&lt;/code&gt;), or JSON (&lt;code&gt;{ … }&lt;/code&gt;).&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Metadata&lt;/strong&gt;&lt;/td&gt;
