@@ -79,6 +79,15 @@ The grouping is visible at the surface: `katalyst` with no arguments lists
 **Verbs** and **Resources** under separate headings rather than one
 alphabetized blob, so the grammar reads off the help screen.
 
+Help order and copy are part of that contract:
+
+- **Verbs are lifecycle-ordered.** Root help lists verbs in the order you
+  reach for them in a new project, not alphabetically.
+- **Resources are setup-ordered.** Root help lists resource nouns by setup
+  priority, not alphabetically.
+- **Help descriptions are sentence fragments.** Top-level help lines use direct
+  action phrasing and no trailing periods.
+
 `check-types` (originally `rules`) was the last command brought into this
 scheme: it began as a bare noun that listed when invoked directly, and was
 split into `check-types list` / `check-types show` so it matches the other

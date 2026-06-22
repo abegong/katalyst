@@ -31,6 +31,43 @@ changed `Short`), update the golden string in `root_test.go`. Register a new
 command in its help group in `root.go` (`addGrouped`), not a bare
 `AddCommand` — an ungrouped command falls to "Additional Commands".
 
+## Help text copy
+
+Help text is product copy for people in a terminal. Keep it literal and
+task-oriented.
+
+- **Describe behavior, not implementation.** Say what the command does for the
+  user (`inspect`, `initialize`, `run checks`), not how it is built.
+- **Use imperative verbs for action commands.** Verb entries read as direct
+  actions: `Inspect …`, `Initialize …`, `Run …`, `Apply …`.
+- **Use `Commands to …` for resource nouns.** Noun parents describe their
+  subcommand family, not an action they run themselves.
+- **Use project vocabulary.** Prefer `collection`, `item`, `schema`, `check`,
+  `inspector`, `selector`; avoid introducing synonyms unless they add clarity.
+- **Keep one line scannable.** Favor short, concrete phrases over long
+  qualifiers; remove filler and hedging words.
+- **Keep tone neutral and mechanical.** No marketing adjectives and no
+  anthropomorphic wording.
+- **Order verbs by lifecycle.** In root help, list `Verbs` in the order a user
+  runs them in a new project, not alphabetically.
+- **Order resources by setup priority.** In root help, list `Resources` by what
+  a project must configure first, then what follows.
+- **No trailing periods in help descriptions.** `Short` strings and root help
+  lines end without `.`.
+
+Patterns to reuse:
+
+- **Verb command (`Short`):** `<Imperative verb> <target> [and <outcome>]`
+- **Resource noun (`Short`):** `Commands to <verb> and <verb> <resource> …`
+- **Root `Long`:** one-sentence "what Katalyst is" + one-sentence "what you do
+  with it", then stable project links.
+
+Examples:
+
+- `inspect     Analyze a directory and report its structure and conventions`
+- `init        Initialize a directory as a katalyst project`
+- `collection  Commands to inspect and modify collections in this project`
+
 ## Error messages
 
 One grammar for every user-facing error:
