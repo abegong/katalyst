@@ -7,8 +7,20 @@ the canonical form `katalyst fix` rewrites files into.
 
 The unit of work. A file on disk with two optional regions:
 
-- A **frontmatter** block, fenced by `---` lines at the very top of the
-  file. YAML today; TOML / JSON are planned.
+- A **frontmatter** block at the very top of the file, in one of three
+  formats detected by the opening fence:
+
+  | Format | Fence | Example openers |
+  |--------|-------|-----------------|
+  | YAML   | `---` | Jekyll, Obsidian, Hugo |
+  | TOML   | `+++` | Hugo, Obsidian, Jekyll |
+  | JSON   | `{` … `}` | Hugo |
+
+  These are the three formats Hugo, Obsidian, and Jekyll emit. Whatever the
+  source format, the parsed `Meta` is a plain `map[string]any`, so checks and
+  inspectors never branch on format. `Document.Format` records the detected
+  syntax so `fix` can re-emit a file in its own format rather than rewriting,
+  say, TOML as YAML.
 - A **body**, everything after the closing fence.
 
 A document *may* have no frontmatter, in which case `check` reports it as an
@@ -18,24 +30,38 @@ When parsed, a markdown document becomes a `frontmatter.Document`:
 
 | Field            | Meaning |
 |------------------|---------|
-| `HasFrontmatter` | Did the file open with `---`? |
-| `Meta`           | Parsed YAML, normalized to `map[string]any` |
+| `HasFrontmatter` | Did the file open with a recognized fence? |
+| `Format`         | Detected syntax: `KindYAML`, `KindTOML`, or `KindJSON` |
+| `Meta`           | Parsed frontmatter, normalized to `map[string]any` |
 | `Body`           | Bytes after the closing fence, **never modified** except by `fix` |
 | `Lines`          | JSON-pointer-path → 1-indexed source line |
 
 The `Lines` index is what makes error messages locatable. It accounts for
-the opening `---` fence offset, so `Lines["/title"] = 2` means the
-`title:` key is on line 2 of the original file.
+the opening fence offset, so `Lines["/title"] = 2` means the `title` key is
+on line 2 of the original file.
+
+**Line tracking is full for YAML only.** For TOML and JSON, `Lines` is empty
+today; checks degrade gracefully (they emit the error without a line number).
+Richer line tracking for the other formats is a planned follow-up — see the
+note in the package doc comment.
 
 ## Why `fix` is deliberately opinionated
 
-`katalyst fix` rewrites frontmatter in one canonical form:
+`katalyst fix` rewrites frontmatter in one canonical form **in the file's own
+format** — TOML stays TOML, JSON stays JSON, YAML stays YAML. `fix` never
+converts between formats. Canonically, that means:
 
+- the source format is preserved (same fence, same syntax),
 - top-level keys sorted alphabetically,
-- yaml.v3 default block style (no flow-style maps or sequences),
-- strings unquoted where safe, double-quoted otherwise,
+- each format's default block/indent style — yaml.v3 block style, the
+  `go-toml` default, two-space-indented JSON,
 - exactly one trailing newline,
 - body bytes preserved verbatim.
+
+Because the canonical scalar styling is each library's default, a round-trip
+is *meaning*-preserving rather than byte-identical: e.g. a double-quoted TOML
+string re-emits single-quoted. Re-parsing the output always yields the same
+`Meta`.
 
 There are no style flags. `gofmt`, `black`, and `rustfmt` taught the same
 lesson: a formatter's value comes from there being one obvious answer.
@@ -72,9 +98,10 @@ For each item:
 1. Read bytes.
 2. Parse to `Document`.
 3. If no frontmatter, return verbatim — `fix` never invents structure.
-4. Marshal `Meta` with top-level keys sorted alphabetically, yaml.v3
-   default block style.
-5. Re-assemble: `---\n<sorted yaml>\n---\n<body>`. Body bytes are
+4. Marshal `Meta` with top-level keys sorted alphabetically, in
+   `Document.Format`'s native syntax and default style.
+5. Re-assemble in the same format: `---\n<yaml>\n---\n<body>`,
+   `+++\n<toml>\n+++\n<body>`, or `{…}\n<body>` for JSON. Body bytes are
    preserved verbatim; one trailing newline is enforced on the file.
 6. Compare against the original. If unchanged, do nothing. Otherwise
    atomically rewrite (temp file + rename) — or, with `--check`, print the
@@ -85,5 +112,8 @@ For each item:
 1. **Body bytes are sacred.** No command except `fix` modifies them. Even
    `fix` only normalizes trailing whitespace and the leading separator;
    interior body bytes round-trip exactly.
-2. **Line numbers are file-relative and 1-indexed.** The opening `---`
-   fence is line 1, so the first YAML key is typically line 2.
+2. **Line numbers are file-relative and 1-indexed.** The opening fence is
+   line 1, so the first key is typically line 2. (Populated for YAML today;
+   see the line-tracking note above.)
+3. **Format is preserved.** `fix` re-emits each file in its own frontmatter
+   syntax and never converts between YAML, TOML, and JSON.

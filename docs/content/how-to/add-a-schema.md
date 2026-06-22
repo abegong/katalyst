@@ -11,7 +11,9 @@ collection.
 
 ## 1. Write the schema file
 
-Put a JSON Schema (draft 2020-12) under `schemas/`:
+Put a JSON Schema (draft 2020-12) under `.katalyst/schemas/`. Its **name** is
+the filename stem — `book.json` registers a schema named `book`, with no
+separate registration step:
 
 ```json
 {
@@ -26,42 +28,33 @@ Put a JSON Schema (draft 2020-12) under `schemas/`:
 }
 ```
 
-## 2. Register it under a name
+The name — not the path — is the stable handle the rest of the config uses, so
+the file is free to move as long as its stem stays the same.
 
-Add it to the `schemas` map. The name — not the path — is the stable handle
-the rest of the config uses:
-
-```yaml
-schemas:
-  book: ./schemas/book.json
-```
-
-## 3. Bind it to a collection
+## 2. Bind it to a collection
 
 The shortest way is the `schema:` shorthand, which adds a single `object`
 check:
 
 ```yaml
-collections:
-  books:
-    path: notes/books
-    schema: book
+# .katalyst/collections/books.yaml
+path: notes/books
+schema: book
 ```
 
 Equivalently, add an explicit object check to `checks` — useful when you mix
 it with markdown or filesystem checks:
 
 ```yaml
-collections:
-  books:
-    path: notes/books
-    checks:
-      - kind: object
-        schema: book
-      - kind: markdown_title_matches_h1
+# .katalyst/collections/books.yaml
+path: notes/books
+checks:
+  - kind: object
+    schema: book
+  - kind: markdown_title_matches_h1
 ```
 
-## 4. Override per file or per run
+## 3. Override per file or per run
 
 A single document can opt into a different registered schema with an inline
 key in its frontmatter:

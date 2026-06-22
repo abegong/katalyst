@@ -82,7 +82,7 @@ katalyst schema list
 katalyst schema show <name>
 ```
 
-Inspect the schemas registered in `katalyst.yaml`.
+Inspect the schemas registered under `.katalyst/schemas/`.
 
 ## `collection`
 
@@ -189,7 +189,7 @@ Exits `0`, or `2` for an unknown family or check type.
 katalyst init [--dir <path>]
 ```
 
-Scaffold a starter `katalyst.yaml`, an example schema, and an example
+Scaffold a starter `.katalyst/` directory, an example schema, and an example
 document. Refuses to overwrite existing files.
 
 ## See also

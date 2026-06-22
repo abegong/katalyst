@@ -161,10 +161,10 @@ spec.
    `docs/content/reference/inspectors/` from `inspect.Descriptors()` /
    `inspect.Families()`, mirroring the rules generation. Run `make docs-gen`.
    (Generated pages are never hand-edited — `AGENTS.md`.)
-2. **File:** `docs/content/explanation/general-model.md` — note that an
+2. **File:** `docs/content/deep-dives/core-concepts.md` — note that an
    **inspector** realizes the long-listed `aggregate` operation: a descriptive
    read that reports a distribution, the dual of a check.
-3. **File:** `docs/content/explanation/domain-model.md` — add the inspector
+3. **File:** `docs/content/deep-dives/domain-model.md` — add the inspector
    concept and the `inspect` data flow; absorb the locked decisions
    (evidence-not-verdicts, determinism dividing line, Markdown default) into the
    prose, per `how-we-plan.md` (no separate decisions log).

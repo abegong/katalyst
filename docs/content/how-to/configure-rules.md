@@ -10,13 +10,12 @@ them. This guide adds a collection and attaches checks to it.
 
 ## 1. Point a collection at the directory
 
-In `katalyst.yaml`, add an entry under `collections`. The key is the
-collection name; `path` is the directory relative to the repo root:
+Create a collection file under `.katalyst/collections/`. Its filename stem is
+the collection name; `path` is the directory relative to the repo root:
 
 ```yaml
-collections:
-  posts:
-    path: content/posts
+# .katalyst/collections/posts.yaml
+path: content/posts
 ```
 
 If you omit `path`, the directory defaults to the collection name. If you
@@ -29,15 +28,14 @@ the [check types reference]({{< relref "../reference/check-types/_index.md" >}})
 for every check type:
 
 ```yaml
-collections:
-  posts:
-    path: content/posts
-    checks:
-      - kind: markdown_requires_h1
-      - kind: markdown_title_matches_h1
-        field: title
-      - kind: filesystem_name_case
-        style: kebab
+# .katalyst/collections/posts.yaml
+path: content/posts
+checks:
+  - kind: markdown_requires_h1
+  - kind: markdown_title_matches_h1
+    field: title
+  - kind: filesystem_name_case
+    style: kebab
 ```
 
 A collection must have at least one check — either a `schema` (see [Add a

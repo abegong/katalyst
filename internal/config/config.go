@@ -10,7 +10,7 @@
 // (discovery: convention, the default), or listed explicitly in
 // .katalyst/config.yaml (discovery: explicit). The file format (yaml,
 // json, or both) is also set per kind in config.yaml. See
-// product/specs/project-layout-spec.md and docs/content/explanation/configuration.md.
+// docs/content/reference/configuration.md.
 package config
 
 import (

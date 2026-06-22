@@ -22,7 +22,7 @@ type Field struct {
 // Descriptor is the machine-readable record for one check type. Its json tags
 // are the wire contract for `katalyst check-types list --json`; see Field.
 type Descriptor struct {
-	// CheckType is the value used as `kind:` in katalyst.yaml.
+	// CheckType is the value used as `kind:` in a collection's checks.
 	CheckType config.CheckType `json:"check_type"`
 	// Family groups the check type on the docs site: "objects", "markdown", or
 	// "filesystem". It is also the subdirectory under reference/check-types/.
@@ -36,7 +36,7 @@ type Descriptor struct {
 	// Fields documents the check type's configuration keys, if any. The
 	// check-types command normalizes a nil slice to [] so consumers never see null.
 	Fields []Field `json:"fields"`
-	// ConfigExample is a complete katalyst.yaml snippet (YAML, no fence)
+	// ConfigExample is a complete config snippet (YAML, no fence)
 	// showing the check in a collection.
 	ConfigExample string `json:"config_example"`
 	// Scope is "collection" for checks that run once per collection over all

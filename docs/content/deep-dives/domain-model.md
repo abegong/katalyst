@@ -8,12 +8,16 @@ weight = 40
 What `katalyst` is *about*: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.
 
+This page is katalyst-specific. For the general, tool-agnostic model these
+concepts instantiate — the same vocabulary applied to a Postgres table or a
+MongoDB collection — see [core concepts]({{< relref "core-concepts.md" >}}).
+
 For *what* the commands do, see the [getting-started
 tutorial]({{< relref "../getting-started.md" >}}) and the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
-For *why* specific design choices were made, see the
-[configuration]({{< relref "configuration.md" >}}) and
-[commands]({{< relref "../reference/commands.md" >}}) reference pages. For
+For *why* specific design choices were made, see the per-package `README.md`
+files under `internal/` (for example `internal/config`) and the
+[commands]({{< relref "../reference/commands.md" >}}) reference. For
 *how the code is laid out*, see the repo's `AGENTS.md` files.
 
 ## At a glance
@@ -23,7 +27,7 @@ flowchart LR
     subgraph Disk["On disk"]
         MD["Markdown file<br/>(frontmatter + body)"]
         SF["Schema file<br/>(JSON Schema)"]
-        CF["katalyst.yaml<br/>(config)"]
+        CF[".katalyst/<br/>(config)"]
     end
 
     subgraph Parsed["In memory"]
@@ -60,8 +64,10 @@ flowchart LR
 
 The unit of work. A file on disk with two optional regions:
 
-- A **frontmatter** block, fenced by `---` lines at the very top of the
-  file. YAML today; TOML / JSON are planned.
+- A **frontmatter** block at the very top of the file, in YAML (`---`
+  fences), TOML (`+++` fences), or JSON (`{ … }`) — the formats Hugo,
+  Obsidian, and Jekyll emit. The source format is detected on read and
+  preserved by `fix`.
 - A **body**, everything after the closing fence.
 
 A document *may* have no frontmatter, in which case `check` reports it as an
@@ -88,9 +94,9 @@ A JSON Schema (draft 2020-12 by default; the library supports 4 through
 A schema has two identities:
 
 - A **path** on disk, where the JSON lives.
-- A **name** registered in `katalyst.yaml` (e.g. `book`, `person`). The
-  name is the stable public handle used by inline `schema:` directives
-  and `schema show`. Paths can change; names should not.
+- A **name**, by default its filename under `.katalyst/schemas/` (e.g.
+  `book.json` → `book`). The name is the stable public handle used by inline
+  `schema:` directives and `schema show`. Paths can change; names should not.
 
 `--schema <path>` bypasses the name layer entirely — useful for ad-hoc
 runs but skips name-based identity.
@@ -102,12 +108,14 @@ depend on the library directly.
 ### Config
 
 The single source of truth for "what schemas exist and what each
-collection checks." Lives at `katalyst.yaml` in the **repo root**.
+collection checks." Lives in a `.katalyst/` directory at the **repo root**:
+an optional `config.yaml`, plus one file per schema under `schemas/` and one
+per collection under `collections/`.
 
 Discovery walks upward from the current working directory looking for
-the nearest ancestor that contains the file (cf. `.git`, `.editorconfig`,
-`go.mod`). The discovered directory *is* the repo root for all
-subsequent path resolution.
+the nearest ancestor that contains a `.katalyst/` directory (cf. `.git`,
+`.editorconfig`, `go.mod`). The discovered directory *is* the repo root for
+all subsequent path resolution.
 
 A `config.Config` has:
 
@@ -124,17 +132,16 @@ check (via `schema:` shorthand or an explicit `checks:` list).
 ### Collection
 
 A **named** group of items backed by a directory. It is the unit you select
-on the command line and the unit that owns a set of checks. In
-`katalyst.yaml`:
+on the command line and the unit that owns a set of checks. Each collection
+is one file under `.katalyst/collections/`, its filename the collection name:
 
 ```yaml
-collections:
-  books:
-    path: notes/books   # directory, relative to the repo root
-    pattern: "*.md"      # filename glob; default "*.md"
-    schema: book         # shorthand for a single object check
-    checks:              # any additional checks
-      - kind: markdown_title_matches_h1
+# .katalyst/collections/books.yaml
+path: notes/books   # directory, relative to the repo root
+pattern: "*.md"      # filename glob; default "*.md"
+schema: book         # shorthand for a single object check
+checks:              # any additional checks
+  - kind: markdown_title_matches_h1
 ```
 
 `path` defaults to the collection name; `pattern` defaults to `*.md`. The
@@ -262,8 +269,8 @@ for the inspector set.
 
 The data flow per item, end-to-end:
 
-1. **Load config (or take the `--schema` flag).** Discover `katalyst.yaml`
-   from the working directory; failing to find one is a usage error
+1. **Load config (or take the `--schema` flag).** Discover the `.katalyst/`
+   directory from the working directory; failing to find one is a usage error
    (exit 2).
 2. **Resolve selectors to items.** No selector means every collection; a
    `<collection>` selector means all its items; `<collection>/<item>` means
@@ -310,8 +317,8 @@ tests; a few are protected only by code review and convention.
 1. **Body bytes are sacred.** No command except `fix` modifies them. Even
    `fix` only normalizes trailing whitespace and the leading separator;
    interior body bytes round-trip exactly.
-2. **Schema names are stable; paths can move.** `katalyst.yaml` is the only
-   place that knows how names map to paths.
+2. **Schema names are stable; paths can move.** The `.katalyst/` config is the
+   only place that knows how names map to paths.
 3. **The `schema:` directive is katalyst metadata, not user data.** It
    influences resolution but never reaches the validator.
 4. **A collection owns its checks; an item belongs to one collection.**

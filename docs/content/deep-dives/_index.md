@@ -8,10 +8,11 @@ bookCollapseSection = true
 
 Understanding-oriented discussion of the *why* behind Katalyst — the
 [vision and scope]({{< relref "vision.md" >}}), the [core
-concepts]({{< relref "core-concepts.md" >}}) the tool is built on, and the
-deeper design discussions that no single page or package owns: how the [core
-commands are organized]({{< relref "command-organization.md" >}}), how
-connectors map stores onto the model, and how operations grow richer as a
+concepts]({{< relref "core-concepts.md" >}}) the tool is built on, the
+[domain model]({{< relref "domain-model.md" >}}) that instantiates them in
+katalyst, and the deeper design discussions that no single page or package
+owns: how the [core commands are organized]({{< relref "command-organization.md" >}}),
+how connectors map stores onto the model, and how operations grow richer as a
 backend's capabilities increase. For the short version, start with [Why
 Katalyst]({{< relref "../why-katalyst.md" >}}).
 

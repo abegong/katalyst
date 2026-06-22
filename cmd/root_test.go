@@ -21,6 +21,7 @@ Verbs:
 Resources:
   check-types Inspect the check types the engine can enforce, grouped by family.
   collection  Inspect collections defined under .katalyst/collections/.
+  inspectors  Inspect the inspectors the engine can run, grouped by family.
   item        List, inspect, and mutate items within collections.
   schema      Inspect schemas defined under .katalyst/schemas/.
 
