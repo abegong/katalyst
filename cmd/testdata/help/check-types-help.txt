@@ -1,0 +1,18 @@
+check-types is a read-only view of the engine's check registry — the same
+catalog cmd/gendocs renders. List every check type grouped by family, or show one
+check type's docs-style readout. It reads no project, so it runs in any directory.
+
+Usage:
+  katalyst check-types [command]
+
+Aliases:
+  check-types, rules
+
+Available Commands:
+  list        List check types grouped by family.
+  show        Show one check type's keys, example, and siblings.
+
+Flags:
+  -h, --help   help for check-types
+
+Use "katalyst check-types [command] --help" for more information about a command.

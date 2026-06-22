@@ -1,0 +1,33 @@
+katalyst is a content consistency layer for agent memory,
+knowledge bases, and other curated content systems. it helps you inspect,
+check, and fix content and metadata conventions.
+
+Project links:
+  GitHub: https://github.com/abegong/katalyst
+  Docs:   https://abegong.github.io/katalyst/
+
+Usage:
+  katalyst [command]
+
+Verbs:
+  inspect     Analyze a directory and report its structure and conventions
+  init        Initialize a directory as a katalyst project
+  check       Run configured checks
+  fix         Apply deterministic, safe fixes
+
+Resources:
+  collection  Commands to inspect and modify collections in this project
+  item        Commands to inspect and modify individual items in collections within this project
+  schema      Commands to inspect and modify schemas defined in this project
+  check-types Commands to inspect the check types that katalyst can enforce
+  inspectors  Commands to inspect the inspectors that katalyst can run
+
+Additional Commands:
+  help        Help about any command
+  completion  Generate the autocompletion script for the specified shell
+
+Flags:
+  -h, --help      help for katalyst
+  -v, --version   version for katalyst
+
+Use "katalyst [command] --help" for more information about a command.

@@ -1,0 +1,16 @@
+inspectors is a read-only view of the engine's inspector registry — the same
+catalog cmd/gendocs renders and that the inspect command runs. List every
+inspector grouped by family, or show one inspector's docs-style readout. It
+reads no project, so it runs in any directory.
+
+Usage:
+  katalyst inspectors [command]
+
+Available Commands:
+  list        List inspectors grouped by family.
+  show        Show one inspector's family context, purpose, and siblings.
+
+Flags:
+  -h, --help   help for inspectors
+
+Use "katalyst inspectors [command] --help" for more information about a command.

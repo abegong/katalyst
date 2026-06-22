@@ -12,11 +12,20 @@ var Version = "0.0.0-dev"
 // hermetic: each test can build its own command tree with its own flags
 // and I/O streams.
 func NewRootCmd() *cobra.Command {
+	// Preserve insertion order in help output so command grouping/order can
+	// communicate the intended workflow instead of alphabetical sorting.
+	cobra.EnableCommandSorting = false
+
 	root := &cobra.Command{
 		Use:   "katalyst",
-		Short: "Define and enforce schemas for markdown frontmatter.",
-		Long: `katalyst validates structured metadata (frontmatter) on
-markdown files against JSON Schema documents.`,
+		Short: "Inspect, check, and fix content consistency rules",
+		Long: `katalyst is a content consistency layer for agent memory,
+knowledge bases, and other curated content systems. it helps you inspect,
+check, and fix content and metadata conventions.
+
+Project links:
+  GitHub: https://github.com/abegong/katalyst
+  Docs:   https://abegong.github.io/katalyst/`,
 		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -38,18 +47,48 @@ markdown files against JSON Schema documents.`,
 		&cobra.Group{ID: "resources", Title: "Resources:"},
 	)
 
+	inspectCmd := newInspectCmd()
+	inspectCmd.Short = "Analyze a directory and report its structure and conventions"
+
+	initCmd := newInitCmd()
+	initCmd.Short = "Initialize a directory as a katalyst project"
+
+	checkCmd := newCheckCmd()
+	checkCmd.Short = "Run configured checks"
+
+	fixCmd := newFixCmd()
+	fixCmd.Short = "Apply deterministic, safe fixes"
+
+	collectionCmd := newCollectionCmd()
+	collectionCmd.Short = "Commands to inspect and modify collections in this project"
+
+	itemCmd := newItemCmd()
+	itemCmd.Short = "Commands to inspect and modify individual items in collections within this project"
+
+	schemaCmd := newSchemaCmd()
+	schemaCmd.Short = "Commands to inspect and modify schemas defined in this project"
+
+	checkTypesCmd := newCheckTypesCmd()
+	checkTypesCmd.Short = "Commands to inspect the check types that katalyst can enforce"
+
+	inspectorsCmd := newInspectorsCmd()
+	inspectorsCmd.Short = "Commands to inspect the inspectors that katalyst can run"
+
+	// Root help order is deliberate:
+	// - verbs follow the expected new-project lifecycle
+	// - resources follow setup priority
 	addGrouped(root, "verbs",
-		newInitCmd(),
-		newCheckCmd(),
-		newFixCmd(),
-		newInspectCmd(),
+		inspectCmd,
+		initCmd,
+		checkCmd,
+		fixCmd,
 	)
 	addGrouped(root, "resources",
-		newCheckTypesCmd(),
-		newCollectionCmd(),
-		newInspectorsCmd(),
-		newItemCmd(),
-		newSchemaCmd(),
+		collectionCmd,
+		itemCmd,
+		schemaCmd,
+		checkTypesCmd,
+		inspectorsCmd,
 	)
 
 	return root

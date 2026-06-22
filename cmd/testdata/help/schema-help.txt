@@ -1,0 +1,13 @@
+Commands to inspect and modify schemas defined in this project
+
+Usage:
+  katalyst schema [command]
+
+Available Commands:
+  list        List schemas registered in the config.
+  show        Print the contents of a registered schema (pretty-printed JSON).
+
+Flags:
+  -h, --help   help for schema
+
+Use "katalyst schema [command] --help" for more information about a command.
