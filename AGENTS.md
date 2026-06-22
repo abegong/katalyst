@@ -28,7 +28,7 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
 internal/config       .katalyst/ loader + named collection/schema resolution
 internal/project      collection/item domain layer: selectors, item enumeration
-internal/frontmatter  YAML frontmatter parser + formatter, with line tracking
+internal/frontmatter  YAML/TOML/JSON frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
 cmd/gendocs           generates reference/check-types/ and reference/inspectors/ from the registries

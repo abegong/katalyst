@@ -60,8 +60,10 @@ flowchart LR
 
 The unit of work. A file on disk with two optional regions:
 
-- A **frontmatter** block, fenced by `---` lines at the very top of the
-  file. YAML today; TOML / JSON are planned.
+- A **frontmatter** block at the very top of the file, in YAML (`---`
+  fences), TOML (`+++` fences), or JSON (`{ … }`) — the formats Hugo,
+  Obsidian, and Jekyll emit. The source format is detected on read and
+  preserved by `fix`.
 - A **body**, everything after the closing fence.
 
 A document *may* have no frontmatter, in which case `check` reports it as an
