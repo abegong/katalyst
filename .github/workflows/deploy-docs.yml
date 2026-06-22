@@ -1,9 +1,13 @@
 name: deploy-docs
 
-# Publishes the Hugo docs site to GitHub Pages on every push to main.
-# Pages must be configured with build_type=workflow (Settings > Pages >
-# Source: GitHub Actions). The existing ci.yml `docs` job still validates
-# the build on pull requests; this workflow only deploys from main.
+# Publishes the Hugo docs site to the `gh-pages` branch on every push to main.
+# Pages must be configured with Source: "Deploy from a branch" -> gh-pages /
+# (root) (Settings > Pages). PR previews (see preview-docs.yml) deploy into the
+# pr-preview/ subdirectory of the same branch, so the main deploy excludes that
+# directory when cleaning to avoid wiping live previews.
+#
+# The ci.yml `docs` job still validates the build on pull requests; this
+# workflow only deploys from main.
 
 on:
   push:
@@ -11,17 +15,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 # Allow one concurrent deployment; don't cancel an in-progress publish.
 concurrency:
-  group: pages
+  group: deploy-docs
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,19 +35,14 @@ jobs:
         with:
           hugo-version: '0.163.3'
           extended: true
-      - uses: actions/configure-pages@v5
       - name: Build docs
         run: make docs-build   # outputs the minified site to docs/public
-      - uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: docs/public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          folder: docs/public
+          branch: gh-pages
+          # Wipe stale files on each deploy, but keep the PR previews that
+          # preview-docs.yml publishes under pr-preview/.
+          clean: true
+          clean-exclude: pr-preview/
