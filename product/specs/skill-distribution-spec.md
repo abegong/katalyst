@@ -1,12 +1,12 @@
 # Skill distribution
 
 > **Status: planning.** A family of user-facing katalyst skills across the
-> content lifecycle — **overview** (orientation/router), **catalog**, **define**
-> (two cross-referencing skills, `identify-collections` and `define-schemas`),
-> and a **deploy** cluster (`deploy` plus `deploy-precommit-hook` and
-> `deploy-cli-gating`, setting up automatic enforcement) — committed under
+> content lifecycle — **katalyst-overview** (orientation/router), **katalyst-catalog**, **define**
+> (two cross-referencing skills, `katalyst-identify-collections` and `katalyst-define-schemas`),
+> and a **katalyst-deploy** cluster (`katalyst-deploy` plus `katalyst-deploy-precommit-hook` and
+> `katalyst-deploy-cli-gating`, setting up automatic enforcement) — committed under
 > `skills/` and versioned with the CLI. Two Reshape-stage placeholders
-> (`migrate-schema`, `migrate-storage`) are committed as stubs but excluded from
+> (`katalyst-migrate-schema`, `katalyst-migrate-storage`) are committed as stubs but excluded from
 > release until they have content. In scope: package each shippable skill as a
 > `.skill` and attach it to GitHub Releases alongside cross-platform binaries,
 > which the skills' shared bootstrap fetches at install. `make skills` packages
@@ -35,7 +35,7 @@ download). Out of scope:
 
 - **The user's deployment cycle** — how an adopter wires katalyst into their
   environment (a pre-commit hook, a gate on directory access). That is skill
-  *content* — what the **deploy** cluster teaches — authored with those skills.
+  *content* — what the **katalyst-deploy** cluster teaches — authored with those skills.
 - **Channel 2, marketplace plugins** — recorded below as the future direction,
   but not built here.
 - **Skill ↔ CLI version coupling** — the bootstrap tracks the latest Release;
@@ -90,34 +90,46 @@ that spans them:
 
 | Skill | Lifecycle stage | What it teaches the agent to do |
 |---|---|---|
-| **overview** | Orientation (all) | What katalyst is, its model and vocabulary (collections, items, schemas, checks), and which skill to reach for. The front door and router; does no task work itself. |
-| **catalog** | Catalog | Take stock of existing content in a specific knowledge base, map the main concepts, get oriented. |
-| **identify-collections** | Define (1 of 2) | Identify the collections — the object types the knowledge base has repeatable instances of. Points to **define-schemas** as the next step. |
-| **define-schemas** | Define (2 of 2) | Define each collection's schema — the properties and invariants of its items. Points back to **identify-collections** as its prerequisite. |
-| **deploy** | Enforce | Set up automatic enforcement *once*. Knows **both** mechanisms, helps choose, and routes to the two specific skills below. |
-| **deploy-precommit-hook** | Enforce | Install a pre-commit hook that runs `katalyst check`, so violations are caught at commit time. |
-| **deploy-cli-gating** | Enforce | Gate write access to the content directory through the CLI, so writes are validated as they happen. |
-| **migrate-schema** | Reshape | *Placeholder — no content yet.* Migrate content when a collection's schema changes. |
-| **migrate-storage** | Reshape | *Placeholder — no content yet.* Migrate when the storage layer changes. |
+| **katalyst-overview** | Orientation (all) | What katalyst is, its model and vocabulary (collections, items, schemas, checks), and which skill to reach for. The front door and router; does no task work itself. |
+| **katalyst-catalog** | Catalog | Take stock of existing content in a specific knowledge base, map the main concepts, get oriented. |
+| **katalyst-identify-collections** | Define (1 of 2) | Identify the collections — the object types the knowledge base has repeatable instances of. Points to **katalyst-define-schemas** as the next step. |
+| **katalyst-define-schemas** | Define (2 of 2) | Define each collection's schema — the properties and invariants of its items. Points back to **katalyst-identify-collections** as its prerequisite. |
+| **katalyst-deploy** | Enforce | Set up automatic enforcement *once*. Knows **both** mechanisms, helps choose, and routes to the two specific skills below. |
+| **katalyst-deploy-precommit-hook** | Enforce | Install a pre-commit hook that runs `katalyst check`, so violations are caught at commit time. |
+| **katalyst-deploy-cli-gating** | Enforce | Gate write access to the content directory through the CLI, so writes are validated as they happen. |
+| **katalyst-migrate-schema** | Reshape | *Placeholder — no content yet.* Migrate content when a collection's schema changes. |
+| **katalyst-migrate-storage** | Reshape | *Placeholder — no content yet.* Migrate when the storage layer changes. |
 
 Each is a separate job with a different agent posture, so each is a separate
 skill — independently discoverable and installable. The set is additive:
 packaging and the release workflow take whatever shippable skills exist under
 `skills/`, so stages can land one at a time without reworking the pipeline.
 
-The define stage is **two discrete skills**, not one: `identify-collections`
-(name the object types) precedes `define-schemas` (formalize each type's
-fields and invariants). They **cross-reference** each other — `identify-collections`
-points forward, `define-schemas` points back — so the two-step flow is explicit
+**Naming convention: every skill is `katalyst-`-prefixed.** Channel 1 installs
+each `.skill` individually into one flat namespace in the client, with no
+enclosing folder or plugin to group them — so generic names (`overview`,
+`catalog`, `deploy`) would collide with unrelated skills and give the agent's
+selection a weaker signal. A uniform prefix disambiguates, clusters the family
+in any sorted list, matches the "use **katalyst**" phrasing, and yields clear
+artifact names (`katalyst-deploy.skill`). The prefix is the shipped identity:
+it is the `name` in each `SKILL.md`, the `.skill` artifact name, **and** the
+directory under `skills/`, kept 1:1 so there is no dir→name mapping to drift.
+(Chosen over a `-with-katalyst` suffix, which would scatter the skills under
+their action letter instead of grouping them.)
+
+The define stage is **two discrete skills**, not one: `katalyst-identify-collections`
+(name the object types) precedes `katalyst-define-schemas` (formalize each type's
+fields and invariants). They **cross-reference** each other — `katalyst-identify-collections`
+points forward, `katalyst-define-schemas` points back — so the two-step flow is explicit
 without merging two jobs an agent invokes at different times into one skill.
 
-### Orientation: the `overview` skill
+### Orientation: the `katalyst-overview` skill
 
-`overview` is the family's front door. It carries katalyst's mental model and
+`katalyst-overview` is the family's front door. It carries katalyst's mental model and
 vocabulary — collections, items, schemas, checks, the lifecycle — and routes an
 agent to the right task skill for the goal at hand. It does no task work itself,
-which keeps it distinct from `catalog`: that one takes stock of a *specific*
-knowledge base, while `overview` explains katalyst-the-tool independent of any
+which keeps it distinct from `katalyst-catalog`: that one takes stock of a *specific*
+knowledge base, while `katalyst-overview` explains katalyst-the-tool independent of any
 repo. Broadly triggered and a candidate to install by default, it is how an
 agent learns katalyst exists and which skill to load — the same "don't make the
 agent guess" concern the deploy cluster addresses, met at the discovery layer.
@@ -126,10 +138,10 @@ agent guess" concern the deploy cluster addresses, met at the discovery layer.
 
 The Enforce stage is a **cluster**, not a runbook the agent re-runs on every
 write. Relying on an agent to *choose* to run `check`/`fix` each time is fragile
-— the guardrail only holds when it is structural. `deploy` is the umbrella
+— the guardrail only holds when it is structural. `katalyst-deploy` is the umbrella
 skill: it knows **both** enforcement mechanisms, helps pick between them, and
-routes to the specific skill. `deploy-precommit-hook` installs a pre-commit hook
-that runs `katalyst check`; `deploy-cli-gating` gates write access to the
+routes to the specific skill. `katalyst-deploy-precommit-hook` installs a pre-commit hook
+that runs `katalyst check`; `katalyst-deploy-cli-gating` gates write access to the
 content directory through the CLI. Either way enforcement is set up once and
 then runs automatically, no matter which agent — or human — does the writing;
 the day-to-day loop needs no skill of its own. The three cross-reference each
@@ -139,8 +151,8 @@ the skills' *content*, out of scope per [Scope](#scope).)
 ### Reshape: placeholders
 
 The Reshape stage is two **placeholder** skills with no content yet:
-`migrate-schema` (content migration when a collection's schema changes) and
-`migrate-storage` (when the storage layer changes). They replace the single
+`katalyst-migrate-schema` (content migration when a collection's schema changes) and
+`katalyst-migrate-storage` (when the storage layer changes). They replace the single
 `reshape` skill from the earlier draft. Committed to reserve the names and
 capture intent, they are marked `status: placeholder` in their front matter and
 **excluded from packaging/release** until they carry real content — so the
@@ -152,30 +164,30 @@ Each skill lives at `skills/{name}/`, committed and versioned with the CLI:
 
 ```
 skills/
-  overview/
+  katalyst-overview/
     SKILL.md          # at the directory root — the .skill entrypoint
     references/        # supporting reference material the skill loads
-  catalog/
+  katalyst-catalog/
     SKILL.md
     references/
-  identify-collections/
+  katalyst-identify-collections/
     SKILL.md
     references/
-  define-schemas/
+  katalyst-define-schemas/
     SKILL.md
     references/
-  deploy/
+  katalyst-deploy/
     SKILL.md
     references/
-  deploy-precommit-hook/
+  katalyst-deploy-precommit-hook/
     SKILL.md
     references/
-  deploy-cli-gating/
+  katalyst-deploy-cli-gating/
     SKILL.md
     references/
-  migrate-schema/        # placeholder (status: placeholder) — not shipped yet
+  katalyst-migrate-schema/        # placeholder (status: placeholder) — not shipped yet
     SKILL.md
-  migrate-storage/       # placeholder — not shipped yet
+  katalyst-migrate-storage/       # placeholder — not shipped yet
     SKILL.md
   bootstrap.…          # shared CLI provisioning, reused by every shipped skill
 ```
@@ -199,8 +211,8 @@ the same tasks, but neither is generated from or depends on the other.
 ### Channel 1 (now): `.skill` on GitHub Releases
 
 A `.skill` is a zip of a skill directory with `SKILL.md` at its root. `make
-skills` produces one `.skill` per skill under `skills/` (e.g. `deploy.skill`,
-`catalog.skill`); the release workflow attaches them to the GitHub Release for
+skills` produces one `.skill` per skill under `skills/` (e.g. `katalyst-deploy.skill`,
+`katalyst-catalog.skill`); the release workflow attaches them to the GitHub Release for
 each tag, beside the CLI binaries. Users download the skill(s) they want from
 the releases page and install through the client's **Settings → Capabilities →
 "Save skill"**. No clone, no Git.
@@ -221,9 +233,9 @@ A `skills` target in the `Makefile` zips each `skills/{name}/` to
 `{name}.skill` with `SKILL.md` at the archive root (not nested under a
 `{name}/` prefix — the client expects `SKILL.md` at the top). It **skips skills
 marked `status: placeholder`** in their `SKILL.md` front matter, so stubs like
-`migrate-schema` and `migrate-storage` are never shipped. It is the single
+`katalyst-migrate-schema` and `katalyst-migrate-storage` are never shipped. It is the single
 packaging entry point, reused by the release job so local and CI packaging are
-identical. A `make skill SKILL=deploy` form packages one. `make clean` removes
+identical. A `make skill SKILL=katalyst-deploy` form packages one. `make clean` removes
 the `.skill` artifacts alongside `bin/`.
 
 ### Release cycle
@@ -269,14 +281,17 @@ _None — resolved or deferred._ For the record:
 - **Fetch, don't embed.** The shared bootstrap fetches the CLI binary from the
   latest GitHub Release (falling back to `go install`); binaries are not bundled
   in the `.skill`.
-- **`define` is two skills.** `identify-collections` and `define-schemas` are
+- **`define` is two skills.** `katalyst-identify-collections` and `katalyst-define-schemas` are
   discrete, cross-referencing skills rather than one merged `define` skill.
-- **Enforce is a cluster.** `deploy` (umbrella, knows both mechanisms) plus
-  `deploy-precommit-hook` and `deploy-cli-gating` (the specific setups), set up
+- **Enforce is a cluster.** `katalyst-deploy` (umbrella, knows both mechanisms) plus
+  `katalyst-deploy-precommit-hook` and `katalyst-deploy-cli-gating` (the specific setups), set up
   once rather than a loop the agent re-runs each write.
-- **`overview` orientation skill added.** A broadly-triggered front door that
+- **`katalyst-overview` orientation skill added.** A broadly-triggered front door that
   carries katalyst's model/vocabulary and routes to the task skills.
-- **Reshape is two placeholders.** `migrate-schema` and `migrate-storage`
+- **`katalyst-` prefix on every skill.** Uniform prefix (name + artifact +
+  directory) to disambiguate and group the family in a flat skill namespace;
+  chosen over a `-with-katalyst` suffix.
+- **Reshape is two placeholders.** `katalyst-migrate-schema` and `katalyst-migrate-storage`
   replace the single `reshape` skill; committed as stubs (`status: placeholder`)
   and excluded from release until they have content.
 - **Channel 1 only.** The `.skill`-on-Releases download is in scope; marketplace
@@ -288,7 +303,7 @@ _None — resolved or deferred._ For the record:
 
 - **One mega-skill for the whole lifecycle.** Buries most of the lifecycle
   behind whichever job the `SKILL.md` leads with, and forces users to install
-  catalog/define machinery just to set up enforcement. A per-stage family
+  katalyst-catalog/define machinery just to set up enforcement. A per-stage family
   matches the "tools and skills" framing in Why Katalyst and lets users install
   only what they need.
 - **Keep the skills outside the repo (own repo or gists).** Decouples each skill

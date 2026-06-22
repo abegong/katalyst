@@ -17,10 +17,10 @@ skill *content* is deliberately the last phase: it is the largest writing
 effort and the least coupled to the build contract, and it is the part most
 likely to keep changing after this branch.
 
-The initial **shipping** family is seven skills — `overview`, `catalog`,
-`identify-collections`, `define-schemas`, `deploy`, `deploy-precommit-hook`,
-`deploy-cli-gating`. Two Reshape-stage **placeholders**, `migrate-schema` and
-`migrate-storage`, are committed as stubs (`status: placeholder`) to reserve the
+The initial **shipping** family is seven skills — `katalyst-overview`, `katalyst-catalog`,
+`katalyst-identify-collections`, `katalyst-define-schemas`, `katalyst-deploy`, `katalyst-deploy-precommit-hook`,
+`katalyst-deploy-cli-gating`. Two Reshape-stage **placeholders**, `katalyst-migrate-schema` and
+`katalyst-migrate-storage`, are committed as stubs (`status: placeholder`) to reserve the
 names but are excluded from packaging until they have content.
 
 The build contract is the spec's **test checklist**; each phase below lands the
@@ -38,17 +38,19 @@ tracks the latest Release.
 ### Phase 1 — Scaffold `skills/` and the pilot cluster
 
 1. Create the top-level `skills/` directory with the seven shipping skill
-   folders — `overview/`, `catalog/`, `identify-collections/`, `define-schemas/`,
-   `deploy/`, `deploy-precommit-hook/`, `deploy-cli-gating/` — each with a
+   folders — `katalyst-overview/`, `katalyst-catalog/`, `katalyst-identify-collections/`, `katalyst-define-schemas/`,
+   `katalyst-deploy/`, `katalyst-deploy-precommit-hook/`, `katalyst-deploy-cli-gating/` — each with a
    `SKILL.md` at its root and a `references/` dir. Add the two Reshape
-   placeholders `migrate-schema/` and `migrate-storage/` with a `SKILL.md`
+   placeholders `katalyst-migrate-schema/` and `katalyst-migrate-storage/` with a `SKILL.md`
    carrying `status: placeholder` in its front matter and no real content.
+   Every `SKILL.md` `name` matches its `katalyst-`-prefixed directory 1:1 (per
+   the spec's naming convention), so the artifact name follows automatically.
 2. Author the **deploy cluster** for real as the pilot that exercises the whole
-   pipeline: `deploy` (umbrella — knows both mechanisms, routes to the two
-   specifics) plus `deploy-precommit-hook` (pre-commit hook running `katalyst
-   check`) and `deploy-cli-gating` (CLI-gated directory access), cross-referencing
-   each other. Leave `overview`, `catalog`, `identify-collections`, and
-   `define-schemas` as front-matter-only stubs to be filled in Phase 6.
+   pipeline: `katalyst-deploy` (umbrella — knows both mechanisms, routes to the two
+   specifics) plus `katalyst-deploy-precommit-hook` (pre-commit hook running `katalyst
+   check`) and `katalyst-deploy-cli-gating` (CLI-gated directory access), cross-referencing
+   each other. Leave `katalyst-overview`, `katalyst-catalog`, `katalyst-identify-collections`, and
+   `katalyst-define-schemas` as front-matter-only stubs to be filled in Phase 6.
 3. Add the shared `bootstrap` at `skills/bootstrap.…` as a placeholder that
    Phase 3 fleshes out.
 4. Confirm placement is distinct from `.cursor/skills/` (contributor tooling)
@@ -63,7 +65,7 @@ tracks the latest Release.
    Phase 3 whether the bootstrap is copied into each skill dir at package time
    or committed into each).
 2. Make `make skills` **skip** any skill whose `SKILL.md` front matter is
-   `status: placeholder`, so `migrate-schema`/`migrate-storage` are not shipped.
+   `status: placeholder`, so `katalyst-migrate-schema`/`katalyst-migrate-storage` are not shipped.
    (`make skill SKILL=<name>` on a placeholder should error or no-op clearly.)
 3. Add `make skill SKILL=<name>` to package a single skill.
 4. Extend `clean` to remove the `*.skill` artifacts alongside `bin/`.
@@ -108,14 +110,14 @@ tracks the latest Release.
 
 ### Phase 6 — Author the remaining skills
 
-1. Fill `overview/`, `catalog/`, `identify-collections/`, and `define-schemas/`
+1. Fill `katalyst-overview/`, `katalyst-catalog/`, `katalyst-identify-collections/`, and `katalyst-define-schemas/`
    `SKILL.md`s with real content, self-contained (no references to the
    `docs/content/how-to/` guides). (The deploy cluster was authored in Phase 1;
-   `migrate-schema`/`migrate-storage` stay placeholders.)
-2. Write `overview` as the orientation/router: katalyst's model and vocabulary,
-   plus pointers to each task skill. Keep it task-free (distinct from `catalog`).
-3. Wire the **cross-references** between `identify-collections` (points forward
-   to `define-schemas`) and `define-schemas` (points back as prerequisite).
+   `katalyst-migrate-schema`/`katalyst-migrate-storage` stay placeholders.)
+2. Write `katalyst-overview` as the orientation/router: katalyst's model and vocabulary,
+   plus pointers to each task skill. Keep it task-free (distinct from `katalyst-catalog`).
+3. Wire the **cross-references** between `katalyst-identify-collections` (points forward
+   to `katalyst-define-schemas`) and `katalyst-define-schemas` (points back as prerequisite).
 4. Keep each skill's `references/` content scoped to what the agent needs at
    runtime.
 
