@@ -11,14 +11,17 @@ Branch: `claude/practical-mayer-uuo45q` (PR
 Build the distribution machinery first, then fill the skills into it. The
 pipeline (packaging → release upload → install via bootstrap) is the part with
 real failure modes — archive layout, asset upload, binary fetch — so it gets
-stood up and verified against a minimal skill before the rest of the family is
-authored in content. The skill *content* is deliberately the last phase: it is
-the largest writing effort and the least coupled to the build contract, and it
-is the part most likely to keep changing after this branch.
+stood up and verified against the **deploy cluster** (the most concrete,
+highest-value skills) before the rest of the family is authored in content. The
+skill *content* is deliberately the last phase: it is the largest writing
+effort and the least coupled to the build contract, and it is the part most
+likely to keep changing after this branch.
 
-The initial family is four skills — `catalog`, `identify-collections`,
-`define-schemas`, and `deploy`. `reshape` is deferred per the spec and is not
-scaffolded here; the additive pipeline takes it later with no rework.
+The initial **shipping** family is seven skills — `overview`, `catalog`,
+`identify-collections`, `define-schemas`, `deploy`, `deploy-precommit-hook`,
+`deploy-cli-gating`. Two Reshape-stage **placeholders**, `migrate-schema` and
+`migrate-storage`, are committed as stubs (`status: placeholder`) to reserve the
+names but are excluded from packaging until they have content.
 
 The build contract is the spec's **test checklist**; each phase below lands the
 piece that makes one or more of those boxes pass. Per `AGENTS.md` (behavior
@@ -32,16 +35,20 @@ tracks the latest Release.
 
 ## Phases
 
-### Phase 1 — Scaffold `skills/` and one real skill
+### Phase 1 — Scaffold `skills/` and the pilot cluster
 
-1. Create the top-level `skills/` directory with the four skill folders:
-   `catalog/`, `identify-collections/`, `define-schemas/`, `deploy/`, each with
-   a `SKILL.md` at its root and a `references/` dir. (No `reshape/` — deferred.)
-2. Write **`deploy/SKILL.md`** for real — set up automatic enforcement once
-   (install a pre-commit hook running `katalyst check`, or gate directory access
-   through the CLI), *not* a loop the agent re-runs each write — as the pilot
-   skill that exercises the whole pipeline; leave the other three as
-   front-matter-only stubs to be filled in Phase 6.
+1. Create the top-level `skills/` directory with the seven shipping skill
+   folders — `overview/`, `catalog/`, `identify-collections/`, `define-schemas/`,
+   `deploy/`, `deploy-precommit-hook/`, `deploy-cli-gating/` — each with a
+   `SKILL.md` at its root and a `references/` dir. Add the two Reshape
+   placeholders `migrate-schema/` and `migrate-storage/` with a `SKILL.md`
+   carrying `status: placeholder` in its front matter and no real content.
+2. Author the **deploy cluster** for real as the pilot that exercises the whole
+   pipeline: `deploy` (umbrella — knows both mechanisms, routes to the two
+   specifics) plus `deploy-precommit-hook` (pre-commit hook running `katalyst
+   check`) and `deploy-cli-gating` (CLI-gated directory access), cross-referencing
+   each other. Leave `overview`, `catalog`, `identify-collections`, and
+   `define-schemas` as front-matter-only stubs to be filled in Phase 6.
 3. Add the shared `bootstrap` at `skills/bootstrap.…` as a placeholder that
    Phase 3 fleshes out.
 4. Confirm placement is distinct from `.cursor/skills/` (contributor tooling)
@@ -55,13 +62,16 @@ tracks the latest Release.
    sits at the top level — package it *inside* each `.skill` instead (decide in
    Phase 3 whether the bootstrap is copied into each skill dir at package time
    or committed into each).
-2. Add `make skill SKILL=<name>` to package a single skill.
-3. Extend `clean` to remove the `*.skill` artifacts alongside `bin/`.
-4. Add the new targets to `.PHONY` and document them briefly in the Makefile
+2. Make `make skills` **skip** any skill whose `SKILL.md` front matter is
+   `status: placeholder`, so `migrate-schema`/`migrate-storage` are not shipped.
+   (`make skill SKILL=<name>` on a placeholder should error or no-op clearly.)
+3. Add `make skill SKILL=<name>` to package a single skill.
+4. Extend `clean` to remove the `*.skill` artifacts alongside `bin/`.
+5. Add the new targets to `.PHONY` and document them briefly in the Makefile
    and `README.md`.
-5. Add a small check (script or test) asserting a produced `.skill` unzips with
-   `SKILL.md` at the root — this is the failing assertion that Phase 2 turns
-   green.
+6. Add a small check (script or test) asserting a produced `.skill` unzips with
+   `SKILL.md` at the root, and that placeholder skills produce no artifact —
+   this is the failing assertion that Phase 2 turns green.
 
 ### Phase 3 — Shared bootstrap (fetch the CLI)
 
@@ -98,12 +108,15 @@ tracks the latest Release.
 
 ### Phase 6 — Author the remaining skills
 
-1. Fill `catalog/`, `identify-collections/`, and `define-schemas/`
+1. Fill `overview/`, `catalog/`, `identify-collections/`, and `define-schemas/`
    `SKILL.md`s with real content, self-contained (no references to the
-   `docs/content/how-to/` guides). (`deploy/` was authored in Phase 1.)
-2. Wire the **cross-references** between `identify-collections` (points forward
+   `docs/content/how-to/` guides). (The deploy cluster was authored in Phase 1;
+   `migrate-schema`/`migrate-storage` stay placeholders.)
+2. Write `overview` as the orientation/router: katalyst's model and vocabulary,
+   plus pointers to each task skill. Keep it task-free (distinct from `catalog`).
+3. Wire the **cross-references** between `identify-collections` (points forward
    to `define-schemas`) and `define-schemas` (points back as prerequisite).
-3. Keep each skill's `references/` content scoped to what the agent needs at
+4. Keep each skill's `references/` content scoped to what the agent needs at
    runtime.
 
 ### Phase 7 — Verify and graduate
@@ -122,8 +135,9 @@ tracks the latest Release.
 
 Mirrors the spec's test checklist; these assertions prove the change.
 
-- [ ] `make skills` produces one `{name}.skill` per directory under `skills/`,
-      each unzipping with `SKILL.md` at the archive root.
+- [ ] `make skills` produces one `{name}.skill` per **shippable** directory
+      under `skills/`, each unzipping with `SKILL.md` at the archive root, and
+      emits no artifact for `status: placeholder` skills.
 - [ ] `make skill SKILL=<name>` packages a single skill.
 - [ ] `make clean` removes the `.skill` artifacts.
 - [ ] The local-dev target symlinks each `skills/{name}/` into `.claude/skills/`;
