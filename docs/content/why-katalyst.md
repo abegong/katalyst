@@ -18,13 +18,12 @@ Katalyst gives you and your agent tools to solve problems like these:
 
 If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
 
-{{% hint info %}}
-**New to Katalyst?**
-
-[Get started »]({{< relref "getting-started.md" >}}) — install
-the CLI, scaffold a `.katalyst/` project, and run your first checks in a few
-minutes.
-{{% /hint %}}
+> [!NOTE]
+> **New to Katalyst?**
+>
+> [Get started »]({{< relref "getting-started.md" >}}) — install
+> the CLI, scaffold a `.katalyst/` project, and run your first checks in a few
+> minutes.
 
 ## Key features
 
