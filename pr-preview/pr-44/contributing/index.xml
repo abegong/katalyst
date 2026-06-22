@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Contributing on Katalyst Documentation</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/</link><description>Recent content in Contributing on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/index.xml" rel="self" type="application/rss+xml"/><item><title>How we document</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/how-we-document/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/how-we-document/</guid><description>&lt;h1 id="how-we-document"&gt;How we document&lt;a class="anchor" href="#how-we-document"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="goals"&gt;Goals&lt;a class="anchor" href="#goals"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Users and contributors both find what they need in one published tree.&lt;/li&gt;
+&lt;li&gt;One source of truth per topic — no drift between duplicate files.&lt;/li&gt;
+&lt;li&gt;Reference that is correct by construction (generated from code).&lt;/li&gt;
+&lt;li&gt;Docs live close to what they describe.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="where-each-kind-of-doc-lives"&gt;Where each kind of doc lives&lt;a class="anchor" href="#where-each-kind-of-doc-lives"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Katalyst keeps documentation in a few homes.&lt;/p&gt;
+&lt;h3 id="docs--the-published-site-hugo"&gt;&lt;code&gt;docs/&lt;/code&gt; — the published site (Hugo)&lt;a class="anchor" href="#docs--the-published-site-hugo"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;The durable home for everything a user needs, organized by
+&lt;a href="https://diataxis.fr/"&gt;Diátaxis&lt;/a&gt; plus a flat &lt;code&gt;contributing/&lt;/code&gt; area:&lt;/p&gt;</description></item><item><title>How we plan</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/how-we-plan/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/contributing/how-we-plan/</guid><description>&lt;h1 id="how-we-plan"&gt;How we plan&lt;a class="anchor" href="#how-we-plan"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;How we use specs and plans to design, build, and document changes.&lt;/p&gt;
+&lt;h2 id="two-doc-types"&gt;Two doc types&lt;a class="anchor" href="#two-doc-types"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Spec&lt;/strong&gt; — &lt;em&gt;what&lt;/em&gt; and &lt;em&gt;why&lt;/em&gt;: the problem, the design, domain-model and
+architecture impact, open questions. A spec is a design doc in
+&lt;code&gt;product/specs/{slug}-spec.md&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Plan&lt;/strong&gt; — &lt;em&gt;how&lt;/em&gt;: the step-by-step implementation, broken into phases, that
+references its spec (&lt;code&gt;{slug}-plan.md&lt;/code&gt;). A spec can exist without a plan; a
+plan always references a spec.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For small, well-understood changes, skip the ceremony: a GitHub issue
+capturing the decision is often enough. Don&amp;rsquo;t write a full spec when an issue
+will do.&lt;/p&gt;</description></item></channel></rss>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Deep dives on Katalyst Documentation</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/</link><description>Recent content in Deep dives on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/index.xml" rel="self" type="application/rss+xml"/><item><title>Vision and scope</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/vision/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/vision/</guid><description>&lt;h1 id="vision-and-scope"&gt;Vision and scope&lt;a class="anchor" href="#vision-and-scope"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Traditional data management often forces teams into binary choices:
+structured or unstructured, rigid or chaotic. Katalyst is an experimental
+framework aimed at enabling fast, low-risk evolution through progressive
+typing in the storage layer.&lt;/p&gt;
+&lt;h2 id="database-management-is-risky-and-rigid"&gt;Database management is risky and rigid&lt;a class="anchor" href="#database-management-is-risky-and-rigid"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Backend architecture and database changes are frequently high-risk operations.
+Teams therefore wrap data systems in heavy governance for access control,
+schema changes, and migrations. Those controls are necessary, but the cost can
+make change rare. Rare change creates rigidity.&lt;/p&gt;</description></item><item><title>Core concepts</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/core-concepts/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/core-concepts/</guid><description>&lt;h1 id="core-concepts"&gt;Core concepts&lt;a class="anchor" href="#core-concepts"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;blockquote class='book-hint '&gt;
+&lt;p&gt;&lt;strong&gt;Status: work in progress.&lt;/strong&gt; This is a deliberately abstract sketch,
+captured as concepts are introduced. It is not about &lt;code&gt;katalyst&lt;/code&gt;
+specifically — katalyst is one instantiation among many. Expect breaking
+revisions until the concepts settle.&lt;/p&gt;
+&lt;/blockquote&gt;&lt;h2 id="goal"&gt;Goal&lt;a class="anchor" href="#goal"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;We tend to think about data in one of two modes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Structured&lt;/strong&gt; — tables with column definitions, schemas, types,
+queries. Databases, warehouses, document stores.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Unstructured&lt;/strong&gt; — files, blobs, free-form text. Filesystems, object
+stores, &amp;ldquo;data lakes.&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Tools, vocabulary, and mental models usually pick a side. A SQL DBA
+and a markdown-vault note-taker have almost no shared language for
+their work, even though the operations they want to perform —
+&lt;em&gt;describe the shape of this data, find data that matches, change it
+safely, check that constraints hold&lt;/em&gt; — are essentially the same.&lt;/p&gt;</description></item><item><title>Progressive Operations</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;&lt;em&gt;How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn&amp;rsquo;t.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary — each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="tier-1--filesystem"&gt;Tier 1 — Filesystem&lt;a class="anchor" href="#tier-1--filesystem"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;</description></item><item><title>Connectors</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/connectors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/connectors/</guid><description>&lt;h1 id="connectors"&gt;Connectors&lt;a class="anchor" href="#connectors"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;blockquote class='book-hint '&gt;
+&lt;p&gt;&lt;strong&gt;Status: future — not shipped.&lt;/strong&gt; Captured now because it shapes the seams
+the current code leaves open. Katalyst today ships a single &lt;em&gt;trivial&lt;/em&gt;
+connector (one flat directory, &lt;code&gt;*.md&lt;/code&gt; files, filename stem = item id);
+everything here is what that abstraction grows into.&lt;/p&gt;
+&lt;/blockquote&gt;&lt;h2 id="what-a-connector-is"&gt;What a connector is&lt;a class="anchor" href="#what-a-connector-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;A &lt;strong&gt;connector&lt;/strong&gt; is the two-way mapping between a backend store and the
+Katalyst domain model. It answers: &lt;em&gt;what collections and items does this
+store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-44/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
+apart. Knowing which grammar a command belongs to tells you how to invoke it,
+what its selector means, and — when you add a command — where it goes.&lt;/p&gt;
+&lt;h2 id="two-families"&gt;Two families&lt;a class="anchor" href="#two-families"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;A top-level command is exactly one of two kinds.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Blessed verbs&lt;/strong&gt; operate &lt;em&gt;over&lt;/em&gt; content. The verb names a cross-cutting
+operation; a &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-44/reference/commands/"&gt;selector&lt;/a&gt; picks the
+targets at any depth, and several may be passed at once:&lt;/p&gt;</description></item></channel></rss>
