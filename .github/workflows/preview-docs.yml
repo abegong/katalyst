@@ -1,56 +1,59 @@
 name: preview-docs
 
-# Deploys a per-PR preview of the Hugo docs site into pr-preview/pr-<N>/ on the
-# gh-pages branch and comments the link on the PR. The preview is removed when
-# the PR is closed. Requires Pages Source: "Deploy from a branch" -> gh-pages /
-# (root), the same branch deploy-docs.yml publishes the live site to.
+# Builds the Hugo docs for each PR and deploys them to Netlify as a per-PR
+# "deploy-preview-<N>" alias, then posts the preview URL on the PR.
 #
-# Note: previews are only deployed for PRs from branches in this repository.
-# Pull requests from forks get a read-only GITHUB_TOKEN, so the deploy/comment
-# steps would fail; the pr-preview action skips them automatically.
+# Production Pages is published separately (Settings > Pages Source: "GitHub
+# Actions"). A GitHub-Actions-sourced Pages site serves a single site and can't
+# host per-PR subpath previews, so previews live on Netlify instead.
+#
+# Requires repo secrets NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID, plus the repo
+# variable NETLIFY_SITE_NAME (the "<name>.netlify.app" subdomain) used to build
+# the preview baseURL. The alias is deterministic, so HUGO_BASEURL is set before
+# the deploy; keep it in sync with the --alias flag below.
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize]
 
 permissions:
-  contents: write       # push the built preview to the gh-pages branch
+  contents: read
   pull-requests: write  # post/update the preview-link comment
 
-# Share one concurrency group with deploy-docs.yml so docs pushes to gh-pages
-# are fully serialized — a main deploy and a PR-preview deploy never run at the
-# same time, which otherwise let Pages publish a snapshot missing the preview.
-# cancel-in-progress must stay false here: a global group means cancelling
-# would abort an in-flight main deploy, not just a stale preview for this PR.
+# One preview deploy per PR; newer pushes supersede in-flight builds.
 concurrency:
-  group: gh-pages-deploy
-  cancel-in-progress: false
+  group: preview-docs-${{ github.event.number }}
+  cancel-in-progress: true
 
 jobs:
   preview:
     runs-on: ubuntu-latest
+    # Skip forks: a pull_request from a fork can't read the Netlify secrets.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-        if: github.event.action != 'closed'
         with:
           go-version: '1.25'   # match the go directive in go.mod
           cache: true
       - uses: peaceiris/actions-hugo@v3
-        if: github.event.action != 'closed'
         with:
           hugo-version: '0.163.3'
           extended: true
-      - name: Build docs with preview baseURL
-        if: github.event.action != 'closed'
-        # Hugo reads HUGO_BASEURL as the baseURL config override, so links in
-        # the preview resolve under the pr-preview/pr-<N>/ subpath.
+      - name: Build docs with the Netlify preview baseURL
         env:
-          HUGO_BASEURL: https://abegong.github.io/katalyst/pr-preview/pr-${{ github.event.number }}/
+          HUGO_BASEURL: https://deploy-preview-${{ github.event.number }}--${{ vars.NETLIFY_SITE_NAME }}.netlify.app/
         run: make docs-build   # outputs the minified site to docs/public
-      - name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
+      - name: Deploy preview to Netlify
+        uses: nwtgck/actions-netlify@v3
         with:
-          source-dir: docs/public
-          preview-branch: gh-pages
-          umbrella-dir: pr-preview
+          publish-dir: docs/public
+          alias: deploy-preview-${{ github.event.number }}
+          deploy-message: "PR #${{ github.event.number }} (${{ github.sha }})"
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          # Alias deploys are previews, never the production deploy.
+          production-deploy: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
