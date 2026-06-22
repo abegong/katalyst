@@ -2,16 +2,19 @@ package frontmatter
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"sort"
 
+	toml "github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )
 
 // Format normalizes a markdown document's frontmatter:
 //
+//   - the source format is preserved (TOML stays TOML, JSON stays JSON)
 //   - top-level keys sorted alphabetically
-//   - yaml.v3 default block style
+//   - each format's default block/indent style
 //   - exactly one trailing newline on the whole file
 //   - body bytes preserved verbatim
 //
@@ -26,23 +29,22 @@ func Format(src []byte) ([]byte, error) {
 		return src, nil
 	}
 
-	yamlBytes, err := marshalSorted(doc.Meta)
+	open, block, close, err := marshalBlock(doc.Format, doc.Meta)
 	if err != nil {
 		return nil, fmt.Errorf("format frontmatter: %w", err)
 	}
 
 	var out bytes.Buffer
-	out.WriteString("---\n")
-	out.Write(yamlBytes)
-	if !bytes.HasSuffix(yamlBytes, []byte("\n")) {
+	out.WriteString(open)
+	out.Write(block)
+	if !bytes.HasSuffix(block, []byte("\n")) {
 		out.WriteByte('\n')
 	}
-	out.WriteString("---\n")
+	out.WriteString(close)
 
 	// The body returned by Parse starts immediately after the closing
-	// "---\n" terminator. Strip any further leading blank lines (they
-	// were noise) and collapse trailing whitespace into a single
-	// final newline.
+	// fence. Strip any further leading blank lines (they were noise) and
+	// collapse trailing whitespace into a single final newline.
 	body := bytes.TrimLeft(doc.Body, "\n")
 	body = bytes.TrimRight(body, "\n")
 	out.Write(body)
@@ -51,10 +53,37 @@ func Format(src []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// marshalSorted emits a YAML mapping whose top-level keys are in
+// marshalBlock renders meta in the given format and returns the opening
+// fence, the marshaled block (sans fences), and the closing fence.
+func marshalBlock(format Kind, meta map[string]any) (open string, block []byte, close string, err error) {
+	switch format {
+	case KindTOML:
+		b, err := toml.Marshal(meta)
+		if err != nil {
+			return "", nil, "", err
+		}
+		return "+++\n", b, "+++\n", nil
+	case KindJSON:
+		b, err := json.MarshalIndent(meta, "", "  ")
+		if err != nil {
+			return "", nil, "", err
+		}
+		// MarshalIndent emits the braces; they are the JSON frontmatter's
+		// fences, so there is nothing to add around the block.
+		return "", b, "", nil
+	default:
+		b, err := marshalSortedYAML(meta)
+		if err != nil {
+			return "", nil, "", err
+		}
+		return "---\n", b, "---\n", nil
+	}
+}
+
+// marshalSortedYAML emits a YAML mapping whose top-level keys are in
 // alphabetical order. Nested map ordering follows yaml.v3's default
 // (which is insertion order from the input).
-func marshalSorted(m map[string]any) ([]byte, error) {
+func marshalSortedYAML(m map[string]any) ([]byte, error) {
 	if len(m) == 0 {
 		// yaml.v3 marshals an empty map as the literal "{}\n", which
 		// is what we want.

@@ -13,7 +13,7 @@ how each term maps onto today's code is documented in the per-package
 
 | Term | Meaning |
 |---|---|
-| **Frontmatter** | The on-disk YAML block delimited by `---` fences at the top of a markdown file. |
+| **Frontmatter** | The on-disk metadata block at the top of a markdown file, in YAML (`---`), TOML (`+++`), or JSON (`{ … }`). |
 | **Metadata** | The parsed, in-memory structure of the frontmatter (a `map[string]any`). |
 | **Body** | Everything after the closing frontmatter fence. Preserved verbatim except by `fix`. |
 | **Document** | A parsed markdown file: frontmatter metadata + body + a line map. |

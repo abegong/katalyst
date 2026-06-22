@@ -25,8 +25,8 @@ func newCheckCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "check [selector ...]",
 		Short: "Run configured checks against the selected items.",
-		Long: `check parses YAML frontmatter from each selected item and runs the
-checks configured for its collection under .katalyst/collections/.
+		Long: `check parses each selected item's frontmatter (YAML, TOML, or JSON)
+and runs the checks configured for its collection under .katalyst/collections/.
 
 Selectors (see docs/explanation/domain-model.md):
 

@@ -1,39 +1,86 @@
-// Package frontmatter extracts and parses YAML frontmatter from markdown
+// Package frontmatter extracts and parses frontmatter from markdown
 // documents.
 //
-// A frontmatter block is the YAML document enclosed between two "---"
-// fences at the very top of a markdown file:
+// A frontmatter block is the metadata document at the very top of a
+// markdown file. Katalyst recognizes the three formats used by Hugo,
+// Obsidian, and Jekyll, detected by the opening fence:
 //
-//	---
-//	title: Dune
-//	year: 1965
-//	---
-//	# Body starts here
+//	---            +++            {
+//	title: Dune    title = "Dune"   "title": "Dune",
+//	year: 1965     year = 1965      "year": 1965
+//	---            +++            }
+//	# Body         # Body         # Body
+//	(YAML)         (TOML)         (JSON)
 //
-// Only YAML frontmatter is supported today. TOML and JSON frontmatter
-// are planned.
+// The parsed representation is format-agnostic: regardless of the source
+// format, Parse returns a Document whose Meta is a map[string]any, so
+// checks and inspectors never need to know which format a file used. The
+// detected format is recorded in Document.Format so that Format (the
+// formatter) can round-trip a file back into its own syntax rather than
+// rewriting, say, TOML as YAML.
+//
+// Source-line tracking (Document.Lines) is currently full for YAML only;
+// for TOML and JSON the map is empty. Error messages degrade gracefully
+// when a line is unknown. Richer line tracking for the other formats is a
+// planned follow-up.
 package frontmatter
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	toml "github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )
 
 // Sentinel errors. Callers should use errors.Is to identify them rather
 // than relying on string matching.
 var (
-	// ErrUnterminated indicates a file started with a "---" fence but
-	// never had a matching closing fence.
-	ErrUnterminated = errors.New("frontmatter: unterminated block (missing closing '---')")
+	// ErrUnterminated indicates a file started with a frontmatter fence
+	// but never had a matching closing fence.
+	ErrUnterminated = errors.New("frontmatter: unterminated block")
 
 	// ErrInvalidYAML indicates the bytes between the fences were not
 	// valid YAML. The wrapped error contains the underlying yaml.v3
 	// parser message.
 	ErrInvalidYAML = errors.New("frontmatter: invalid YAML")
+
+	// ErrInvalidTOML indicates the bytes between the "+++" fences were
+	// not valid TOML.
+	ErrInvalidTOML = errors.New("frontmatter: invalid TOML")
+
+	// ErrInvalidJSON indicates the bytes between the "{" / "}" fences
+	// were not a valid JSON object.
+	ErrInvalidJSON = errors.New("frontmatter: invalid JSON")
 )
+
+// Kind identifies which frontmatter syntax a document uses. (It is named
+// Kind rather than Format to avoid colliding with the Format function.)
+type Kind int
+
+const (
+	// KindYAML is "---"-fenced YAML. It is also the zero value, used for
+	// documents that have no frontmatter at all (where it is moot).
+	KindYAML Kind = iota
+	// KindTOML is "+++"-fenced TOML.
+	KindTOML
+	// KindJSON is "{" / "}"-delimited JSON.
+	KindJSON
+)
+
+// String returns the lowercase name of the format ("yaml", "toml", "json").
+func (k Kind) String() string {
+	switch k {
+	case KindTOML:
+		return "toml"
+	case KindJSON:
+		return "json"
+	default:
+		return "yaml"
+	}
+}
 
 // Document is the result of parsing a markdown file.
 //
@@ -42,27 +89,36 @@ var (
 //
 // Lines maps JSON-pointer paths into Meta ("/title", "/tags/0", etc.)
 // to their 1-indexed source line numbers in the original file. The
-// opening "---" fence counts as line 1, so the first YAML key is
-// typically at line 2. Lines is empty when HasFrontmatter is false.
+// opening fence counts as line 1, so the first key is typically at line
+// 2. Lines is empty when HasFrontmatter is false, and (today) for TOML
+// and JSON frontmatter.
 type Document struct {
 	HasFrontmatter bool
-	Meta           map[string]any
-	Body           []byte
-	BodyLine       int
-	Lines          map[string]int
-	// Frontmatter is the raw YAML block between the fences (no fences),
-	// for text search; Meta is its parsed form. Nil when HasFrontmatter
-	// is false.
+	// Format records the source syntax so the formatter can preserve it.
+	Format   Kind
+	Meta     map[string]any
+	Body     []byte
+	BodyLine int
+	Lines    map[string]int
+	// Frontmatter is the raw metadata block, for text search; Meta is
+	// its parsed form. For YAML and TOML this is the bytes between the
+	// fences (no fences). For JSON it is the object including its braces,
+	// since the braces are part of the JSON. Nil when HasFrontmatter is
+	// false.
 	Frontmatter []byte
 }
 
-// fence is the literal opener/closer for YAML frontmatter.
-const fence = "---"
+// Fence literals for the line-fenced formats.
+const (
+	fenceYAML = "---"
+	fenceTOML = "+++"
+)
 
 // bom is the UTF-8 byte-order mark, which some editors prepend to files.
 var bom = []byte{0xEF, 0xBB, 0xBF}
 
-// Parse extracts YAML frontmatter from src.
+// Parse extracts frontmatter from src, detecting the format (YAML, TOML,
+// or JSON) from the opening fence.
 //
 // The function never modifies src. It returns a Document whose Body is a
 // sub-slice of src (after BOM stripping); callers that mutate the result
@@ -70,51 +126,132 @@ var bom = []byte{0xEF, 0xBB, 0xBF}
 func Parse(src []byte) (*Document, error) {
 	input := bytes.TrimPrefix(src, bom)
 
-	// Frontmatter only applies if the very first line is exactly the
-	// fence. We require an immediate newline (or end-of-file) after the
-	// fence so a line like "----" or "--- something" doesn't trigger.
-	if !startsWithFence(input) {
+	switch {
+	case startsWithFence(input, fenceYAML):
+		return parseFenced(input, KindYAML, fenceYAML, decodeYAML)
+	case startsWithFence(input, fenceTOML):
+		return parseFenced(input, KindTOML, fenceTOML, decodeTOML)
+	case len(input) > 0 && input[0] == '{':
+		return parseJSON(input)
+	default:
+		// No frontmatter: Body is the original input, verbatim.
 		return &Document{Body: src, BodyLine: 1}, nil
 	}
+}
 
+// decoder turns a raw frontmatter block into parsed metadata and a
+// (possibly empty) path→line index. offset is added to every reported
+// line so the decoder can compensate for the opening fence on line 1.
+type decoder func(block []byte, offset int) (map[string]any, map[string]int, error)
+
+// parseFenced handles the line-fenced formats (YAML "---" and TOML
+// "+++"), which share the same opening/closing structure and differ only
+// in their decoder.
+func parseFenced(input []byte, format Kind, fence string, decode decoder) (*Document, error) {
 	// Skip past the opening fence and its line terminator.
 	rest := input[len(fence):]
 	rest = trimOneNewline(rest)
 
-	// Find the closing fence on its own line.
-	closeStart, closeEnd, ok := findClosingFence(rest)
+	closeStart, closeEnd, ok := findClosingFence(rest, fence)
 	if !ok {
-		return nil, ErrUnterminated
+		return nil, fmt.Errorf("%w: missing closing %q", ErrUnterminated, fence)
 	}
 
-	yamlBlock := rest[:closeStart]
+	block := rest[:closeStart]
 	body := rest[closeEnd:]
 	bodyLine := 1 + bytes.Count(input[:len(input)-len(rest)+closeEnd], []byte{'\n'})
 
-	meta := map[string]any{}
-	lines := map[string]int{}
-	if len(bytes.TrimSpace(yamlBlock)) > 0 {
-		var root yaml.Node
-		if err := yaml.Unmarshal(yamlBlock, &root); err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrInvalidYAML, err)
-		}
-		if err := root.Decode(&meta); err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrInvalidYAML, err)
-		}
-		// The yaml.Node line numbers are 1-indexed relative to the
-		// YAML block. We add 1 to account for the opening "---" fence
-		// (which is line 1 of the original file).
-		collectLines(&root, "", lines, 1)
+	meta, lines, err := decode(block, 1)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Document{
 		HasFrontmatter: true,
+		Format:         format,
 		Meta:           meta,
 		Body:           body,
 		BodyLine:       bodyLine,
 		Lines:          lines,
-		Frontmatter:    yamlBlock,
+		Frontmatter:    block,
 	}, nil
+}
+
+// parseJSON handles JSON frontmatter, which is a single brace-delimited
+// object at the top of the file rather than a pair of fence lines.
+func parseJSON(input []byte) (*Document, error) {
+	end, ok := findJSONObjectEnd(input)
+	if !ok {
+		return nil, fmt.Errorf("%w: missing closing %q", ErrUnterminated, "}")
+	}
+
+	block := input[:end+1]
+	rest := input[end+1:]
+	afterFence := trimOneNewline(rest)
+	consumed := len(input) - len(afterFence)
+	bodyLine := 1 + bytes.Count(input[:consumed], []byte{'\n'})
+
+	meta, lines, err := decodeJSON(block, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Document{
+		HasFrontmatter: true,
+		Format:         KindJSON,
+		Meta:           meta,
+		Body:           afterFence,
+		BodyLine:       bodyLine,
+		Lines:          lines,
+		Frontmatter:    block,
+	}, nil
+}
+
+// decodeYAML parses a YAML block and builds a full path→line index using
+// the yaml.v3 node tree.
+func decodeYAML(block []byte, offset int) (map[string]any, map[string]int, error) {
+	meta := map[string]any{}
+	lines := map[string]int{}
+	if len(bytes.TrimSpace(block)) == 0 {
+		return meta, lines, nil
+	}
+	var root yaml.Node
+	if err := yaml.Unmarshal(block, &root); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidYAML, err)
+	}
+	if err := root.Decode(&meta); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidYAML, err)
+	}
+	collectLines(&root, "", lines, offset)
+	return meta, lines, nil
+}
+
+// decodeTOML parses a TOML block. Line tracking is not yet implemented
+// for TOML; Lines is returned empty.
+func decodeTOML(block []byte, _ int) (map[string]any, map[string]int, error) {
+	meta := map[string]any{}
+	lines := map[string]int{}
+	if len(bytes.TrimSpace(block)) == 0 {
+		return meta, lines, nil
+	}
+	if err := toml.Unmarshal(block, &meta); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidTOML, err)
+	}
+	return meta, lines, nil
+}
+
+// decodeJSON parses a JSON object block. Line tracking is not yet
+// implemented for JSON; Lines is returned empty.
+func decodeJSON(block []byte, _ int) (map[string]any, map[string]int, error) {
+	meta := map[string]any{}
+	lines := map[string]int{}
+	if len(bytes.TrimSpace(block)) == 0 {
+		return meta, lines, nil
+	}
+	if err := json.Unmarshal(block, &meta); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidJSON, err)
+	}
+	return meta, lines, nil
 }
 
 // collectLines walks a yaml.Node tree and populates out with a mapping
@@ -170,9 +307,9 @@ func escapePointer(s string) string {
 	return string(out)
 }
 
-// startsWithFence reports whether input begins with "---" followed
+// startsWithFence reports whether input begins with fence followed
 // immediately by a line terminator (or EOF).
-func startsWithFence(input []byte) bool {
+func startsWithFence(input []byte, fence string) bool {
 	if !bytes.HasPrefix(input, []byte(fence)) {
 		return false
 	}
@@ -195,14 +332,14 @@ func trimOneNewline(b []byte) []byte {
 	}
 }
 
-// findClosingFence locates the next line that is exactly "---" (with no
+// findClosingFence locates the next line that is exactly fence (with no
 // other content). It returns the byte offsets that delimit, respectively,
-// the end of the YAML block and the start of the body.
+// the end of the metadata block and the start of the body.
 //
-// closeStart is the index in b where the closing-fence line begins (i.e.
-// the start of "---"). closeEnd is the index of the first byte of the
-// body — past the fence and its trailing newline (if any).
-func findClosingFence(b []byte) (closeStart, closeEnd int, ok bool) {
+// closeStart is the index in b where the closing-fence line begins.
+// closeEnd is the index of the first byte of the body — past the fence
+// and its trailing newline (if any).
+func findClosingFence(b []byte, fence string) (closeStart, closeEnd int, ok bool) {
 	cursor := 0
 	for cursor < len(b) {
 		lineEnd := bytes.IndexByte(b[cursor:], '\n')
@@ -225,4 +362,39 @@ func findClosingFence(b []byte) (closeStart, closeEnd int, ok bool) {
 		cursor += lineEnd + 1
 	}
 	return 0, 0, false
+}
+
+// findJSONObjectEnd returns the index of the "}" that closes the leading
+// JSON object in b (which must begin with "{"). It tracks brace depth and
+// skips over string literals so that braces inside strings don't count.
+func findJSONObjectEnd(b []byte) (end int, ok bool) {
+	depth := 0
+	inStr := false
+	esc := false
+	for i := 0; i < len(b); i++ {
+		c := b[i]
+		if inStr {
+			switch {
+			case esc:
+				esc = false
+			case c == '\\':
+				esc = true
+			case c == '"':
+				inStr = false
+			}
+			continue
+		}
+		switch c {
+		case '"':
+			inStr = true
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return i, true
+			}
+		}
+	}
+	return 0, false
 }
