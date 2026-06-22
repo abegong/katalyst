@@ -6,28 +6,33 @@ import "testing"
 // as one inspectable block so a reviewer can read the whole help surface at a
 // glance and see the noun/verb grouping (Verbs vs Resources) the command tree
 // is designed around — see docs/deep-dives/command-organization.md.
-const wantRootHelp = `katalyst validates structured metadata (frontmatter) on
-markdown files against JSON Schema documents.
+const wantRootHelp = `katalyst is a content consistency layer for agent memory,
+knowledge bases, and other curated content systems. it helps you inspect,
+check, and fix content and metadata conventions.
+
+Project links:
+  GitHub: https://github.com/abegong/katalyst
+  Docs:   https://abegong.github.io/katalyst/
 
 Usage:
   katalyst [command]
 
 Verbs:
-  check       Run configured checks against the selected items.
-  fix         Apply deterministic, safe fixes to the selected items.
-  init        Prepare the current directory as a katalyst project.
-  inspect     Profile a directory of markdown files and report its shape.
+  inspect     Analyze a directory and report its structure and conventions
+  init        Initialize a directory as a katalyst project
+  check       Run configured checks
+  fix         Apply deterministic, safe fixes
 
 Resources:
-  check-types Inspect the check types the engine can enforce, grouped by family.
-  collection  Inspect collections defined under .katalyst/collections/.
-  inspectors  Inspect the inspectors the engine can run, grouped by family.
-  item        List, inspect, and mutate items within collections.
-  schema      Inspect schemas defined under .katalyst/schemas/.
+  collection  Commands to inspect and modify collections in this project
+  item        Commands to inspect and modify individual items in collections within this project
+  schema      Commands to inspect and modify schemas defined in this project
+  check-types Commands to inspect the check types that katalyst can enforce
+  inspectors  Commands to inspect the inspectors that katalyst can run
 
 Additional Commands:
-  completion  Generate the autocompletion script for the specified shell
   help        Help about any command
+  completion  Generate the autocompletion script for the specified shell
 
 Flags:
   -h, --help      help for katalyst

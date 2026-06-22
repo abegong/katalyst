@@ -12,11 +12,20 @@ var Version = "0.0.0-dev"
 // hermetic: each test can build its own command tree with its own flags
 // and I/O streams.
 func NewRootCmd() *cobra.Command {
+	// Preserve insertion order in help output so command grouping/order can
+	// communicate the intended workflow instead of alphabetical sorting.
+	cobra.EnableCommandSorting = false
+
 	root := &cobra.Command{
 		Use:   "katalyst",
-		Short: "Define and enforce schemas for markdown frontmatter.",
-		Long: `katalyst validates structured metadata (frontmatter) on
-markdown files against JSON Schema documents.`,
+		Short: "Inspect, check, and fix content consistency rules.",
+		Long: `katalyst is a content consistency layer for agent memory,
+knowledge bases, and other curated content systems. it helps you inspect,
+check, and fix content and metadata conventions.
+
+Project:
+  GitHub: https://github.com/abegong/katalyst
+  Docs:   https://abegong.github.io/katalyst/`,
 		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -40,9 +49,9 @@ markdown files against JSON Schema documents.`,
 
 	addGrouped(root, "verbs",
 		newInitCmd(),
+		newInspectCmd(),
 		newCheckCmd(),
 		newFixCmd(),
-		newInspectCmd(),
 	)
 	addGrouped(root, "resources",
 		newCheckTypesCmd(),
