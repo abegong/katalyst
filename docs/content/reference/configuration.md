@@ -5,49 +5,44 @@ weight = 10
 
 # Configuration
 
-Katalyst reads a single `katalyst.yaml`, found by walking upward from the
-current working directory to the nearest ancestor that contains it. That
-directory is the repo root; all relative paths resolve against it.
+Katalyst reads a `.katalyst/` directory, found by walking upward from the
+current working directory to the nearest ancestor that contains one. That
+ancestor is the repo root; all relative paths resolve against it.
 
 For *why* the config is shaped this way, see `internal/config/README.md`. To
 set one up step by step, see [Configure checks for a
 collection]({{< relref "../how-to/configure-rules.md" >}}).
 
-## Top-level keys
+## Layout
 
-| Key | Type | Meaning |
-|---|---|---|
-| `schemas` | map | Schema name → path to a JSON Schema file. |
-| `collections` | map | Collection name → collection definition (below). |
-
-```yaml
-schemas:
-  book: ./schemas/book.json
-  person: ./schemas/person.json
-
-collections:
-  books:
-    path: notes/books
-    schema: book
-  people:
-    path: notes/people
-    schema: person
-    checks:
-      - kind: markdown_title_matches_h1
-      - kind: filesystem_name_matches_field
+```
+.katalyst/
+  config.yaml          # optional: query defaults and discovery settings
+  schemas/             # one JSON Schema file per named schema
+    book.json
+  collections/         # one YAML file per named collection
+    books.yaml
 ```
 
-## `schemas`
+By default, schemas and collections are discovered by **convention**: every
+file under `schemas/` is a schema whose name is its filename stem
+(`book.json` → `book`), and every file under `collections/` is a collection
+named for its filename stem (`books.yaml` → `books`). `config.yaml` is
+optional; it carries `query:` defaults and can switch a kind to **explicit**
+discovery, listing definitions inline instead of as files.
 
-A map from a **name** to a JSON Schema file path. The name is the stable
-public handle used by `schema show <name>`, by an inline `schema: <name>`
-key in a document's frontmatter, and by a collection's `schema:` shorthand.
-Paths are resolved relative to the repo root.
+## Schemas
 
-## `collections`
+Each file under `.katalyst/schemas/` is a JSON Schema. Its **name** — the
+filename stem — is the stable public handle used by `schema show <name>`, by
+an inline `schema: <name>` key in a document's frontmatter, and by a
+collection's `schema:` shorthand. The path can move; the name should not.
 
-A map from a **collection name** to its definition. Each collection is a
-directory of items plus the checks every item must pass.
+## Collections
+
+Each file under `.katalyst/collections/` defines one collection: a directory
+of items plus the checks every item must pass. The filename stem is the
+collection name.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
@@ -56,6 +51,15 @@ directory of items plus the checks every item must pass.
 | `schema` | no | — | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | — | List of checks (see below). |
 | `query` | no | — | `item list` query behavior for this collection (see [`query`](#query)). |
+
+```yaml
+# .katalyst/collections/books.yaml
+path: notes/books
+schema: book
+checks:
+  - kind: markdown_title_matches_h1
+  - kind: filesystem_name_matches_field
+```
 
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match

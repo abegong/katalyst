@@ -101,7 +101,7 @@ func inspectorsIndex(families []inspect.Family, byFamily map[string][]inspect.De
 	fmt.Fprint(&b, "Inspectors describe the shape of a markdown corpus and return evidence — ")
 	fmt.Fprint(&b, "counts and distributions, never recommendations. They are the descriptive ")
 	fmt.Fprint(&b, "dual of [check types]({{< relref \"../check-types/_index.md\" >}}) and drive the ")
-	fmt.Fprint(&b, "[`inspect`]({{< relref \"commands.md\" >}}) command. These pages are generated ")
+	fmt.Fprint(&b, "[`inspect`]({{< relref \"../commands.md\" >}}) command. These pages are generated ")
 	fmt.Fprint(&b, "from the inspector registry, so they always match the shipped engine.\n")
 	for _, fam := range families {
 		ds := byFamily[fam.ID]

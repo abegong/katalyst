@@ -134,6 +134,9 @@ Here are a few more examples, to help ground these concepts.
 - These checks are required in order to guarantee that the system can provide its catalog of operations.
 - In other words, schemas and structuredness are a means to an end. They're about enforcing checks in order to provide a catalog of operations.
 
-For how these concepts translate to today's code, see the per-package
-`README.md` files under `internal/` (notably `internal/config`,
-`internal/frontmatter`, and `internal/checks`).
+For how these general concepts are instantiated in katalyst specifically — the
+concrete `Document`, `Schema`, `Collection`, and `Check` types and the
+invariants between them — see the [domain model]({{< relref "domain-model.md" >}}).
+For how they translate to today's code, see the per-package `README.md` files
+under `internal/` (notably `internal/config`, `internal/frontmatter`, and
+`internal/checks`).

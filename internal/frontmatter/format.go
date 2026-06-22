@@ -19,7 +19,7 @@ import (
 //   - body bytes preserved verbatim
 //
 // Files without frontmatter are returned unchanged. See
-// docs/explanation/formatting.md for why this is intentionally inflexible.
+// internal/frontmatter/README.md for why this is intentionally inflexible.
 func Format(src []byte) ([]byte, error) {
 	doc, err := Parse(src)
 	if err != nil {

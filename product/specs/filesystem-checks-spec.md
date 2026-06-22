@@ -340,7 +340,7 @@ message so the user (or their editor) can rename deliberately.
   `docs/content/reference/configuration.md` name the folded kinds and must move
   to the `target × rule` model and new kind names. The domain model that
   references check kinds currently lives in
-  `docs/content/explanation/domain-model.md` — see the note below.
+  `docs/content/deep-dives/domain-model.md` — see the note below.
   `docs/content/reference/glossary.md` gains "target" and "collection-scoped
   check."
 - **Developer docs** — root `AGENTS.md` (and `internal/checks` package docs if
@@ -348,7 +348,7 @@ message so the user (or their editor) can rename deliberately.
   `Context.CollectionRoot` addition, and the `CollectionCheck` tier + its
   full-collection re-scan. No `.cursor/skills/` changes.
 - **Docs-location risk (confirm at graduation).** main currently carries *both*
-  `docs/content/explanation/domain-model.md` and
+  `docs/content/deep-dives/domain-model.md` and
   `docs/content/deep-dives/core-concepts.md`; the `explanation/` page is the one
   that references check kinds today, but the docs convention (write-spec skill)
   treats `docs/deep-dives/` as canonical. Before graduating, confirm which page

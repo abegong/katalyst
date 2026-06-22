@@ -40,6 +40,15 @@ The docs are a **separate Hugo module** so the application's `go.mod` stays
 `go mod tidy`-clean. Never add the Hugo theme to the root `go.mod`; it lives
 in `docs/go.mod` and is managed by `make docs-deps` (`hugo mod get`).
 
+Katalyst **dogfoods itself on those docs.** The repo-root `.katalyst/`
+directory configures a single `pages` collection over `docs/content/`, and the
+CI `docs` job runs `./bin/katalyst check` after the Hugo build. A docs change
+that breaks the page frontmatter contract (`schemas/page.json` — `title`
+required; `weight`/`draft`/`bookCollapseSection`/`aliases` typed) fails CI, so
+run `make build && ./bin/katalyst check` after editing docs. `.katalyst/` sits
+at the repo root (not under `docs/content/`) so the collection's recursive
+unmatched-file scan never walks the config dir itself.
+
 Production code stays in `internal/` unless something genuinely needs to be
 importable from outside the module.
 

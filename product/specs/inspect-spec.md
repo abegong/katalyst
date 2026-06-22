@@ -3,7 +3,7 @@
 > **Status: implementing.** Introduces **inspectors**: a descriptive (read-only)
 > operation family that measures an existing directory and returns *evidence*
 > about its shape — frontmatter fields, markdown structure, filename
-> conventions. Inspectors are the dual of [checks](../../docs/content/explanation/general-model.md):
+> conventions. Inspectors are the dual of [checks](../../docs/content/deep-dives/core-concepts.md):
 > a check asserts a predicate; an inspector reports the distribution that
 > predicate would be tested against. The deliverable is not a magic
 > "auto-schema" button but a set of **instruments an agent drives** to profile a
@@ -37,7 +37,7 @@ The design has two deliberate halves, reflecting a division of labor:
    and converges on a draft.
 
 Katalyst provides the instruments; the agent is the profiler. This matches the
-[technical spec](../../docs/content/explanation/technical-spec.md)'s framing of
+[technical spec](../../docs/content/deep-dives/vision.md)'s framing of
 katalyst as "infrastructure for AI harnesses and agentic systems" supporting
 "deterministic and non-deterministic rule evaluation" — inspectors are the
 deterministic instruments; the agent supplies the non-deterministic judgment.
@@ -58,7 +58,7 @@ and validate it with the normal installed `check`.
   *inspect → agent drafts a schema → check → see the holdouts* — is the whole
   onboarding story in a few commands.
 - **A general primitive, not a one-off.** An inspector is the descriptive
-  [operation](../../docs/content/explanation/general-model.md) the model has
+  [operation](../../docs/content/deep-dives/core-concepts.md) the model has
   been missing. The same evidence powers profiling today and, later, schema
   evolution, drift detection, and migration planning — all of which need to
   "describe the shape of this data" before they can act.
@@ -70,7 +70,7 @@ and validate it with the normal installed `check`.
 ## Current State
 
 - **No descriptive operation exists.** The
-  [general model](../../docs/content/explanation/general-model.md) lists
+  [general model](../../docs/content/deep-dives/core-concepts.md) lists
   operations (read, list, search, query, **aggregate**, diff) but the engine
   only implements the evaluative ones. There is nothing that aggregates across
   a collection to describe it.
@@ -80,7 +80,7 @@ and validate it with the normal installed `check`.
   reports unmatched files. An inspector is mostly an aggregation pass over
   `Document`s the engine already produces.
 - **`check` is single-direction and human-only.** It resolves a schema, runs
-  the [18-check engine](../../docs/content/explanation/technical-spec.md)
+  the [18-check engine](../../docs/content/deep-dives/vision.md)
   (object / markdown / filesystem), and prints `path:line: /pointer: message`
   plus an exit code. Two relevant capabilities already exist and are reused
   below: `--schema <path>` runs an **un-installed** schema, and the resolver
@@ -310,7 +310,7 @@ Two cautions, the first of which applies once the deferred loop lands:
 ### Domain-model impact
 
 - **New concept: inspector.** A descriptive operation; the dual of a check.
-  Added to the [general model](../../docs/content/explanation/general-model.md)
+  Added to the [general model](../../docs/content/deep-dives/core-concepts.md)
   (it realizes the long-listed `aggregate` operation) and the
   [glossary](../../docs/content/reference/glossary.md).
 - **Out-of-scope list updates.** `cli-spec.md` moves `infer`/`profile` out of

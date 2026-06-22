@@ -1,13 +1,14 @@
 # Dogfood katalyst on its own docs
 
-> **Status: planning. Blocked on #40.** Configure a katalyst project over
-> `docs/content/` and enforce it in CI, so the Hugo docs corpus is validated by
-> the tool it documents (#28). Doing so requires the docs to first be
-> *consistent* — the reorganizations (Explanation → Deep dives, the inspect
-> series) left orphans, broken cross-links, and overlaps — so the cleanup pass
-> (#29) is the precondition, not a separate effort. This spec covers both as one
-> change. **It cannot start until #40 (TOML/JSON frontmatter support) merges**,
-> because katalyst cannot read the docs' TOML frontmatter today.
+> **Status: implementing.** Configure a katalyst project over `docs/content/`
+> and enforce it in CI, so the Hugo docs corpus is validated by the tool it
+> documents (#28). Doing so requires the docs to first be *consistent* — the
+> reorganizations (Explanation → Deep dives, the inspect series) left orphans,
+> broken cross-links, and overlaps — so the cleanup pass (#29) is the
+> precondition, not a separate effort. This spec covers both as one change.
+> #40 (TOML/JSON frontmatter support) was the blocking gap; it has merged, so
+> katalyst can now read the docs' TOML frontmatter. Per-page-type enforcement
+> (filename casing, section structure) is deferred to #41.
 
 ## Overview
 
@@ -118,9 +119,9 @@ required section structure.
 | Concern | Enforced by | Why |
 |---|---|---|
 | `relref`/link targets resolve | `make docs-build` (Hugo, already in CI) | Hugo owns shortcode resolution; it already fails the build |
-| Frontmatter presence/type/enum | `katalyst check` (object family) | Hugo ignores unknown keys; nothing else enforces them |
-| Filename casing, extension | `katalyst check` (filesystem family) | Hugo is indifferent to filenames |
-| Required section structure (`_index.md`) | `katalyst check` (filesystem family) | Hugo renders without it; we want it required |
+| Frontmatter presence/type | `katalyst check` (object family) — **shipped** | Hugo ignores unknown keys; nothing else enforces them |
+| File extension | `katalyst check` (`filesystem_extension_in`) — **shipped** | Hugo is indifferent to filenames |
+| Filename casing, required section structure | `katalyst check` (filesystem family) — **deferred to #41** | Can't be scoped to non-`_index.md` pages within one collection today |
 
 This keeps katalyst's job to what it is uniquely good at and avoids
 reimplementing a Hugo-aware link checker. (A katalyst check that understands
@@ -145,8 +146,22 @@ churn. See Rejected alternatives.
 
 ### `.katalyst/` layout over the docs
 
-The project root is `docs/content/`, so `.katalyst/` lives at
-`docs/content/.katalyst/` and `make docs-build`/Hugo ignore the dotted dir.
+`.katalyst/` lives at the **repo root**, with the collection's `path` pointing
+at `docs/content`. It is *not* placed at `docs/content/.katalyst/`: the
+collection's unmatched-file check walks its directory **recursively**, so a
+config dir inside the scanned tree would flag its own non-`.md` files
+(`config.yaml`, `page.json`) as errors. Keeping `.katalyst/` above the scanned
+tree sidesteps that, and `make docs-build`/Hugo never see it. The directory is:
+
+```
+.katalyst/
+  config.yaml              # schemas.format: json (schemas are JSON Schema)
+  schemas/page.json        # the unified page schema
+  collections/pages.yaml   # path: docs/content, pattern: **/*.md, schema: page
+```
+
+(`config.yaml` is needed only because convention discovery defaults schema
+files to YAML; `schemas.format: json` lets the schema stay idiomatic JSON.)
 
 **One collection, one unified schema.** Ideally collections would model the
 page *types* — content pages (`title` + `weight`) vs section landing pages
@@ -163,22 +178,26 @@ can't express that today, and the reason is structural:
   not one pattern, and two collections rooted at the same subtree would each
   flag the other's files as unmatched.
 
-So a single permissive schema covers the whole tree. One collection rooted at
-`docs/content/` with `pattern: **/*.md` claims every page (no unmatched
-errors), and its schema asserts the **common** contract:
+So a single permissive schema covers the whole tree. The `pages` collection
+(`path: docs/content`, `pattern: **/*.md`) claims every page (no unmatched
+errors), and its schema asserts the **common** contract over all 59 pages:
 
-- `title` — required string (true of all 62 pages).
+- `title` — required, non-empty string (true of every page).
 - `weight` — integer **when present** (optional, because the root `_index.md`
   has none and section indexes vary).
 - `bookCollapseSection` — boolean when present; `aliases` — array of strings
   when present; `draft` — boolean when present. Extra keys allowed.
-- Filesystem checks: `filesystem_name_case` (kebab), `filesystem_extension_in`
-  (`md`).
+- Plus a `filesystem_extension_in: [.md]` check (trivially true given the
+  pattern, but it exercises a filesystem-family check on the corpus).
 
-The cost is that `weight` can't be *required* only on content pages — the
-common shape is the strongest schema a single collection can enforce. Closing
-that gap (per-page-type / per-pattern check scoping) is **#41**, filed as a
-follow-up; the unified schema ships now. See Open Question 2 (resolved).
+**Not** included: `filesystem_name_case` (kebab). It would reject every
+`_index.md` (the regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` disallows the leading
+underscore), and `markdown_requires_h1` would reject the generated check-type
+pages (no `# H1`). Those are exactly the per-page-type checks the engine can't
+scope today; they wait on **#41**. The cost is that `weight` can't be
+*required* only on content pages, and names aren't enforced — the common shape
+is the strongest schema a single collection can carry. The unified schema
+ships now. See Open Question 2 (resolved).
 
 **Generated check-type pages are checked too.** The pages under
 `reference/check-types/` (written by `make docs-gen`) carry `aliases` and a
