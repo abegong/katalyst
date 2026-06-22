@@ -96,7 +96,7 @@ func selectInspectors(names []string) ([]inspect.Inspector, error) {
 	for _, n := range names {
 		ins, ok := inspect.ByName(n)
 		if !ok {
-			return nil, usageErr(fmt.Sprintf("unknown inspector %q (try `katalyst inspect --help`)", n))
+			return nil, usageErr(fmt.Sprintf("unknown inspector %q (try `katalyst inspectors list`)", n))
 		}
 		out = append(out, ins)
 	}
