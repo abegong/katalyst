@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/spf13/cobra"
 )
 

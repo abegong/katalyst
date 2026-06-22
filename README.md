@@ -16,10 +16,10 @@ If you want to be confident that your content/data/memory is always in good shap
 Need a quick shape profile of an existing wiki before authoring rules? Use
 `katalyst inspect <path>` to report frontmatter, markdown, and filename
 conventions as evidence. The full command surface (including `inspect`) is in
-the [command reference](https://katabase-ai.github.io/katalyst/reference/commands/).
+the [command reference](https://abegong.github.io/katalyst/reference/commands/).
 
 > [!TIP]
-> **New to Katalyst?** [Get started »](https://katabase-ai.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
+> **New to Katalyst?** [Get started »](https://abegong.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
 
 ## Key features
 
@@ -83,10 +83,32 @@ What if structure were light — easy to add, easy to maintain, easy to change?
 
 In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information — it's having a shared language and structure to organize what we've learned, and to act on it together.
 
+## Installation
+
+Install the latest release with Go (1.25+):
+
+```sh
+go install github.com/abegong/katalyst@latest
+```
+
+Or build from source:
+
+```sh
+git clone https://github.com/abegong/katalyst.git
+cd katalyst
+make build      # produces ./katalyst
+```
+
+Then point it at a directory to profile its structure:
+
+```sh
+katalyst inspect ./my-knowledge-base
+```
+
 ## No, really, you should try it out
 
-- [Build the CLI and run your first checks](https://katabase-ai.github.io/katalyst/getting-started/).
-- [Contribute](https://katabase-ai.github.io/katalyst/contributing/) — how we plan and document changes.
+- [Build the CLI and run your first checks](https://abegong.github.io/katalyst/getting-started/).
+- [Contribute](https://abegong.github.io/katalyst/contributing/) — how we plan and document changes.
 
 ## About me
 
@@ -95,3 +117,7 @@ I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open sourc
 I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously — if you're trying Katalyst, I'd love to hear from you.
 
 More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).
+
+## License
+
+Katalyst is licensed under the [Apache License 2.0](LICENSE).

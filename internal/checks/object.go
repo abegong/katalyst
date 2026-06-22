@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/katabase-ai/katalyst/internal/validator"
+	"github.com/abegong/katalyst/internal/validator"
 )
 
 // Object validates frontmatter metadata against JSON Schema.

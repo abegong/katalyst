@@ -8,7 +8,7 @@ weight = 20
 Install from source:
 
 ```bash
-git clone https://github.com/katabase-ai/katalyst
+git clone https://github.com/abegong/katalyst
 cd katalyst
 make build
 ```

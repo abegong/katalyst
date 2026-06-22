@@ -5,8 +5,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/katabase-ai/katalyst/internal/config"
-	"github.com/katabase-ai/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
 )
 

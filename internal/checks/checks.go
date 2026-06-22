@@ -1,6 +1,6 @@
 package checks
 
-import "github.com/katabase-ai/katalyst/internal/frontmatter"
+import "github.com/abegong/katalyst/internal/frontmatter"
 
 // Context carries all data a check may need.
 type Context struct {

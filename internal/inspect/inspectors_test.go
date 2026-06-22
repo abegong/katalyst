@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/inspect"
 )
 
 // writeFile scaffolds a file (creating parent dirs) under root for Load tests.

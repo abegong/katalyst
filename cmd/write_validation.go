@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
-	"github.com/katabase-ai/katalyst/internal/config"
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/frontmatter"
 	"gopkg.in/yaml.v3"
 )
 

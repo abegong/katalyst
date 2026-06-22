@@ -1,4 +1,4 @@
-module github.com/katabase-ai/katalyst/docs
+module github.com/abegong/katalyst/docs
 
 go 1.25
 

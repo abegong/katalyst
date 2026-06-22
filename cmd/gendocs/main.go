@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/inspect"
 )
 
 // outDir is the generated check-types section, relative to the repo root.

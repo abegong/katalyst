@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"text/tabwriter"
 
-	"github.com/katabase-ai/katalyst/internal/config"
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
-	"github.com/katabase-ai/katalyst/internal/project"
-	"github.com/katabase-ai/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/query"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
