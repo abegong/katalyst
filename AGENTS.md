@@ -101,6 +101,18 @@ you add a fixture.
   truth for check types. Both `cmd/gendocs` and `katalyst check-types list` read
   it, and `registry_test.go` fails if a dispatched check type has no descriptor
   — a new check type ships with its descriptor. The `json:` tags on
-  `Descriptor`/`Field`
-  are the published wire contract for `katalyst check-types list --json`; keep
-  them stable.
+  `Descriptor`/`Field` are the published wire contract for `katalyst check-types
+  list --json`; keep them stable.
+- Filesystem name/path check types share a **target × rule** shape: a `target`
+  (`filename`, `filename-ext`, `parent-dir`, `path-segments`) resolved by
+  `resolveTarget` in `internal/checks/filesystem.go`, against which a rule runs.
+  Targets that span directories (`path-segments`, `path_depth`, `path_charset`)
+  resolve relative to `Context.CollectionRoot`, populated by the per-item check
+  pass — don't assume `FilePath` alone is enough.
+- **Collection-scoped check types** implement `checks.CollectionCheck`
+  (`RunCollection(CollectionContext)`), not `Check`. They are dispatched in
+  `engine.collectionChecksFor` and run by a second pass in `cmd/check.go` that
+  re-scans the *whole* collection via `project.Items`, independent of the
+  selector — a uniqueness verdict is only correct against every item. Mark such
+  types in `config.collectionScopedTypes` and set `Scope: "collection"` on their
+  descriptor.

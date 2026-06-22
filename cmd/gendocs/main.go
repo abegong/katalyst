@@ -133,6 +133,9 @@ func checkTypePage(d checks.Descriptor, weight int) string {
 	fmt.Fprintf(&b, "+++\ntitle = \"%s\"\nweight = %d\naliases = [\"/reference/rules/%s/%s/\"]\n+++\n\n", d.Title, weight, d.Family, d.Slug)
 	fmt.Fprintln(&b, generatedNote)
 	fmt.Fprintf(&b, "\n## Check type ID\n\n`kind: %s`\n\n", d.CheckType)
+	if d.Scope == "collection" {
+		fmt.Fprint(&b, "**Scope:** collection — runs once per collection over all its items.\n\n")
+	}
 	fmt.Fprintf(&b, "## Purpose\n\n%s\n\n", d.Summary)
 	if len(d.Fields) > 0 {
 		fmt.Fprint(&b, "## Configuration keys\n\n")

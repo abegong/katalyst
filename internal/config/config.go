@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -83,12 +84,20 @@ const (
 	CheckMarkdownNoHeadingLevelJumps   CheckType = "markdown_no_heading_level_jumps"
 	CheckMarkdownRequiredSection       CheckType = "markdown_required_section"
 	CheckMarkdownCodeFenceHasLanguage  CheckType = "markdown_code_fence_language_required"
-	CheckFilesystemFilenameMatchesSlug CheckType = "filesystem_filename_matches_slug"
 	CheckFilesystemExtensionIn         CheckType = "filesystem_extension_in"
-	CheckFilesystemFilenameKebabCase   CheckType = "filesystem_filename_kebab_case"
-	CheckFilesystemNoSpacesInPath      CheckType = "filesystem_no_spaces_in_path"
 	CheckFilesystemParentDirIn         CheckType = "filesystem_parent_dir_in"
-	CheckFilesystemFilenamePrefix      CheckType = "filesystem_filename_prefix"
+	CheckFilesystemNameCase            CheckType = "filesystem_name_case"
+	CheckFilesystemNameMatchesField    CheckType = "filesystem_name_matches_field"
+	CheckFilesystemNameAffix           CheckType = "filesystem_name_affix"
+	CheckFilesystemPathCharset         CheckType = "filesystem_path_charset"
+	CheckFilesystemNameRegex           CheckType = "filesystem_name_regex"
+	CheckFilesystemNameLength          CheckType = "filesystem_name_length"
+	CheckFilesystemPathDepth           CheckType = "filesystem_path_depth"
+	CheckFilesystemParentDirMatchesFld CheckType = "filesystem_parent_dir_matches_field"
+	CheckFilesystemReferencedFiles     CheckType = "filesystem_referenced_files_exist"
+	CheckFilesystemUniqueFilename      CheckType = "filesystem_unique_filename"
+	CheckFilesystemUniqueField         CheckType = "filesystem_unique_field"
+	CheckFilesystemIndexFileRequired   CheckType = "filesystem_index_file_required"
 	defaultMarkdownTitleField                    = "title"
 	defaultFilesystemSlugField                   = "slug"
 )
@@ -110,6 +119,18 @@ type CheckInstance struct {
 	MinLength int
 	MaxLength int
 	Heading   string
+	Style     string
+	Target    string
+	Transform string
+	Prefix    string
+	Suffix    string
+	Allow     []string
+	Deny      []string
+	Pattern   string
+	MinInt    *int
+	MaxInt    *int
+	Fields    []string
+	Name      string
 }
 
 // Collection is a named group of items backed by a directory of files.
@@ -204,6 +225,16 @@ type rawCheck struct {
 	MinLength int      `yaml:"min_length"`
 	MaxLength int      `yaml:"max_length"`
 	Heading   string   `yaml:"heading"`
+	Style     string   `yaml:"style"`
+	Target    string   `yaml:"target"`
+	Transform string   `yaml:"transform"`
+	Prefix    string   `yaml:"prefix"`
+	Suffix    string   `yaml:"suffix"`
+	Allow     []string `yaml:"allow"`
+	Deny      []string `yaml:"deny"`
+	Pattern   string   `yaml:"pattern"`
+	Fields    []string `yaml:"fields"`
+	Name      string   `yaml:"name"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -576,6 +607,62 @@ func resolve(root, p string) string {
 	return filepath.Clean(filepath.Join(root, p))
 }
 
+// caseStyleNames and targetNames mirror the values the filesystem checks
+// accept. They are duplicated here (not imported from internal/checks)
+// because checks imports config — importing back would cycle.
+var caseStyleNames = map[string]bool{
+	"kebab": true, "snake": true, "screaming-snake": true,
+	"camel": true, "pascal": true, "point": true, "lower": true,
+}
+
+var targetNames = map[string]bool{
+	"filename": true, "filename-ext": true, "parent-dir": true, "path-segments": true,
+}
+
+func validCaseStyle(s string) bool { return caseStyleNames[s] }
+
+// collectionScopedTypes are check types that run once per collection over all
+// its items, rather than per item.
+var collectionScopedTypes = map[CheckType]bool{
+	CheckFilesystemUniqueFilename:    true,
+	CheckFilesystemUniqueField:       true,
+	CheckFilesystemIndexFileRequired: true,
+}
+
+// CollectionScoped reports whether a check type runs per collection (vs. per
+// item).
+func CollectionScoped(t CheckType) bool { return collectionScopedTypes[t] }
+
+// HasCollectionChecks reports whether the collection configures any
+// collection-scoped check.
+func (c Collection) HasCollectionChecks() bool {
+	for _, ch := range c.Checks {
+		if CollectionScoped(ch.Type) {
+			return true
+		}
+	}
+	return false
+}
+
+// floatToIntPtr truncates a *float64 (the shared yaml min/max) to a *int for
+// integer-bounded checks. Nil in, nil out.
+func floatToIntPtr(f *float64) *int {
+	if f == nil {
+		return nil
+	}
+	n := int(*f)
+	return &n
+}
+
+// validateTarget allows an empty target (defaults to filename) and rejects
+// any non-empty value outside the known set.
+func validateTarget(checkType, target string) error {
+	if target == "" || targetNames[target] {
+		return nil
+	}
+	return fmt.Errorf("%s: unknown target %q", checkType, target)
+}
+
 func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, error) {
 	checkType := CheckType(strings.TrimSpace(raw.Kind))
 	switch checkType {
@@ -649,34 +736,102 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 		return CheckInstance{Type: checkType, Heading: raw.Heading}, nil
 	case CheckMarkdownCodeFenceHasLanguage:
 		return CheckInstance{Type: checkType}, nil
-	case CheckFilesystemFilenameMatchesSlug:
-		if raw.Schema != "" {
-			return CheckInstance{}, errors.New(`filesystem_filename_matches_slug does not support "schema"`)
-		}
-		field := raw.Field
-		if field == "" {
-			field = defaultFilesystemSlugField
-		}
-		return CheckInstance{Type: CheckFilesystemFilenameMatchesSlug, Field: field}, nil
 	case CheckFilesystemExtensionIn:
 		if len(raw.Values) == 0 {
 			return CheckInstance{}, errors.New(`filesystem_extension_in requires "values"`)
 		}
 		return CheckInstance{Type: checkType, Values: raw.Values}, nil
-	case CheckFilesystemFilenameKebabCase:
-		return CheckInstance{Type: checkType}, nil
-	case CheckFilesystemNoSpacesInPath:
-		return CheckInstance{Type: checkType}, nil
 	case CheckFilesystemParentDirIn:
 		if len(raw.Values) == 0 {
 			return CheckInstance{}, errors.New(`filesystem_parent_dir_in requires "values"`)
 		}
 		return CheckInstance{Type: checkType, Values: raw.Values}, nil
-	case CheckFilesystemFilenamePrefix:
-		if raw.Value == "" {
-			return CheckInstance{}, errors.New(`filesystem_filename_prefix requires "value"`)
+	case CheckFilesystemNameCase:
+		if raw.Style == "" {
+			return CheckInstance{}, errors.New(`filesystem_name_case requires "style"`)
 		}
-		return CheckInstance{Type: checkType, Value: raw.Value}, nil
+		if !validCaseStyle(raw.Style) {
+			return CheckInstance{}, fmt.Errorf("filesystem_name_case: unknown style %q", raw.Style)
+		}
+		if err := validateTarget("filesystem_name_case", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Style: raw.Style, Target: raw.Target}, nil
+	case CheckFilesystemNameMatchesField:
+		field := raw.Field
+		if field == "" {
+			field = defaultFilesystemSlugField
+		}
+		transform := raw.Transform
+		if transform == "" {
+			transform = "none"
+		}
+		if transform != "none" && transform != "slugify" {
+			return CheckInstance{}, fmt.Errorf(`filesystem_name_matches_field: "transform" must be none or slugify (got %q)`, raw.Transform)
+		}
+		if err := validateTarget("filesystem_name_matches_field", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Field: field, Transform: transform, Target: raw.Target}, nil
+	case CheckFilesystemNameAffix:
+		if raw.Prefix == "" && raw.Suffix == "" {
+			return CheckInstance{}, errors.New(`filesystem_name_affix requires "prefix" or "suffix"`)
+		}
+		if err := validateTarget("filesystem_name_affix", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Prefix: raw.Prefix, Suffix: raw.Suffix, Target: raw.Target}, nil
+	case CheckFilesystemPathCharset:
+		if len(raw.Allow) > 0 && len(raw.Deny) > 0 {
+			return CheckInstance{}, errors.New(`filesystem_path_charset accepts "allow" or "deny", not both`)
+		}
+		if len(raw.Allow) == 0 && len(raw.Deny) == 0 {
+			return CheckInstance{}, errors.New(`filesystem_path_charset requires "allow" or "deny"`)
+		}
+		return CheckInstance{Type: checkType, Allow: raw.Allow, Deny: raw.Deny}, nil
+	case CheckFilesystemNameRegex:
+		if raw.Pattern == "" {
+			return CheckInstance{}, errors.New(`filesystem_name_regex requires "pattern"`)
+		}
+		if _, err := regexp.Compile("^(?:" + raw.Pattern + ")$"); err != nil {
+			return CheckInstance{}, fmt.Errorf("filesystem_name_regex: invalid pattern %q: %w", raw.Pattern, err)
+		}
+		if err := validateTarget("filesystem_name_regex", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target}, nil
+	case CheckFilesystemNameLength:
+		if raw.Min == nil && raw.Max == nil {
+			return CheckInstance{}, errors.New(`filesystem_name_length requires "min" or "max"`)
+		}
+		if err := validateTarget("filesystem_name_length", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max), Target: raw.Target}, nil
+	case CheckFilesystemPathDepth:
+		if raw.Min == nil && raw.Max == nil {
+			return CheckInstance{}, errors.New(`filesystem_path_depth requires "min" or "max"`)
+		}
+		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max)}, nil
+	case CheckFilesystemParentDirMatchesFld:
+		if raw.Field == "" {
+			return CheckInstance{}, errors.New(`filesystem_parent_dir_matches_field requires "field"`)
+		}
+		return CheckInstance{Type: checkType, Field: raw.Field}, nil
+	case CheckFilesystemReferencedFiles:
+		if len(raw.Fields) == 0 {
+			return CheckInstance{}, errors.New(`filesystem_referenced_files_exist requires "fields"`)
+		}
+		return CheckInstance{Type: checkType, Fields: raw.Fields}, nil
+	case CheckFilesystemUniqueFilename:
+		return CheckInstance{Type: checkType}, nil
+	case CheckFilesystemUniqueField:
+		if raw.Field == "" {
+			return CheckInstance{}, errors.New(`filesystem_unique_field requires "field"`)
+		}
+		return CheckInstance{Type: checkType, Field: raw.Field}, nil
+	case CheckFilesystemIndexFileRequired:
+		return CheckInstance{Type: checkType, Name: raw.Name}, nil
 	case "":
 		return CheckInstance{}, errors.New(`check type is required`)
 	default:

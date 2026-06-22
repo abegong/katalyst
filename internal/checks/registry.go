@@ -39,6 +39,9 @@ type Descriptor struct {
 	// ConfigExample is a complete katalyst.yaml snippet (YAML, no fence)
 	// showing the check in a collection.
 	ConfigExample string `json:"config_example"`
+	// Scope is "collection" for checks that run once per collection over all
+	// its items; empty means an ordinary per-item check.
+	Scope string `json:"scope,omitempty"`
 }
 
 // Family identifies the three check-type families and their intro copy. Order
@@ -268,20 +271,204 @@ collections:
 		},
 		// --- filesystem family ---
 		{
-			CheckType: config.CheckFilesystemFilenameMatchesSlug,
+			CheckType: config.CheckFilesystemNameCase,
 			Family:    "filesystem",
-			Slug:      "filename-matches-slug",
-			Title:     "Filename Matches Slug",
-			Summary:   "Require a frontmatter field to match the markdown file basename.",
+			Slug:      "name-case",
+			Title:     "Name Case",
+			Summary:   "Require a name (or path segments) to follow a case style.",
 			Fields: []Field{
-				{Name: "field", Required: false, Default: "slug", Desc: "Frontmatter key compared to the basename."},
+				{Name: "style", Required: true, Desc: "One of `kebab`, `snake`, `screaming-snake`, `camel`, `pascal`, `point`, `lower`."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},
 			},
 			ConfigExample: `collections:
   notes:
     path: notes
     checks:
-      - kind: filesystem_filename_matches_slug
+      - kind: filesystem_name_case
+        style: kebab`,
+		},
+		{
+			CheckType: config.CheckFilesystemNameMatchesField,
+			Family:    "filesystem",
+			Slug:      "name-matches-field",
+			Title:     "Name Matches Field",
+			Summary:   "Require a name to equal a frontmatter field, optionally slugified.",
+			Fields: []Field{
+				{Name: "field", Required: false, Default: "slug", Desc: "Frontmatter key compared to the name."},
+				{Name: "transform", Required: false, Default: "none", Desc: "`none` or `slugify` (applied to the field value before comparison)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, or `parent-dir`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_matches_field
         field: slug`,
+		},
+		{
+			CheckType: config.CheckFilesystemNameAffix,
+			Family:    "filesystem",
+			Slug:      "name-affix",
+			Title:     "Name Affix",
+			Summary:   "Require a name to start with a prefix and/or end with a suffix.",
+			Fields: []Field{
+				{Name: "prefix", Required: false, Desc: "Required name prefix (at least one of prefix/suffix)."},
+				{Name: "suffix", Required: false, Desc: "Required name suffix (at least one of prefix/suffix)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, or `parent-dir`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_affix
+        prefix: book-`,
+		},
+		{
+			CheckType: config.CheckFilesystemPathCharset,
+			Family:    "filesystem",
+			Slug:      "path-charset",
+			Title:     "Path Charset",
+			Summary:   "Constrain the characters allowed in the item's path.",
+			Fields: []Field{
+				{Name: "deny", Required: false, Desc: "Forbidden substrings (e.g. a space). Use `deny` or `allow`, not both."},
+				{Name: "allow", Required: false, Desc: "The only permitted characters; the path separator is always allowed."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_path_charset
+        deny: [" "]`,
+		},
+		{
+			CheckType: config.CheckFilesystemNameRegex,
+			Family:    "filesystem",
+			Slug:      "name-regex",
+			Title:     "Name Regex",
+			Summary:   "Require a name to match a regular expression (anchored).",
+			Fields: []Field{
+				{Name: "pattern", Required: true, Desc: "Regular expression; matched anchored (`^pattern$`)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_regex
+        pattern: '[0-9]{4}-[a-z-]+'`,
+		},
+		{
+			CheckType: config.CheckFilesystemNameLength,
+			Family:    "filesystem",
+			Slug:      "name-length",
+			Title:     "Name Length",
+			Summary:   "Bound the character length of a name.",
+			Fields: []Field{
+				{Name: "min", Required: false, Desc: "Minimum length (at least one of min/max)."},
+				{Name: "max", Required: false, Desc: "Maximum length (at least one of min/max)."},
+				{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_name_length
+        max: 80`,
+		},
+		{
+			CheckType: config.CheckFilesystemPathDepth,
+			Family:    "filesystem",
+			Slug:      "path-depth",
+			Title:     "Path Depth",
+			Summary:   "Bound directory nesting relative to the collection root.",
+			Fields: []Field{
+				{Name: "min", Required: false, Desc: "Minimum depth (at least one of min/max)."},
+				{Name: "max", Required: false, Desc: "Maximum depth; `0` means a flat collection (at least one of min/max)."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_path_depth
+        max: 0`,
+		},
+		{
+			CheckType: config.CheckFilesystemParentDirMatchesFld,
+			Family:    "filesystem",
+			Slug:      "parent-dir-matches-field",
+			Title:     "Parent Directory Matches Field",
+			Summary:   "Require the parent directory name to equal a frontmatter field.",
+			Fields: []Field{
+				{Name: "field", Required: true, Desc: "Frontmatter key compared to the parent directory name."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_parent_dir_matches_field
+        field: category`,
+		},
+		{
+			CheckType: config.CheckFilesystemReferencedFiles,
+			Family:    "filesystem",
+			Slug:      "referenced-files-exist",
+			Title:     "Referenced Files Exist",
+			Summary:   "Require path-valued frontmatter fields to resolve to real files.",
+			Fields: []Field{
+				{Name: "fields", Required: true, Desc: "Frontmatter keys holding a path (string) or list of paths, resolved relative to the item."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_referenced_files_exist
+        fields: [cover, attachments]`,
+		},
+		{
+			CheckType: config.CheckFilesystemUniqueFilename,
+			Family:    "filesystem",
+			Slug:      "unique-filename",
+			Title:     "Unique Filename",
+			Summary:   "Require that no two items in the collection share a basename.",
+			Scope:     "collection",
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_unique_filename`,
+		},
+		{
+			CheckType: config.CheckFilesystemUniqueField,
+			Family:    "filesystem",
+			Slug:      "unique-field",
+			Title:     "Unique Field",
+			Summary:   "Require that no two items share a value for a frontmatter field.",
+			Scope:     "collection",
+			Fields: []Field{
+				{Name: "field", Required: true, Desc: "Frontmatter key whose value must be unique across the collection."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_unique_field
+        field: slug`,
+		},
+		{
+			CheckType: config.CheckFilesystemIndexFileRequired,
+			Family:    "filesystem",
+			Slug:      "index-file-required",
+			Title:     "Index File Required",
+			Summary:   "Require that every directory containing items has an index file.",
+			Scope:     "collection",
+			Fields: []Field{
+				{Name: "name", Required: false, Default: "_index.md", Desc: "Index filename that must be present in each item directory."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: filesystem_index_file_required`,
 		},
 		{
 			CheckType: config.CheckFilesystemExtensionIn,
@@ -301,30 +488,6 @@ collections:
         values: [.md, .markdown]`,
 		},
 		{
-			CheckType: config.CheckFilesystemFilenameKebabCase,
-			Family:    "filesystem",
-			Slug:      "filename-kebab-case",
-			Title:     "Filename Kebab Case",
-			Summary:   "Require lowercase kebab-case filenames (without extension).",
-			ConfigExample: `collections:
-  notes:
-    path: notes
-    checks:
-      - kind: filesystem_filename_kebab_case`,
-		},
-		{
-			CheckType: config.CheckFilesystemNoSpacesInPath,
-			Family:    "filesystem",
-			Slug:      "no-spaces-in-path",
-			Title:     "No Spaces In Path",
-			Summary:   "Disallow spaces anywhere in the file path.",
-			ConfigExample: `collections:
-  notes:
-    path: notes
-    checks:
-      - kind: filesystem_no_spaces_in_path`,
-		},
-		{
 			CheckType: config.CheckFilesystemParentDirIn,
 			Family:    "filesystem",
 			Slug:      "parent-dir-in",
@@ -339,22 +502,6 @@ collections:
     checks:
       - kind: filesystem_parent_dir_in
         values: [books, people]`,
-		},
-		{
-			CheckType: config.CheckFilesystemFilenamePrefix,
-			Family:    "filesystem",
-			Slug:      "filename-prefix",
-			Title:     "Filename Prefix",
-			Summary:   "Require that the filename starts with a specific prefix.",
-			Fields: []Field{
-				{Name: "value", Required: true, Desc: "Required filename prefix."},
-			},
-			ConfigExample: `collections:
-  notes:
-    path: notes
-    checks:
-      - kind: filesystem_filename_prefix
-        value: book-`,
 		},
 	}
 }

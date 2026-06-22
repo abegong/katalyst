@@ -190,3 +190,25 @@ func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 		t.Errorf("expected title/H1 message, got: %q", stderr)
 	}
 }
+
+// A single-item selector must still re-scan the whole collection for a
+// collection-scoped check: selecting just one of two colliding items should
+// still report the duplicate (and name both files).
+func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "notes/a.md"), "---\nslug: dune\n---\n# A\n")
+	mustWrite(t, filepath.Join(dir, "notes/b.md"), "---\nslug: dune\n---\n# B\n")
+
+	// Select only a.md; the duplicate verdict must still consider b.md.
+	_, stderr, err := runRoot(t, "check", "notes/a")
+	if err == nil {
+		t.Fatalf("expected duplicate-slug failure")
+	}
+	if !strings.Contains(stderr, "a.md") || !strings.Contains(stderr, "b.md") {
+		t.Errorf("expected both colliding files named, got: %q", stderr)
+	}
+}

@@ -53,7 +53,7 @@ decisions yourself — the threshold is your judgment, not the tool's:
 | `object_field_numeric_range` / `string_length` | observed bounds | a `min`/`max` or length constraint |
 | `markdown_heading_shape` | single-H1, H1-matches-title, level jumps | `markdown_single_h1`, `markdown_title_matches_h1` |
 | `markdown_sections` | recurring section headings | a `markdown_required_section` |
-| `filesystem_naming` | casing, spaces, extensions | `filesystem_filename_kebab_case`, `filesystem_no_spaces_in_path` |
+| `filesystem_naming` | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
 
 The denominator `n` is always reported, so you decide what "nearly every file"
 means. The outliers — the 17-of-142 `isbn`, the three filenames with spaces —
@@ -80,7 +80,8 @@ path: wiki
 schema: book
 checks:
   - kind: markdown_single_h1
-  - kind: filesystem_filename_kebab_case
+  - kind: filesystem_name_case
+    style: kebab
 ```
 
 See [Add a schema]({{< relref "add-a-schema.md" >}}) for the binding details.

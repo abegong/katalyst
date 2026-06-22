@@ -230,15 +230,17 @@ checks:
   - kind: markdown_required_section
     heading: Summary
   - kind: markdown_code_fence_language_required
-  - kind: filesystem_filename_matches_slug
+  - kind: filesystem_name_matches_field
   - kind: filesystem_extension_in
     values: [.md]
-  - kind: filesystem_filename_kebab_case
-  - kind: filesystem_no_spaces_in_path
+  - kind: filesystem_name_case
+    style: kebab
+  - kind: filesystem_path_charset
+    deny: [" "]
   - kind: filesystem_parent_dir_in
     values: [books, notes]
-  - kind: filesystem_filename_prefix
-    value: book-
+  - kind: filesystem_name_affix
+    prefix: book-
 `,
 	})
 	cfg, err := config.Load(dir)
@@ -259,8 +261,11 @@ checks:
 	if got[6].Type != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
 		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
 	}
-	if got[12].Type != config.CheckFilesystemFilenameMatchesSlug || got[12].Field != "slug" {
-		t.Fatalf("check[12] = %+v, want filesystem default field slug", got[12])
+	if got[12].Type != config.CheckFilesystemNameMatchesField || got[12].Field != "slug" || got[12].Transform != "none" {
+		t.Fatalf("check[12] = %+v, want name_matches_field default field slug, transform none", got[12])
+	}
+	if got[14].Type != config.CheckFilesystemNameCase || got[14].Style != "kebab" {
+		t.Fatalf("check[14] = %+v, want name_case style kebab", got[14])
 	}
 }
 
@@ -297,6 +302,56 @@ checks:
 	}
 	if !strings.Contains(err.Error(), "requires") {
 		t.Fatalf("expected malformed payload error, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
+	cases := map[string]struct{ checks, want string }{
+		"name_case unknown style": {
+			"  - kind: filesystem_name_case\n    style: nope\n", "unknown style",
+		},
+		"name_case unknown target": {
+			"  - kind: filesystem_name_case\n    style: kebab\n    target: nope\n", "unknown target",
+		},
+		"name_affix needs prefix or suffix": {
+			"  - kind: filesystem_name_affix\n", `requires "prefix" or "suffix"`,
+		},
+		"path_charset both allow and deny": {
+			"  - kind: filesystem_path_charset\n    allow: [a]\n    deny: [b]\n", "not both",
+		},
+		"path_charset neither": {
+			"  - kind: filesystem_path_charset\n", `requires "allow" or "deny"`,
+		},
+		"name_matches_field bad transform": {
+			"  - kind: filesystem_name_matches_field\n    transform: shout\n", "must be none or slugify",
+		},
+		"name_regex bad pattern": {
+			"  - kind: filesystem_name_regex\n    pattern: '['\n", "invalid pattern",
+		},
+		"name_length needs a bound": {
+			"  - kind: filesystem_name_length\n", `requires "min" or "max"`,
+		},
+		"path_depth needs a bound": {
+			"  - kind: filesystem_path_depth\n", `requires "min" or "max"`,
+		},
+		"referenced_files needs fields": {
+			"  - kind: filesystem_referenced_files_exist\n", `requires "fields"`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeProject(t, dir, map[string]string{
+				"collections/notes.yaml": "path: notes\nchecks:\n" + tc.checks,
+			})
+			_, err := config.Load(dir)
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected error containing %q, got: %v", tc.want, err)
+			}
+		})
 	}
 }
 

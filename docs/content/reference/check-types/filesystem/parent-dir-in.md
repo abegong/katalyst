@@ -1,6 +1,6 @@
 +++
 title = "Parent Directory In"
-weight = 50
+weight = 140
 aliases = ["/reference/rules/filesystem/parent-dir-in/"]
 +++
 

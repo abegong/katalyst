@@ -37,9 +37,17 @@ Markdown check types validate relationships between frontmatter metadata and mar
 
 Filesystem check types validate filename and path conventions for markdown items.
 
-- [Filename Matches Slug]({{< relref "filesystem/filename-matches-slug.md" >}}) — Require a frontmatter field to match the markdown file basename.
+- [Name Case]({{< relref "filesystem/name-case.md" >}}) — Require a name (or path segments) to follow a case style.
+- [Name Matches Field]({{< relref "filesystem/name-matches-field.md" >}}) — Require a name to equal a frontmatter field, optionally slugified.
+- [Name Affix]({{< relref "filesystem/name-affix.md" >}}) — Require a name to start with a prefix and/or end with a suffix.
+- [Path Charset]({{< relref "filesystem/path-charset.md" >}}) — Constrain the characters allowed in the item's path.
+- [Name Regex]({{< relref "filesystem/name-regex.md" >}}) — Require a name to match a regular expression (anchored).
+- [Name Length]({{< relref "filesystem/name-length.md" >}}) — Bound the character length of a name.
+- [Path Depth]({{< relref "filesystem/path-depth.md" >}}) — Bound directory nesting relative to the collection root.
+- [Parent Directory Matches Field]({{< relref "filesystem/parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
+- [Referenced Files Exist]({{< relref "filesystem/referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
+- [Unique Filename]({{< relref "filesystem/unique-filename.md" >}}) — Require that no two items in the collection share a basename.
+- [Unique Field]({{< relref "filesystem/unique-field.md" >}}) — Require that no two items share a value for a frontmatter field.
+- [Index File Required]({{< relref "filesystem/index-file-required.md" >}}) — Require that every directory containing items has an index file.
 - [Extension In]({{< relref "filesystem/extension-in.md" >}}) — Allow only specific file extensions.
-- [Filename Kebab Case]({{< relref "filesystem/filename-kebab-case.md" >}}) — Require lowercase kebab-case filenames (without extension).
-- [No Spaces In Path]({{< relref "filesystem/no-spaces-in-path.md" >}}) — Disallow spaces anywhere in the file path.
 - [Parent Directory In]({{< relref "filesystem/parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
-- [Filename Prefix]({{< relref "filesystem/filename-prefix.md" >}}) — Require that the filename starts with a specific prefix.

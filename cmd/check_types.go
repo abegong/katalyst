@@ -121,6 +121,11 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 	fmt.Fprintf(out, "%s › %s\n\n", fam.Title, d.Title)
 	fmt.Fprintf(out, "kind:    %s\n", d.CheckType)
 	fmt.Fprintf(out, "family:  %s\n", d.Family)
+	scope := d.Scope
+	if scope == "" {
+		scope = "item"
+	}
+	fmt.Fprintf(out, "scope:   %s\n", scope)
 	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
 	fmt.Fprintf(out, "\n%s\n", fam.Intro)
 

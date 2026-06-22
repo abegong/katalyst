@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/katabase-ai/katalyst/internal/checks"
@@ -140,25 +141,56 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 			checkList = append(checkList, checks.MarkdownRequiredSection{Heading: ch.Heading})
 		case config.CheckMarkdownCodeFenceHasLanguage:
 			checkList = append(checkList, checks.MarkdownCodeFenceHasLanguage{})
-		case config.CheckFilesystemFilenameMatchesSlug:
-			checkList = append(checkList, checks.FilenameMatchesSlug{Field: ch.Field})
 		case config.CheckFilesystemExtensionIn:
 			checkList = append(checkList, checks.FilesystemExtensionIn{Values: ch.Values})
-		case config.CheckFilesystemFilenameKebabCase:
-			checkList = append(checkList, checks.FilesystemFilenameKebabCase{})
-		case config.CheckFilesystemNoSpacesInPath:
-			checkList = append(checkList, checks.FilesystemNoSpacesInPath{})
 		case config.CheckFilesystemParentDirIn:
 			checkList = append(checkList, checks.FilesystemParentDirIn{Values: ch.Values})
-		case config.CheckFilesystemFilenamePrefix:
-			checkList = append(checkList, checks.FilesystemFilenamePrefix{Value: ch.Value})
+		case config.CheckFilesystemNameCase:
+			checkList = append(checkList, checks.NameCase{Style: ch.Style, Target: ch.Target})
+		case config.CheckFilesystemNameMatchesField:
+			checkList = append(checkList, checks.NameMatchesField{Field: ch.Field, Transform: ch.Transform, Target: ch.Target})
+		case config.CheckFilesystemNameAffix:
+			checkList = append(checkList, checks.NameAffix{Prefix: ch.Prefix, Suffix: ch.Suffix, Target: ch.Target})
+		case config.CheckFilesystemPathCharset:
+			checkList = append(checkList, checks.PathCharset{Allow: ch.Allow, Deny: ch.Deny})
+		case config.CheckFilesystemNameRegex:
+			checkList = append(checkList, checks.NameRegex{
+				Re:      regexp.MustCompile(checks.AnchoredPattern(ch.Pattern)),
+				Pattern: ch.Pattern,
+				Target:  ch.Target,
+			})
+		case config.CheckFilesystemNameLength:
+			checkList = append(checkList, checks.NameLength{Min: ch.MinInt, Max: ch.MaxInt, Target: ch.Target})
+		case config.CheckFilesystemPathDepth:
+			checkList = append(checkList, checks.PathDepth{Min: ch.MinInt, Max: ch.MaxInt})
+		case config.CheckFilesystemParentDirMatchesFld:
+			checkList = append(checkList, checks.ParentDirMatchesField{Field: ch.Field})
+		case config.CheckFilesystemReferencedFiles:
+			checkList = append(checkList, checks.ReferencedFilesExist{Fields: ch.Fields})
 		}
 	}
 
-	if len(checkList) == 0 {
+	if len(checkList) == 0 && !c.HasCollectionChecks() {
 		return nil, errors.New("no checks configured for collection")
 	}
 	return checkList, nil
+}
+
+// collectionChecksFor builds the collection-scoped checks configured for a
+// collection. These run once per collection, after the per-item pass.
+func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionCheck {
+	var out []checks.CollectionCheck
+	for _, ch := range c.Checks {
+		switch ch.Type {
+		case config.CheckFilesystemUniqueFilename:
+			out = append(out, checks.UniqueFilename{})
+		case config.CheckFilesystemUniqueField:
+			out = append(out, checks.UniqueField{Field: ch.Field})
+		case config.CheckFilesystemIndexFileRequired:
+			out = append(out, checks.IndexFileRequired{Name: ch.Name})
+		}
+	}
+	return out
 }
 
 // projectFor wraps a loaded config in a project.
