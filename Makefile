@@ -43,10 +43,11 @@ clean:
 docs-gen:
 	go run ./cmd/gendocs
 
-# docs-gen-check fails if the generated check-type reference is out of date.
-# Run in CI so a new check type can't ship without its generated page.
+# docs-gen-check fails if the generated check-type or inspector reference is out
+# of date. Run in CI so a new check type or inspector can't ship without its
+# generated page.
 docs-gen-check: docs-gen
-	git diff --exit-code -- docs/content/reference/check-types
+	git diff --exit-code -- docs/content/reference/check-types docs/content/reference/inspectors
 
 docs-deps:
 	cd $(DOCS_DIR) && $(HUGO) mod get -u $(HUGO_BOOK_MODULE)
