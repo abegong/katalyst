@@ -1,11 +1,13 @@
 # Dogfood katalyst on its own docs
 
-> **Status: planning.** Configure a katalyst project over `docs/content/` and
-> enforce it in CI, so the Hugo docs corpus is validated by the tool it
-> documents (#28). Doing so requires the docs to first be *consistent* — the
-> reorganizations (Explanation → Deep dives, the inspect series) left orphans,
-> broken cross-links, and overlaps — so the cleanup pass (#29) is the
-> precondition, not a separate effort. This spec covers both as one change.
+> **Status: planning. Blocked on #40.** Configure a katalyst project over
+> `docs/content/` and enforce it in CI, so the Hugo docs corpus is validated by
+> the tool it documents (#28). Doing so requires the docs to first be
+> *consistent* — the reorganizations (Explanation → Deep dives, the inspect
+> series) left orphans, broken cross-links, and overlaps — so the cleanup pass
+> (#29) is the precondition, not a separate effort. This spec covers both as one
+> change. **It cannot start until #40 (TOML/JSON frontmatter support) merges**,
+> because katalyst cannot read the docs' TOML frontmatter today.
 
 ## Overview
 
@@ -126,52 +128,63 @@ Hugo shortcodes is a possible later gap — see Gaps — but is **not** in scope
 `filesystem_referenced_files_exist` validates *path-valued frontmatter
 fields*, not inline `relref` shortcodes.)
 
-### Frontmatter format: standardize the docs on YAML
+### Frontmatter format: teach katalyst to read TOML (and JSON), don't convert the docs
 
-Resolving the blocking gap (Current State) two ways:
+The blocking gap is resolved by extending katalyst, not by changing the
+corpus. **#40 adds TOML (`+++`) and JSON frontmatter support to
+`internal/frontmatter`**; this spec depends on it and starts only once it
+merges. The docs stay on TOML — their idiomatic Hugo format — and katalyst
+gains the ability to validate the formats real corpora (Hugo, Obsidian,
+Jekyll) actually use, which is the more valuable outcome than a 62-file
+conversion.
 
-1. **Convert `docs/content/` frontmatter from TOML `+++` to YAML `---`.** Hugo
-   supports YAML frontmatter natively, so this is a mechanical, lossless
-   per-file change with no rendering impact. It makes katalyst's *native*
-   format the docs' format, which also unlocks `fix --check` (canonical
-   frontmatter formatting) on the corpus.
-2. **Add TOML frontmatter support to katalyst.** Broader long-term value, but
-   it is a parser+formatter feature with its own round-trip `fix` semantics —
-   a separate spec, and the wrong thing to block dogfooding on.
-
-**Decision: (1) now, (2) as a follow-up gap issue.** Standardizing the docs on
-YAML unblocks the whole effort immediately and keeps this spec about *config
-and cleanup*, not a parser feature. Multi-format reading is the right
-long-term answer for katalyst-the-tool (Obsidian/Jekyll emit TOML/JSON), so it
-is filed as a gap — but the docs themselves have no reason to stay on TOML.
-See Open Question 1.
+The rejected alternative — convert `docs/content/` from TOML to YAML — would
+have unblocked dogfooding faster but solves the problem in the wrong layer:
+katalyst that can only read YAML is a weaker tool, and the conversion is pure
+churn. See Rejected alternatives.
 
 ### `.katalyst/` layout over the docs
 
 The project root is `docs/content/`, so `.katalyst/` lives at
 `docs/content/.katalyst/` and `make docs-build`/Hugo ignore the dotted dir.
-Collections model the page *types*, because their frontmatter contracts differ
-and a collection carries exactly one schema + check list:
 
-- **`pages`** — ordinary content pages. `pattern` selects `**/*.md` excluding
-  `_index.md`. Schema requires `title` (string) and `weight` (integer).
-- **`sections`** — section landing pages (`pattern: **/_index.md`). Schema
-  requires `title`; `bookCollapseSection` boolean when present. The root
-  `_index.md` (no `weight`) is the one exception the schema must tolerate.
-- Filesystem checks shared by both: `filesystem_name_case` (kebab),
-  `filesystem_extension_in` (`md`).
+**One collection, one unified schema.** Ideally collections would model the
+page *types* — content pages (`title` + `weight`) vs section landing pages
+(`title` + `bookCollapseSection`) — because their contracts differ. The engine
+can't express that today, and the reason is structural:
 
-`internal/project` enumerates with `doublestar` (`project.go:61`), so `**`
-recursive patterns work and **files not matching a collection's pattern are
-reported as errors** (`project.go:79`). That unmatched-as-error rule is the
-sharp edge: every `.md` under a collection's directory must be claimed by some
-pattern, or `check` fails. Modeling page types as overlapping `**` patterns
-under one root needs care — see Open Question 2.
+- A collection carries exactly **one** schema + check list, applied to every
+  item in its subtree.
+- `internal/project` enumerates with `doublestar` (`project.go:61`), and
+  **files not matching a collection's pattern are reported as errors** — via a
+  **recursive** walk of the collection's directory (`Unmatched`,
+  `project.go:84`).
+- doublestar globs have **no negation**, so "all `.md` except `_index.md`" is
+  not one pattern, and two collections rooted at the same subtree would each
+  flag the other's files as unmatched.
 
-The generated check-type pages (`reference/check-types/`, written by
-`make docs-gen`) carry `aliases` and a "GENERATED" banner. They are valid
-content pages and the `pages` schema should accept them (extra keys allowed);
-katalyst does not need a dedicated collection for them. See Open Question 3.
+So a single permissive schema covers the whole tree. One collection rooted at
+`docs/content/` with `pattern: **/*.md` claims every page (no unmatched
+errors), and its schema asserts the **common** contract:
+
+- `title` — required string (true of all 62 pages).
+- `weight` — integer **when present** (optional, because the root `_index.md`
+  has none and section indexes vary).
+- `bookCollapseSection` — boolean when present; `aliases` — array of strings
+  when present; `draft` — boolean when present. Extra keys allowed.
+- Filesystem checks: `filesystem_name_case` (kebab), `filesystem_extension_in`
+  (`md`).
+
+The cost is that `weight` can't be *required* only on content pages — the
+common shape is the strongest schema a single collection can enforce. Closing
+that gap (per-page-type / per-pattern check scoping) is **#41**, filed as a
+follow-up; the unified schema ships now. See Open Question 2 (resolved).
+
+**Generated check-type pages are checked too.** The pages under
+`reference/check-types/` (written by `make docs-gen`) carry `aliases` and a
+"GENERATED" banner. They are claimed by the same `**/*.md` collection and must
+satisfy the unified schema — drift in generated output should fail the build
+like any other page. No exclusion, no dedicated collection.
 
 ### Cleanup pass (#29), landed in the same change
 
@@ -202,25 +215,24 @@ to show the docs themselves as the worked example.
 
 ## Open Questions
 
-1. **TOML vs. YAML frontmatter.** Recommendation above is to convert
-   `docs/content/` to YAML now and file TOML support as a katalyst gap. Confirm
-   before the 62-file conversion lands, since it is a large (if mechanical)
-   diff and the reverse churn if we later prefer TOML is real. Blocks
-   everything else.
-2. **Modeling heterogeneous page types under one root given
-   unmatched-as-error.** Do `pages` (`**/*.md` minus `_index.md`) and
-   `sections` (`**/_index.md`) cleanly partition the tree with no file left
-   unclaimed, given `doublestar` semantics and per-directory collection roots?
-   If overlapping `**` collections under a single root don't compose, fall
-   back to one collection per top-level section (`how-to/`, `reference/`,
-   `deep-dives/`, `contributing/`). Resolve by trial against the real tree.
-3. **Do generated check-type pages get checked?** Folding them into `pages`
-   (extra keys allowed) is simplest; the alternative is excluding
-   `reference/check-types/**` so the generator stays the sole authority.
-   Leaning toward checking them — drift in generated output should fail too.
-4. **One spec or split at implementation.** This spec covers #28 and #29
-   together because cleanup gates enforcement. If the cleanup grows, split the
-   plan into a cleanup phase and an enforcement phase rather than two specs.
+Resolved (folded into the design above):
+
+- **Frontmatter format → extend katalyst, don't convert the docs.** Add TOML
+  and JSON frontmatter support (#40) and keep the docs on TOML. Blocks this
+  spec: #40 must merge first.
+- **Heterogeneous page types under one root → one collection, unified
+  schema.** The engine can't apply different schemas to `_index.md` vs content
+  pages in the same subtree (one schema per collection; recursive
+  unmatched-as-error; no glob negation). Use a single `**/*.md` collection
+  whose schema asserts the common contract (`title` required; `weight` and the
+  other keys optional). Strict per-page-type enforcement is deferred to **#41**.
+- **Generated check-type pages → checked, not excluded.** They satisfy the same
+  unified schema; generated drift should fail like any page.
+- **Scope → one spec.** #28 (enforce) and #29 (clean up) ship together because
+  the cleanup gates enforcement. If the work grows, split the *plan* into a
+  cleanup phase and an enforcement phase — not into two specs.
+
+Still open: _None._
 
 ## Documentation updates
 
@@ -245,31 +257,42 @@ to show the docs themselves as the worked example.
 - **Generated reference** — none; this change adds no check type, so
   `make docs-gen` output is unaffected.
 
-## Gaps to file as follow-up issues (per #28)
+## Gaps surfaced (per #28)
 
-- **TOML (and JSON) frontmatter support** in `internal/frontmatter` — the
-  blocking gap, deferred so dogfooding ships on YAML. Its own spec.
+Filed:
+
+- **#40 — TOML and JSON frontmatter support** in `internal/frontmatter`. The
+  blocking gap; this spec depends on it and starts only after it merges.
+- **#41 — Per-page-type / per-pattern check scoping within a collection.** Why
+  the docs ship with one unified schema instead of strict `_index.md` vs
+  content-page contracts. Non-blocking.
+
+Candidates to file as the first real `check` run surfaces them:
+
 - **Hugo-shortcode-aware link checking** — only if we ever want katalyst (not
   Hugo) to own `relref` integrity; today the Hugo build covers it.
-- **`fix --check` gate on the docs** — second CI gate, once the corpus is
-  confirmed canonical.
-- Any check-set limitations the first real `check` run surfaces (e.g. an
-  "exactly one of these keys" or conditional-required-field shape the docs need
-  but the 18 checks can't express).
+- **`fix --check` gate on the docs** — a second CI gate, once `fix` round-trips
+  TOML (part of #40) and the corpus is confirmed canonical.
+- Any other check-set limitation the run exposes (e.g. a conditional /
+  "exactly one of these keys" frontmatter shape the docs need but the 18 checks
+  can't express).
 
 ## Rejected alternatives
 
-- **Add TOML frontmatter support first, then dogfood.** Correct long-term, but
-  it front-loads a parser feature to unblock a config-and-cleanup task. YAML
-  conversion gets the same dogfooding today; TOML support ships on its own
-  merits later.
+- **Convert the docs from TOML to YAML instead of teaching katalyst TOML.**
+  Faster to unblock, but it solves the problem in the wrong layer: a katalyst
+  that only reads YAML stays a weaker tool, and the 62-file conversion is pure
+  churn with no payoff beyond this repo. Extending the parser (#40) makes
+  katalyst usable on real Hugo/Obsidian/Jekyll corpora, which is the point of
+  dogfooding.
 - **A katalyst check for broken `relref`s.** Duplicates what `make docs-build`
   already enforces in CI. Katalyst should validate what Hugo ignores
   (frontmatter, naming, structure), not re-implement Hugo's resolver.
-- **One catch-all collection over `docs/content/` with one schema.** The page
-  types (content / section index / template) have genuinely different
-  frontmatter contracts; a single permissive schema would assert almost
-  nothing. Separate collections keep each contract honest.
+- **Separate collections per page type (content / section index).** The ideal —
+  each contract enforced strictly — but the engine can't express it: one schema
+  per collection, recursive unmatched-as-error, and no glob negation mean
+  overlapping collections under one root collide. Deferred to #41; the unified
+  schema is the strongest contract a single collection can carry today.
 - **Enforce on a dirty tree and let CI stay red until cleaned.** Turning on a
   gate that fails on day one trains everyone to ignore it. Clean first
   (#29), then gate.
