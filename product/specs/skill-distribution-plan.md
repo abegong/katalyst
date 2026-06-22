@@ -91,14 +91,26 @@ tracks the latest Release.
 ### Phase 4 — Release workflow
 
 1. Add a tag-triggered workflow (`on: push: tags: ['v*']`), separate from the
-   `test` job in `ci.yml`.
-2. Build cross-platform CLI binaries via a GOOS/GOARCH matrix (the current
+   `test` job in `ci.yml`. Also add a `workflow_dispatch` trigger so the job can
+   be **dry-run** from the Actions tab without cutting a tag.
+2. Grant the job `permissions: contents: write` so the built-in `GITHUB_TOKEN`
+   can create the Release and upload assets — **no PAT or repo secret required.**
+   (Caveat: if the org/repo default caps `GITHUB_TOKEN` to read-only and the
+   explicit block is overridden by policy, the upload step 403s; the fix is a
+   repo-admin toggle at Settings → Actions → General → Workflow permissions →
+   "Read and write." Not changeable from here.)
+3. Build cross-platform CLI binaries via a GOOS/GOARCH matrix (the current
    `go build -o bin/katalyst .` is host-only), naming each asset to match what
    the Phase 3 bootstrap fetches (e.g. `katalyst_<os>_<arch>`).
-3. Run `make skills` in the job.
-4. Upload the binaries **and** every `.skill` as assets on the Release for that
+4. Run `make skills` in the job.
+5. Upload the binaries **and** every `.skill` as assets on the Release for that
    tag, in one workflow run.
-5. Leave per-PR CI unchanged.
+6. Leave per-PR CI unchanged.
+
+> **Owner action.** Cutting a real release means pushing a `v*` tag — a
+> deliberate act outside this branch's scope, so it stays with the repo owner
+> (or is done with explicit go-ahead). Everything else in this phase is just the
+> committed workflow file.
 
 ### Phase 5 — Local dev symlink
 
