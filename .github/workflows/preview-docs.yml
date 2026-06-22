@@ -17,10 +17,14 @@ permissions:
   contents: write       # push the built preview to the gh-pages branch
   pull-requests: write  # post/update the preview-link comment
 
-# One preview deploy per PR; newer pushes supersede in-flight builds.
+# Share one concurrency group with deploy-docs.yml so docs pushes to gh-pages
+# are fully serialized — a main deploy and a PR-preview deploy never run at the
+# same time, which otherwise let Pages publish a snapshot missing the preview.
+# cancel-in-progress must stay false here: a global group means cancelling
+# would abort an in-flight main deploy, not just a stale preview for this PR.
 concurrency:
-  group: preview-docs-${{ github.event.number }}
-  cancel-in-progress: true
+  group: gh-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   preview:

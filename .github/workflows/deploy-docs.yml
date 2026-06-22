@@ -17,9 +17,12 @@ on:
 permissions:
   contents: write
 
-# Allow one concurrent deployment; don't cancel an in-progress publish.
+# Serialize every push to gh-pages. preview-docs.yml shares this group so a
+# main deploy and a PR-preview deploy can never push (and trigger Pages builds)
+# at the same time; racing pushes previously left Pages publishing a snapshot
+# that omitted the just-deployed preview. Never cancel an in-progress publish.
 concurrency:
-  group: deploy-docs
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
