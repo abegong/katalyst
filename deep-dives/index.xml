@@ -39,7 +39,19 @@ everything here is what that abstraction grows into.&lt;/p&gt;
 &lt;/blockquote&gt;&lt;h2 id="what-a-connector-is"&gt;What a connector is&lt;a class="anchor" href="#what-a-connector-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;A &lt;strong&gt;connector&lt;/strong&gt; is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: &lt;em&gt;what collections and items does this
-store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
+store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;What &lt;code&gt;katalyst&lt;/code&gt; is &lt;em&gt;about&lt;/em&gt;: the concepts it manipulates, how they relate,
+and which invariants hold across the system. This is the conceptual map.&lt;/p&gt;
+&lt;p&gt;This page is katalyst-specific. For the general, tool-agnostic model these
+concepts instantiate — the same vocabulary applied to a Postgres table or a
+MongoDB collection — see &lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For &lt;em&gt;what&lt;/em&gt; the commands do, see the &lt;a href="https://abegong.github.io/katalyst/getting-started/"&gt;getting-started
+tutorial&lt;/a&gt; and the
+&lt;a href="https://abegong.github.io/katalyst/reference/configuration/"&gt;configuration reference&lt;/a&gt;.
+For &lt;em&gt;why&lt;/em&gt; specific design choices were made, see the per-package &lt;code&gt;README.md&lt;/code&gt;
+files under &lt;code&gt;internal/&lt;/code&gt; (for example &lt;code&gt;internal/config&lt;/code&gt;) and the
+&lt;a href="https://abegong.github.io/katalyst/reference/commands/"&gt;commands&lt;/a&gt; reference. For
+&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
 apart. Knowing which grammar a command belongs to tells you how to invoke it,
 what its selector means, and — when you add a command — where it goes.&lt;/p&gt;

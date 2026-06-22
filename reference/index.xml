@@ -1,50 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Reference on Katalyst Documentation</title><link>https://abegong.github.io/katalyst/reference/</link><description>Recent content in Reference on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/reference/index.xml" rel="self" type="application/rss+xml"/><item><title>Configuration</title><link>https://abegong.github.io/katalyst/reference/configuration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/configuration/</guid><description>&lt;h1 id="configuration"&gt;Configuration&lt;a class="anchor" href="#configuration"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;p&gt;Katalyst reads a single &lt;code&gt;katalyst.yaml&lt;/code&gt;, found by walking upward from the
-current working directory to the nearest ancestor that contains it. That
-directory is the repo root; all relative paths resolve against it.&lt;/p&gt;
+&lt;p&gt;Katalyst reads a &lt;code&gt;.katalyst/&lt;/code&gt; directory, found by walking upward from the
+current working directory to the nearest ancestor that contains one. That
+ancestor is the repo root; all relative paths resolve against it.&lt;/p&gt;
 &lt;p&gt;For &lt;em&gt;why&lt;/em&gt; the config is shaped this way, see &lt;code&gt;internal/config/README.md&lt;/code&gt;. To
 set one up step by step, see &lt;a href="https://abegong.github.io/katalyst/how-to/configure-rules/"&gt;Configure checks for a
 collection&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id="top-level-keys"&gt;Top-level keys&lt;a class="anchor" href="#top-level-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;table&gt;
-	&lt;thead&gt;
-			&lt;tr&gt;
-					&lt;th&gt;Key&lt;/th&gt;
-					&lt;th&gt;Type&lt;/th&gt;
-					&lt;th&gt;Meaning&lt;/th&gt;
-			&lt;/tr&gt;
-	&lt;/thead&gt;
-	&lt;tbody&gt;
-			&lt;tr&gt;
-					&lt;td&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;map&lt;/td&gt;
-					&lt;td&gt;Schema name → path to a JSON Schema file.&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;&lt;code&gt;collections&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;map&lt;/td&gt;
-					&lt;td&gt;Collection name → collection definition (below).&lt;/td&gt;
-			&lt;/tr&gt;
-	&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;schemas&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;book&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/book.json&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;person&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/person.json&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;books&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/books&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;book&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;people&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/people&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;person&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_title_matches_h1&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_matches_field&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="schemas"&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;a class="anchor" href="#schemas"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;A map from a &lt;strong&gt;name&lt;/strong&gt; to a JSON Schema file path. The name is the stable
-public handle used by &lt;code&gt;schema show &amp;lt;name&amp;gt;&lt;/code&gt;, by an inline &lt;code&gt;schema: &amp;lt;name&amp;gt;&lt;/code&gt;
-key in a document&amp;rsquo;s frontmatter, and by a collection&amp;rsquo;s &lt;code&gt;schema:&lt;/code&gt; shorthand.
-Paths are resolved relative to the repo root.&lt;/p&gt;</description></item><item><title>Commands</title><link>https://abegong.github.io/katalyst/reference/commands/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/commands/</guid><description>&lt;h1 id="commands"&gt;Commands&lt;a class="anchor" href="#commands"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="layout"&gt;Layout&lt;a class="anchor" href="#layout"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;.katalyst/
+ config.yaml # optional: query defaults and discovery settings
+ schemas/ # one JSON Schema file per named schema
+ book.json
+ collections/ # one YAML file per named collection
+ books.yaml&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;By default, schemas and collections are discovered by &lt;strong&gt;convention&lt;/strong&gt;: every
+file under &lt;code&gt;schemas/&lt;/code&gt; is a schema whose name is its filename stem
+(&lt;code&gt;book.json&lt;/code&gt; → &lt;code&gt;book&lt;/code&gt;), and every file under &lt;code&gt;collections/&lt;/code&gt; is a collection
+named for its filename stem (&lt;code&gt;books.yaml&lt;/code&gt; → &lt;code&gt;books&lt;/code&gt;). &lt;code&gt;config.yaml&lt;/code&gt; is
+optional; it carries &lt;code&gt;query:&lt;/code&gt; defaults and can switch a kind to &lt;strong&gt;explicit&lt;/strong&gt;
+discovery, listing definitions inline instead of as files.&lt;/p&gt;</description></item><item><title>Commands</title><link>https://abegong.github.io/katalyst/reference/commands/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/commands/</guid><description>&lt;h1 id="commands"&gt;Commands&lt;a class="anchor" href="#commands"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI. Most commands take &lt;strong&gt;selectors&lt;/strong&gt; — nothing (the whole
 project), &lt;code&gt;&amp;lt;collection&amp;gt;&lt;/code&gt;, or &lt;code&gt;&amp;lt;collection&amp;gt;/&amp;lt;item&amp;gt;&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Exit codes are shared across the validating commands:&lt;/p&gt;
@@ -168,7 +140,7 @@ how each term maps onto today&amp;rsquo;s code is documented in the per-package
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Repo root&lt;/strong&gt;&lt;/td&gt;
-					&lt;td&gt;The directory containing &lt;code&gt;katalyst.yaml&lt;/code&gt;; the base for all path resolution.&lt;/td&gt;
+					&lt;td&gt;The directory containing the &lt;code&gt;.katalyst/&lt;/code&gt; config directory; the base for all path resolution.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Resolver&lt;/strong&gt;&lt;/td&gt;
@@ -190,6 +162,6 @@ reference&lt;/a&gt; and &lt;code&gt;katalyst check-types list&lt;/code&gt; enume
 runtime check itself — never &amp;ldquo;validator&amp;rdquo; as a thing users write.&lt;/li&gt;
 &lt;li&gt;Use &lt;strong&gt;frontmatter&lt;/strong&gt; for the on-disk block and &lt;strong&gt;metadata&lt;/strong&gt; for the parsed
 structure; they are not interchangeable.&lt;/li&gt;
-&lt;li&gt;Say &lt;strong&gt;&lt;code&gt;katalyst.yaml&lt;/code&gt;&lt;/strong&gt; or &amp;ldquo;the config&amp;rdquo; rather than an unqualified
+&lt;li&gt;Say &lt;strong&gt;&lt;code&gt;.katalyst/&lt;/code&gt;&lt;/strong&gt; or &amp;ldquo;the config&amp;rdquo; rather than an unqualified
 &amp;ldquo;config&amp;rdquo; when ambiguous.&lt;/li&gt;
 &lt;/ul&gt;</description></item></channel></rss>

@@ -20,17 +20,18 @@ and the loop stays debuggable.&lt;/p&gt;</description></item><item><title>Config
 &lt;p&gt;You have a directory of markdown files and want Katalyst to enforce checks on
 them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
 &lt;h2 id="1-point-a-collection-at-the-directory"&gt;1. Point a collection at the directory&lt;a class="anchor" href="#1-point-a-collection-at-the-directory"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;In &lt;code&gt;katalyst.yaml&lt;/code&gt;, add an entry under &lt;code&gt;collections&lt;/code&gt;. The key is the
-collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;posts&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
+&lt;p&gt;Create a collection file under &lt;code&gt;.katalyst/collections/&lt;/code&gt;. Its filename stem is
+the collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# .katalyst/collections/posts.yaml&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
 omit &lt;code&gt;pattern&lt;/code&gt;, it defaults to &lt;code&gt;*.md&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter —
 required keys, types, ranges. This guide registers a schema and binds it to a
 collection.&lt;/p&gt;
 &lt;h2 id="1-write-the-schema-file"&gt;1. Write the schema file&lt;a class="anchor" href="#1-write-the-schema-file"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;schemas/&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;.katalyst/schemas/&lt;/code&gt;. Its &lt;strong&gt;name&lt;/strong&gt; is
+the filename stem — &lt;code&gt;book.json&lt;/code&gt; registers a schema named &lt;code&gt;book&lt;/code&gt;, with no
+separate registration step:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;$schema&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;https://json-schema.org/draft/2020-12/schema&amp;#34;&lt;/span&gt;,
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;book&amp;#34;&lt;/span&gt;,
@@ -40,9 +41,8 @@ collection.&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minLength&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt; },
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;integer&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minimum&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt; }
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="2-register-it-under-a-name"&gt;2. Register it under a name&lt;a class="anchor" href="#2-register-it-under-a-name"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Add it to the &lt;code&gt;schemas&lt;/code&gt; map. The name — not the path — is the stable handle
-the rest of the config uses:&lt;/p&gt;</description></item><item><title>Validate in CI</title><link>https://abegong.github.io/katalyst/how-to/validate-in-ci/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/validate-in-ci/</guid><description>&lt;h1 id="validate-in-ci"&gt;Validate in CI&lt;a class="anchor" href="#validate-in-ci"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The name — not the path — is the stable handle the rest of the config uses, so
+the file is free to move as long as its stem stays the same.&lt;/p&gt;</description></item><item><title>Validate in CI</title><link>https://abegong.github.io/katalyst/how-to/validate-in-ci/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/validate-in-ci/</guid><description>&lt;h1 id="validate-in-ci"&gt;Validate in CI&lt;a class="anchor" href="#validate-in-ci"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;Run Katalyst in continuous integration so malformed frontmatter and
 non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;/code&gt;.&lt;/p&gt;
 &lt;h2 id="exit-codes"&gt;Exit codes&lt;a class="anchor" href="#exit-codes"&gt;#&lt;/a&gt;&lt;/h2&gt;
@@ -65,7 +65,7 @@ non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;2&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;Usage error (e.g. no &lt;code&gt;katalyst.yaml&lt;/code&gt; found)&lt;/td&gt;
+					&lt;td&gt;Usage error (e.g. no &lt;code&gt;.katalyst/&lt;/code&gt; directory found)&lt;/td&gt;
 			&lt;/tr&gt;
 	&lt;/tbody&gt;
 &lt;/table&gt;

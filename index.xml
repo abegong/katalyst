@@ -17,60 +17,31 @@ agent is the profiler.&lt;/p&gt;
 deciding that a field present in 94% of files should be &lt;code&gt;required&lt;/code&gt;, or that two
 similar directories are one collection, is the agent&amp;rsquo;s call. Keep that division
 and the loop stays debuggable.&lt;/p&gt;</description></item><item><title>Configuration</title><link>https://abegong.github.io/katalyst/reference/configuration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/configuration/</guid><description>&lt;h1 id="configuration"&gt;Configuration&lt;a class="anchor" href="#configuration"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;p&gt;Katalyst reads a single &lt;code&gt;katalyst.yaml&lt;/code&gt;, found by walking upward from the
-current working directory to the nearest ancestor that contains it. That
-directory is the repo root; all relative paths resolve against it.&lt;/p&gt;
+&lt;p&gt;Katalyst reads a &lt;code&gt;.katalyst/&lt;/code&gt; directory, found by walking upward from the
+current working directory to the nearest ancestor that contains one. That
+ancestor is the repo root; all relative paths resolve against it.&lt;/p&gt;
 &lt;p&gt;For &lt;em&gt;why&lt;/em&gt; the config is shaped this way, see &lt;code&gt;internal/config/README.md&lt;/code&gt;. To
 set one up step by step, see &lt;a href="https://abegong.github.io/katalyst/how-to/configure-rules/"&gt;Configure checks for a
 collection&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id="top-level-keys"&gt;Top-level keys&lt;a class="anchor" href="#top-level-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;table&gt;
-	&lt;thead&gt;
-			&lt;tr&gt;
-					&lt;th&gt;Key&lt;/th&gt;
-					&lt;th&gt;Type&lt;/th&gt;
-					&lt;th&gt;Meaning&lt;/th&gt;
-			&lt;/tr&gt;
-	&lt;/thead&gt;
-	&lt;tbody&gt;
-			&lt;tr&gt;
-					&lt;td&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;map&lt;/td&gt;
-					&lt;td&gt;Schema name → path to a JSON Schema file.&lt;/td&gt;
-			&lt;/tr&gt;
-			&lt;tr&gt;
-					&lt;td&gt;&lt;code&gt;collections&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;map&lt;/td&gt;
-					&lt;td&gt;Collection name → collection definition (below).&lt;/td&gt;
-			&lt;/tr&gt;
-	&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;schemas&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;book&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/book.json&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;person&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/person.json&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;books&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/books&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;book&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;people&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/people&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;person&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_title_matches_h1&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_matches_field&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="schemas"&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;a class="anchor" href="#schemas"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;A map from a &lt;strong&gt;name&lt;/strong&gt; to a JSON Schema file path. The name is the stable
-public handle used by &lt;code&gt;schema show &amp;lt;name&amp;gt;&lt;/code&gt;, by an inline &lt;code&gt;schema: &amp;lt;name&amp;gt;&lt;/code&gt;
-key in a document&amp;rsquo;s frontmatter, and by a collection&amp;rsquo;s &lt;code&gt;schema:&lt;/code&gt; shorthand.
-Paths are resolved relative to the repo root.&lt;/p&gt;</description></item><item><title>Configure checks for a collection</title><link>https://abegong.github.io/katalyst/how-to/configure-rules/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/configure-rules/</guid><description>&lt;h1 id="configure-checks-for-a-collection"&gt;Configure checks for a collection&lt;a class="anchor" href="#configure-checks-for-a-collection"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="layout"&gt;Layout&lt;a class="anchor" href="#layout"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;.katalyst/
+ config.yaml # optional: query defaults and discovery settings
+ schemas/ # one JSON Schema file per named schema
+ book.json
+ collections/ # one YAML file per named collection
+ books.yaml&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;By default, schemas and collections are discovered by &lt;strong&gt;convention&lt;/strong&gt;: every
+file under &lt;code&gt;schemas/&lt;/code&gt; is a schema whose name is its filename stem
+(&lt;code&gt;book.json&lt;/code&gt; → &lt;code&gt;book&lt;/code&gt;), and every file under &lt;code&gt;collections/&lt;/code&gt; is a collection
+named for its filename stem (&lt;code&gt;books.yaml&lt;/code&gt; → &lt;code&gt;books&lt;/code&gt;). &lt;code&gt;config.yaml&lt;/code&gt; is
+optional; it carries &lt;code&gt;query:&lt;/code&gt; defaults and can switch a kind to &lt;strong&gt;explicit&lt;/strong&gt;
+discovery, listing definitions inline instead of as files.&lt;/p&gt;</description></item><item><title>Configure checks for a collection</title><link>https://abegong.github.io/katalyst/how-to/configure-rules/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/configure-rules/</guid><description>&lt;h1 id="configure-checks-for-a-collection"&gt;Configure checks for a collection&lt;a class="anchor" href="#configure-checks-for-a-collection"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;You have a directory of markdown files and want Katalyst to enforce checks on
 them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
 &lt;h2 id="1-point-a-collection-at-the-directory"&gt;1. Point a collection at the directory&lt;a class="anchor" href="#1-point-a-collection-at-the-directory"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;In &lt;code&gt;katalyst.yaml&lt;/code&gt;, add an entry under &lt;code&gt;collections&lt;/code&gt;. The key is the
-collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;posts&lt;/span&gt;:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
+&lt;p&gt;Create a collection file under &lt;code&gt;.katalyst/collections/&lt;/code&gt;. Its filename stem is
+the collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# .katalyst/collections/posts.yaml&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
 omit &lt;code&gt;pattern&lt;/code&gt;, it defaults to &lt;code&gt;*.md&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Field Frequency</title><link>https://abegong.github.io/katalyst/reference/inspectors/object/field-frequency/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/inspectors/object/field-frequency/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/inspect/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
 &lt;h2 id="inspector-id"&gt;Inspector ID&lt;a class="anchor" href="#inspector-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;&lt;code&gt;object_field_frequency&lt;/code&gt;&lt;/p&gt;
@@ -234,7 +205,9 @@ make change rare. Rare change creates rigidity.&lt;/p&gt;</description></item><i
 required keys, types, ranges. This guide registers a schema and binds it to a
 collection.&lt;/p&gt;
 &lt;h2 id="1-write-the-schema-file"&gt;1. Write the schema file&lt;a class="anchor" href="#1-write-the-schema-file"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;schemas/&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;.katalyst/schemas/&lt;/code&gt;. Its &lt;strong&gt;name&lt;/strong&gt; is
+the filename stem — &lt;code&gt;book.json&lt;/code&gt; registers a schema named &lt;code&gt;book&lt;/code&gt;, with no
+separate registration step:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;$schema&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;https://json-schema.org/draft/2020-12/schema&amp;#34;&lt;/span&gt;,
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;book&amp;#34;&lt;/span&gt;,
@@ -244,9 +217,8 @@ collection.&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minLength&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt; },
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;integer&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minimum&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt; }
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="2-register-it-under-a-name"&gt;2. Register it under a name&lt;a class="anchor" href="#2-register-it-under-a-name"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Add it to the &lt;code&gt;schemas&lt;/code&gt; map. The name — not the path — is the stable handle
-the rest of the config uses:&lt;/p&gt;</description></item><item><title>Commands</title><link>https://abegong.github.io/katalyst/reference/commands/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/commands/</guid><description>&lt;h1 id="commands"&gt;Commands&lt;a class="anchor" href="#commands"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The name — not the path — is the stable handle the rest of the config uses, so
+the file is free to move as long as its stem stays the same.&lt;/p&gt;</description></item><item><title>Commands</title><link>https://abegong.github.io/katalyst/reference/commands/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/commands/</guid><description>&lt;h1 id="commands"&gt;Commands&lt;a class="anchor" href="#commands"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI. Most commands take &lt;strong&gt;selectors&lt;/strong&gt; — nothing (the whole
 project), &lt;code&gt;&amp;lt;collection&amp;gt;&lt;/code&gt;, or &lt;code&gt;&amp;lt;collection&amp;gt;/&amp;lt;item&amp;gt;&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Exit codes are shared across the validating commands:&lt;/p&gt;
@@ -557,7 +529,7 @@ non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;2&lt;/code&gt;&lt;/td&gt;
-					&lt;td&gt;Usage error (e.g. no &lt;code&gt;katalyst.yaml&lt;/code&gt; found)&lt;/td&gt;
+					&lt;td&gt;Usage error (e.g. no &lt;code&gt;.katalyst/&lt;/code&gt; directory found)&lt;/td&gt;
 			&lt;/tr&gt;
 	&lt;/tbody&gt;
 &lt;/table&gt;
@@ -575,52 +547,19 @@ everything here is what that abstraction grows into.&lt;/p&gt;
 &lt;/blockquote&gt;&lt;h2 id="what-a-connector-is"&gt;What a connector is&lt;a class="anchor" href="#what-a-connector-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;A &lt;strong&gt;connector&lt;/strong&gt; is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: &lt;em&gt;what collections and items does this
-store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/explanation/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/explanation/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
+store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;What &lt;code&gt;katalyst&lt;/code&gt; is &lt;em&gt;about&lt;/em&gt;: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.&lt;/p&gt;
+&lt;p&gt;This page is katalyst-specific. For the general, tool-agnostic model these
+concepts instantiate — the same vocabulary applied to a Postgres table or a
+MongoDB collection — see &lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;For &lt;em&gt;what&lt;/em&gt; the commands do, see the &lt;a href="https://abegong.github.io/katalyst/getting-started/"&gt;getting-started
 tutorial&lt;/a&gt; and the
 &lt;a href="https://abegong.github.io/katalyst/reference/configuration/"&gt;configuration reference&lt;/a&gt;.
-For &lt;em&gt;why&lt;/em&gt; specific design choices were made, see the
-&lt;a href="https://abegong.github.io/katalyst/reference/configuration/"&gt;configuration&lt;/a&gt; and
-&lt;a href="https://abegong.github.io/katalyst/reference/commands/"&gt;commands&lt;/a&gt; reference pages. For
-&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;
-&lt;h2 id="at-a-glance"&gt;At a glance&lt;a class="anchor" href="#at-a-glance"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;pre class="mermaid"&gt;flowchart LR
- subgraph Disk[&amp;#34;On disk&amp;#34;]
- MD[&amp;#34;Markdown file&amp;lt;br/&amp;gt;(frontmatter + body)&amp;#34;]
- SF[&amp;#34;Schema file&amp;lt;br/&amp;gt;(JSON Schema)&amp;#34;]
- CF[&amp;#34;katalyst.yaml&amp;lt;br/&amp;gt;(config)&amp;#34;]
- end
-
- subgraph Parsed[&amp;#34;In memory&amp;#34;]
- DOC[&amp;#34;Document&amp;lt;br/&amp;gt;Meta + Body + Lines&amp;#34;]
- SCH[&amp;#34;Schema&amp;lt;br/&amp;gt;(compiled)&amp;#34;]
- CFG[&amp;#34;Config&amp;lt;br/&amp;gt;Schemas + Collections&amp;#34;]
- end
-
- subgraph Decide[&amp;#34;Schema selection&amp;#34;]
- FLAG[&amp;#34;--schema flag&amp;#34;]
- INLINE[&amp;#34;inline &amp;#39;schema:&amp;#39; key&amp;#34;]
- COL[&amp;#34;collection&amp;#39;s object check&amp;#34;]
- RES[&amp;#34;Resolver&amp;#34;]
- end
-
- MD --&amp;gt; DOC
- SF --&amp;gt; SCH
- CF --&amp;gt; CFG
-
- FLAG --&amp;gt; RES
- INLINE --&amp;gt; RES
- COL --&amp;gt; RES
- CFG --&amp;gt; COL
-
- DOC -- &amp;#34;Meta (minus schema directive)&amp;#34; --&amp;gt; VAL[&amp;#34;Run checks&amp;#34;]
- RES -- &amp;#34;selected Schema&amp;#34; --&amp;gt; VAL
- VAL --&amp;gt; RESULT[&amp;#34;Result&amp;lt;br/&amp;gt;(OK + Violations)&amp;#34;]
- DOC -- &amp;#34;Lines&amp;#34; --&amp;gt; RESULT&lt;/pre&gt;&lt;h2 id="entities"&gt;Entities&lt;a class="anchor" href="#entities"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;h3 id="markdown-document"&gt;Markdown document&lt;a class="anchor" href="#markdown-document"&gt;#&lt;/a&gt;&lt;/h3&gt;
-&lt;p&gt;The unit of work. A file on disk with two optional regions:&lt;/p&gt;</description></item><item><title>Field Enum</title><link>https://abegong.github.io/katalyst/reference/check-types/objects/field-enum/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/check-types/objects/field-enum/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+For &lt;em&gt;why&lt;/em&gt; specific design choices were made, see the per-package &lt;code&gt;README.md&lt;/code&gt;
+files under &lt;code&gt;internal/&lt;/code&gt; (for example &lt;code&gt;internal/config&lt;/code&gt;) and the
+&lt;a href="https://abegong.github.io/katalyst/reference/commands/"&gt;commands&lt;/a&gt; reference. For
+&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;</description></item><item><title>Field Enum</title><link>https://abegong.github.io/katalyst/reference/check-types/objects/field-enum/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/reference/check-types/objects/field-enum/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
 &lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;&lt;code&gt;kind: object_field_enum&lt;/code&gt;&lt;/p&gt;
 &lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
@@ -809,7 +748,7 @@ how each term maps onto today&amp;rsquo;s code is documented in the per-package
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Repo root&lt;/strong&gt;&lt;/td&gt;
-					&lt;td&gt;The directory containing &lt;code&gt;katalyst.yaml&lt;/code&gt;; the base for all path resolution.&lt;/td&gt;
+					&lt;td&gt;The directory containing the &lt;code&gt;.katalyst/&lt;/code&gt; config directory; the base for all path resolution.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Resolver&lt;/strong&gt;&lt;/td&gt;
@@ -831,7 +770,7 @@ reference&lt;/a&gt; and &lt;code&gt;katalyst check-types list&lt;/code&gt; enume
 runtime check itself — never &amp;ldquo;validator&amp;rdquo; as a thing users write.&lt;/li&gt;
 &lt;li&gt;Use &lt;strong&gt;frontmatter&lt;/strong&gt; for the on-disk block and &lt;strong&gt;metadata&lt;/strong&gt; for the parsed
 structure; they are not interchangeable.&lt;/li&gt;
-&lt;li&gt;Say &lt;strong&gt;&lt;code&gt;katalyst.yaml&lt;/code&gt;&lt;/strong&gt; or &amp;ldquo;the config&amp;rdquo; rather than an unqualified
+&lt;li&gt;Say &lt;strong&gt;&lt;code&gt;.katalyst/&lt;/code&gt;&lt;/strong&gt; or &amp;ldquo;the config&amp;rdquo; rather than an unqualified
 &amp;ldquo;config&amp;rdquo; when ambiguous.&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
