@@ -11,10 +11,14 @@ Branch: `claude/practical-mayer-uuo45q` (PR
 Build the distribution machinery first, then fill the skills into it. The
 pipeline (packaging → release upload → install via bootstrap) is the part with
 real failure modes — archive layout, asset upload, binary fetch — so it gets
-stood up and verified against a minimal skill before the four lifecycle skills
-are authored in content. The skill *content* is deliberately the last phase: it
-is the largest writing effort and the least coupled to the build contract, and
-it is the part most likely to keep changing after this branch.
+stood up and verified against a minimal skill before the rest of the family is
+authored in content. The skill *content* is deliberately the last phase: it is
+the largest writing effort and the least coupled to the build contract, and it
+is the part most likely to keep changing after this branch.
+
+The initial family is four skills — `catalog`, `identify-collections`,
+`define-schemas`, and `deploy`. `reshape` is deferred per the spec and is not
+scaffolded here; the additive pipeline takes it later with no rework.
 
 The build contract is the spec's **test checklist**; each phase below lands the
 piece that makes one or more of those boxes pass. Per `AGENTS.md` (behavior
@@ -30,12 +34,14 @@ tracks the latest Release.
 
 ### Phase 1 — Scaffold `skills/` and one real skill
 
-1. Create the top-level `skills/` directory with the five stage folders:
-   `catalog/`, `identify-collections/`, `define-schemas/`, `enforce/`,
-   `reshape/`, each with a `SKILL.md` at its root and a `references/` dir.
-2. Write **`enforce/SKILL.md`** for real (the day-to-day `check`/`fix`/`item`
-   loop) as the pilot skill that exercises the whole pipeline; leave the other
-   four as front-matter-only stubs to be filled in Phase 6.
+1. Create the top-level `skills/` directory with the four skill folders:
+   `catalog/`, `identify-collections/`, `define-schemas/`, `deploy/`, each with
+   a `SKILL.md` at its root and a `references/` dir. (No `reshape/` — deferred.)
+2. Write **`deploy/SKILL.md`** for real — set up automatic enforcement once
+   (install a pre-commit hook running `katalyst check`, or gate directory access
+   through the CLI), *not* a loop the agent re-runs each write — as the pilot
+   skill that exercises the whole pipeline; leave the other three as
+   front-matter-only stubs to be filled in Phase 6.
 3. Add the shared `bootstrap` at `skills/bootstrap.…` as a placeholder that
    Phase 3 fleshes out.
 4. Confirm placement is distinct from `.cursor/skills/` (contributor tooling)
@@ -92,9 +98,9 @@ tracks the latest Release.
 
 ### Phase 6 — Author the remaining skills
 
-1. Fill `catalog/`, `identify-collections/`, `define-schemas/`, and `reshape/`
+1. Fill `catalog/`, `identify-collections/`, and `define-schemas/`
    `SKILL.md`s with real content, self-contained (no references to the
-   `docs/content/how-to/` guides).
+   `docs/content/how-to/` guides). (`deploy/` was authored in Phase 1.)
 2. Wire the **cross-references** between `identify-collections` (points forward
    to `define-schemas`) and `define-schemas` (points back as prerequisite).
 3. Keep each skill's `references/` content scoped to what the agent needs at

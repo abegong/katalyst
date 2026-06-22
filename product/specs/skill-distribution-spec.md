@@ -1,13 +1,15 @@
 # Skill distribution
 
-> **Status: planning.** A family of user-facing katalyst skills — one per
-> lifecycle stage (catalog, define, enforce, reshape), with define split into
-> two cross-referencing skills (identify-collections, define-schemas) —
-> committed under `skills/` and versioned with the CLI. In scope: package each
-> as a `.skill` and attach it to GitHub Releases alongside cross-platform
-> binaries, which the skills' shared bootstrap fetches at install. `make skills`
-> packages them; a tag-triggered release workflow uploads them. Out of scope:
-> marketplace plugins (a later channel) and skill↔CLI version coupling.
+> **Status: planning.** A family of user-facing katalyst skills covering the
+> early content lifecycle — **catalog**, **define** (split into two
+> cross-referencing skills, `identify-collections` and `define-schemas`), and
+> **deploy** (set up automatic enforcement) — committed under `skills/` and
+> versioned with the CLI. (`reshape` is deferred until its content exists; the
+> additive pipeline takes it later with no rework.) In scope: package each as a
+> `.skill` and attach it to GitHub Releases alongside cross-platform binaries,
+> which the skills' shared bootstrap fetches at install. `make skills` packages
+> them; a tag-triggered release workflow uploads them. Out of scope: marketplace
+> plugins (a later channel) and skill↔CLI version coupling.
 
 ## Overview
 
@@ -30,8 +32,8 @@ sourced, packaged, and published through Channel 1 (the `.skill`-on-Releases
 download). Out of scope:
 
 - **The user's deployment cycle** — how an adopter wires katalyst into their
-  environment (a linter on every agent write, a gate in their CI). That is skill
-  *content* — what the **enforce** skill teaches — authored with that skill.
+  environment (a pre-commit hook, a gate on directory access). That is skill
+  *content* — what the **deploy** skill teaches — authored with that skill.
 - **Channel 2, marketplace plugins** — recorded below as the future direction,
   but not built here.
 - **Skill ↔ CLI version coupling** — the bootstrap tracks the latest Release;
@@ -88,19 +90,35 @@ One skill per lifecycle stage, mirroring the "Why Katalyst" feature set:
 | **catalog** | Catalog | Take stock of existing content, map the main concepts, get oriented. |
 | **identify-collections** | Define (1 of 2) | Identify the collections — the object types the knowledge base has repeatable instances of. Points to **define-schemas** as the next step. |
 | **define-schemas** | Define (2 of 2) | Define each collection's schema — the properties and invariants of its items. Points back to **identify-collections** as its prerequisite. |
-| **enforce** | Enforce | Run the day-to-day loop — `check`, `fix`, `item` — to keep content in good shape on every write. |
-| **reshape** | Reshape | Navigate change: add or change checks, restructure content, change the storage layer. |
+| **deploy** | Enforce | Set up automatic enforcement *once* — install a pre-commit hook running `katalyst check`, or gate directory access through the CLI — so structure holds on every write without the agent choosing to run checks. |
 
 Each is a separate job with a different agent posture, so each is a separate
 skill — independently discoverable and installable. The set is additive:
 packaging and the release workflow take whatever skills exist under `skills/`,
 so stages can land one at a time without reworking the pipeline.
 
+**`reshape`** (navigate change: add or change checks, restructure content,
+change the storage layer) is the Reshape stage's skill, **deferred** until the
+content for it exists. It drops in later through the same additive pipeline,
+with no rework.
+
 The define stage is **two discrete skills**, not one: `identify-collections`
 (name the object types) precedes `define-schemas` (formalize each type's
 fields and invariants). They **cross-reference** each other — `identify-collections`
 points forward, `define-schemas` points back — so the two-step flow is explicit
 without merging two jobs an agent invokes at different times into one skill.
+
+### Enforcement is deployed, not invoked
+
+The Enforce stage's skill is **`deploy`**, not a runbook the agent re-runs on
+every write. Relying on an agent to *choose* to run `check`/`fix` each time is
+fragile — the guardrail only holds when it is structural. So `deploy` sets
+enforcement up once and then steps out of the loop: it installs a pre-commit
+hook that runs `katalyst check`, or gates write access to the content directory
+through the CLI, so violations are caught automatically no matter which agent —
+or human — does the writing. The day-to-day enforcement loop needs no skill of
+its own; once deployed, it just runs. (How that wiring is done is the `deploy`
+skill's *content*, out of scope per [Scope](#scope).)
 
 ### Source of truth: `skills/{name}/`
 
@@ -117,10 +135,7 @@ skills/
   define-schemas/
     SKILL.md
     references/
-  enforce/
-    SKILL.md
-    references/
-  reshape/
+  deploy/
     SKILL.md
     references/
   bootstrap.…          # shared CLI provisioning, reused by every skill
@@ -145,8 +160,8 @@ the same tasks, but neither is generated from or depends on the other.
 ### Channel 1 (now): `.skill` on GitHub Releases
 
 A `.skill` is a zip of a skill directory with `SKILL.md` at its root. `make
-skills` produces one `.skill` per skill under `skills/` (e.g. `enforce.skill`,
-`define.skill`); the release workflow attaches them to the GitHub Release for
+skills` produces one `.skill` per skill under `skills/` (e.g. `deploy.skill`,
+`catalog.skill`); the release workflow attaches them to the GitHub Release for
 each tag, beside the CLI binaries. Users download the skill(s) they want from
 the releases page and install through the client's **Settings → Capabilities →
 "Save skill"**. No clone, no Git.
@@ -167,7 +182,7 @@ A `skills` target in the `Makefile` zips each `skills/{name}/` to
 `{name}.skill` with `SKILL.md` at the archive root (not nested under a
 `{name}/` prefix — the client expects `SKILL.md` at the top). It is the single
 packaging entry point, reused by the release job so local and CI packaging are
-identical. A `make skill SKILL=enforce` form packages one. `make clean` removes
+identical. A `make skill SKILL=deploy` form packages one. `make clean` removes
 the `.skill` artifacts alongside `bin/`.
 
 ### Release cycle
@@ -214,6 +229,11 @@ _None — resolved or deferred._ For the record:
   in the `.skill`.
 - **`define` is two skills.** `identify-collections` and `define-schemas` are
   discrete, cross-referencing skills rather than one merged `define` skill.
+- **Enforce ships as `deploy`.** The Enforce stage's skill sets up automatic
+  enforcement (pre-commit hook / CLI-gated access) once, rather than being a
+  loop the agent re-runs each write.
+- **`reshape` deferred.** Dropped from the initial family until its content
+  exists; added later through the additive pipeline.
 - **Channel 1 only.** The `.skill`-on-Releases download is in scope; marketplace
   plugins (Channel 2) are deferred.
 - **Versioning deferred.** Skill↔CLI version coupling is out of scope; the
@@ -223,7 +243,7 @@ _None — resolved or deferred._ For the record:
 
 - **One mega-skill for the whole lifecycle.** Buries most of the lifecycle
   behind whichever job the `SKILL.md` leads with, and forces users to install
-  catalog/reshape machinery to get day-to-day enforcement. A per-stage family
+  catalog/define machinery just to set up enforcement. A per-stage family
   matches the "tools and skills" framing in Why Katalyst and lets users install
   only what they need.
 - **Keep the skills outside the repo (own repo or gists).** Decouples each skill
