@@ -1,0 +1,16 @@
+# Dogfooding: katalyst checks its own Hugo docs (see issues #28, #29).
+#
+# One collection over the whole content tree. The `page` schema asserts the
+# contract common to every page type — content pages, section _index.md files,
+# and the generated check-type reference alike: a non-empty `title`, with
+# `weight`/`draft`/`bookCollapseSection`/`aliases` typed when present.
+#
+# Per-page-type checks can't live here yet: a kebab-case filename check would
+# reject every `_index.md`, and `requires_h1` would reject the generated
+# reference pages. Enforcing those needs per-pattern check scoping — issue #41.
+path: docs/content
+pattern: "**/*.md"
+schema: page
+checks:
+  - kind: filesystem_extension_in
+    values: [.md]

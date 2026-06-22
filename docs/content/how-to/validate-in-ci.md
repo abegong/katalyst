@@ -16,7 +16,7 @@ Both gating commands use the same convention:
 |---|---|
 | `0` | Everything passed |
 | `1` | One or more items failed (validation or formatting) |
-| `2` | Usage error (e.g. no `katalyst.yaml` found) |
+| `2` | Usage error (e.g. no `.katalyst/` directory found) |
 
 ## Gate on validation
 

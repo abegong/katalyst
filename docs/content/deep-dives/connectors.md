@@ -80,7 +80,7 @@ file) are both valid; the connector names which.
 GX shipped both, and they map cleanly onto Katalyst verbs:
 
 - **Configured** — collections and their patterns are declared explicitly
-  (Katalyst's `katalyst.yaml`). This is the `check` path: known structure,
+  (Katalyst's `.katalyst/` config). This is the `check` path: known structure,
   enforced.
 - **Inferred** — collection names and structure are *discovered* by applying
   the pattern to whatever is in the store. This is the `infer` / `profile`

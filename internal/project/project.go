@@ -1,6 +1,6 @@
 // Package project sits on top of internal/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
-// reverse id→path resolution. See docs/explanation/domain-model.md
+// reverse id→path resolution. See docs/content/deep-dives/domain-model.md
 // (selectors, collections, items).
 package project
 
@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/abegong/katalyst/internal/config"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to
@@ -77,7 +77,7 @@ func (p *Project) Items(c config.Collection) ([]Item, error) {
 
 // Unmatched lists files inside a collection's directory that do NOT match
 // its pattern. These are reported as errors by `check` (cf.
-// docs/explanation/configuration.md). Paths are returned relative to Dir.
+// docs/content/reference/configuration.md). Paths are returned relative to Dir.
 func (p *Project) Unmatched(c config.Collection) ([]string, error) {
 	info, err := os.Stat(c.Dir)
 	if err != nil || !info.IsDir() {

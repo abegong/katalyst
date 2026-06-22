@@ -97,7 +97,7 @@ full direction above:
 
 - Filesystem-first CLI.
 - Markdown frontmatter validation via JSON Schema.
-- Config-driven schema resolution through `katalyst.yaml`.
+- Config-driven schema resolution through `.katalyst/`.
 
 The DSL is expected to grow to support validation for object-like data (YAML,
 JSON, SQL-backed records), markdown content, and file/directory structures,

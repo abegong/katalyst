@@ -1,48 +1,49 @@
 # internal/config
 
-Loads `katalyst.yaml`, resolves named schemas and collections, and decides
-which schema applies to a given item. This is the orchestration hub: the
-`check` lifecycle is driven from here.
+Loads a project's `.katalyst/` directory, resolves named schemas and
+collections, and decides which schema applies to a given item. This is the
+orchestration hub: the `check` lifecycle is driven from here.
 
 For the precise key-by-key surface, see the
 [configuration reference](../../docs/content/reference/configuration.md). This
 file is the *why* and the conceptual model behind it.
 
-## Why a single `katalyst.yaml` at the repo root
+## Why a `.katalyst/` directory at the repo root
 
-The config file is `katalyst.yaml`, discovered by walking **up** from the
-working directory to the nearest ancestor that contains it. That directory
-becomes the repo root for all path resolution.
+Configuration lives in a `.katalyst/` directory, discovered by walking **up**
+from the working directory to the nearest ancestor that contains one. That
+ancestor becomes the repo root for all path resolution.
 
-YAML matches what users already write in frontmatter, so there is no second
-format to learn. A nearest-ancestor lookup mirrors `.git`, `.editorconfig`,
-and `go.mod` — familiar and predictable. Discovery resolves symlinks on both
-the root and the input path, because on macOS `$TMPDIR` lives behind
-`/var → /private/var` and relative-path resolution would otherwise produce
-garbage.
+The directory holds an optional `config.yaml`, one schema file per definition
+under `schemas/`, and one collection file per definition under `collections/`.
+A directory (rather than one big file) keeps each schema and collection in its
+own reviewable file and lets the name fall out of the filename by convention.
+A nearest-ancestor lookup mirrors `.git`, `.editorconfig`, and `go.mod` —
+familiar and predictable. Discovery resolves symlinks on both the root and the
+input path, because on macOS `$TMPDIR` lives behind `/var → /private/var` and
+relative-path resolution would otherwise produce garbage.
 
-Whether to also accept JSON config is deferred until someone asks; YAML is
-the only supported format today.
+`config.yaml` is YAML; schema and collection files default to YAML/JSON and the
+accepted format is set per kind there. Default discovery is **convention** (one
+file per definition); a kind can be switched to **explicit** to list its
+definitions inline in `config.yaml` instead.
 
 ## Why named collections
 
-Configuration is two maps:
+By convention, each file under `schemas/` is a schema and each file under
+`collections/` is a collection, named for its filename stem:
 
 ```yaml
-schemas:
-  book: ./schemas/book.json
-collections:
-  books:
-    path: notes/books
-    schema: book
+# .katalyst/collections/books.yaml
+path: notes/books
+schema: book
 ```
 
-`schemas` maps a **name** to a file path; the name is the stable public
-handle (used by `schema show`, by inline `schema:` keys, and by a
-collection's `schema:` shorthand) while the path is free to move. A
-**collection** is a named directory with a filename `pattern` and the checks
-its items must pass. Keeping `schemas` and `collections` separate lets one
-schema back many collections without duplication.
+A schema's **name** is the stable public handle (used by `schema show`, by
+inline `schema:` keys, and by a collection's `schema:` shorthand) while the
+path is free to move. A **collection** is a named directory with a filename
+`pattern` and the checks its items must pass. Keeping schemas and collections
+in separate kinds lets one schema back many collections without duplication.
 
 ### Why this replaced the old anonymous `rules:` list
 
@@ -97,8 +98,8 @@ silence; those are deferred until real usage shows the need.
 ### Config
 
 The single source of truth for "what schemas exist and what each collection
-checks." Lives at `katalyst.yaml` in the **repo root**, discovered by walking
-upward from the working directory. A `config.Config` has:
+checks." Lives in the `.katalyst/` directory at the **repo root**, discovered
+by walking upward from the working directory. A `config.Config` has:
 
 | Field         | Meaning |
 |---------------|---------|
@@ -116,13 +117,12 @@ A **named** group of items backed by a directory. It is the unit you select
 on the command line and the unit that owns a set of checks:
 
 ```yaml
-collections:
-  books:
-    path: notes/books   # directory, relative to the repo root
-    pattern: "*.md"      # filename glob; default "*.md"
-    schema: book         # shorthand for a single object check
-    checks:              # any additional checks
-      - kind: markdown_title_matches_h1
+# .katalyst/collections/books.yaml
+path: notes/books   # directory, relative to the repo root
+pattern: "*.md"      # filename glob; default "*.md"
+schema: book         # shorthand for a single object check
+checks:              # any additional checks
+  - kind: markdown_title_matches_h1
 ```
 
 `path` defaults to the collection name; `pattern` defaults to `*.md`. The
@@ -150,8 +150,9 @@ Selectors are shared by `check`, `fix`, and the `item` subcommands.
 
 A JSON Schema (draft 2020-12 by default) describing the legal shape of a
 document's `Meta`. A schema has two identities: a **path** on disk and a
-**name** registered in `katalyst.yaml`. The name is the stable public handle;
-paths can change. `--schema <path>` bypasses the name layer entirely.
+**name** (by default its filename stem under `.katalyst/schemas/`). The name
+is the stable public handle; paths can change. `--schema <path>` bypasses the
+name layer entirely.
 
 ### Schema directive (`schema:` in frontmatter)
 
@@ -172,8 +173,8 @@ files against the same schema" cost one compile.
 
 The data flow per item, end-to-end:
 
-1. **Load config (or take the `--schema` flag).** Discover `katalyst.yaml`
-   from the working directory; failing to find one is a usage error
+1. **Load config (or take the `--schema` flag).** Discover the `.katalyst/`
+   directory from the working directory; failing to find one is a usage error
    (exit 2).
 2. **Resolve selectors to items.** No selector means every collection; a
    `<collection>` selector means all its items; `<collection>/<item>` means
@@ -181,8 +182,8 @@ The data flow per item, end-to-end:
    are reported as unmatched references (errors).
 3. **Read file bytes.** Read errors are reported per-item but don't abort
    the run; we accumulate exit-1 status and continue.
-4. **Parse frontmatter.** Errors here (malformed YAML, unterminated fence)
-   are per-item failures too. No frontmatter is itself an error.
+4. **Parse frontmatter.** Errors here (malformed YAML/TOML/JSON, unterminated
+   fence) are per-item failures too. No frontmatter is itself an error.
 5. **Resolve the object schema** via the precedence policy above, then
    **strip the `schema:` directive** so user schemas with
    `additionalProperties: false` aren't tripped by katalyst's own metadata.
@@ -196,8 +197,8 @@ The data flow per item, end-to-end:
 
 ## Invariants
 
-1. **Schema names are stable; paths can move.** `katalyst.yaml` is the only
-   place that knows how names map to paths.
+1. **Schema names are stable; paths can move.** The `.katalyst/` config is the
+   only place that knows how names map to paths.
 2. **The `schema:` directive is katalyst metadata, not user data.** It
    influences resolution but never reaches the validator.
 3. **A collection owns its checks; an item belongs to one collection.**
@@ -222,5 +223,5 @@ is *not*:
 - **Schema evolution.** No "this field was renamed in v2" migrations.
   Planned.
 - **Query.** No "find all docs where year > 1980." Planned.
-- **Derived state.** No index, no cache file, no `.katalyst/` directory.
-  Every run is stateless.
+- **Derived state.** No index and no cache file. `.katalyst/` holds only
+  hand-authored config; nothing is generated into it. Every run is stateless.

@@ -41,3 +41,7 @@ jobs:
           extended: true       # Makefile uses the local hugo when it is extended
       - name: Build docs
         run: make docs-build   # fails on REF_NOT_FOUND and other broken refs
+      - name: Validate docs with katalyst (dogfood)
+        run: |
+          make build
+          ./bin/katalyst check   # enforces docs/content/ frontmatter via .katalyst/

@@ -32,7 +32,7 @@ how each term maps onto today's code is documented in the per-package
 | **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |
 | **Corpus** | The set of markdown files under an inspected path, parsed once and shared across inspectors. |
 | **Fingerprint** | The sorted set of a file's frontmatter keys, used by `frontmatter_shape` to group files into candidate collections. |
-| **Repo root** | The directory containing `katalyst.yaml`; the base for all path resolution. |
+| **Repo root** | The directory containing the `.katalyst/` config directory; the base for all path resolution. |
 | **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas. |
 | **Connector** | (Future) the two-way mapping between a backend store and the domain model. The filesystem is the only one today. |
 
@@ -47,5 +47,5 @@ how each term maps onto today's code is documented in the per-package
   runtime check itself — never "validator" as a thing users write.
 - Use **frontmatter** for the on-disk block and **metadata** for the parsed
   structure; they are not interchangeable.
-- Say **`katalyst.yaml`** or "the config" rather than an unqualified
+- Say **`.katalyst/`** or "the config" rather than an unqualified
   "config" when ambiguous.
