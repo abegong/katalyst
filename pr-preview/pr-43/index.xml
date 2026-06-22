@@ -1,0 +1,1202 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Katalyst Documentation</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/</link><description>Recent content on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/pr-preview/pr-43/index.xml" rel="self" type="application/rss+xml"/><item><title>Profile an existing wiki by hand</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/</guid><description>&lt;h1 id="profile-an-existing-wiki-by-hand"&gt;Profile an existing wiki by hand&lt;a class="anchor" href="#profile-an-existing-wiki-by-hand"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;You have a directory of markdown — a vault, a docs tree, a knowledge base —
+and you want a Katalyst schema for it. Rather than guess the conventions,
+&lt;code&gt;inspect&lt;/code&gt; measures them. This guide turns an existing corpus into a draft
+schema &lt;strong&gt;by reading the evidence yourself&lt;/strong&gt;. To hand that judgment to an agent
+instead, see &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/"&gt;Profile an existing wiki with an
+agent&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; is read-only and needs no &lt;code&gt;.katalyst/&lt;/code&gt; project. It reports
+&lt;strong&gt;evidence&lt;/strong&gt; — counts and distributions — never recommendations. Reading the
+evidence and deciding the schema is your call.&lt;/p&gt;</description></item><item><title>Profile an existing wiki with an agent</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/</guid><description>&lt;h1 id="profile-an-existing-wiki-with-an-agent"&gt;Profile an existing wiki with an agent&lt;a class="anchor" href="#profile-an-existing-wiki-with-an-agent"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/"&gt;by-hand guide&lt;/a&gt; has
+you read inspector evidence and decide the schema. This guide hands that
+judgment to an agent: &lt;code&gt;inspect&lt;/code&gt; supplies the measurements, the agent supplies
+the thresholds, the clustering, and the draft. Katalyst is the instrument; the
+agent is the profiler.&lt;/p&gt;
+&lt;p&gt;The split is deliberate. Inspectors are deterministic and never recommend;
+deciding that a field present in 94% of files should be &lt;code&gt;required&lt;/code&gt;, or that two
+similar directories are one collection, is the agent&amp;rsquo;s call. Keep that division
+and the loop stays debuggable.&lt;/p&gt;</description></item><item><title>Configuration</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/configuration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/configuration/</guid><description>&lt;h1 id="configuration"&gt;Configuration&lt;a class="anchor" href="#configuration"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Katalyst reads a single &lt;code&gt;katalyst.yaml&lt;/code&gt;, found by walking upward from the
+current working directory to the nearest ancestor that contains it. That
+directory is the repo root; all relative paths resolve against it.&lt;/p&gt;
+&lt;p&gt;For &lt;em&gt;why&lt;/em&gt; the config is shaped this way, see &lt;code&gt;internal/config/README.md&lt;/code&gt;. To
+set one up step by step, see &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/configure-rules/"&gt;Configure checks for a
+collection&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id="top-level-keys"&gt;Top-level keys&lt;a class="anchor" href="#top-level-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Key&lt;/th&gt;
+					&lt;th&gt;Type&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;map&lt;/td&gt;
+					&lt;td&gt;Schema name → path to a JSON Schema file.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;collections&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;map&lt;/td&gt;
+					&lt;td&gt;Collection name → collection definition (below).&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;schemas&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;book&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/book.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;person&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/person.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;books&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/books&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;book&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;people&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes/people&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;person&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_title_matches_h1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_matches_field&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="schemas"&gt;&lt;code&gt;schemas&lt;/code&gt;&lt;a class="anchor" href="#schemas"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;A map from a &lt;strong&gt;name&lt;/strong&gt; to a JSON Schema file path. The name is the stable
+public handle used by &lt;code&gt;schema show &amp;lt;name&amp;gt;&lt;/code&gt;, by an inline &lt;code&gt;schema: &amp;lt;name&amp;gt;&lt;/code&gt;
+key in a document&amp;rsquo;s frontmatter, and by a collection&amp;rsquo;s &lt;code&gt;schema:&lt;/code&gt; shorthand.
+Paths are resolved relative to the repo root.&lt;/p&gt;</description></item><item><title>Configure checks for a collection</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/configure-rules/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/configure-rules/</guid><description>&lt;h1 id="configure-checks-for-a-collection"&gt;Configure checks for a collection&lt;a class="anchor" href="#configure-checks-for-a-collection"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;You have a directory of markdown files and want Katalyst to enforce checks on
+them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
+&lt;h2 id="1-point-a-collection-at-the-directory"&gt;1. Point a collection at the directory&lt;a class="anchor" href="#1-point-a-collection-at-the-directory"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;In &lt;code&gt;katalyst.yaml&lt;/code&gt;, add an entry under &lt;code&gt;collections&lt;/code&gt;. The key is the
+collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;posts&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
+omit &lt;code&gt;pattern&lt;/code&gt;, it defaults to &lt;code&gt;*.md&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>How we document</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/contributing/how-we-document/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/contributing/how-we-document/</guid><description>&lt;h1 id="how-we-document"&gt;How we document&lt;a class="anchor" href="#how-we-document"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="goals"&gt;Goals&lt;a class="anchor" href="#goals"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Users and contributors both find what they need in one published tree.&lt;/li&gt;
+&lt;li&gt;One source of truth per topic — no drift between duplicate files.&lt;/li&gt;
+&lt;li&gt;Reference that is correct by construction (generated from code).&lt;/li&gt;
+&lt;li&gt;Docs live close to what they describe.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="where-each-kind-of-doc-lives"&gt;Where each kind of doc lives&lt;a class="anchor" href="#where-each-kind-of-doc-lives"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Katalyst keeps documentation in a few homes.&lt;/p&gt;
+&lt;h3 id="docs--the-published-site-hugo"&gt;&lt;code&gt;docs/&lt;/code&gt; — the published site (Hugo)&lt;a class="anchor" href="#docs--the-published-site-hugo"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;The durable home for everything a user needs, organized by
+&lt;a href="https://diataxis.fr/"&gt;Diátaxis&lt;/a&gt; plus a flat &lt;code&gt;contributing/&lt;/code&gt; area:&lt;/p&gt;</description></item><item><title>Name Case</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-case/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-case/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_name_case&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require a name (or path segments) to follow a case style.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;style&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;One of &lt;code&gt;kebab&lt;/code&gt;, &lt;code&gt;snake&lt;/code&gt;, &lt;code&gt;screaming-snake&lt;/code&gt;, &lt;code&gt;camel&lt;/code&gt;, &lt;code&gt;pascal&lt;/code&gt;, &lt;code&gt;point&lt;/code&gt;, &lt;code&gt;lower&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;target&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;What to test: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_case&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;style&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;kebab&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Object Validation</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/object/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/object/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Validate frontmatter metadata against a named JSON Schema from &lt;code&gt;schemas:&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;schema&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Name of an entry in &lt;code&gt;schemas:&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;schemas&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;book&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;./schemas/book.json&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;schema&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;book&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Title Matches H1</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/title-matches-h1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/title-matches-h1/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_title_matches_h1&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require a frontmatter field to match the first H1 heading in the body.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;title&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Frontmatter key compared to the first H1.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_title_matches_h1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;title&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Vision and scope</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/vision/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/vision/</guid><description>&lt;h1 id="vision-and-scope"&gt;Vision and scope&lt;a class="anchor" href="#vision-and-scope"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Traditional data management often forces teams into binary choices:
+structured or unstructured, rigid or chaotic. Katalyst is an experimental
+framework aimed at enabling fast, low-risk evolution through progressive
+typing in the storage layer.&lt;/p&gt;
+&lt;h2 id="database-management-is-risky-and-rigid"&gt;Database management is risky and rigid&lt;a class="anchor" href="#database-management-is-risky-and-rigid"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Backend architecture and database changes are frequently high-risk operations.
+Teams therefore wrap data systems in heavy governance for access control,
+schema changes, and migrations. Those controls are necessary, but the cost can
+make change rare. Rare change creates rigidity.&lt;/p&gt;</description></item><item><title>Why Katalyst?</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/why-katalyst/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/why-katalyst/</guid><description>&lt;h1 id="why-katalyst"&gt;Why Katalyst?&lt;a class="anchor" href="#why-katalyst"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Katalyst is a &lt;em&gt;content consistency layer&lt;/em&gt;, designed for people and agents who curate persistent memory, wikis, and knowledge bases.&lt;/p&gt;
+&lt;p&gt;Katalyst gives you and your agent tools to solve problems like these:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&amp;ldquo;My agent takes a long time to find things, and sometimes burns a ton of tokens.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&amp;ldquo;I&amp;rsquo;ve repeatedly told my agent how to organize content and it still gets it wrong.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&amp;ldquo;Sometimes when I go back and look, I discover that my agent has completely lost important information.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&amp;ldquo;The content in my knowledge base isn&amp;rsquo;t just text. It also includes metadata that I need to be able to categorize, score, filter, sort, etc.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&amp;ldquo;My agent is supposed to store and curate notes for me, but I spend way too much time checking its work.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&amp;ldquo;I want to change how I&amp;rsquo;m storing my data, but migration would be a big pain.&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If you want to be confident that your content/data/memory is always in good shape — even when it&amp;rsquo;s maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter —
+required keys, types, ranges. This guide registers a schema and binds it to a
+collection.&lt;/p&gt;
+&lt;h2 id="1-write-the-schema-file"&gt;1. Write the schema file&lt;a class="anchor" href="#1-write-the-schema-file"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;schemas/&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;$schema&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;https://json-schema.org/draft/2020-12/schema&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;book&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style="color:#e6db74"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;, &lt;span style="color:#e6db74"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minLength&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;integer&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minimum&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="2-register-it-under-a-name"&gt;2. Register it under a name&lt;a class="anchor" href="#2-register-it-under-a-name"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Add it to the &lt;code&gt;schemas&lt;/code&gt; map. The name — not the path — is the stable handle
+the rest of the config uses:&lt;/p&gt;</description></item><item><title>Commands</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/commands/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/commands/</guid><description>&lt;h1 id="commands"&gt;Commands&lt;a class="anchor" href="#commands"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI. Most commands take &lt;strong&gt;selectors&lt;/strong&gt; — nothing (the whole
+project), &lt;code&gt;&amp;lt;collection&amp;gt;&lt;/code&gt;, or &lt;code&gt;&amp;lt;collection&amp;gt;/&amp;lt;item&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Exit codes are shared across the validating commands:&lt;/p&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Code&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Success&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;1&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;One or more items failed&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;2&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Usage error&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="check"&gt;&lt;code&gt;check&lt;/code&gt;&lt;a class="anchor" href="#check"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst check &lt;span style="color:#f92672"&gt;[&lt;/span&gt;selector ...&lt;span style="color:#f92672"&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst check --schema &amp;lt;path&amp;gt; &lt;span style="color:#f92672"&gt;[&lt;/span&gt;selector ...&lt;span style="color:#f92672"&gt;]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Run each selected item&amp;rsquo;s configured checks. Prints &lt;code&gt;path: OK&lt;/code&gt; for valid
+items and &lt;code&gt;path:line: /pointer: message&lt;/code&gt; for violations. &lt;code&gt;--schema/-s&lt;/code&gt;
+overrides object-schema resolution for every selected item. Files inside a
+collection directory that do not match its pattern are reported as unmatched
+references (errors).&lt;/p&gt;</description></item><item><title>Core concepts</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/core-concepts/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/core-concepts/</guid><description>&lt;h1 id="core-concepts"&gt;Core concepts&lt;a class="anchor" href="#core-concepts"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;blockquote class='book-hint '&gt;
+&lt;p&gt;&lt;strong&gt;Status: work in progress.&lt;/strong&gt; This is a deliberately abstract sketch,
+captured as concepts are introduced. It is not about &lt;code&gt;katalyst&lt;/code&gt;
+specifically — katalyst is one instantiation among many. Expect breaking
+revisions until the concepts settle.&lt;/p&gt;
+&lt;/blockquote&gt;&lt;h2 id="goal"&gt;Goal&lt;a class="anchor" href="#goal"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;We tend to think about data in one of two modes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Structured&lt;/strong&gt; — tables with column definitions, schemas, types,
+queries. Databases, warehouses, document stores.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Unstructured&lt;/strong&gt; — files, blobs, free-form text. Filesystems, object
+stores, &amp;ldquo;data lakes.&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Tools, vocabulary, and mental models usually pick a side. A SQL DBA
+and a markdown-vault note-taker have almost no shared language for
+their work, even though the operations they want to perform —
+&lt;em&gt;describe the shape of this data, find data that matches, change it
+safely, check that constraints hold&lt;/em&gt; — are essentially the same.&lt;/p&gt;</description></item><item><title>Getting Started</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/getting-started/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/getting-started/</guid><description>&lt;h2 id="install"&gt;Install&lt;a class="anchor" href="#install"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Install from source:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;git clone https://github.com/abegong/katalyst
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;cd katalyst
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;make build&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="quickstart"&gt;Quickstart&lt;a class="anchor" href="#quickstart"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;mkdir my-notes &lt;span style="color:#f92672"&gt;&amp;amp;&amp;amp;&lt;/span&gt; cd my-notes
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst init
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst check&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;katalyst init&lt;/code&gt; prepares the current directory as a katalyst project:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;.katalyst/config.yaml&lt;/code&gt; — commented project settings&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;.katalyst/schemas/&lt;/code&gt; — one schema per file (empty to start)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;.katalyst/collections/&lt;/code&gt; — one collection per file (empty to start)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It writes no example content. Add a schema under &lt;code&gt;.katalyst/schemas/&lt;/code&gt; and a
+collection under &lt;code&gt;.katalyst/collections/&lt;/code&gt;, then run &lt;code&gt;katalyst check&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Name Matches Field</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-matches-field/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-matches-field/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_name_matches_field&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require a name to equal a frontmatter field, optionally slugified.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;slug&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Frontmatter key compared to the name.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;transform&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;none&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;none&lt;/code&gt; or &lt;code&gt;slugify&lt;/code&gt; (applied to the field value before comparison).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;target&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;What to test: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, or &lt;code&gt;parent-dir&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_matches_field&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;slug&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Required Field</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/required-field/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/required-field/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object_required_field&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that a frontmatter field exists.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key that must be present.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object_required_field&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;year&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Requires H1</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/requires-h1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/requires-h1/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_requires_h1&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require at least one H1 heading in the markdown body.&lt;/p&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_requires_h1&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Field Type</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/field-type/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/field-type/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object_field_type&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that a frontmatter field has a specific type.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key to check.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;type&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;One of &lt;code&gt;string&lt;/code&gt;, &lt;code&gt;boolean&lt;/code&gt;, &lt;code&gt;array&lt;/code&gt;, &lt;code&gt;object&lt;/code&gt;, &lt;code&gt;number&lt;/code&gt;, &lt;code&gt;integer&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object_field_type&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;year&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;type&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;integer&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>How we plan</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/contributing/how-we-plan/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/contributing/how-we-plan/</guid><description>&lt;h1 id="how-we-plan"&gt;How we plan&lt;a class="anchor" href="#how-we-plan"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;How we use specs and plans to design, build, and document changes.&lt;/p&gt;
+&lt;h2 id="two-doc-types"&gt;Two doc types&lt;a class="anchor" href="#two-doc-types"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Spec&lt;/strong&gt; — &lt;em&gt;what&lt;/em&gt; and &lt;em&gt;why&lt;/em&gt;: the problem, the design, domain-model and
+architecture impact, open questions. A spec is a design doc in
+&lt;code&gt;product/specs/{slug}-spec.md&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Plan&lt;/strong&gt; — &lt;em&gt;how&lt;/em&gt;: the step-by-step implementation, broken into phases, that
+references its spec (&lt;code&gt;{slug}-plan.md&lt;/code&gt;). A spec can exist without a plan; a
+plan always references a spec.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For small, well-understood changes, skip the ceremony: a GitHub issue
+capturing the decision is often enough. Don&amp;rsquo;t write a full spec when an issue
+will do.&lt;/p&gt;</description></item><item><title>Name Affix</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-affix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-affix/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_name_affix&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require a name to start with a prefix and/or end with a suffix.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;prefix&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Required name prefix (at least one of prefix/suffix).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;suffix&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Required name suffix (at least one of prefix/suffix).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;target&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;What to test: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, or &lt;code&gt;parent-dir&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_affix&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;prefix&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;book-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Progressive Operations</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;&lt;em&gt;How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn&amp;rsquo;t.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary — each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="tier-1--filesystem"&gt;Tier 1 — Filesystem&lt;a class="anchor" href="#tier-1--filesystem"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;</description></item><item><title>Single H1</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/single-h1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/single-h1/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_single_h1&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that the markdown body contains at most one H1 heading.&lt;/p&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_single_h1&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Validate in CI</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/validate-in-ci/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/validate-in-ci/</guid><description>&lt;h1 id="validate-in-ci"&gt;Validate in CI&lt;a class="anchor" href="#validate-in-ci"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Run Katalyst in continuous integration so malformed frontmatter and
+non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 id="exit-codes"&gt;Exit codes&lt;a class="anchor" href="#exit-codes"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Both gating commands use the same convention:&lt;/p&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Code&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Everything passed&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;1&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;One or more items failed (validation or formatting)&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;2&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Usage error (e.g. no &lt;code&gt;katalyst.yaml&lt;/code&gt; found)&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="gate-on-validation"&gt;Gate on validation&lt;a class="anchor" href="#gate-on-validation"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;katalyst check&lt;/code&gt; over the whole project exits non-zero if any item has a
+violation:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst check&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="gate-on-formatting"&gt;Gate on formatting&lt;a class="anchor" href="#gate-on-formatting"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;katalyst fix --check&lt;/code&gt; writes nothing; it lists items whose frontmatter is
+not canonical and exits &lt;code&gt;1&lt;/code&gt; if any are found:&lt;/p&gt;</description></item><item><title>Connectors</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/connectors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/connectors/</guid><description>&lt;h1 id="connectors"&gt;Connectors&lt;a class="anchor" href="#connectors"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;blockquote class='book-hint '&gt;
+&lt;p&gt;&lt;strong&gt;Status: future — not shipped.&lt;/strong&gt; Captured now because it shapes the seams
+the current code leaves open. Katalyst today ships a single &lt;em&gt;trivial&lt;/em&gt;
+connector (one flat directory, &lt;code&gt;*.md&lt;/code&gt; files, filename stem = item id);
+everything here is what that abstraction grows into.&lt;/p&gt;
+&lt;/blockquote&gt;&lt;h2 id="what-a-connector-is"&gt;What a connector is&lt;a class="anchor" href="#what-a-connector-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;A &lt;strong&gt;connector&lt;/strong&gt; is the two-way mapping between a backend store and the
+Katalyst domain model. It answers: &lt;em&gt;what collections and items does this
+store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/explanation/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/explanation/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;What &lt;code&gt;katalyst&lt;/code&gt; is &lt;em&gt;about&lt;/em&gt;: the concepts it manipulates, how they relate,
+and which invariants hold across the system. This is the conceptual map.&lt;/p&gt;
+&lt;p&gt;For &lt;em&gt;what&lt;/em&gt; the commands do, see the &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/getting-started/"&gt;getting-started
+tutorial&lt;/a&gt; and the
+&lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/reference/configuration/"&gt;configuration reference&lt;/a&gt;.
+For &lt;em&gt;why&lt;/em&gt; specific design choices were made, see the
+&lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/reference/configuration/"&gt;configuration&lt;/a&gt; and
+&lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/reference/commands/"&gt;commands&lt;/a&gt; reference pages. For
+&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;
+&lt;h2 id="at-a-glance"&gt;At a glance&lt;a class="anchor" href="#at-a-glance"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ subgraph Disk[&amp;#34;On disk&amp;#34;]
+ MD[&amp;#34;Markdown file&amp;lt;br/&amp;gt;(frontmatter + body)&amp;#34;]
+ SF[&amp;#34;Schema file&amp;lt;br/&amp;gt;(JSON Schema)&amp;#34;]
+ CF[&amp;#34;katalyst.yaml&amp;lt;br/&amp;gt;(config)&amp;#34;]
+ end
+
+ subgraph Parsed[&amp;#34;In memory&amp;#34;]
+ DOC[&amp;#34;Document&amp;lt;br/&amp;gt;Meta + Body + Lines&amp;#34;]
+ SCH[&amp;#34;Schema&amp;lt;br/&amp;gt;(compiled)&amp;#34;]
+ CFG[&amp;#34;Config&amp;lt;br/&amp;gt;Schemas + Collections&amp;#34;]
+ end
+
+ subgraph Decide[&amp;#34;Schema selection&amp;#34;]
+ FLAG[&amp;#34;--schema flag&amp;#34;]
+ INLINE[&amp;#34;inline &amp;#39;schema:&amp;#39; key&amp;#34;]
+ COL[&amp;#34;collection&amp;#39;s object check&amp;#34;]
+ RES[&amp;#34;Resolver&amp;#34;]
+ end
+
+ MD --&amp;gt; DOC
+ SF --&amp;gt; SCH
+ CF --&amp;gt; CFG
+
+ FLAG --&amp;gt; RES
+ INLINE --&amp;gt; RES
+ COL --&amp;gt; RES
+ CFG --&amp;gt; COL
+
+ DOC -- &amp;#34;Meta (minus schema directive)&amp;#34; --&amp;gt; VAL[&amp;#34;Run checks&amp;#34;]
+ RES -- &amp;#34;selected Schema&amp;#34; --&amp;gt; VAL
+ VAL --&amp;gt; RESULT[&amp;#34;Result&amp;lt;br/&amp;gt;(OK + Violations)&amp;#34;]
+ DOC -- &amp;#34;Lines&amp;#34; --&amp;gt; RESULT&lt;/pre&gt;&lt;h2 id="entities"&gt;Entities&lt;a class="anchor" href="#entities"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;h3 id="markdown-document"&gt;Markdown document&lt;a class="anchor" href="#markdown-document"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;The unit of work. A file on disk with two optional regions:&lt;/p&gt;</description></item><item><title>Field Enum</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/field-enum/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/field-enum/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object_field_enum&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that a field is one of a fixed set of values.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key to check.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;values&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Allowed values.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object_field_enum&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;status&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;values&lt;/span&gt;: [&lt;span style="color:#ae81ff"&gt;draft, published, archived]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>No Heading Level Jumps</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/no-heading-level-jumps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/no-heading-level-jumps/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_no_heading_level_jumps&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Disallow jumps larger than one heading level (for example &lt;code&gt;H1 -&amp;gt; H3&lt;/code&gt;).&lt;/p&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_no_heading_level_jumps&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Path Charset</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/path-charset/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/path-charset/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_path_charset&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Constrain the characters allowed in the item&amp;rsquo;s path.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;deny&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Forbidden substrings (e.g. a space). Use &lt;code&gt;deny&lt;/code&gt; or &lt;code&gt;allow&lt;/code&gt;, not both.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;allow&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;The only permitted characters; the path separator is always allowed.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_path_charset&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;deny&lt;/span&gt;: [&lt;span style="color:#e6db74"&gt;&amp;#34; &amp;#34;&lt;/span&gt;]&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Glossary</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/glossary/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/glossary/</guid><description>&lt;h1 id="glossary"&gt;Glossary&lt;a class="anchor" href="#glossary"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The canonical vocabulary for Katalyst. Use these terms consistently in code,
+docs, and user-facing copy. The general, backend-agnostic vocabulary is
+introduced in &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;;
+how each term maps onto today&amp;rsquo;s code is documented in the per-package
+&lt;code&gt;README.md&lt;/code&gt; files under &lt;code&gt;internal/&lt;/code&gt;. This page is the quick lookup.&lt;/p&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Term&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Frontmatter&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The on-disk metadata block at the top of a markdown file, in YAML (&lt;code&gt;---&lt;/code&gt;), TOML (&lt;code&gt;+++&lt;/code&gt;), or JSON (&lt;code&gt;{ … }&lt;/code&gt;).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Metadata&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The parsed, in-memory structure of the frontmatter (a &lt;code&gt;map[string]any&lt;/code&gt;).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Body&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;Everything after the closing frontmatter fence. Preserved verbatim except by &lt;code&gt;fix&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Document&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A parsed markdown file: frontmatter metadata + body + a line map.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Schema&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A JSON Schema document. Named in &lt;code&gt;schemas:&lt;/code&gt;; located by path.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Schema directive&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The inline &lt;code&gt;schema:&lt;/code&gt; key inside a document&amp;rsquo;s frontmatter, opting it into a named schema.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Collection&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A named entry in &lt;code&gt;collections:&lt;/code&gt; — a directory, a filename &lt;code&gt;pattern&lt;/code&gt;, and the checks its items must pass.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Item&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;One file in a collection that matches its pattern. Its id is the filename stem.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Selector&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;How a command names what to operate on: nothing (whole project), &lt;code&gt;&amp;lt;collection&amp;gt;&lt;/code&gt;, or &lt;code&gt;&amp;lt;collection&amp;gt;/&amp;lt;item&amp;gt;&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Check type&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The reusable definition of a constraint — one entry in the engine&amp;rsquo;s check registry (&lt;code&gt;object_required_field&lt;/code&gt;, &lt;code&gt;markdown_single_h1&lt;/code&gt;, …), selected by its &lt;code&gt;kind:&lt;/code&gt; id. &lt;code&gt;katalyst check-types list&lt;/code&gt; lists them.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Check instance&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;One configured check attached to a collection: a check type plus its arguments (one YAML object under &lt;code&gt;checks:&lt;/code&gt;). It runs against each item (object, markdown, or filesystem family).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Check&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;Shorthand for a check instance when context is unambiguous.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Collection-scoped check&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A check type that runs once per collection over all its items (e.g. &lt;code&gt;filesystem_unique_filename&lt;/code&gt;), rather than per item. It re-scans the full collection even under a single-item selector.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Target&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The slice of a path a filesystem name/path check type tests: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt; (every directory segment plus the basename).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Violation&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;One failed check, reported as &lt;code&gt;path:line: /pointer: message&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Inspector&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Evidence&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The structured result of one inspector: counts and distributions with the file count &lt;code&gt;n&lt;/code&gt; as denominator. Never a recommendation or verdict.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Corpus&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The set of markdown files under an inspected path, parsed once and shared across inspectors.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Fingerprint&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The sorted set of a file&amp;rsquo;s frontmatter keys, used by &lt;code&gt;frontmatter_shape&lt;/code&gt; to group files into candidate collections.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Repo root&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The directory containing &lt;code&gt;katalyst.yaml&lt;/code&gt;; the base for all path resolution.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Resolver&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The runtime object that decides which object schema applies to an item and caches compiled schemas.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Connector&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;(Future) the two-way mapping between a backend store and the domain model. The filesystem is the only one today.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="usage-notes"&gt;Usage notes&lt;a class="anchor" href="#usage-notes"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;A &lt;strong&gt;check type&lt;/strong&gt; is the definition; a &lt;strong&gt;check instance&lt;/strong&gt; is that check type
+configured in a collection and run against a specific item, and a
+&lt;strong&gt;violation&lt;/strong&gt; is a check that failed. The &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/"&gt;check types
+reference&lt;/a&gt; and &lt;code&gt;katalyst check-types list&lt;/code&gt; enumerate check types.&lt;/li&gt;
+&lt;li&gt;Prefer &lt;strong&gt;schema&lt;/strong&gt; for what users author and &lt;strong&gt;validator&lt;/strong&gt; only for the
+runtime check itself — never &amp;ldquo;validator&amp;rdquo; as a thing users write.&lt;/li&gt;
+&lt;li&gt;Use &lt;strong&gt;frontmatter&lt;/strong&gt; for the on-disk block and &lt;strong&gt;metadata&lt;/strong&gt; for the parsed
+structure; they are not interchangeable.&lt;/li&gt;
+&lt;li&gt;Say &lt;strong&gt;&lt;code&gt;katalyst.yaml&lt;/code&gt;&lt;/strong&gt; or &amp;ldquo;the config&amp;rdquo; rather than an unqualified
+&amp;ldquo;config&amp;rdquo; when ambiguous.&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
+apart. Knowing which grammar a command belongs to tells you how to invoke it,
+what its selector means, and — when you add a command — where it goes.&lt;/p&gt;
+&lt;h2 id="two-families"&gt;Two families&lt;a class="anchor" href="#two-families"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;A top-level command is exactly one of two kinds.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Blessed verbs&lt;/strong&gt; operate &lt;em&gt;over&lt;/em&gt; content. The verb names a cross-cutting
+operation; a &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/reference/commands/"&gt;selector&lt;/a&gt; picks the
+targets at any depth, and several may be passed at once:&lt;/p&gt;</description></item><item><title>Name Regex</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-regex/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-regex/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_name_regex&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require a name to match a regular expression (anchored).&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;pattern&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Regular expression; matched anchored (&lt;code&gt;^pattern$&lt;/code&gt;).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;target&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;What to test: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_regex&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;pattern&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#39;[0-9]{4}-[a-z-]+&amp;#39;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Number Range</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/number-range/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/number-range/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object_number_range&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Constrain a numeric field to a minimum and/or maximum value.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key to check.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;min&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Inclusive lower bound. At least one of &lt;code&gt;min&lt;/code&gt;/&lt;code&gt;max&lt;/code&gt; is required.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;max&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Inclusive upper bound. At least one of &lt;code&gt;min&lt;/code&gt;/&lt;code&gt;max&lt;/code&gt; is required.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object_number_range&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;year&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;min&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1900&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;max&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;2100&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Required Section</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/required-section/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/required-section/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_required_section&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that a heading with specific text exists somewhere in the body.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;heading&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Heading text that must appear.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_required_section&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;heading&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;Summary&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Code Fence Language Required</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/code-fence-language-required/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/markdown/code-fence-language-required/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: markdown_code_fence_language_required&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that opening fenced code blocks include a language tag.&lt;/p&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;markdown_code_fence_language_required&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Name Length</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-length/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/name-length/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_name_length&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Bound the character length of a name.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;min&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Minimum length (at least one of min/max).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;max&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Maximum length (at least one of min/max).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;target&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;What to test: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt;.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_name_length&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;max&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;80&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>String Length</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/string-length/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/objects/string-length/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: object_string_length&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Constrain the minimum and/or maximum length of a string field.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key to check.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;min_length&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Minimum length. At least one of &lt;code&gt;min_length&lt;/code&gt;/&lt;code&gt;max_length&lt;/code&gt; is required.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;max_length&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Maximum length. At least one of &lt;code&gt;min_length&lt;/code&gt;/&lt;code&gt;max_length&lt;/code&gt; is required.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;object_string_length&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;title&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;min_length&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;3&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;max_length&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;120&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Path Depth</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/path-depth/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/path-depth/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_path_depth&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Bound directory nesting relative to the collection root.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;min&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Minimum depth (at least one of min/max).&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;max&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Maximum depth; &lt;code&gt;0&lt;/code&gt; means a flat collection (at least one of min/max).&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_path_depth&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;max&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Parent Directory Matches Field</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/parent-dir-matches-field/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/parent-dir-matches-field/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_parent_dir_matches_field&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require the parent directory name to equal a frontmatter field.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key compared to the parent directory name.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_parent_dir_matches_field&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;category&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Referenced Files Exist</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/referenced-files-exist/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/referenced-files-exist/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_referenced_files_exist&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require path-valued frontmatter fields to resolve to real files.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;fields&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter keys holding a path (string) or list of paths, resolved relative to the item.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_referenced_files_exist&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;fields&lt;/span&gt;: [&lt;span style="color:#ae81ff"&gt;cover, attachments]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Unique Filename</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/unique-filename/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/unique-filename/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_unique_filename&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Scope:&lt;/strong&gt; collection — runs once per collection over all its items.&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that no two items in the collection share a basename.&lt;/p&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_unique_filename&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Unique Field</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/unique-field/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/unique-field/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_unique_field&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Scope:&lt;/strong&gt; collection — runs once per collection over all its items.&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that no two items share a value for a frontmatter field.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;field&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Frontmatter key whose value must be unique across the collection.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_unique_field&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;field&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;slug&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Index File Required</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/index-file-required/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/index-file-required/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_index_file_required&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Scope:&lt;/strong&gt; collection — runs once per collection over all its items.&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that every directory containing items has an index file.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;name&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;no&lt;/td&gt;
+					&lt;td&gt;&lt;code&gt;_index.md&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Index filename that must be present in each item directory.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_index_file_required&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Extension In</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/extension-in/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/extension-in/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_extension_in&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Allow only specific file extensions.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;values&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Allowed extensions, including the leading dot.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;pattern&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;*&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_extension_in&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;values&lt;/span&gt;: [&lt;span style="color:#ae81ff"&gt;.md, .markdown]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>Parent Directory In</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/parent-dir-in/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/reference/check-types/filesystem/parent-dir-in/</guid><description>&lt;!-- GENERATED by cmd/gendocs from internal/checks/registry.go. Do not edit by hand; run `make docs-gen`. --&gt;
+&lt;h2 id="check-type-id"&gt;Check type ID&lt;a class="anchor" href="#check-type-id"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;kind: filesystem_parent_dir_in&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id="purpose"&gt;Purpose&lt;a class="anchor" href="#purpose"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Require that the file&amp;rsquo;s parent directory name is in an allowed set.&lt;/p&gt;
+&lt;h2 id="configuration-keys"&gt;Configuration keys&lt;a class="anchor" href="#configuration-keys"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Field&lt;/th&gt;
+					&lt;th&gt;Required&lt;/th&gt;
+					&lt;th&gt;Default&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;values&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;yes&lt;/td&gt;
+					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;Allowed parent directory names.&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="example"&gt;Example&lt;a class="anchor" href="#example"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;notes&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;notes&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;checks&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; - &lt;span style="color:#f92672"&gt;kind&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;filesystem_parent_dir_in&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;values&lt;/span&gt;: [&lt;span style="color:#ae81ff"&gt;books, people]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item></channel></rss>

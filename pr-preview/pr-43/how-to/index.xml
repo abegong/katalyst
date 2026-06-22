@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>How-to guides on Katalyst Documentation</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/</link><description>Recent content in How-to guides on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/index.xml" rel="self" type="application/rss+xml"/><item><title>Profile an existing wiki by hand</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/</guid><description>&lt;h1 id="profile-an-existing-wiki-by-hand"&gt;Profile an existing wiki by hand&lt;a class="anchor" href="#profile-an-existing-wiki-by-hand"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;You have a directory of markdown — a vault, a docs tree, a knowledge base —
+and you want a Katalyst schema for it. Rather than guess the conventions,
+&lt;code&gt;inspect&lt;/code&gt; measures them. This guide turns an existing corpus into a draft
+schema &lt;strong&gt;by reading the evidence yourself&lt;/strong&gt;. To hand that judgment to an agent
+instead, see &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/"&gt;Profile an existing wiki with an
+agent&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; is read-only and needs no &lt;code&gt;.katalyst/&lt;/code&gt; project. It reports
+&lt;strong&gt;evidence&lt;/strong&gt; — counts and distributions — never recommendations. Reading the
+evidence and deciding the schema is your call.&lt;/p&gt;</description></item><item><title>Profile an existing wiki with an agent</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-with-an-agent/</guid><description>&lt;h1 id="profile-an-existing-wiki-with-an-agent"&gt;Profile an existing wiki with an agent&lt;a class="anchor" href="#profile-an-existing-wiki-with-an-agent"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;The &lt;a href="https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/profile-an-existing-wiki-by-hand/"&gt;by-hand guide&lt;/a&gt; has
+you read inspector evidence and decide the schema. This guide hands that
+judgment to an agent: &lt;code&gt;inspect&lt;/code&gt; supplies the measurements, the agent supplies
+the thresholds, the clustering, and the draft. Katalyst is the instrument; the
+agent is the profiler.&lt;/p&gt;
+&lt;p&gt;The split is deliberate. Inspectors are deterministic and never recommend;
+deciding that a field present in 94% of files should be &lt;code&gt;required&lt;/code&gt;, or that two
+similar directories are one collection, is the agent&amp;rsquo;s call. Keep that division
+and the loop stays debuggable.&lt;/p&gt;</description></item><item><title>Configure checks for a collection</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/configure-rules/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/configure-rules/</guid><description>&lt;h1 id="configure-checks-for-a-collection"&gt;Configure checks for a collection&lt;a class="anchor" href="#configure-checks-for-a-collection"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;You have a directory of markdown files and want Katalyst to enforce checks on
+them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
+&lt;h2 id="1-point-a-collection-at-the-directory"&gt;1. Point a collection at the directory&lt;a class="anchor" href="#1-point-a-collection-at-the-directory"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;In &lt;code&gt;katalyst.yaml&lt;/code&gt;, add an entry under &lt;code&gt;collections&lt;/code&gt;. The key is the
+collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;collections&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;posts&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
+omit &lt;code&gt;pattern&lt;/code&gt;, it defaults to &lt;code&gt;*.md&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter —
+required keys, types, ranges. This guide registers a schema and binds it to a
+collection.&lt;/p&gt;
+&lt;h2 id="1-write-the-schema-file"&gt;1. Write the schema file&lt;a class="anchor" href="#1-write-the-schema-file"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;schemas/&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;$schema&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;https://json-schema.org/draft/2020-12/schema&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;book&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style="color:#e6db74"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;, &lt;span style="color:#e6db74"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minLength&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;integer&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minimum&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="2-register-it-under-a-name"&gt;2. Register it under a name&lt;a class="anchor" href="#2-register-it-under-a-name"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Add it to the &lt;code&gt;schemas&lt;/code&gt; map. The name — not the path — is the stable handle
+the rest of the config uses:&lt;/p&gt;</description></item><item><title>Validate in CI</title><link>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/validate-in-ci/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/pr-preview/pr-43/how-to/validate-in-ci/</guid><description>&lt;h1 id="validate-in-ci"&gt;Validate in CI&lt;a class="anchor" href="#validate-in-ci"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Run Katalyst in continuous integration so malformed frontmatter and
+non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;/code&gt;.&lt;/p&gt;
+&lt;h2 id="exit-codes"&gt;Exit codes&lt;a class="anchor" href="#exit-codes"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;Both gating commands use the same convention:&lt;/p&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Code&lt;/th&gt;
+					&lt;th&gt;Meaning&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Everything passed&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;1&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;One or more items failed (validation or formatting)&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;code&gt;2&lt;/code&gt;&lt;/td&gt;
+					&lt;td&gt;Usage error (e.g. no &lt;code&gt;katalyst.yaml&lt;/code&gt; found)&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id="gate-on-validation"&gt;Gate on validation&lt;a class="anchor" href="#gate-on-validation"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;katalyst check&lt;/code&gt; over the whole project exits non-zero if any item has a
+violation:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;katalyst check&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="gate-on-formatting"&gt;Gate on formatting&lt;a class="anchor" href="#gate-on-formatting"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;katalyst fix --check&lt;/code&gt; writes nothing; it lists items whose frontmatter is
+not canonical and exits &lt;code&gt;1&lt;/code&gt; if any are found:&lt;/p&gt;</description></item></channel></rss>
