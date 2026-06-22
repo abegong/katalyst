@@ -19,7 +19,7 @@
   restructuring + command reorganization** around a new collection/item
   domain layer.
 
-Module path: `github.com/katabase-ai/katalyst`.
+Module path: `github.com/abegong/katalyst`.
 
 ## What stays vs. what changes
 

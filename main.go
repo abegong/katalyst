@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/katabase-ai/katalyst/cmd"
+	"github.com/abegong/katalyst/cmd"
 )
 
 func main() {

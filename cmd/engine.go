@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
-	"github.com/katabase-ai/katalyst/internal/config"
-	"github.com/katabase-ai/katalyst/internal/project"
-	"github.com/katabase-ai/katalyst/internal/validator"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/validator"
 )
 
 // engine resolves and compiles the checks for an item. It loads the

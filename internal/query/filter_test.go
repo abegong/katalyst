@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/query"
 )
 
 // filterIDs parses the given filter expressions, applies them, and returns

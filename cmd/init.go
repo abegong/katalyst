@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/katabase-ai/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/config"
 	"github.com/spf13/cobra"
 )
 

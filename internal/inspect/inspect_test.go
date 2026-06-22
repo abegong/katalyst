@@ -3,8 +3,8 @@ package inspect_test
 import (
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/inspect"
 )
 
 // file parses src into a Corpus File, recording any parse error just as

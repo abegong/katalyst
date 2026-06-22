@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/frontmatter"
 )
 
 func TestFormat_sortsTopLevelKeys(t *testing.T) {

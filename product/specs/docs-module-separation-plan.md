@@ -22,7 +22,7 @@ mechanical phase, verified by a successful `hugo build`.
 ### Phase 1 — Stand up the docs module (no content move yet)
 
 1. Create `docs/go.mod` with module path
-   `github.com/katabase-ai/katalyst/docs` (`go mod init` in `docs/`, or
+   `github.com/abegong/katalyst/docs` (`go mod init` in `docs/`, or
    `hugo mod init`).
 2. Move `hugo.yaml` from the repo root to `docs/hugo.yaml`.
 3. From `docs/`, run `hugo mod get -u github.com/alex-shpak/hugo-book` so

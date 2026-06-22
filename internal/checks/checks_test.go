@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
-	"github.com/katabase-ai/katalyst/internal/validator"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/validator"
 )
 
 func ptr(v float64) *float64 { return &v }

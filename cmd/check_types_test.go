@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks"
 )
 
 func TestCheckTypes_listsEveryTypeGroupedByFamily(t *testing.T) {

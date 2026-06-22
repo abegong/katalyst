@@ -3,7 +3,7 @@ package inspect_test
 import (
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/inspect"
 )
 
 // TestRegistryParity is the no-orphan guarantee: every inspector in All() has a

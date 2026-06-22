@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/katabase-ai/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/frontmatter"
 )
 
 // File is one markdown file in a Corpus: its path relative to the scope root,

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/cmd"
+	"github.com/abegong/katalyst/cmd"
 )
 
 // runRoot builds a fresh command tree, runs it with args, and captures

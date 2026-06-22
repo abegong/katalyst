@@ -5,9 +5,9 @@ import (
 	"io"
 	"sort"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
-	"github.com/katabase-ai/katalyst/internal/config"
-	"github.com/katabase-ai/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
 )
 

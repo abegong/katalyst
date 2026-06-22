@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/katabase-ai/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks"
 	"github.com/spf13/cobra"
 )
 

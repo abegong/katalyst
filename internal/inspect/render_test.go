@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/inspect"
+	"github.com/abegong/katalyst/internal/inspect"
 )
 
 func renderInput(t *testing.T) []inspect.Evidence {

@@ -1,6 +1,6 @@
 package checks
 
-import "github.com/katabase-ai/katalyst/internal/config"
+import "github.com/abegong/katalyst/internal/config"
 
 // This file is the single source of truth for the check-type reference
 // documentation. Every check type dispatched in config.normalizeCheck must

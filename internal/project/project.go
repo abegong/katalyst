@@ -12,7 +12,7 @@ import (
 	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/katabase-ai/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/config"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to

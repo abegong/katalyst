@@ -63,7 +63,7 @@ katalyst/
 
 - Hugo site root → `docs/`; the markdown currently at `docs/*.md` moves
   under `docs/content/` (Hugo's default `contentDir`).
-- Docs module path: `github.com/katabase-ai/katalyst/docs` (any valid
+- Docs module path: `github.com/abegong/katalyst/docs` (any valid
   module path works; this one is conventional and self-documenting).
 - `baseURL` and published-site structure stay identical; only the *source*
   tree moves.

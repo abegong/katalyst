@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/katabase-ai/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/query"
 )
 
 // sortIDs parses the sort spec, applies it, and returns the ordered ids.
