@@ -1,0 +1,26 @@
+# Netlify hosts the per-PR docs previews (Deploy Previews). Production docs are
+# published separately by GitHub Pages (Settings > Pages Source: "GitHub
+# Actions"); Netlify is only used because a GitHub-Actions-sourced Pages site
+# serves a single site and can't host per-PR previews.
+#
+# Connect the repo via Netlify's GitHub App (New site > import from GitHub).
+# No tokens or GitHub secrets are needed; the App handles auth and posts the
+# preview URL on each PR. The Netlify production deploy of `main` is redundant
+# with GitHub Pages and can be ignored (or disabled in the Netlify UI).
+
+[build]
+  base = "docs"            # Hugo site lives in docs/ (hugo.yaml, content/)
+  publish = "public"       # relative to base -> docs/public
+  command = "hugo --gc --minify"
+
+[build.environment]
+  HUGO_VERSION = "0.163.3" # match the version CI builds with
+  GO_VERSION = "1.25"      # required so Hugo can resolve the hugo-book module
+
+# Set baseURL to the deploy's own URL so links resolve in previews. For Deploy
+# Previews this is the stable per-PR URL; for branch deploys, the branch URL.
+[context.deploy-preview]
+  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
+
+[context.branch-deploy]
+  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
