@@ -13,8 +13,8 @@ tutorial]({{< relref "../getting-started.md" >}}) and the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
 For *why* specific design choices were made, see the
 [configuration]({{< relref "configuration.md" >}}) and
-[formatting]({{< relref "formatting.md" >}}) explanation pages. For *how the
-code is laid out*, see the repo's `AGENTS.md` files.
+[commands]({{< relref "../reference/commands.md" >}}) reference pages. For
+*how the code is laid out*, see the repo's `AGENTS.md` files.
 
 ## At a glance
 
@@ -242,8 +242,8 @@ The descriptive dual of a check, in `internal/inspect`. A check asks "does
 this item satisfy a predicate?" and returns violations; an **inspector** asks
 "what is the distribution of this aspect across the corpus?" and returns
 **evidence** — counts and distributions with the file count `n` as the
-denominator. It realizes the `aggregate` operation from the [general
-model]({{< relref "general-model.md" >}}).
+denominator. It realizes the `aggregate` operation from the [core
+concepts]({{< relref "../deep-dives/core-concepts.md" >}}).
 
 Inspectors are read-only and never recommend. They report that `status` is
 present in 142 of 142 files with three distinct values; deciding that this
@@ -299,7 +299,7 @@ Much simpler. For each item:
    atomically rewrite (temp file + rename) — or, with `--check`, print the
    path and accumulate exit-1 status.
 
-See [Formatting]({{< relref "formatting.md" >}}) for why `fix` is
+See [Commands]({{< relref "../reference/commands.md" >}}) for why `fix` is
 opinionated and why it refuses to inject missing values.
 
 ## Invariants
