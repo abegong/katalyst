@@ -129,8 +129,9 @@ tracks the latest Release.
 3. Run the verification checklist below.
 4. Per `docs/content/contributing/how-we-plan.md`:
    on **done**, graduate durable content — fold the locked rationale (one
-   committed source, fetch-not-embed, per-stage family, Channel 1 first) into
-   the relevant `docs/deep-dives/` page, add any new vocabulary to the glossary,
+   committed source, fetch-not-embed, the lifecycle skill family with the
+   `katalyst-` naming convention, deploy-as-setup, Channel 1 first) into the
+   relevant `docs/deep-dives/` page, add any new vocabulary to the glossary,
    point `README.md` at the skills download, then retire this spec + plan.
 
 ## Verification checklist
