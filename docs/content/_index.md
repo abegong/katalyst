@@ -4,6 +4,10 @@ title = "Katalyst Documentation"
 
 # Katalyst
 
+{{< hint warning >}}
+**Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet — but I'd genuinely love your feedback as it takes shape.
+{{< /hint >}}
+
 Katalyst is a **content consistency layer**: schemas and checks that live with
 your content and keep its structure steady as it grows — built for the content
 AI agents manage. [Why Katalyst]({{< relref "why-katalyst.md" >}}) makes the
