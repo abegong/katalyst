@@ -1,0 +1,24 @@
+check parses each selected item's frontmatter (YAML, TOML, or JSON)
+and runs the checks configured for its collection under .katalyst/collections/.
+
+Selectors (see docs/explanation/domain-model.md):
+
+  (none)                the whole project (every collection)
+  <collection>          one collection (all its items)
+  <collection>/<item>   one item
+
+Object-schema resolution, highest precedence first:
+
+  1. --schema <path>      (applies to every selected item)
+  2. inline "schema:" key in the item's frontmatter (a name from config)
+  3. the collection's configured object checks
+
+Files inside a collection directory that do not match its pattern are
+reported as unmatched references (errors).
+
+Usage:
+  katalyst check [selector ...] [flags]
+
+Flags:
+  -h, --help            help for check
+  -s, --schema string   Path to a JSON Schema file. Overrides config-based resolution for every selected item.

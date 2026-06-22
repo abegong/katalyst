@@ -2,44 +2,8 @@ package cmd_test
 
 import "testing"
 
-// wantRootHelp is the exact output of `katalyst` with no arguments. It is kept
-// as one inspectable block so a reviewer can read the whole help surface at a
-// glance and see the noun/verb grouping (Verbs vs Resources) the command tree
-// is designed around — see docs/deep-dives/command-organization.md.
-const wantRootHelp = `katalyst is a content consistency layer for agent memory,
-knowledge bases, and other curated content systems. it helps you inspect,
-check, and fix content and metadata conventions.
-
-Project links:
-  GitHub: https://github.com/abegong/katalyst
-  Docs:   https://abegong.github.io/katalyst/
-
-Usage:
-  katalyst [command]
-
-Verbs:
-  inspect     Analyze a directory and report its structure and conventions
-  init        Initialize a directory as a katalyst project
-  check       Run configured checks
-  fix         Apply deterministic, safe fixes
-
-Resources:
-  collection  Commands to inspect and modify collections in this project
-  item        Commands to inspect and modify individual items in collections within this project
-  schema      Commands to inspect and modify schemas defined in this project
-  check-types Commands to inspect the check types that katalyst can enforce
-  inspectors  Commands to inspect the inspectors that katalyst can run
-
-Additional Commands:
-  help        Help about any command
-  completion  Generate the autocompletion script for the specified shell
-
-Flags:
-  -h, --help      help for katalyst
-  -v, --version   version for katalyst
-
-Use "katalyst [command] --help" for more information about a command.
-`
+// Root help is snapshot-tested from a fixture so the exact help contract is
+// reviewable as plain text and shared with broader help-output snapshot tests.
 
 func TestRoot_noArgs_printsGroupedHelp(t *testing.T) {
 	stdout, stderr, err := runRoot(t)
@@ -49,6 +13,7 @@ func TestRoot_noArgs_printsGroupedHelp(t *testing.T) {
 	if stderr != "" {
 		t.Errorf("expected empty stderr, got:\n%s", stderr)
 	}
+	wantRootHelp := mustHelpFixture(t, "root-noargs.txt")
 	if stdout != wantRootHelp {
 		t.Errorf("root help mismatch.\n--- got ---\n%s\n--- want ---\n%s", stdout, wantRootHelp)
 	}

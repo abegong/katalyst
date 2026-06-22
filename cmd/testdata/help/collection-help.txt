@@ -1,0 +1,13 @@
+Commands to inspect and modify collections in this project
+
+Usage:
+  katalyst collection [command]
+
+Available Commands:
+  list        List collections: name, directory, item count, schema.
+  get         Show one collection's detail.
+
+Flags:
+  -h, --help   help for collection
+
+Use "katalyst collection [command] --help" for more information about a command.

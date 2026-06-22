@@ -1,0 +1,8 @@
+Initialize a directory as a katalyst project
+
+Usage:
+  katalyst init [flags]
+
+Flags:
+      --dir string   Directory to prepare (default: current directory)
+  -h, --help         help for init
