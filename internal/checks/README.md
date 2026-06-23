@@ -6,8 +6,8 @@ checks produce.
 ## Check
 
 A single check run against an item — a type constraint, a heading requirement,
-a filename convention. Each comes from one of the **18 check types** Katalyst
-ships, in three families:
+a filename convention, a forbidden phrase. Each comes from one of the check
+types Katalyst ships, across four families:
 
 - **Object** (6): `object` (full JSON Schema), plus targeted
   `object_required_field`, `object_field_type`, `object_field_enum`,
@@ -19,6 +19,10 @@ ships, in three families:
   `filesystem_extension_in`, `filesystem_filename_kebab_case`,
   `filesystem_no_spaces_in_path`, `filesystem_parent_dir_in`,
   `filesystem_filename_prefix`.
+- **Text** (3): `text_requires`, `text_forbids`, `text_denylist` — regex and
+  literal-substring policy over the body, evaluated against a **span** selected
+  by `target`. They share the `textSpans` helper (`text.go`) and, reading only
+  the body, also lint plain-text and frontmatter-less items.
 
 Each check type implements one `checks.Check` interface (`Run(Context)
 []Violation`) and is documented, per check type, in the generated check-types
