@@ -5,22 +5,20 @@ weight = 10
 
 # How we document
 
-## Goals
+Like most knowledge bases, Katalyst's documentation must balance two objectives:
 
-- Users and contributors both find what they need in one published tree.
-- One source of truth per topic, no drift between duplicate files.
-- Reference that is correct by construction (generated from code).
-- Docs live close to what they describe.
+- Users, agents, and contributors can easily find what they need.
+- Content is comprehensive, has no internal contradictions, and is always up to date.
 
-## Where each kind of doc lives
+We do this by dividing documentation across four areas, each with a specific purpose.
 
-Katalyst keeps documentation in a few homes. Rationale follows its **altitude**:
-the behavioral *why* a user can observe belongs in the docs (`deep-dives/`,
-`reference/`); implementation-depth *why* that only matters once you are reading
-the code lives with the code (`doc.go` or a co-located `README.md`); a
-convention contributors follow lives in `AGENTS.md`.
+{List doc types and purposes, in bullet form.}
 
-### 1. `docs/`, the published site (Hugo)
+By clearly delineating when and where to update documentation, this approach lets us minimize duplication and the risk of content drift, while still serving a wide variety of needs. That said, some overlap in content is unavoidable. Some judgement calls about what information belongs where will always be necessary. Making these judgement calls is up to the project maintainers.
+
+## Four types of documentation
+
+### 1. Published documentation (Hugo)
 
 The durable home for everything a user needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
@@ -40,20 +38,7 @@ The durable home for everything a user needs, organized by
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
-### 2. `AGENTS.md`, code-writing conventions
-
-Rules for anyone *writing code* in the repo: commands, layout, testing
-style, code style. **What goes here:** naming conventions, required
-patterns, gotchas, and the *why* behind a code constraint. **What doesn't:**
-conceptual explanations of how the system works (→ `docs/deep-dives/`),
-user-facing usage (→ `docs/`), or API-level detail (→ Go doc comments).
-
-Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where
-a package has rules that don't belong at the root. Examples live in tests,
-not a separate examples file: a `*_test.go` is the canonical, executable
-example.
-
-### 3. Docs that live with the code: Go doc comments and co-located `README.md`
+### 2. Docs that live with code (Go doc comments)
 
 Documentation that only matters once you are reading the code lives **with the
 code**, not in the Hugo tree: code-level API docs and a package's
@@ -75,7 +60,20 @@ separate `explanation/` page that drifts. Use godoc headings (`# Heading`),
 prose, and short lists in doc comments; reach for a table in a `README.md` or
 the reference.
 
-### 4. `product/`, in-flight specs and plans only
+### 3. Notes on code-writing conventions (`AGENTS.md` files)
+
+Rules for anyone *writing code* in the repo: commands, layout, testing
+style, code style. **What goes here:** naming conventions, required
+patterns, gotchas, and the *why* behind a code constraint. **What doesn't:**
+conceptual explanations of how the system works (→ `docs/deep-dives/`),
+user-facing usage (→ `docs/`), or API-level detail (→ Go doc comments).
+
+Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where
+a package has rules that don't belong at the root. Examples live in tests,
+not a separate examples file: a `*_test.go` is the canonical, executable
+example.
+
+### 4. In-flight specs and plans (Markdown files in `product/`)
 
 `product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
 merged**. A spec is deleted when its work lands and its durable content
