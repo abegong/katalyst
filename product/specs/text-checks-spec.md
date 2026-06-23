@@ -337,14 +337,13 @@ the Descriptors and the new `plainText` `Family`.
 
 ## Documentation updates
 
-- **Family relabel.** `internal/checks/registry.go` adopts the four-family
-  model: rename `objects`→`structuredObject`, `markdown`→`markdownBodyText`,
-  `filesystem`→`fileSystem`, and add `plainText`. This is mechanical — the family
-  *id*, its intro copy, and the docs-dir slug change; `kind` ids
-  (`object_*`/`markdown_*`/`filesystem_*`) are untouched. Docs subdirectories use
-  kebab slugs (`structured-object/`, `markdown-body-text/`, `file-system/`,
-  `plain-text/`). **Recommendation:** land the relabel as a small precursor PR so
-  the text-checks diff stays focused on the new family and its three kinds.
+- **Family relabel — precursor, tracked in #56.** The four-family relabel
+  (`objects`→`structuredObject`, `markdown`→`markdownBodyText`,
+  `filesystem`→`fileSystem`; kebab docs slugs; `kind` ids untouched) lands as part
+  of the **checks reorganization** (#56: per-family packages, one check type per
+  file, co-located self-registering descriptors), which sequences **before** this
+  PR. This spec's job is then only to *add* the `plainText` family and its three
+  kinds into that structure.
 - **Generated reference** — add the `Descriptor`s and the `plainText` `Family`,
   then `make docs-gen` to render the reference page(s) (do not hand-edit). New
   kinds then appear in `katalyst check-types list`; the `registry_test.go` parity
