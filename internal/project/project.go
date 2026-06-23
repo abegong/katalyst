@@ -1,18 +1,18 @@
 // Package project sits on top of internal/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
-// reverse id→path resolution. See docs/content/deep-dives/domain-model.md
-// (selectors, collections, items).
+// reverse id→path resolution. The path↔item-identity mapping itself lives
+// behind the internal/storage seam; this package selects the right
+// CollectionDefinition and orchestrates it. See
+// docs/content/deep-dives/domain-model.md (selectors, collections, items) and
+// docs/content/deep-dives/storage.md (the seam).
 package project
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
-	"sort"
 
 	"github.com/abegong/katalyst/internal/config"
-	"github.com/bmatcuk/doublestar/v4"
+	"github.com/abegong/katalyst/internal/storage"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to
@@ -27,14 +27,15 @@ func New(cfg *config.Config) *Project { return &Project{cfg: cfg} }
 // Config returns the underlying configuration.
 func (p *Project) Config() *config.Config { return p.cfg }
 
-// Item is one resolved item: a file in a collection's directory.
-type Item struct {
-	Collection config.Collection
-	// ID is the collection-relative identifier (the filename stem for the
-	// flat single-directory case).
-	ID string
-	// Path is the absolute path to the item file.
-	Path string
+// Item is one resolved item. It is the storage layer's Item, re-exported so
+// callers (and the cmd layer) keep using project.Item unchanged.
+type Item = storage.Item
+
+// def builds the filesystem CollectionDefinition for this project's config.
+// Today there is a single filesystem backend rooted at the repo root; Phase 2
+// routes per storage instance.
+func (p *Project) def() *storage.FilesystemCollectionDefinition {
+	return storage.NewFilesystem(p.cfg.Root, p.cfg.Collections)
 }
 
 // Collections returns all collections in name order.
@@ -46,67 +47,35 @@ func (p *Project) Collection(name string) (config.Collection, bool) {
 }
 
 // ItemPath computes the on-disk path for an item id within a collection
-// (reverse resolution: notes/dune → <dir>/dune.md).
+// (reverse resolution: notes/dune → <dir>/dune.md). It delegates to the
+// filesystem definition's Reference; the mapping itself lives in the storage
+// seam.
 func ItemPath(c config.Collection, id string) string {
-	return filepath.Join(c.Dir, filepath.FromSlash(id)+c.Ext())
+	ref, _ := storage.NewFilesystem("", nil).Reference(c, id)
+	return string(ref)
 }
 
 // Items lists the items in a collection: files under its directory that
 // match its pattern, sorted by id. A missing directory yields no items.
 func (p *Project) Items(c config.Collection) ([]Item, error) {
-	if info, err := os.Stat(c.Dir); err != nil || !info.IsDir() {
-		// No directory yet → no items.
-		return nil, nil
-	}
-	matches, err := doublestar.Glob(os.DirFS(c.Dir), c.Pattern)
-	if err != nil {
-		return nil, fmt.Errorf("collection %q: %w", c.Name, err)
-	}
-	sort.Strings(matches)
-	items := make([]Item, 0, len(matches))
-	for _, rel := range matches {
-		id := rel[:len(rel)-len(c.Ext())]
-		items = append(items, Item{
-			Collection: c,
-			ID:         filepath.ToSlash(id),
-			Path:       filepath.Join(c.Dir, rel),
-		})
-	}
-	return items, nil
+	return p.def().Items(c)
 }
 
 // Unmatched lists files inside a collection's directory that do NOT match
 // its pattern. These are reported as errors by `check` (cf.
 // docs/content/reference/configuration.md). Paths are returned relative to Dir.
 func (p *Project) Unmatched(c config.Collection) ([]string, error) {
-	info, err := os.Stat(c.Dir)
-	if err != nil || !info.IsDir() {
-		// No directory yet → nothing unmatched.
+	refs, err := p.def().Unmatched(c)
+	if err != nil {
+		return nil, err
+	}
+	if len(refs) == 0 {
 		return nil, nil
 	}
-	var out []string
-	walkErr := filepath.WalkDir(c.Dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		rel, err := filepath.Rel(c.Dir, path)
-		if err != nil {
-			return err
-		}
-		rel = filepath.ToSlash(rel)
-		ok, _ := doublestar.Match(c.Pattern, rel)
-		if !ok {
-			out = append(out, rel)
-		}
-		return nil
-	})
-	if walkErr != nil {
-		return nil, fmt.Errorf("collection %q: %w", c.Name, walkErr)
+	out := make([]string, len(refs))
+	for i, r := range refs {
+		out[i] = string(r)
 	}
-	sort.Strings(out)
 	return out, nil
 }
 
@@ -118,7 +87,11 @@ func (p *Project) ItemAt(collection, id string) (Item, error) {
 	if !ok {
 		return Item{}, &UsageError{Msg: fmt.Sprintf("unknown collection %q", collection)}
 	}
-	path := ItemPath(c, id)
+	ref, err := p.def().Reference(c, id)
+	if err != nil {
+		return Item{}, err
+	}
+	path := string(ref)
 	if info, err := os.Stat(path); err != nil || info.IsDir() {
 		return Item{}, &UsageError{Msg: fmt.Sprintf("unknown item %q in collection %q", id, collection)}
 	}
