@@ -78,13 +78,9 @@ func TestCheck_invalidItem_exit1WithPointer(t *testing.T) {
 	if !errors.As(err, &coded) || coded.Code() != 1 {
 		t.Errorf("expected exit code 1, got: %v", err)
 	}
-	if !strings.Contains(stderr, "/year") {
-		t.Errorf("expected /year pointer in stderr, got: %q", stderr)
-	}
-	bad := filepath.Join(dir, "notes/bad.md")
-	if !strings.Contains(stderr, bad+":3:") {
-		t.Errorf("expected line 3 in stderr, got: %q", stderr)
-	}
+	// The diagnostic voice (path:line: /pointer: message) is pinned as a
+	// snapshot; normTmp stabilizes the absolute item path.
+	snapshot(t, "check/invalid-pointer.txt", stderr, normTmp(dir))
 }
 
 func TestCheck_missingRequired_fallsBackToAncestorLine(t *testing.T) {
@@ -134,9 +130,7 @@ func TestCheck_unmatchedFileInCollectionDir_isError(t *testing.T) {
 	if !errors.As(err, &coded) || coded.Code() != 1 {
 		t.Errorf("expected exit code 1, got: %v", err)
 	}
-	if !strings.Contains(stderr, "stray.txt") || !strings.Contains(stderr, "unmatched") {
-		t.Errorf("expected unmatched stray.txt error, got: %q", stderr)
-	}
+	snapshot(t, "check/unmatched.txt", stderr, normTmp(dir))
 }
 
 func TestCheck_unknownSelector_exit2(t *testing.T) {
@@ -414,10 +408,6 @@ func TestCheck_writingTells_warnButPass(t *testing.T) {
 	if !strings.Contains(stdout, "x.md: OK") {
 		t.Errorf("expected OK on stdout (warnings are advisory), got: %q", stdout)
 	}
-	if !strings.Contains(stderr, "warning:") {
-		t.Errorf("expected a warning line on stderr, got: %q", stderr)
-	}
-	if !strings.Contains(stderr, "em dash") {
-		t.Errorf("expected the em-dash tell, got: %q", stderr)
-	}
+	// The advisory warning voice (warning: ... em dash) is pinned as a snapshot.
+	snapshot(t, "check/writing-tell.txt", stderr, normTmp(dir))
 }

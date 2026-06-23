@@ -1,0 +1,2 @@
+<project>/notes/x.md:6: warning: /: writing tell (em dash): "—" (review and revise if it reads as filler)
+<project>/notes/x.md:6: warning: /: writing tell (overused word: delve): "delve" (review and revise if it reads as filler)
