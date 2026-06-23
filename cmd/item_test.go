@@ -17,7 +17,7 @@ func setupItemRepo(t *testing.T) string {
 		"config.yaml":              schemaFormatJSON,
 		"schemas/book.json":        bookSchemaFixture,
 		"schemas/strict-book.json": strictBookSchemaFixture,
-		"collections/notes.yaml":   objectNotesConfig,
+		"storage/local.yaml":       storageLocal(map[string]string{"notes": objectNotesConfig}),
 	})
 	chdir(t, dir)
 	return dir

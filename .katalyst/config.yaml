@@ -1,8 +1,8 @@
 # Dogfooding katalyst on its own Hugo docs (issues #28, #29).
-# The single collection and its schema live under collections/ and schemas/;
-# see collections/pages.yaml for the rationale.
+# The single storage instance and its schema live under storage/ and schemas/;
+# see storage/local.yaml for the rationale.
 #
-# Schemas are authored as idiomatic JSON Schema (.json); collections use the
+# Schemas are authored as idiomatic JSON Schema (.json); storage uses the
 # default YAML convention.
 schemas:
   format: json

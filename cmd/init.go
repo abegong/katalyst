@@ -12,19 +12,36 @@ import (
 // scaffoldConfig is the commented-template config.yaml written by init.
 // Every setting is shown at its default and commented out, so a fresh
 // project loads as an empty, valid configuration while the file documents
-// the available knobs. See product/specs/project-layout-spec.md.
+// the available knobs.
 const scaffoldConfig = `# katalyst project configuration.
 #
-# Schemas live in .katalyst/schemas/<name>.yaml and collections in
-# .katalyst/collections/<name>.yaml, discovered by filename. The settings
-# below are optional and shown at their defaults; uncomment to change them.
+# Schemas live in .katalyst/schemas/<name>.yaml. Storage instances live in
+# .katalyst/storage/<name>.yaml, and each instance declares the collections it
+# maps. The settings below are optional and shown at their defaults; uncomment
+# to change them.
 #
 # schemas:
 #   discovery: convention   # convention | explicit
 #   format: yaml            # yaml | json | both
-# collections:
+# storage:
 #   discovery: convention
 #   format: yaml
+`
+
+// scaffoldLocalStorage is the default storage instance written by init: the
+// local filesystem rooted at the project. There is no implicit instance —
+// this file is what makes the default explicit. Collections are declared
+// inline here (or split into .katalyst/storage/local/<name>.yaml).
+const scaffoldLocalStorage = `# The default storage instance: the local filesystem, rooted at the project.
+# Declare collections under "collections:", e.g.
+#
+#   collections:
+#     notes:
+#       path: notes          # directory, relative to root
+#       schema: note         # a schema name from .katalyst/schemas/
+type: filesystem
+root: .
+collections: {}
 `
 
 func newInitCmd() *cobra.Command {
@@ -50,13 +67,21 @@ func newInitCmd() *cobra.Command {
 				return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", katalystDir))
 			}
 
-			for _, sub := range []string{"schemas", "collections"} {
+			for _, sub := range []string{"schemas", "storage"} {
 				rel := filepath.Join(config.Dir, sub)
 				if err := os.MkdirAll(filepath.Join(target, rel), 0o755); err != nil {
 					return err
 				}
 				fmt.Fprintf(cmd.OutOrStdout(), "created %s/\n", rel)
 			}
+
+			// Write the default storage instance explicitly; katalyst never
+			// synthesizes one at runtime.
+			storageRel := filepath.Join(config.Dir, "storage", "local.yaml")
+			if err := os.WriteFile(filepath.Join(target, storageRel), []byte(scaffoldLocalStorage), 0o644); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", storageRel)
 
 			cfgRel := filepath.Join(config.Dir, "config.yaml")
 			if err := os.WriteFile(filepath.Join(target, cfgRel), []byte(scaffoldConfig), 0o644); err != nil {

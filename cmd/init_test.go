@@ -16,7 +16,8 @@ func TestInit_preparesKatalystDir(t *testing.T) {
 	for _, want := range []string{
 		".katalyst",
 		".katalyst/schemas",
-		".katalyst/collections",
+		".katalyst/storage",
+		".katalyst/storage/local.yaml",
 		".katalyst/config.yaml",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, want)); err != nil {
@@ -38,7 +39,7 @@ func TestInit_writesNoExampleContent(t *testing.T) {
 		"schemas",
 		"notes",
 		".katalyst/schemas/book.yaml",
-		".katalyst/collections/notes.yaml",
+		".katalyst/storage/local/notes.yaml",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, unwanted)); err == nil {
 			t.Errorf("did not expect %s to exist", unwanted)

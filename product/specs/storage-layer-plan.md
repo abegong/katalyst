@@ -2,12 +2,14 @@
 
 > Spec: [Storage layer](./storage-layer-spec.md)
 >
-> **Status: planning.** Implements issue #31. Splits the hardcoded filesystem
-> mapping into `internal/storage` (StorageType, StorageInstance,
-> CollectionDefinition), then moves the config model so a StorageInstance
-> declares its own collections. Sequenced **seam first** (a behavior-preserving
-> refactor the existing suite guards unchanged), **config change second** (the
-> breaking part), so risk is isolated per phase.
+> **Status: implementing.** Phase 1 (the seam) landed: `internal/storage`
+> exists and `internal/project` delegates to it, with the existing suite green
+> unedited. Phases 2–4 pending. Splits the hardcoded filesystem mapping into
+> `internal/storage` (StorageType, StorageInstance, CollectionDefinition), then
+> moves the config model so a StorageInstance declares its own collections.
+> Sequenced **seam first** (a behavior-preserving refactor the existing suite
+> guards unchanged), **config change second** (the breaking part), so risk is
+> isolated per phase.
 
 ## Current State
 

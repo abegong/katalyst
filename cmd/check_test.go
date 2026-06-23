@@ -14,9 +14,9 @@ func setupNotesRepo(t *testing.T, notesCollection string) string {
 	t.Helper()
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"config.yaml":            schemaFormatJSON,
-		"schemas/book.json":      bookSchemaFixture,
-		"collections/notes.yaml": notesCollection,
+		"config.yaml":        schemaFormatJSON,
+		"schemas/book.json":  bookSchemaFixture,
+		"storage/local.yaml": storageLocal(map[string]string{"notes": notesCollection}),
 	})
 	chdir(t, dir)
 	return dir
@@ -156,7 +156,7 @@ func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 		"config.yaml":              schemaFormatJSON,
 		"schemas/book.json":        bookSchemaFixture,
 		"schemas/strict-book.json": strictBookSchemaFixture,
-		"collections/notes.yaml":   "path: notes\nschema: book\n",
+		"storage/local.yaml":       storageLocal(map[string]string{"notes": "path: notes\nschema: book\n"}),
 	})
 	chdir(t, dir)
 
@@ -177,7 +177,7 @@ func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n",
+		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/dune.md"), "---\ntitle: Dune\n---\n# Children of Dune\n")
@@ -197,7 +197,7 @@ func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n",
+		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/a.md"), "---\nslug: dune\n---\n# A\n")

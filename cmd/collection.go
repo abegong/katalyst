@@ -13,7 +13,7 @@ import (
 func newCollectionCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "collection",
-		Short: "Inspect collections defined under .katalyst/collections/.",
+		Short: "Inspect collections declared by storage instances under .katalyst/storage/.",
 	}
 	c.AddCommand(newCollectionListCmd(), newCollectionGetCmd())
 	return c
