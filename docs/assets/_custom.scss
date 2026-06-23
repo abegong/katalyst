@@ -1,0 +1,21 @@
+// Visual grouping for H3 sections: keep headings flush, indent first body block.
+.markdown.book-article > h3 {
+  margin-top: 1.6rem;
+  font-weight: 650;
+}
+
+.markdown.book-article > h3 + :is(
+  p,
+  ul,
+  ol,
+  pre,
+  table,
+  blockquote,
+  .highlight,
+  .book-hint,
+  .book-tabs,
+  .book-columns,
+  .book-steps
+) {
+  margin-inline-start: 1.25rem;
+}
