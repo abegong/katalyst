@@ -13,13 +13,11 @@ Like most knowledge bases, Katalyst's documentation must balance two objectives:
 We do this by dividing documentation across four areas, each with a specific purpose.
 
 - **Published documentation (Hugo):** everything users and agents need to
-  understand and use Katalyst - tutorials, how-to, reference, and the
-  behavioral *why* in deep-dives. The public, durable home.
-- **Go doc comments:** code-level API and design detail that only matters with
-  the source open, kept beside the code so it stays correct.
-- **`AGENTS.md` files:** conventions, required patterns, and gotchas for writing
-  code in the repo - a lean root file plus co-located per-package files.
-- **In-flight specs and plans:** `product/` staging for changes not yet merged;
+  understand and use Katalyst - tutorials, how-to, reference, and deep-dives explaining the reasoning behind them.
+- **Go doc comments:** code-level API and design detail, co-located with the code
+- **`AGENTS.md` files:** conventions, local architecture, required patterns, and gotchas for writing
+  code in the repo - a lean root file plus per-package files.
+- **Specs and plans:** `product/` staging for in-flight ideas;
   each is deleted once its durable content graduates into the homes above.
 
 By clearly delineating when and where to update documentation, this approach lets us minimize duplication and the risk of content drift, while still serving a wide variety of needs. That said, some overlap in content is unavoidable. Some judgement calls about what information belongs where will always be necessary. Making these judgement calls is up to the project maintainers.
@@ -81,7 +79,7 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### 4. In-flight specs and plans
+### 4. Specs and plans
 
 `product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
 merged**. A spec is deleted when its work lands and its durable content
