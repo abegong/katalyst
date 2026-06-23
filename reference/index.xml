@@ -118,6 +118,14 @@ how each term maps onto today&amp;rsquo;s code is documented in the per-package
 					&lt;td&gt;A check type that runs once per collection over all its items (e.g. &lt;code&gt;filesystem_unique_filename&lt;/code&gt;), rather than per item. It re-scans the full collection even under a single-item selector.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Variant&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A discriminated check group inside a collection (one entry of &lt;code&gt;variants:&lt;/code&gt;): a &lt;code&gt;when&lt;/code&gt; discriminator plus the schema/checks added for items that match it. An item runs the base checks plus the first matching variant&amp;rsquo;s.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Discriminator&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The &lt;code&gt;when&lt;/code&gt; predicate that selects a variant — a list of &lt;code&gt;item list --filter&lt;/code&gt; expressions over an item&amp;rsquo;s metadata, ANDed together.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Target&lt;/strong&gt;&lt;/td&gt;
 					&lt;td&gt;The slice of a path a filesystem name/path check type tests: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt; (every directory segment plus the basename). For a text rule, the slice of body it tests — see Span.&lt;/td&gt;
 			&lt;/tr&gt;
