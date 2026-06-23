@@ -348,6 +348,178 @@ func TestLoad_rejectsCollectionWithNoChecks(t *testing.T) {
 	}
 }
 
+func TestLoad_variantsParsed(t *testing.T) {
+	dir := t.TempDir()
+	body := "path: pages\nschema: page\nuseExhaustiveVariants: true\n" +
+		"variants:\n" +
+		"  - when:\n" +
+		"      where: [\"kind=section\"]\n" +
+		"    schema: section\n" +
+		"  - when: [\"kind!=section\", \"weight>=1\"]\n" +
+		"    schema: content\n" +
+		"    checks:\n" +
+		"      - kind: markdown_requires_h1\n"
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":    minimalSchema,
+		"schemas/section.yaml": minimalSchema,
+		"schemas/content.yaml": minimalSchema,
+		"storage/local.yaml":   localStorage(map[string]string{"pages": body}),
+	})
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	pages, ok := cfg.Collection("pages")
+	if !ok {
+		t.Fatal("expected pages collection")
+	}
+	if !pages.UseExhaustiveVariants {
+		t.Error("UseExhaustiveVariants = false, want true")
+	}
+	if len(pages.Variants) != 2 {
+		t.Fatalf("expected 2 variants, got %d", len(pages.Variants))
+	}
+
+	// Variant 0: one predicate, schema folded into a single leading object check.
+	v0 := pages.Variants[0]
+	if len(v0.Where) != 1 {
+		t.Errorf("variant 0 Where = %d predicates, want 1", len(v0.Where))
+	}
+	if len(v0.Checks) != 1 || v0.Checks[0].Type != config.CheckObject || v0.Checks[0].Schema != "section" {
+		t.Errorf("variant 0 Checks = %+v, want one object check on 'section'", v0.Checks)
+	}
+
+	// Variant 1: two ANDed predicates, schema folded plus its own check.
+	v1 := pages.Variants[1]
+	if len(v1.Where) != 2 {
+		t.Errorf("variant 1 Where = %d predicates, want 2", len(v1.Where))
+	}
+	if len(v1.Checks) != 2 || v1.Checks[0].Type != config.CheckObject || v1.Checks[0].Schema != "content" {
+		t.Fatalf("variant 1 Checks = %+v, want object check then requires_h1", v1.Checks)
+	}
+	if v1.Checks[1].Type != config.CheckMarkdownRequiresH1 {
+		t.Errorf("variant 1 second check = %q, want markdown_requires_h1", v1.Checks[1].Type)
+	}
+}
+
+func TestLoad_whenShorthandDesugars(t *testing.T) {
+	dir := t.TempDir()
+	// A single bare-string when and a list when both desugar to where-lists.
+	body := "path: pages\nschema: page\n" +
+		"variants:\n" +
+		"  - when: \"kind=section\"\n" +
+		"    checks:\n" +
+		"      - kind: markdown_requires_h1\n" +
+		"  - when: [\"a=1\", \"b=2\"]\n" +
+		"    checks:\n" +
+		"      - kind: markdown_requires_h1\n"
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":  minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	pages, _ := cfg.Collection("pages")
+	if len(pages.Variants) != 2 {
+		t.Fatalf("expected 2 variants, got %d", len(pages.Variants))
+	}
+	if len(pages.Variants[0].Where) != 1 {
+		t.Errorf("string shorthand: Where = %d, want 1", len(pages.Variants[0].Where))
+	}
+	if len(pages.Variants[1].Where) != 2 {
+		t.Errorf("list shorthand: Where = %d, want 2", len(pages.Variants[1].Where))
+	}
+}
+
+func TestLoad_variantOnlyCollectionIsValid(t *testing.T) {
+	// A collection with no base checks but at least one variant is allowed.
+	dir := t.TempDir()
+	body := "path: pages\n" +
+		"variants:\n" +
+		"  - when: \"kind=section\"\n" +
+		"    checks:\n" +
+		"      - kind: markdown_requires_h1\n"
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	})
+	if _, err := config.Load(dir); err != nil {
+		t.Fatalf("variant-only collection should load: %v", err)
+	}
+}
+
+func TestLoad_rejectsInvalidVariantPredicate(t *testing.T) {
+	dir := t.TempDir()
+	body := "path: pages\nschema: page\n" +
+		"variants:\n" +
+		"  - when: \"=nofield\"\n"
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":  minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "variants[0]") {
+		t.Fatalf("expected variants[0] predicate error, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsUnknownVariantSchema(t *testing.T) {
+	dir := t.TempDir()
+	body := "path: pages\nschema: page\n" +
+		"variants:\n" +
+		"  - when: \"kind=section\"\n" +
+		"    schema: nonexistent\n"
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":  minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "nonexistent") {
+		t.Fatalf("expected unknown variant schema error, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "variants[0]") {
+		t.Errorf("error should locate the variant: %v", err)
+	}
+}
+
+func TestLoad_rejectsEmptyWhen(t *testing.T) {
+	dir := t.TempDir()
+	body := "path: pages\nschema: page\n" +
+		"variants:\n" +
+		"  - when: []\n" +
+		"    checks:\n" +
+		"      - kind: markdown_requires_h1\n"
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":  minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "at least one predicate") {
+		t.Fatalf("expected empty-when error, got: %v", err)
+	}
+}
+
+func TestLoad_useExhaustiveVariantsDefaultsFalse(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":  minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if notes.UseExhaustiveVariants {
+		t.Error("UseExhaustiveVariants = true, want default false")
+	}
+	if len(notes.Variants) != 0 {
+		t.Errorf("Variants = %d, want 0 by default", len(notes.Variants))
+	}
+}
+
 func TestLoad_parsesChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

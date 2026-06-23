@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/abegong/katalyst/internal/query"
 	"gopkg.in/yaml.v3"
 )
 
@@ -198,6 +199,26 @@ type Collection struct {
 	// Storage is the name of the storage instance that declares this
 	// collection.
 	Storage string
+	// Variants are discriminated check groups: an item runs the first
+	// variant (in order) whose Where predicates it all satisfies, in
+	// addition to the base Checks. Empty for a collection without variants.
+	Variants []CollectionVariant
+	// UseExhaustiveVariants makes an item that matches no variant a check
+	// failure ("matches no variant") instead of running the base checks
+	// alone. Default false.
+	UseExhaustiveVariants bool
+}
+
+// CollectionVariant is one discriminated check group inside a collection. An
+// item whose metadata satisfies every predicate in Where — the first such
+// variant in declaration order — runs Checks on top of the collection's base
+// checks. A variant's `schema:` shorthand is folded into a leading object
+// check in Checks, mirroring a collection's `schema:`.
+type CollectionVariant struct {
+	// Where are the discriminator predicates, ANDed together. Non-empty.
+	Where []query.Predicate
+	// Checks run on an item routed to this variant, added to the base.
+	Checks []CheckInstance
 }
 
 // QuerySettings configures the behavior of `item list` filtering and
@@ -260,11 +281,58 @@ type rawStorageInstance struct {
 }
 
 type rawCollection struct {
-	Path    string     `yaml:"path"`
-	Pattern string     `yaml:"pattern"`
-	Schema  string     `yaml:"schema"`
-	Checks  []rawCheck `yaml:"checks"`
-	Query   *rawQuery  `yaml:"query"`
+	Path                  string       `yaml:"path"`
+	Pattern               string       `yaml:"pattern"`
+	Schema                string       `yaml:"schema"`
+	Checks                []rawCheck   `yaml:"checks"`
+	Query                 *rawQuery    `yaml:"query"`
+	Variants              []rawVariant `yaml:"variants"`
+	UseExhaustiveVariants bool         `yaml:"useExhaustiveVariants"`
+}
+
+// rawVariant mirrors one entry of a collection's `variants:` list: a `when`
+// discriminator plus the schema/checks to add for matching items.
+type rawVariant struct {
+	When   rawWhen    `yaml:"when"`
+	Schema string     `yaml:"schema"`
+	Checks []rawCheck `yaml:"checks"`
+}
+
+// rawWhen is a variant discriminator: a list of `item list --filter` predicate
+// strings. It accepts three YAML shapes that all desugar to that list:
+//
+//	when: "kind=section"             # one predicate
+//	when: ["kind=section", "w>1"]    # a list of predicates
+//	when: { where: [ ... ] }         # the explicit block form
+type rawWhen []string
+
+// UnmarshalYAML accepts the scalar, sequence, and {where: [...]} forms.
+func (w *rawWhen) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.ScalarNode:
+		var s string
+		if err := value.Decode(&s); err != nil {
+			return err
+		}
+		*w = rawWhen{s}
+	case yaml.SequenceNode:
+		var ss []string
+		if err := value.Decode(&ss); err != nil {
+			return err
+		}
+		*w = rawWhen(ss)
+	case yaml.MappingNode:
+		var block struct {
+			Where []string `yaml:"where"`
+		}
+		if err := value.Decode(&block); err != nil {
+			return err
+		}
+		*w = rawWhen(block.Where)
+	default:
+		return fmt.Errorf("invalid when: expected a string, a list, or {where: [...]}")
+	}
+	return nil
 }
 
 type rawCheck struct {
@@ -519,22 +587,18 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 		pattern = defaultPattern
 	}
 
-	checks := make([]CheckInstance, 0, len(rc.Checks)+1)
-	if rc.Schema != "" {
-		if _, ok := c.Schemas[rc.Schema]; !ok {
-			return Collection{}, fmt.Errorf("collection %q: unknown schema %q", name, rc.Schema)
-		}
-		checks = append(checks, CheckInstance{Type: CheckObject, Schema: rc.Schema})
+	checks, err := c.buildChecks(fmt.Sprintf("collection %q", name), rc.Schema, rc.Checks)
+	if err != nil {
+		return Collection{}, err
 	}
-	for j, raw := range rc.Checks {
-		ch, err := normalizeCheck(raw, c.Schemas)
-		if err != nil {
-			return Collection{}, fmt.Errorf("collection %q: checks[%d]: %w", name, j, err)
-		}
-		checks = append(checks, ch)
+
+	variants, err := c.buildVariants(name, rc.Variants)
+	if err != nil {
+		return Collection{}, err
 	}
-	if len(checks) == 0 {
-		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema or checks)", name)
+
+	if len(checks) == 0 && len(variants) == 0 {
+		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema, checks, or variants)", name)
 	}
 
 	schemaName := ""
@@ -545,21 +609,74 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 		}
 	}
 
-	query, err := resolveQuery(name, rc.Query, projectQuery)
+	qs, err := resolveQuery(name, rc.Query, projectQuery)
 	if err != nil {
 		return Collection{}, err
 	}
 
 	return Collection{
-		Name:    name,
-		Path:    dirRel,
-		Dir:     resolve(instRoot, dirRel),
-		Pattern: pattern,
-		Schema:  schemaName,
-		Checks:  checks,
-		Query:   query,
-		Storage: instName,
+		Name:                  name,
+		Path:                  dirRel,
+		Dir:                   resolve(instRoot, dirRel),
+		Pattern:               pattern,
+		Schema:                schemaName,
+		Checks:                checks,
+		Query:                 qs,
+		Storage:               instName,
+		Variants:              variants,
+		UseExhaustiveVariants: rc.UseExhaustiveVariants,
 	}, nil
+}
+
+// buildChecks folds an optional schema name into a leading object check and
+// normalizes the remaining raw checks. errCtx prefixes any error (e.g.
+// `collection "books"` or `collection "books": variants[0]`).
+func (c *Config) buildChecks(errCtx, schema string, raws []rawCheck) ([]CheckInstance, error) {
+	checks := make([]CheckInstance, 0, len(raws)+1)
+	if schema != "" {
+		if _, ok := c.Schemas[schema]; !ok {
+			return nil, fmt.Errorf("%s: unknown schema %q", errCtx, schema)
+		}
+		checks = append(checks, CheckInstance{Type: CheckObject, Schema: schema})
+	}
+	for j, raw := range raws {
+		ch, err := normalizeCheck(raw, c.Schemas)
+		if err != nil {
+			return nil, fmt.Errorf("%s: checks[%d]: %w", errCtx, j, err)
+		}
+		checks = append(checks, ch)
+	}
+	return checks, nil
+}
+
+// buildVariants parses and validates a collection's variants: each `when`
+// becomes a non-empty list of predicates, and each variant's schema/checks are
+// built like the collection's own (the schema folds into a leading object
+// check). A variant may add no checks (an exemption).
+func (c *Config) buildVariants(name string, raws []rawVariant) ([]CollectionVariant, error) {
+	if len(raws) == 0 {
+		return nil, nil
+	}
+	variants := make([]CollectionVariant, 0, len(raws))
+	for i, rv := range raws {
+		if len(rv.When) == 0 {
+			return nil, fmt.Errorf("collection %q: variants[%d]: when requires at least one predicate", name, i)
+		}
+		preds := make([]query.Predicate, 0, len(rv.When))
+		for k, expr := range rv.When {
+			p, err := query.ParseFilter(expr)
+			if err != nil {
+				return nil, fmt.Errorf("collection %q: variants[%d]: when[%d]: %w", name, i, k, err)
+			}
+			preds = append(preds, p)
+		}
+		vchecks, err := c.buildChecks(fmt.Sprintf("collection %q: variants[%d]", name, i), rv.Schema, rv.Checks)
+		if err != nil {
+			return nil, err
+		}
+		variants = append(variants, CollectionVariant{Where: preds, Checks: vchecks})
+	}
+	return variants, nil
 }
 
 // resolveQuery merges a collection's query block over the project's over
