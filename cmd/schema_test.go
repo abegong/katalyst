@@ -14,20 +14,8 @@ func TestSchemaList_printsSortedNamesAndPaths(t *testing.T) {
 	if err != nil {
 		t.Fatalf("schema list: %v", err)
 	}
-
-	lines := strings.Split(strings.TrimRight(stdout, "\n"), "\n")
-	if len(lines) != 2 {
-		t.Fatalf("expected 2 lines, got %d:\n%s", len(lines), stdout)
-	}
-	if !strings.HasPrefix(lines[0], "book") {
-		t.Errorf("expected first line to start with 'book', got: %q", lines[0])
-	}
-	if !strings.HasPrefix(lines[1], "person") {
-		t.Errorf("expected second line to start with 'person', got: %q", lines[1])
-	}
-	if !strings.Contains(lines[0], "schemas/book.json") {
-		t.Errorf("expected first line to contain path, got: %q", lines[0])
-	}
+	// The fixture pins the sorted names and their paths.
+	snapshot(t, "schema/list.txt", stdout)
 }
 
 func TestSchemaList_noConfig(t *testing.T) {
@@ -51,9 +39,7 @@ func TestSchemaShow_printsSchemaContents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("schema show: %v", err)
 	}
-	if !strings.Contains(stdout, `"title": "book"`) && !strings.Contains(stdout, `"title":"book"`) {
-		t.Errorf("expected schema contents in output, got: %q", stdout)
-	}
+	snapshot(t, "schema/show-book.txt", stdout)
 }
 
 func TestSchemaShow_unknownName(t *testing.T) {
