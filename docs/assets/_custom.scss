@@ -23,7 +23,7 @@
   margin-inline-start: 1.25rem;
 }
 
-// Welcome page status callout rendered under the TOC.
+// Global status callout rendered under the TOC.
 .book-toc .book-toc-warning {
   margin-top: 1rem;
   padding: 0.5rem 0.75rem;
@@ -36,4 +36,8 @@
 
 .book-toc .book-toc-warning p {
   margin: 0;
+}
+
+.book-toc .book-toc-warning a {
+  display: inline;
 }
