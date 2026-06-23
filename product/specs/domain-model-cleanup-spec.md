@@ -37,9 +37,13 @@ code nor the CLI fully agrees with them:
   truth, but it omits some core-concepts terms (*attribute*, *operation*,
   *aggregate*) and relegates others (*family*) to sub-clauses.
 
-The two deep-dives re-define the same nouns (item, collection, schema, check,
-inspector) independently, so the boundary between "general theory" and
-"katalyst specifics" is blurred, that is the division-of-labor problem to fix.
+PR #73 reshaped this landscape: it slimmed `domain-model.md` into a
+katalyst-specific hub that summarizes each entity and links out, and moved the
+detail into new `collections.md` and `inspectors.md` deep-dives. That fixes most
+of the old "monolith re-defines everything" problem. What remains is
+`core-concepts.md`, still encyclopedic, re-defining the same nouns the glossary
+should own and the hub now indexes, so the general-vs-specific boundary is still
+the division-of-labor problem to fix, just concentrated in core-concepts now.
 
 The [terminology matrix](./domain-model-terminology-matrix.md) catalogues the
 full set of divergences. The sharpest:
@@ -159,8 +163,11 @@ glossary or the doc reconciliation.
 ## Open Questions
 
 _None._ Query and engine are deferred to their own branches (see Settled
-naming); the doc-consolidation plan (retire `domain-model.md`, slim
-`core-concepts.md`) is tracked against the post-rebase deep-dive layout.
+naming). The doc-consolidation direction settled after rebasing on #73, which
+already turned `domain-model.md` into a katalyst-specific hub and rehomed its
+detail into the new `collections.md` and `inspectors.md`: keep `domain-model.md`
+as that hub, slim `core-concepts.md` into the parallel general-altitude hub, and
+terminology-align the new pages.
 
 ## Documentation updates
 
@@ -169,20 +176,22 @@ naming); the doc-consolidation plan (retire `domain-model.md`, slim
   the specialization link), *operation*, *aggregate*, and *validation result*;
   fold *family* into its own row; apply the storage / source / item-document
   decisions.
-- **`docs/content/deep-dives/core-concepts.md`** — slimmed to a tool-agnostic
-  conceptual map: define each general term in a line, link to its subsystem
-  deep-dive and the glossary, and stop re-specifying katalyst types; written in
-  general terms only; drop "data interface" for storage terms.
-- **`docs/content/deep-dives/domain-model.md`** — **retired.** Its unique content
-  (the schema-resolver precedence table, the per-item `check` lifecycle, a handful
-  of invariants) moves into `checks.md`/`storage.md`; the rest is already covered
-  by the dedicated deep-dives. See the consolidation plan.
-- **`docs/content/deep-dives/checks.md`** — absorbs the resolver precedence table,
-  the `check` lifecycle, and the schema-name/compilation/directive invariants from
-  the retired domain-model page; apply source/raw-source rename.
+- **`docs/content/deep-dives/core-concepts.md`** — the primary doc target now:
+  slim from the encyclopedic definitions into a general-altitude hub mirroring
+  `domain-model.md`. Define each general term in a line, link to the glossary for
+  the definition and to where the general idea is discussed (e.g. *operation* →
+  progressive-operations); keep only its own thesis (the structured/unstructured
+  bridge). Written in general terms only; drop "data interface" for storage terms.
+- **`docs/content/deep-dives/domain-model.md`** — **kept** as the katalyst hub
+  #73 built. No structural change; terminology-align it (item/document,
+  source/raw-source) and sharpen its one-line statement of how it differs from
+  core-concepts.
+- **`docs/content/deep-dives/collections.md`, `inspectors.md`** — new in #73 and
+  the homes for the former domain-model detail (resolver table, `check`
+  lifecycle, invariants, inspector layers). Apply the source/raw-source and
+  item/document decisions here.
 - **`docs/content/deep-dives/storage.md`** — confirm wording now that "data
-  interface" is deprecated in favor of the storage vocabulary; absorb the
-  membership/unmatched invariants.
+  interface" is deprecated in favor of the storage vocabulary.
 - **Generated check-types/inspectors reference** — regenerate with `make
   docs-gen` if any family or layer label changes (e.g. raw-source → source);
   never hand-edit.
