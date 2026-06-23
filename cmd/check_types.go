@@ -126,6 +126,11 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 		scope = "item"
 	}
 	fmt.Fprintf(out, "scope:   %s\n", scope)
+	sev := d.Severity
+	if sev == "" {
+		sev = "error"
+	}
+	fmt.Fprintf(out, "severity: %s\n", sev)
 	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
 	fmt.Fprintf(out, "\n%s\n", fam.Intro)
 

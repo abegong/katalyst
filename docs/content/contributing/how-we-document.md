@@ -102,6 +102,19 @@ type rather than guessed up front.
 - **Match the existing pages'** TOML `+++` frontmatter and `{{</* relref */>}}`
   cross-links.
 
+## Watch for AI-writing tells
+
+The [`markdown_writing_tells`]({{< relref "../reference/check-types/markdown/writing-tells.md" >}})
+check surfaces likely "AI slop" — decorative punctuation, overused words, and
+stock phrases — as **warnings**: it reports each hit but never fails the run.
+It is a review aid, not a gate; many hits are fine in context, and there is no
+allow list. A hit is a prompt to look, and the fix for each is a judgment call.
+
+The docs collection runs it (see `.katalyst/collections/pages.yaml`), so
+`katalyst check` prints each tell as a `warning:` line and still exits 0. How
+to act on a flagged em dash (and which conventions to keep) is being worked out
+in the em-dash rubric draft under `product/`.
+
 ## Tool-specific files
 
 `AGENTS.md` is the source of truth for conventions. Other tools read their

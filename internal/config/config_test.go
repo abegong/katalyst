@@ -1010,3 +1010,18 @@ func TestSchemaNames_returnsSortedNames(t *testing.T) {
 		t.Errorf("SchemaNames = %v, want %v", got, want)
 	}
 }
+
+func TestLoad_parsesWritingTells(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	if len(notes.Checks) != 1 || notes.Checks[0].Type != config.CheckMarkdownWritingTells {
+		t.Fatalf("expected one markdown_writing_tells check, got %+v", notes.Checks)
+	}
+}

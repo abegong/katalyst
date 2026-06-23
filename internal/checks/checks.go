@@ -23,6 +23,27 @@ type Context struct {
 	Meta           map[string]any
 }
 
+// Severity classifies how serious a violation is. The zero value is
+// SeverityError, so any check that does not set it keeps failing the run;
+// SeverityWarning is advisory — it is reported but never changes the exit
+// code. Warnings exist for judgment-call checks (prose tells, style nits)
+// where a human decides per instance rather than the build deciding for
+// them.
+type Severity int
+
+const (
+	SeverityError Severity = iota
+	SeverityWarning
+)
+
+// String returns "error" or "warning".
+func (s Severity) String() string {
+	if s == SeverityWarning {
+		return "warning"
+	}
+	return "error"
+}
+
 // Violation is one failed check.
 type Violation struct {
 	Path    string
@@ -32,6 +53,9 @@ type Violation struct {
 	// are not tied to the single item being processed. Empty for per-item
 	// checks (the caller already knows the file).
 	File string
+	// Severity defaults to SeverityError (the zero value). Checks emitting
+	// advisory findings set SeverityWarning.
+	Severity Severity
 }
 
 // Check validates one concern against a document context.

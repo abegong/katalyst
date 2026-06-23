@@ -397,3 +397,27 @@ func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *tes
 		t.Errorf("expected both colliding files named, got: %q", stderr)
 	}
 }
+
+func TestCheck_writingTells_warnButPass(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "notes/x.md"),
+		"---\ntitle: X\n---\n# X\n\nWe delve in — carefully.\n")
+
+	stdout, stderr, err := runRoot(t, "check", "notes/x")
+	if err != nil {
+		t.Fatalf("warnings must not fail the run, got: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "x.md: OK") {
+		t.Errorf("expected OK on stdout (warnings are advisory), got: %q", stdout)
+	}
+	if !strings.Contains(stderr, "warning:") {
+		t.Errorf("expected a warning line on stderr, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "em dash") {
+		t.Errorf("expected the em-dash tell, got: %q", stderr)
+	}
+}

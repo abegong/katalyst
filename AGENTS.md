@@ -117,6 +117,9 @@ you add a fixture.
 - Run `gofmt -w .` (or `make fmt`) before committing.
 - Don't add comments that just narrate what the code does. Comments
   explain *why* — non-obvious intent, trade-offs, constraints — not *what*.
+- The `markdown_writing_tells` check surfaces likely AI-writing tells (em
+  dashes, decorative emoji, stock phrases) as warnings for review; see
+  `docs/content/contributing/how-we-document.md`.
 - Production code that needs a new test fixture: add it under the
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.

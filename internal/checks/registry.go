@@ -54,6 +54,9 @@ type Descriptor struct {
 	// Scope is "collection" for checks that run once per collection over all
 	// its items; empty means an ordinary per-item check.
 	Scope string `json:"scope,omitempty"`
+	// Severity is "warning" for checks that emit advisory findings (never
+	// failing the run); empty means the default, "error".
+	Severity string `json:"severity,omitempty"`
 }
 
 // Family identifies a check-type family: its id (used in Descriptor.Family and

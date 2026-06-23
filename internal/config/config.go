@@ -119,6 +119,7 @@ const (
 	CheckMarkdownNoHeadingLevelJumps   CheckType = "markdown_no_heading_level_jumps"
 	CheckMarkdownRequiredSection       CheckType = "markdown_required_section"
 	CheckMarkdownCodeFenceHasLanguage  CheckType = "markdown_code_fence_language_required"
+	CheckMarkdownWritingTells          CheckType = "markdown_writing_tells"
 	CheckFilesystemExtensionIn         CheckType = "filesystem_extension_in"
 	CheckFilesystemParentDirIn         CheckType = "filesystem_parent_dir_in"
 	CheckFilesystemNameCase            CheckType = "filesystem_name_case"
@@ -1023,6 +1024,8 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 		}
 		return CheckInstance{Type: checkType, Heading: raw.Heading}, nil
 	case CheckMarkdownCodeFenceHasLanguage:
+		return CheckInstance{Type: checkType}, nil
+	case CheckMarkdownWritingTells:
 		return CheckInstance{Type: checkType}, nil
 	case CheckFilesystemExtensionIn:
 		if len(raw.Values) == 0 {
