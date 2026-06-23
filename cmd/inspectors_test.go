@@ -36,17 +36,25 @@ func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 	}
 }
 
+// The full catalog's layout (layer headings, column alignment) is pinned as a
+// snapshot; TestInspectors_listsEveryInspectorGroupedByLayer keeps the
+// registry-coverage and layer-order invariant against the live registry.
+func TestInspectorsList_textContract(t *testing.T) {
+	chdir(t, t.TempDir())
+	stdout, _, err := runRoot(t, "inspectors", "list")
+	if err != nil {
+		t.Fatalf("inspectors list: %v", err)
+	}
+	snapshot(t, "inspectors/list.txt", stdout)
+}
+
 func TestInspectorsShow_showsDetail(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "inspectors", "show", "object_fields")
 	if err != nil {
 		t.Fatalf("inspectors show object_fields: %v", err)
 	}
-	for _, want := range []string{"object_fields", "layer:     collection", "A data dictionary"} {
-		if !strings.Contains(stdout, want) {
-			t.Errorf("expected %q in detail output, got: %q", want, stdout)
-		}
-	}
+	snapshot(t, "inspectors/show-object_fields.txt", stdout)
 }
 
 func TestInspectorsShow_showsLayerContextAndSiblings(t *testing.T) {
@@ -55,15 +63,9 @@ func TestInspectorsShow_showsLayerContextAndSiblings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspectors show document_shape: %v", err)
 	}
-	if !strings.Contains(stdout, "Raw-source inspectors › Document shape") {
-		t.Errorf("expected breadcrumb header, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "profile a backend store directly") {
-		t.Errorf("expected layer intro, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "file_tree") {
-		t.Errorf("expected a sibling inspector, got: %q", stdout)
-	}
+	// The fixture pins the breadcrumb header, the layer intro, and the sibling
+	// list.
+	snapshot(t, "inspectors/show-document_shape.txt", stdout)
 }
 
 func TestInspectorsShow_unknown_exit2(t *testing.T) {
@@ -84,18 +86,9 @@ func TestInspectorsList_layerFiltersList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspectors list --layer collection: %v", err)
 	}
-	if !strings.Contains(stdout, "Collection inspectors") {
-		t.Errorf("expected Collection inspectors heading, got: %q", stdout)
-	}
-	if strings.Contains(stdout, "Raw-source inspectors") {
-		t.Errorf("expected only the collection layer, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "object_fields") {
-		t.Errorf("expected a collection inspector, got: %q", stdout)
-	}
-	if strings.Contains(stdout, "file_tree") {
-		t.Errorf("did not expect a source inspector, got: %q", stdout)
-	}
+	// The fixture pins the filtered output: only the collection layer, no
+	// source inspectors leak in.
+	snapshot(t, "inspectors/list-layer-collection.txt", stdout)
 }
 
 func TestInspectorsList_unknownLayer_exit2(t *testing.T) {

@@ -1,0 +1,21 @@
+Markdown body text check types › Single H1
+
+kind:    markdown_single_h1
+family:  markdownBodyText
+scope:   item
+severity: error
+purpose: Require that the markdown body contains at most one H1 heading.
+
+Markdown body-text check types validate relationships between frontmatter metadata and markdown body content.
+
+This check type takes no configuration keys.
+
+example:
+  collections:
+    notes:
+      path: notes
+      checks:
+        - kind: markdown_single_h1
+
+other markdown body text check types:
+  markdown_code_fence_language_required, markdown_no_heading_level_jumps, markdown_required_section, markdown_requires_h1, markdown_title_matches_h1, markdown_writing_tells

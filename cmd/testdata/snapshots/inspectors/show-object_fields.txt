@@ -1,0 +1,11 @@
+Collection inspectors › Object fields
+
+inspector: object_fields
+layer:     collection
+family:    object
+purpose:   A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
+
+Collection inspectors profile a configured collection's items, probing them through the same substrate the checks use.
+
+other collection inspectors:
+  markdown_body

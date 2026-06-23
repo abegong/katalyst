@@ -1,0 +1,43 @@
+Structured object check types
+CHECK TYPE               PURPOSE                                                                   REQUIRED       OPTIONAL
+object_field_enum        Require that a field is one of a fixed set of values.                     field, values  -
+object_field_type        Require that a frontmatter field has a specific type.                     field, type    -
+object_number_range      Constrain a numeric field to a minimum and/or maximum value.              field          min, max
+object_required_field    Require that a frontmatter field exists.                                  field          -
+object_sentence_case     Require a string field to read as sentence case, not Title Case.          field          allow
+object_string_length     Constrain the minimum and/or maximum length of a string field.            field          min_length, max_length
+filesystem_unique_field  Require that no two items share a value for a frontmatter field.          field          -
+object                   Validate frontmatter metadata against a named JSON Schema from schemas:.  schema         -
+
+Markdown body text check types
+CHECK TYPE                             PURPOSE                                                                                                         REQUIRED  OPTIONAL
+markdown_code_fence_language_required  Require that opening fenced code blocks include a language tag.                                                 -         -
+markdown_no_heading_level_jumps        Disallow jumps larger than one heading level (for example H1 -> H3).                                            -         -
+markdown_required_section              Require that a heading with specific text exists somewhere in the body.                                         heading   -
+markdown_requires_h1                   Require at least one H1 heading in the markdown body.                                                           -         -
+markdown_single_h1                     Require that the markdown body contains at most one H1 heading.                                                 -         -
+markdown_title_matches_h1              Require a frontmatter field to match the first H1 heading in the body.                                          -         field
+markdown_writing_tells                 Warn on likely AI-writing tells (em dashes, decorative emoji, overused words, stock phrases) for human review.  -         -
+
+File system check types
+CHECK TYPE                           PURPOSE                                                              REQUIRED  OPTIONAL
+filesystem_extension_in              Allow only specific file extensions.                                 values    -
+filesystem_index_file_required       Require that every directory containing items has an index file.     -         name
+filesystem_name_affix                Require a name to start with a prefix and/or end with a suffix.      -         prefix, suffix, target
+filesystem_name_case                 Require a name (or path segments) to follow a case style.            style     target
+filesystem_name_length               Bound the character length of a name.                                -         min, max, target
+filesystem_name_matches_field        Require a name to equal a frontmatter field, optionally slugified.   -         field, transform, target
+filesystem_name_regex                Require a name to match a regular expression (anchored).             pattern   target
+filesystem_parent_dir_in             Require that the file's parent directory name is in an allowed set.  values    -
+filesystem_parent_dir_matches_field  Require the parent directory name to equal a frontmatter field.      field     -
+filesystem_path_charset              Constrain the characters allowed in the item's path.                 -         deny, allow
+filesystem_path_depth                Bound directory nesting relative to the collection root.             -         min, max
+filesystem_referenced_files_exist    Require path-valued frontmatter fields to resolve to real files.     fields    -
+filesystem_unique_filename           Require that no two items in the collection share a basename.        -         -
+
+Plain text check types
+CHECK TYPE              PURPOSE                                                       REQUIRED  OPTIONAL
+text_denylist           Forbid any of a list of literal substrings in the body text.  values    target, select
+text_forbids            Forbid a regular expression from appearing in the body text.  pattern   target, select, fix
+text_requires           Require a regular expression to appear in the body text.      pattern   target, select, match
+fake_prose_unavailable  Test-only out-of-process check type.                          -         -
