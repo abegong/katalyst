@@ -39,6 +39,32 @@ func TestCheck_validItem_OK(t *testing.T) {
 	}
 }
 
+func TestCheck_frontmatterlessFile_lintsBodyText(t *testing.T) {
+	dir := setupNotesRepo(t, "path: notes\npattern: \"*.txt\"\nchecks:\n  - kind: text_forbids\n    target: line\n    pattern: '\\bTODO\\b'\n")
+	mustWrite(t, filepath.Join(dir, "notes/a.txt"), "plain line\nhas TODO here\n")
+
+	_, stderr, err := runRoot(t, "check", "notes/a")
+	if err == nil {
+		t.Fatalf("expected a violation on the frontmatter-less file")
+	}
+	if !strings.Contains(stderr, "forbidden text") || !strings.Contains(stderr, "a.txt:2:") {
+		t.Errorf("expected a TODO violation on line 2, got: %q", stderr)
+	}
+}
+
+func TestCheck_frontmatterlessFile_passesWhenClean(t *testing.T) {
+	dir := setupNotesRepo(t, "path: notes\npattern: \"*.txt\"\nchecks:\n  - kind: text_forbids\n    target: line\n    pattern: '\\bTODO\\b'\n")
+	mustWrite(t, filepath.Join(dir, "notes/clean.txt"), "all good here\n")
+
+	stdout, _, err := runRoot(t, "check", "notes/clean")
+	if err != nil {
+		t.Fatalf("check: %v", err)
+	}
+	if !strings.Contains(stdout, "OK") {
+		t.Errorf("expected OK on a clean frontmatter-less file, got: %q", stdout)
+	}
+}
+
 func TestCheck_invalidItem_exit1WithPointer(t *testing.T) {
 	dir := setupNotesRepo(t, objectNotesConfig)
 	// year is a string → type error at /year on line 3.
