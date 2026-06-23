@@ -15,8 +15,9 @@ We do this by dividing documentation across four areas, each with a specific pur
 - **Published documentation (Hugo):** everything users and agents need to
   understand and use Katalyst - tutorials, how-to, reference, and deep-dives explaining the reasoning behind them.
 - **Go doc comments:** code-level API and design detail, co-located with the code
-- **`AGENTS.md` files:** conventions, local architecture, required patterns, and gotchas for writing
-  code in the repo - a lean root file plus per-package files.
+- **`AGENTS.md` files:** conventions, required patterns, and gotchas for writing
+  code in the repo, plus a pointer to each subsystem's architecture deep-dive - a
+  lean root file plus per-package files.
 - **Specs and plans:** `product/` staging for in-flight ideas;
   each is deleted once its durable content graduates into the homes above.
 
