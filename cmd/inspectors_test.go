@@ -9,10 +9,8 @@ import (
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
-func TestInspectors_listsEveryInspectorGroupedByFamily(t *testing.T) {
-	// No project on disk: inspectors reads the engine registry, not config.
+func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 	chdir(t, t.TempDir())
-
 	stdout, _, err := runRoot(t, "inspectors", "list")
 	if err != nil {
 		t.Fatalf("inspectors list: %v", err)
@@ -24,16 +22,15 @@ func TestInspectors_listsEveryInspectorGroupedByFamily(t *testing.T) {
 		}
 	}
 
-	// Family titles appear in Families() order.
 	last := -1
-	for _, fam := range inspect.Families() {
-		i := strings.Index(stdout, fam.Title)
+	for _, l := range inspect.Layers() {
+		i := strings.Index(stdout, l.Title)
 		if i < 0 {
-			t.Errorf("expected family title %q in output", fam.Title)
+			t.Errorf("expected layer title %q in output", l.Title)
 			continue
 		}
 		if i < last {
-			t.Errorf("family %q out of order", fam.Title)
+			t.Errorf("layer %q out of order", l.Title)
 		}
 		last = i
 	}
@@ -41,36 +38,30 @@ func TestInspectors_listsEveryInspectorGroupedByFamily(t *testing.T) {
 
 func TestInspectorsShow_showsDetail(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "show", "object_field_frequency")
+	stdout, _, err := runRoot(t, "inspectors", "show", "object_fields")
 	if err != nil {
-		t.Fatalf("inspectors show object_field_frequency: %v", err)
+		t.Fatalf("inspectors show object_fields: %v", err)
 	}
-	for _, want := range []string{
-		"object_field_frequency",           // inspector id
-		"Report, per frontmatter key",      // purpose
-		"--inspector object_field_frequency", // usage hint
-	} {
+	for _, want := range []string{"object_fields", "layer:     collection", "A data dictionary"} {
 		if !strings.Contains(stdout, want) {
 			t.Errorf("expected %q in detail output, got: %q", want, stdout)
 		}
 	}
 }
 
-func TestInspectorsShow_showsFamilyContextAndSiblings(t *testing.T) {
+func TestInspectorsShow_showsLayerContextAndSiblings(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "show", "object_field_types")
+	stdout, _, err := runRoot(t, "inspectors", "show", "document_shape")
 	if err != nil {
-		t.Fatalf("inspectors show object_field_types: %v", err)
+		t.Fatalf("inspectors show document_shape: %v", err)
 	}
-	// Breadcrumb + family intro give the docs-traversal context.
-	if !strings.Contains(stdout, "Object › Field Types") {
+	if !strings.Contains(stdout, "Raw-source inspectors › Document Shape") {
 		t.Errorf("expected breadcrumb header, got: %q", stdout)
 	}
-	if !strings.Contains(stdout, "Object inspectors report the distribution") {
-		t.Errorf("expected family intro, got: %q", stdout)
+	if !strings.Contains(stdout, "profile a backend store directly") {
+		t.Errorf("expected layer intro, got: %q", stdout)
 	}
-	// Siblings list points at the rest of the family.
-	if !strings.Contains(stdout, "object_field_frequency") {
+	if !strings.Contains(stdout, "file_tree") {
 		t.Errorf("expected a sibling inspector, got: %q", stdout)
 	}
 }
@@ -87,31 +78,31 @@ func TestInspectorsShow_unknown_exit2(t *testing.T) {
 	}
 }
 
-func TestInspectorsList_familyFiltersList(t *testing.T) {
+func TestInspectorsList_layerFiltersList(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "list", "--family", "markdown")
+	stdout, _, err := runRoot(t, "inspectors", "list", "--layer", "collection")
 	if err != nil {
-		t.Fatalf("inspectors list --family markdown: %v", err)
+		t.Fatalf("inspectors list --layer collection: %v", err)
 	}
-	if !strings.Contains(stdout, "Markdown") {
-		t.Errorf("expected Markdown heading, got: %q", stdout)
+	if !strings.Contains(stdout, "Collection inspectors") {
+		t.Errorf("expected Collection inspectors heading, got: %q", stdout)
 	}
-	if strings.Contains(stdout, "Structural") || strings.Contains(stdout, "Filesystem") {
-		t.Errorf("expected only the markdown family, got: %q", stdout)
+	if strings.Contains(stdout, "Raw-source inspectors") {
+		t.Errorf("expected only the collection layer, got: %q", stdout)
 	}
-	if !strings.Contains(stdout, "markdown_sections") {
-		t.Errorf("expected a markdown inspector, got: %q", stdout)
+	if !strings.Contains(stdout, "object_fields") {
+		t.Errorf("expected a collection inspector, got: %q", stdout)
 	}
-	if strings.Contains(stdout, "walk_parse") {
-		t.Errorf("did not expect a structural inspector, got: %q", stdout)
+	if strings.Contains(stdout, "file_tree") {
+		t.Errorf("did not expect a source inspector, got: %q", stdout)
 	}
 }
 
-func TestInspectorsList_unknownFamily_exit2(t *testing.T) {
+func TestInspectorsList_unknownLayer_exit2(t *testing.T) {
 	chdir(t, t.TempDir())
-	_, _, err := runRoot(t, "inspectors", "list", "--family", "nope")
+	_, _, err := runRoot(t, "inspectors", "list", "--layer", "nope")
 	if err == nil {
-		t.Fatalf("expected error for unknown family")
+		t.Fatalf("expected error for unknown layer")
 	}
 	var coded interface{ Code() int }
 	if !errors.As(err, &coded) || coded.Code() != 2 {
@@ -125,12 +116,9 @@ func TestInspectorsList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspectors list --json: %v", err)
 	}
-
 	var got []struct {
 		Name    string `json:"name"`
-		Family  string `json:"family"`
-		Slug    string `json:"slug"`
-		Title   string `json:"title"`
+		Layer   string `json:"layer"`
 		Summary string `json:"summary"`
 	}
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
@@ -141,62 +129,58 @@ func TestInspectorsList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	}
 	for i, d := range inspect.Descriptors() {
 		if got[i].Name != d.Name {
-			t.Errorf("entry %d: got inspector %q, want %q", i, got[i].Name, d.Name)
+			t.Errorf("entry %d: got %q, want %q", i, got[i].Name, d.Name)
 		}
-		if got[i].Summary == "" {
-			t.Errorf("entry %d (%s): empty summary", i, d.Name)
+		if got[i].Layer == "" || got[i].Summary == "" {
+			t.Errorf("entry %d (%s): empty layer/summary", i, d.Name)
 		}
 	}
-
-	// Wire-shape guarantee: snake_case keys.
-	if !strings.Contains(stdout, `"name"`) || !strings.Contains(stdout, `"summary"`) {
-		t.Errorf("expected snake_case name/summary keys")
+	if !strings.Contains(stdout, `"layer"`) {
+		t.Errorf("expected snake_case layer key")
 	}
 }
 
-func TestInspectorsList_familyJSONFiltersToFamily(t *testing.T) {
+func TestInspectorsList_layerJSONFiltersToLayer(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "list", "--family", "filesystem", "--json")
+	stdout, _, err := runRoot(t, "inspectors", "list", "--layer", "source", "--json")
 	if err != nil {
-		t.Fatalf("inspectors list --family filesystem --json: %v", err)
+		t.Fatalf("inspectors list --layer source --json: %v", err)
 	}
 	var got []struct {
-		Name   string `json:"name"`
-		Family string `json:"family"`
+		Name  string `json:"name"`
+		Layer string `json:"layer"`
 	}
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(familyInspectors("filesystem")) {
-		t.Fatalf("got %d filesystem descriptors, want %d", len(got), len(familyInspectors("filesystem")))
+	if len(got) != len(layerInspectors("source")) {
+		t.Fatalf("got %d source descriptors, want %d", len(got), len(layerInspectors("source")))
 	}
 	for _, d := range got {
-		if d.Family != "filesystem" {
-			t.Errorf("got non-filesystem family %q", d.Family)
+		if d.Layer != "source" {
+			t.Errorf("got non-source layer %q", d.Layer)
 		}
 	}
 }
 
 func TestInspectorsShow_jsonObject(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "show", "filesystem_naming", "--json")
+	stdout, _, err := runRoot(t, "inspectors", "show", "file_tree", "--json")
 	if err != nil {
-		t.Fatalf("inspectors show filesystem_naming --json: %v", err)
+		t.Fatalf("inspectors show file_tree --json: %v", err)
 	}
 	var got struct {
-		Name   string `json:"name"`
-		Family string `json:"family"`
+		Name  string `json:"name"`
+		Layer string `json:"layer"`
 	}
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
-		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
+		t.Fatalf("invalid JSON: %v", err)
 	}
-	if got.Name != "filesystem_naming" {
-		t.Errorf("got inspector %q, want filesystem_naming", got.Name)
+	if got.Name != "file_tree" || got.Layer != "source" {
+		t.Errorf("got %+v, want file_tree/source", got)
 	}
 }
 
-// TestInspectors_bare_printsHelpNotList pins the grammar rule: a resource noun
-// invoked bare prints help and never silently lists (see cmd/AGENTS.md).
 func TestInspectors_bare_printsHelpNotList(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "inspectors")
@@ -208,18 +192,16 @@ func TestInspectors_bare_printsHelpNotList(t *testing.T) {
 			t.Errorf("expected help to mention %q, got: %q", want, stdout)
 		}
 	}
-	// The catalog must not leak: bare `inspectors` is not an action.
-	if strings.Contains(stdout, "walk_parse") {
+	if strings.Contains(stdout, "object_fields") {
 		t.Errorf("bare inspectors listed inspectors instead of printing help: %q", stdout)
 	}
 }
 
-// familyInspectors returns the registered inspectors in a family, for test
-// expectations.
-func familyInspectors(family string) []string {
+// layerInspectors returns the registered inspector names in a layer.
+func layerInspectors(layer string) []string {
 	var out []string
 	for _, d := range inspect.Descriptors() {
-		if d.Family == family {
+		if d.Layer == layer {
 			out = append(out, d.Name)
 		}
 	}

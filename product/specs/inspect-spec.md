@@ -1,5 +1,15 @@
 # Inspect — profiling a directory into a draft schema
 
+> **Superseded in part.** The single-scope inspector model here — every
+> inspector a pure function of one `Corpus` — is evolved by
+> [inspector-layers-spec.md](./inspector-layers-spec.md), which splits
+> inspectors into a **raw-source** layer and a **collection** layer over the
+> [#31 storage seam](./storage-layer-spec.md), with distinct data-referencing
+> machinery and checks as the collection layer's substrate. This spec remains
+> the record of what originally shipped (the inspectors and the `inspect`
+> command); read it for that history, and the layers spec for the current
+> direction.
+
 > **Status: implementing.** Introduces **inspectors**: a descriptive (read-only)
 > operation family that measures an existing directory and returns *evidence*
 > about its shape — frontmatter fields, markdown structure, filename

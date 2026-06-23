@@ -16,30 +16,36 @@ deciding that a field present in 94% of files should be `required`, or that two
 similar directories are one collection, is the agent's call. Keep that division
 and the loop stays debuggable.
 
-## 1. Give the agent the evidence
+## 1. Give the agent the raw-store evidence
 
-Run `inspect` with `--json` so the agent gets structured records — one per
-inspector, each carrying the file count `n` as the denominator:
+Run `inspect` on the directory with `--json` so the agent gets structured
+records — one per inspector, each carrying the unit count `n` as the
+denominator:
 
 ```bash
 katalyst inspect ./wiki --json
 ```
 
-Feed that output to the agent. Tell it the contract: every record is
-*evidence*, not a recommendation; it must choose its own thresholds and justify
-them from the counts.
+With no project this runs the **raw-source** layer. The key record is
+`document_shape`, which clusters files into candidate collections by a composite
+fingerprint (frontmatter keys, body section skeleton, file naming). Feed the
+output to the agent. Tell it the contract: every record is *evidence*, not a
+recommendation; it must choose its own thresholds and justify them.
 
-## 2. Let the agent cluster and draft
+## 2. Let the agent cluster, configure, and profile fields
 
 A capable agent then:
 
-1. **Clusters** the `frontmatter_shape` groups into candidate collections.
-   `inspect` groups files with *identical* key-sets; the agent decides when two
-   near-but-distinct groups are really one collection, and names them.
-2. **Sets thresholds** from the evidence — e.g. fields in ≥95% of files become
+1. **Clusters** the `document_shape` classes into candidate collections.
+   `inspect` groups files with *matching* fingerprints; the agent decides when
+   two near-but-distinct classes are really one collection, and names them. It
+   drafts `.katalyst/storage/*` pointing each collection at its directory.
+2. **Profiles the fields** by inspecting each new collection — `katalyst inspect
+   <collection> --json` runs the collection layer, whose `object_fields` record
+   is the per-field data dictionary (presence, types, values).
+3. **Sets thresholds** from that evidence — e.g. fields in ≥95% of items become
    `required`, a small stable value set becomes an `enum`, a consistent type
-   becomes a `type` constraint.
-3. **Drafts** the `.katalyst/schemas/*` and `.katalyst/storage/*` files.
+   becomes a `type` constraint — and **drafts** the `.katalyst/schemas/*`.
 
 A prompt that works:
 

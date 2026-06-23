@@ -12,7 +12,11 @@ When adding a top-level command, decide which family it joins:
 - **Blessed verb** — `katalyst <verb> [selector ...]` — a cross-cutting
   operation over content, accepting a selector at any depth and multiple
   selectors (`check`, `fix`). `init` and `inspect` are verbs too — they take
-  flags or a path rather than a selector.
+  flags or a path rather than a selector. `inspect` infers its inspector
+  **layer** from the single argument: a configured collection name runs the
+  collection layer; anything else is a filesystem path for the raw-source layer
+  (with no project, always raw). Layer selection is by argument, deliberately
+  not a flag, to keep the onboarding case (`inspect ./wiki`) flag-free.
 - **Resource noun** — `katalyst <noun> <verb> <selector>` — a group whose
   CRUD-shaped sub-verbs act on one resource at a fixed depth (`collection`,
   `item`, `schema`, `rules`).

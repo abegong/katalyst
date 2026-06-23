@@ -253,14 +253,31 @@ denominator. It realizes the `aggregate` operation from the [core
 concepts]({{< relref "../deep-dives/core-concepts.md" >}}).
 
 Inspectors are read-only and never recommend. They report that `status` is
-present in 142 of 142 files with three distinct values; deciding that this
+present in 142 of 142 items with three distinct values; deciding that this
 warrants a `required` field with an `enum` is *judgment* that belongs to
-whoever reads the evidence — a human or an agent — not to the inspector. The
-[`inspect`]({{< relref "../reference/commands.md" >}}) command parses a
-directory once into a `Corpus`, runs each inspector over it, and renders the
-evidence as Markdown (default) or JSON. Inspectors have their own registry and
-parity test, mirroring checks, so none ships undocumented. The design rationale
-(evidence-not-verdicts, the determinism dividing line, the division of labor)
+whoever reads the evidence — a human or an agent — not to the inspector.
+
+Inspectors come in **two layers**, distinguished by how they reference the
+data — the same seam as [storage]({{< relref "storage.md" >}}):
+
+- **Raw-source** inspectors profile a backend store directly, before any
+  collection configuration, addressed by backend-native reference (a path
+  today). This is the onboarding case: "what's in this directory?" `file_tree`,
+  `file_tree_content`, and `document_shape` live here.
+- **Collection** inspectors profile a configured collection's items, addressed
+  by domain identity (collection + item id) through the
+  [`CollectionDefinition`]({{< relref "storage.md" >}}), and probe items through
+  the same substrate the checks use. `object_fields` and `markdown_body` live
+  here.
+
+The [`inspect`]({{< relref "../reference/commands.md" >}}) command infers the
+layer from its argument — a configured collection name runs the collection
+layer, anything else is a path for the raw-source layer — and renders the
+evidence as Markdown (default) or JSON. Both layers are built from a few
+reusable measurement primitives (`object_fields`, `markdown_body`,
+file-metadata). Inspectors have their own registry and per-layer parity test,
+mirroring checks, so none ships undocumented. The design rationale
+(evidence-not-verdicts, the determinism dividing line, the two-layer split)
 lives in the package's own docs — `go doc ./internal/inspect` — next to the
 code; see [the reference]({{< relref "../reference/inspectors/_index.md" >}})
 for the inspector set.

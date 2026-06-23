@@ -1,19 +1,6 @@
 package inspect
 
-import (
-	"sort"
-	"strconv"
-)
-
-// eachValue calls fn for every (key, value) pair across the frontmatter of
-// every file in the corpus. Files without frontmatter contribute nothing.
-func eachValue(c Corpus, fn func(key string, v any)) {
-	for _, f := range c.Files {
-		for k, v := range meta(f) {
-			fn(k, v)
-		}
-	}
-}
+import "sort"
 
 // jsonType names the JSON-shaped type of a decoded YAML value. yaml.v3 decodes
 // integers as Go ints and floats as float64, so both map cleanly here.
@@ -68,28 +55,6 @@ func toFloat(v any) (float64, bool) {
 		return x, true
 	default:
 		return 0, false
-	}
-}
-
-// scalarString renders a scalar value (string, bool, number) to a stable
-// string for value-set counting. Arrays and objects are not scalars and
-// return false, so they never enter an enum candidate set.
-func scalarString(v any) (string, bool) {
-	switch x := v.(type) {
-	case string:
-		return x, true
-	case bool:
-		if x {
-			return "true", true
-		}
-		return "false", true
-	default:
-		if f, ok := toFloat(v); ok {
-			// 'f' with -1 precision yields the shortest exact form, so the
-			// integer 5 and the value-set key "5" agree.
-			return strconv.FormatFloat(f, 'f', -1, 64), true
-		}
-		return "", false
 	}
 }
 

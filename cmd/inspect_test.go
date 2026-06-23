@@ -10,28 +10,66 @@ import (
 	"testing"
 )
 
-// inspectRepo scaffolds a small markdown corpus and returns its directory.
+// inspectRepo scaffolds a small markdown tree (no .katalyst) and returns its
+// directory — a raw store for the source layer.
 func inspectRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	writeFile(t, dir, "books/dune.md", "---\ntitle: Dune\nstatus: read\n---\n# Dune\n## Review\n")
-	writeFile(t, dir, "books/it.md", "---\ntitle: It\nstatus: reading\n---\n# It\n")
+	writeFile(t, dir, "books/it.md", "---\ntitle: It\nstatus: read\n---\n# It\n## Review\n")
 	return dir
 }
 
-func TestInspect_defaultOutputIsMarkdown(t *testing.T) {
+func TestInspect_rawPathRunsSourceLayer(t *testing.T) {
 	dir := inspectRepo(t)
 	stdout, _, err := runRoot(t, "inspect", dir)
 	if err != nil {
 		t.Fatalf("inspect: %v", err)
 	}
-	for _, want := range []string{"# Inspection report:", "## Structural", "### object_field_frequency"} {
+	for _, want := range []string{"# Inspection report:", "### document_shape", "### file_tree"} {
 		if !strings.Contains(stdout, want) {
-			t.Errorf("markdown output missing %q\n%s", want, stdout)
+			t.Errorf("source-layer output missing %q\n%s", want, stdout)
 		}
 	}
 	if strings.HasPrefix(strings.TrimSpace(stdout), "[") {
 		t.Errorf("default output looks like JSON, want Markdown")
+	}
+}
+
+func TestInspect_collectionLayerWhenConfigured(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`)
+	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\nrating: 5\n---\n# Dune\n")
+	writeFile(t, dir, "notes/it.md", "---\ntitle: It\nrating: 4\n---\n# It\n")
+	chdir(t, dir)
+
+	stdout, _, err := runRoot(t, "inspect", "--json", "notes")
+	if err != nil {
+		t.Fatalf("inspect notes: %v", err)
+	}
+	var records []map[string]any
+	if err := json.Unmarshal([]byte(stdout), &records); err != nil {
+		t.Fatalf("bad json: %v\n%s", err, stdout)
+	}
+	names := map[string]bool{}
+	for _, r := range records {
+		names[r["inspector"].(string)] = true
+		if r["scope"] != "notes" {
+			t.Errorf("scope = %v, want notes", r["scope"])
+		}
+	}
+	if !names["object_fields"] || !names["markdown_body"] {
+		t.Errorf("collection layer should run object_fields + markdown_body, got %v", names)
+	}
+	if names["file_tree"] {
+		t.Errorf("collection layer should not run source inspectors, got %v", names)
 	}
 }
 
@@ -78,7 +116,7 @@ func TestInspect_outputFileMatchesStdout(t *testing.T) {
 
 func TestInspect_inspectorFlagNarrows(t *testing.T) {
 	dir := inspectRepo(t)
-	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "object_field_frequency", dir)
+	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "document_shape", dir)
 	if err != nil {
 		t.Fatalf("inspect --inspector: %v", err)
 	}
@@ -86,8 +124,8 @@ func TestInspect_inspectorFlagNarrows(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &records); err != nil {
 		t.Fatalf("bad json: %v", err)
 	}
-	if len(records) != 1 || records[0]["inspector"] != "object_field_frequency" {
-		t.Errorf("expected only object_field_frequency, got %v", records)
+	if len(records) != 1 || records[0]["inspector"] != "document_shape" {
+		t.Errorf("expected only document_shape, got %v", records)
 	}
 }
 
@@ -124,27 +162,35 @@ func TestInspect_unknownInspectorIsUsageError(t *testing.T) {
 	}
 }
 
+func TestInspect_collapseParamsMutuallyExclusive(t *testing.T) {
+	dir := inspectRepo(t)
+	_, _, err := runRoot(t, "inspect", "--detail", "coarse", "--max-classes", "2", dir)
+	var coded interface{ Code() int }
+	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit 2 for mutually-exclusive collapse flags, got: %v", err)
+	}
+}
+
 func TestInspect_outputIncludesDescriptions(t *testing.T) {
 	stdout, _, err := runRoot(t, "inspect", inspectRepo(t))
 	if err != nil {
 		t.Fatalf("inspect: %v", err)
 	}
-	// The one-line description of object_field_frequency's results.
-	if !strings.Contains(stdout, "Report, per frontmatter key, how many files contain it.") {
+	if !strings.Contains(stdout, "Cluster files into candidate collections") {
 		t.Errorf("output missing inspector description\n%s", stdout)
 	}
 }
 
 func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
 	dir := t.TempDir()
-	var body strings.Builder
-	body.WriteString("---\ntitle: A\n---\n# A\n")
-	for i := 0; i < 30; i++ {
-		body.WriteString(fmt.Sprintf("## Section %02d\n", i))
+	// Ten files with disjoint frontmatter keys + sections → ten singleton
+	// document_shape classes, enough lines to exceed a small --max-lines.
+	for i := 0; i < 10; i++ {
+		writeFile(t, dir, fmt.Sprintf("docs/f%02d.md", i),
+			fmt.Sprintf("---\nk%02d: v\n---\n# H\n\n## S%02d\n", i, i))
 	}
-	writeFile(t, dir, "a.md", body.String())
 
-	truncated, _, err := runRoot(t, "inspect", "--inspector", "markdown_sections", "--max-lines", "5", dir)
+	truncated, _, err := runRoot(t, "inspect", "--inspector", "document_shape", "--max-lines", "5", dir)
 	if err != nil {
 		t.Fatalf("inspect --max-lines: %v", err)
 	}
@@ -152,27 +198,26 @@ func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
 		t.Errorf("expected a truncation notice with --max-lines 5\n%s", truncated)
 	}
 
-	full, _, err := runRoot(t, "inspect", "--inspector", "markdown_sections", "-v", dir)
+	full, _, err := runRoot(t, "inspect", "--inspector", "document_shape", "-v", dir)
 	if err != nil {
 		t.Fatalf("inspect -v: %v", err)
 	}
 	if strings.Contains(full, "truncated") {
 		t.Errorf("-v should not truncate\n%s", full)
 	}
-	if got := strings.Count(full, "- Section "); got != 30 {
-		t.Errorf("-v rendered %d sections, want 30", got)
+	if got := strings.Count(full, "label=docs/f"); got != 10 {
+		t.Errorf("-v rendered %d outliers, want 10\n%s", got, full)
 	}
 }
 
-func TestInspect_missingDirectoryGivesHelpfulError(t *testing.T) {
+func TestInspect_missingArgumentGivesHelpfulError(t *testing.T) {
 	_, stderr, err := runRoot(t, "inspect")
 	var coded interface{ Code() int }
 	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
 		t.Fatalf("expected exit code 2, got: %v", err)
 	}
-	// A usage hint with the arg spec, not Cobra's "accepts 1 arg(s)".
 	combined := err.Error() + stderr
-	if !strings.Contains(combined, "usage: katalyst inspect <path>") {
+	if !strings.Contains(combined, "usage: katalyst inspect <path-or-collection>") {
 		t.Errorf("error should carry a usage hint: %q", combined)
 	}
 	if strings.Contains(combined, "arg(s)") {

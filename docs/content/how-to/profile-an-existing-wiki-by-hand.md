@@ -12,57 +12,101 @@ schema **by reading the evidence yourself**. To hand that judgment to an agent
 instead, see [Profile an existing wiki with an
 agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}).
 
-`inspect` is read-only and needs no `.katalyst/` project. It reports
-**evidence** — counts and distributions — never recommendations. Reading the
-evidence and deciding the schema is your call.
+`inspect` reports **evidence** — counts and distributions — never
+recommendations. Reading the evidence and deciding the schema is your call. It
+runs in **two layers**: point it at a **directory** to profile a raw store
+(no project needed), or at a configured **collection** to profile its items.
+The onboarding loop uses both.
 
-## 1. Inspect the directory
+## 1. Survey the directory (raw-source layer)
 
-Point `inspect` at the directory:
+Point `inspect` at the directory. With no `.katalyst/` project it runs the
+raw-source inspectors:
 
 ```bash
 katalyst inspect ./wiki
 ```
 
-You get a Markdown report grouped by family. The fields that matter most:
+`document_shape` clusters files into **candidate collections** by a composite
+fingerprint — frontmatter keys, body section skeleton, and file naming — so you
+can see what natural groups exist:
 
 ```
-### object_field_frequency (n=142)
-- title:  { present: 142 }
-- author: { present: 141 }
-- status: { present: 142 }
-- isbn:   { present: 17 }
-
-### object_field_values (n=142)
-- status: { cardinality: 3, values: { read: 80, reading: 12, to-read: 50 } }
+### document_shape (n=142)
+- classes:
+  - class=P1 features=[ext:.md, casing:kebab, fmkey:author, fmkey:status, fmkey:title, sec:Review] members=[...] size=139
+- outliers:
+  - features=[ext:.md, casing:other] label=Dune Messiah.md
 ```
 
-For a machine-readable form an agent can parse, add `--json`; to save the
-report, use `-o report.md`.
+`file_tree` reports the file types and naming conventions per directory. Use
+this layer to decide **which directories are collections** — here, 139 files
+share one shape, so `./wiki` is a single `books` collection with three
+outliers.
 
-## 2. Read the evidence
+## 2. Configure the collection
 
-Each inspector answers one question. Translate its counts into schema
-decisions yourself — the threshold is your judgment, not the tool's:
+Point a collection at the directory so the field-level layer can run. Minimal
+config:
 
-| Inspector | What it tells you | A reasonable reading |
+```yaml
+# .katalyst/storage/local.yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: wiki
+```
+
+## 3. Inspect the collection (collection layer)
+
+Now inspect the collection by name. Inside the project, `inspect` runs the
+collection inspectors over its items:
+
+```bash
+katalyst inspect books
+```
+
+`object_fields` is a **data dictionary** over the items' frontmatter — per
+field, presence over `n`, observed types, value cardinality, and the common
+values when the set is small:
+
+```
+### object_fields (n=142)
+- author:
+  - present: 141
+  - types: { string: 141 }
+- status:
+  - present: 142
+  - cardinality: 3
+  - values: { read: 80, reading: 12, to-read: 50 }
+```
+
+`markdown_body` reports the body conventions: single-H1 / H1-matches-title rates
+and recurring section headings. For a machine-readable form, add `--json`; to
+save the report, use `-o report.md`.
+
+## 4. Read the evidence
+
+Translate the counts into schema decisions yourself — the threshold is your
+judgment, not the tool's:
+
+| Evidence | What it tells you | A reasonable reading |
 |---|---|---|
-| `object_field_frequency` | how often each field appears | present in nearly every file → `required`; sometimes → optional |
-| `object_field_values` | distinct values of a field | a small, stable set → an `enum` |
-| `object_field_types` | observed types per field | one consistent type → a `type` constraint; mixed → a field to clean up first |
-| `object_field_numeric_range` / `string_length` | observed bounds | a `min`/`max` or length constraint |
-| `markdown_heading_shape` | single-H1, H1-matches-title, level jumps | `markdown_single_h1`, `markdown_title_matches_h1` |
-| `markdown_sections` | recurring section headings | a `markdown_required_section` |
-| `filesystem_naming` | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
+| `object_fields` `present` / `n` | how often a field appears | nearly every item → `required`; sometimes → optional |
+| `object_fields` `values` | a small, stable value set | an `enum` |
+| `object_fields` `types` | observed types per field | one consistent type → a `type` constraint; mixed → a field to clean up first |
+| `markdown_body` heading shape | single-H1, H1-matches-title | `markdown_single_h1`, `markdown_title_matches_h1` |
+| `markdown_body` sections | recurring section headings | a `markdown_required_section` |
+| `file_tree` naming (step 1) | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
 
-The denominator `n` is always reported, so you decide what "nearly every file"
-means. The outliers — the 17-of-142 `isbn`, the three filenames with spaces —
-are exactly the files a schema will flag.
+The denominator `n` is always reported, so you decide what "nearly every item"
+means. The outliers — the one-of-142 missing `author`, the `document_shape`
+outlier with spaces in its name — are exactly the files a schema will flag.
 
-## 3. Draft a schema from the evidence
+## 5. Draft a schema and check
 
-`inspect` does not write anything; you author the `.katalyst/` files (or have
-an agent draft them). A schema for the evidence above:
+Add the schema and bind it to the collection:
 
 ```yaml
 # .katalyst/schemas/book.yaml
@@ -75,7 +119,7 @@ properties:
 ```
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/storage/local.yaml  (extend the collection from step 2)
 type: filesystem
 root: .
 collections:
@@ -89,10 +133,7 @@ collections:
 ```
 
 See [Add a schema]({{< relref "add-a-schema.md" >}}) for the binding details.
-
-## 4. Check and iterate
-
-Run `check` against the draft:
+Then run `check` against the draft:
 
 ```bash
 katalyst check books

@@ -18,8 +18,10 @@ If you want to be confident that your content/data/memory is always in good shap
 
 Need a quick shape profile of an existing wiki before authoring rules? Use
 `katalyst inspect <path>` to report frontmatter, markdown, and filename
-conventions as evidence. The full command surface (including `inspect`) is in
-the [command reference](https://abegong.github.io/katalyst/reference/commands/).
+conventions as evidence — and, once you've configured collections,
+`katalyst inspect <collection>` to profile a collection's items. The full
+command surface (including `inspect`) is in the
+[command reference](https://abegong.github.io/katalyst/reference/commands/).
 
 > [!TIP]
 > **New to Katalyst?** [Get started »](https://abegong.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.

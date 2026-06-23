@@ -48,32 +48,40 @@ write nothing, print items that would change, and exit `1` — the CI form.
 ## `inspect`
 
 ```bash
-katalyst inspect <path>
-katalyst inspect <path> --json
-katalyst inspect <path> --inspector <name> [--inspector <name> ...]
-katalyst inspect <path> --max-lines <n> | -v
-katalyst inspect <path> -o report.md
+katalyst inspect <path>            # raw-source layer (a directory)
+katalyst inspect <collection>      # collection layer (a configured collection)
+katalyst inspect <target> --json
+katalyst inspect <target> --inspector <name> [--inspector <name> ...]
+katalyst inspect <target> --detail exact|grouped|coarse
+katalyst inspect <target> --max-lines <n> | -v
+katalyst inspect <target> -o report.md
 ```
 
-Profile the markdown files under `<path>` and report the corpus's shape:
-frontmatter field frequency and types, markdown heading and section
-conventions, and filename conventions. The output is **evidence** — counts and
-distributions with the file count as denominator — not recommendations.
-`inspect` is read-only: it writes no schema and mutates nothing under `<path>`.
+Profile a target and report its shape as **evidence** — counts and
+distributions with the unit count as denominator — never recommendations.
+`inspect` is read-only: it writes no schema and mutates nothing.
+
+The **layer is inferred from the argument**. Inside a `.katalyst/` project, a
+configured collection name (e.g. `notes`) runs the **collection** inspectors
+over that collection's items. Otherwise the argument is a filesystem path and
+the **raw-source** inspectors profile the tree — the onboarding case, "what's
+here?", which needs no project. See the
+[inspectors reference]({{< relref "inspectors/_index.md" >}}) for the two
+layers and their inspectors.
 
 Each inspector's results are prefixed with a one-line description of what they
 mean. Output is Markdown by default; `--json` emits the same evidence as JSON.
 
-- `--inspector` narrows the run to named inspectors (see the [inspectors
-  reference]({{< relref "inspectors/_index.md" >}})).
+- `--inspector` narrows the run to named inspectors in the selected layer.
+- `--detail` tunes how aggressively the summarizing inspectors (`file_tree`,
+  `document_shape`) collapse near-identical profiles into classes: `exact`,
+  `grouped` (default), or `coarse`. `--similarity <0–1>` and `--max-classes <n>`
+  are alternative forms; the three are mutually exclusive.
 - `--max-lines <n>` truncates each inspector's Markdown output to `n` lines
   (default `20`, `0` for no limit) so one wide field can't drown the report;
   `-v`/`--verbose` is the same as `--max-lines 0`. Truncation is per inspector
   and Markdown-only — `--json` is always complete and parseable.
 - `-o` writes the report to a file instead of stdout.
-
-Unlike the selector-based commands, `inspect` takes a plain directory path and
-needs no `.katalyst/` project.
 
 ## `schema`
 

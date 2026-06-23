@@ -11,19 +11,15 @@ var (
 	snakePattern = regexp.MustCompile(`^[a-z0-9]+(?:_[a-z0-9]+)*$`)
 )
 
-// FilesystemNaming reports filename and path conventions across the corpus: a
-// casing histogram of basenames, how many paths contain spaces, the extension
-// histogram, and the deepest nesting seen.
-type FilesystemNaming struct{}
-
-func (FilesystemNaming) Name() string { return "filesystem_naming" }
-
-func (FilesystemNaming) Inspect(c Corpus) Evidence {
+// fileMetadata reports path-level conventions over a set of references
+// (relative paths): a casing histogram of filename stems, how many contain
+// spaces, an extension histogram, and the deepest nesting seen. It opens no
+// files. This is the file_metadata primitive behind the file_tree inspector.
+func fileMetadata(refs []string) map[string]any {
 	casing := map[string]int{"kebab": 0, "snake": 0, "other": 0}
 	exts := map[string]int{}
 	withSpaces, maxDepth := 0, 0
-	for _, f := range c.Files {
-		rel := f.Rel
+	for _, rel := range refs {
 		if strings.Contains(rel, " ") {
 			withSpaces++
 		}
@@ -43,15 +39,10 @@ func (FilesystemNaming) Inspect(c Corpus) Evidence {
 			maxDepth = depth
 		}
 	}
-	extData := make(map[string]any, len(exts))
-	for e, n := range exts {
-		extData[e] = n
-	}
-	data := map[string]any{
-		"casing":      map[string]any{"kebab": casing["kebab"], "snake": casing["snake"], "other": casing["other"]},
+	return map[string]any{
+		"casing":      toAnyMap(casing),
 		"with_spaces": withSpaces,
-		"extensions":  extData,
+		"extensions":  toAnyMap(exts),
 		"max_depth":   maxDepth,
 	}
-	return Evidence{Inspector: "filesystem_naming", Scope: c.Scope, N: len(c.Files), Data: data}
 }

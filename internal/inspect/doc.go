@@ -1,30 +1,80 @@
-// Package inspect profiles a directory of markdown files: it measures their
-// shape — frontmatter fields, body structure, filename conventions — and
-// returns evidence, the descriptive dual of internal/checks. A check asserts a
-// predicate; an inspector reports the distribution that predicate would be
-// tested against.
+// Package inspect profiles content and returns evidence — the descriptive dual
+// of internal/checks. A check asserts a predicate; an inspector reports the
+// distribution that predicate would be tested against.
+//
+// # Two layers
+//
+// Inspectors come in two layers, distinguished by how they reference the data:
+//
+//   - The raw-source layer (SourceInspector over a SourceView) measures a
+//     backend store directly, before any collection configuration, addressed by
+//     backend-native reference (a relative path today). It answers "what is in
+//     this store?" — the onboarding case. file_tree, file_tree_content, and
+//     document_shape live here. AppliesTo gates backend-specific inspectors.
+//   - The collection layer (CollectionInspector over a CollectionView) measures
+//     a configured collection's items, addressed by domain identity
+//     (collection + item id) and reached through the project's
+//     CollectionDefinition — never a raw path. object_fields and markdown_body
+//     live here.
+//
+// The two are distinct interfaces, not one type at two scopes, precisely
+// because they reference the data through different machinery. This mirrors the
+// storage seam in internal/storage (issue #31).
+//
+// # Built from primitives
+//
+// Most measurement lives in three reusable, layer-agnostic primitives, so the
+// inspectors are thin wrappers that point a primitive at an input:
+//
+//   - objectFields — a data dictionary over a set of object maps: per field,
+//     presence, type histogram, scalar cardinality, and an enum-candidate value
+//     set. String and numeric scalars are kept distinct; arrays and nested
+//     objects are typed but not yet characterized (issue #58).
+//   - markdownBody — heading-shape and recurring-section facets over a set of
+//     bodies.
+//   - fileMetadata — path-level conventions (type, naming, depth) over a set of
+//     references, opening no files.
+//
+// The same objectFields primitive runs over a collection's items (collection
+// layer) and over loose-file frontmatter (the document_shape fingerprint, raw
+// layer), so the two layers share one engine rather than re-deriving it.
 //
 // # Evidence, not recommendations
 //
-// An inspector reports that a field appears in 94% of files; it does not say
+// An inspector reports that a field appears in 94% of items; it does not say
 // "make it required." The threshold that turns 94% into a required field, or a
 // small recurring value set into an enum, is a judgment call kept out of the
 // measurement layer. This is the load-bearing decision. If inspectors emitted
 // recommendations the threshold policy would be baked in and un-tunable, and
-// the evidence itself would become something to second-guess rather than
-// trust. Reporting only counts, with the file count n as denominator, keeps the
+// the evidence itself would become something to second-guess rather than trust.
+// Reporting only counts, with the unit count n as denominator, keeps the
 // evidence trustable: the reader sees why a conclusion holds and decides.
 //
 // # The determinism dividing line
 //
 // Deterministic measurement is an inspector's job; threshold-picking and
 // structure-proposing are not. Counting field presence, histogramming types,
-// grouping files by frontmatter key-set are all deterministic, all inspectors.
-// Deciding that 94% is "required", that two near-but-distinct key-sets are one
-// collection, or what to name a schema are all judgment, none of it here.
-// FrontmatterShape sits on the seam: it groups files with identical
-// fingerprints (deterministic) but leaves the fuzzy "these two groups are the
+// and clustering files by a composite fingerprint are all deterministic, all
+// inspectors. Deciding that 94% is "required", that two near-but-distinct
+// clusters are one collection, or what to name a schema are all judgment, none
+// of it here. document_shape sits on the seam: it groups files with matching
+// fingerprints (deterministic) but leaves the fuzzy "these two classes are the
 // same collection" call to the reader.
+//
+// # Keeping output small
+//
+// The summarizing inspectors (file_tree, document_shape) collapse near-identical
+// profiles into named classes via summarize, so output is proportional to the
+// number of distinct profiles, not the number of directories or files; the rest
+// are reported as outliers. Params carries the collapse tolerance — the first
+// inspector parameter — in three mutually-exclusive forms (a named detail level,
+// a similarity proportion, or a max-classes budget).
+//
+// # Output
+//
+// Evidence renders as Markdown by default and JSON under --json; both are
+// projections of the same values. A single inspect run is one layer's
+// inspectors, rendered together. inspect writes no schema and mutates nothing.
 //
 // # Division of labor
 //
@@ -32,33 +82,4 @@
 // intended workflow is a loop — inspect, draft a schema, check, fix the
 // holdouts — but the forming, drafting, and threshold-choosing live with
 // whoever drives the tool, not in this package.
-//
-// # Parse once
-//
-// Load reads the directory into a Corpus a single time; every inspector is a
-// pure function of that shared, parsed set and never touches disk. That keeps
-// inspectors deterministic and testable and avoids re-reading each file once
-// per inspector.
-//
-// # Output
-//
-// Evidence renders as Markdown by default and JSON under --json; both are
-// projections of the same values. Markdown suits agents and humans alike, so it
-// is the default; JSON is for callers that parse results mechanically.
-//
-// # Alternatives considered
-//
-// A monolithic command that emits a finished schema: rejected. It bundles
-// measurement and judgment into one opaque step and over-fits, encoding the
-// corpus's current state — mistakes and all — as authoritative.
-//
-// A "candidate collections" inspector: rejected. Drawing and naming collection
-// boundaries is judgment; only the deterministic fingerprinting ships, as
-// FrontmatterShape.
-//
-// Auto-applying an inferred schema: rejected. The value is a fast, conservative
-// first draft a human edits; inspect writes nothing.
-//
-// Counterfactual check (testing a throwaway schema with "check --try") is the
-// natural companion but is deferred; inspectors stand on their own.
 package inspect
