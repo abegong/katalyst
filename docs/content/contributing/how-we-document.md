@@ -38,7 +38,7 @@ The durable home for everything a user needs, organized by
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
-### 2. Docs that live with code (Go doc comments)
+### 2. Go doc comments
 
 Documentation that only matters once you are reading the code lives **with the
 code**, not in the Hugo tree: code-level API docs and a package's
@@ -60,7 +60,7 @@ separate `explanation/` page that drifts. Use godoc headings (`# Heading`),
 prose, and short lists in doc comments; reach for a table in a `README.md` or
 the reference.
 
-### 3. Notes on code-writing conventions (`AGENTS.md` files)
+### 3. `AGENTS.md` files
 
 Rules for anyone *writing code* in the repo: commands, layout, testing
 style, code style. **What goes here:** naming conventions, required
@@ -73,7 +73,7 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### 4. In-flight specs and plans (Markdown files in `product/`)
+### 4. In-flight specs and plans
 
 `product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
 merged**. A spec is deleted when its work lands and its durable content
