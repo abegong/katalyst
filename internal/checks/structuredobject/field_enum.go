@@ -44,7 +44,7 @@ func (o ObjectFieldEnum) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckObjectFieldEnum,
 		Family:    "structuredObject",
 		Slug:      "field-enum",

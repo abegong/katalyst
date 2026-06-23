@@ -45,7 +45,7 @@ func (c IndexFileRequired) RunCollection(ctx checks.CollectionContext) []checks.
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemIndexFileRequired,
 		Family:    "fileSystem",
 		Slug:      "index-file-required",

@@ -94,7 +94,7 @@ func isAcronym(word string) bool {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckObjectSentenceCase,
 		Family:    "structuredObject",
 		Slug:      "sentence-case",

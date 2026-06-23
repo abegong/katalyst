@@ -51,7 +51,7 @@ func (m MarkdownTitleMatchesH1) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckMarkdownTitleMatchesH1,
 		Family:    "markdownBodyText",
 		Slug:      "title-matches-h1",

@@ -71,7 +71,7 @@ func stringOrList(v any) ([]string, bool) {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemReferencedFiles,
 		Family:    "fileSystem",
 		Slug:      "referenced-files-exist",

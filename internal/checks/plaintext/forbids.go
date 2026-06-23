@@ -69,7 +69,7 @@ func (t TextForbids) ApplyFix(body []byte) []byte {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckTextForbids,
 		Family:    "plainText",
 		Slug:      "forbids",

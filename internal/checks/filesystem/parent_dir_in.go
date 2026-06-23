@@ -27,7 +27,7 @@ func (f FilesystemParentDirIn) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemParentDirIn,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-in",

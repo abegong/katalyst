@@ -34,7 +34,7 @@ func (t TextDenylist) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckTextDenylist,
 		Family:    "plainText",
 		Slug:      "denylist",

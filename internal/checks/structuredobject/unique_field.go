@@ -32,7 +32,7 @@ func (c UniqueField) RunCollection(ctx checks.CollectionContext) []checks.Violat
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemUniqueField,
 		Family:    "structuredObject",
 		Slug:      "unique-field",

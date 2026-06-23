@@ -36,18 +36,30 @@ contract and never change, even when a check's family does.
 
 Each check type implements `checks.Check` (`Run(Context) []Violation`), or
 `checks.CollectionCheck` for collection-scoped checks, and lives in its own
-file with its `Descriptor` and an `init()` that calls `checks.Register`. The
-core `checks` package owns the shared types (`Context`, `Violation`,
-`MarkdownLines`, `LookupLine`) and the registry; the family packages import the
-core, never the reverse. Callers wire every family in by blank-importing
-`internal/checks/all`.
+file with its `Descriptor` and an `init()` that registers it through its
+package's `register` helper (in `library.go`), which stamps `Descriptor.Library`
+with the family's [CheckLibrary](#checklibrary). The core `checks` package owns
+the shared types (`Context`, `Violation`, `MarkdownLines`, `LookupLine`) and the
+registry; the family packages import the core, never the reverse. Callers wire
+every family in by blank-importing `internal/checks/all`.
 
 The registry (`registry.go`, populated by those `Register` calls) is the single
 source of truth: `cmd/engine` builds the runnable check list by registry lookup
 (`Build` / `BuildCollection`), and `cmd/gendocs` and `katalyst check-types`
 render the catalog from `Descriptors()` / `Families()`. `registry_test.go`
 enforces parity with `config.normalizeCheck`, so a new check type cannot ship
-undocumented.
+undocumented, and that every check type names a registered library.
+
+## CheckLibrary
+
+A **CheckLibrary** is the provider behind a check type. Each of the four native
+families registers one in its `library.go` (always available, in-process); the
+`internal/checks/jsonschema` library additionally implements `SchemaLibrary` to
+compile a named schema. A library is *provenance*, orthogonal to a check type's
+*family* (source-data kind): the `structuredObject` family holds both `object`
+(the `json-schema` library) and `object_required_field` (the `structuredobject`
+library). The engine resolves a kind's library via `checks.LibraryFor` and
+fails the run if a library's `Available()` errors.
 
 ## Validation result
 
