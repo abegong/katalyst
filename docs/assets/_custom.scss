@@ -22,3 +22,18 @@
 ) {
   margin-inline-start: 1.25rem;
 }
+
+// Welcome page status callout rendered under the TOC.
+.book-toc .book-toc-warning {
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-inline-start: 0.25rem solid var(--color-accent-warning);
+  border-radius: var(--border-radius);
+  background: var(--color-accent-warning-tint);
+  color: var(--body-font-color);
+  line-height: 1.5;
+}
+
+.book-toc .book-toc-warning p {
+  margin: 0;
+}
