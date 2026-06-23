@@ -105,7 +105,7 @@ When one collection holds more than one kind of item, say a Hugo content tree
 where section landing pages (`_index.md`, carrying `bookCollapseSection`) sit
 beside ordinary content pages, use **variants** to diverge the checks. Each
 variant's `when` is a metadata predicate (the same grammar as
-[`item list --filter`]({{< relref "../reference/commands.md" >}})); an item runs
+[`item list --filter`]({{< relref "../reference/cli.md#filter-predicates" >}})); an item runs
 the base checks plus the first matching variant's.
 
 ```yaml

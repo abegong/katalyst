@@ -14,7 +14,7 @@ what its selector means, and, when you add a command, where it goes.
 A top-level command is exactly one of two kinds.
 
 **Blessed verbs** operate *over* content. The verb names a cross-cutting
-operation; a [selector]({{< relref "../reference/commands.md" >}}) picks the
+operation; a [selector]({{< relref "../reference/cli.md" >}}) picks the
 targets at any depth, and several may be passed at once:
 
 ```bash
