@@ -40,9 +40,11 @@ Mechanical choices — apply them consistently across every page.
 
 - **Product vs. command.** Write the product as **Katalyst** in prose; reserve
   the code form `katalyst` for the CLI command or binary (`run katalyst check`).
-  "Katalyst validates frontmatter" — not "`katalyst` validates frontmatter."
-- **Em dashes.** Use the `—` character with a space on each side
-  (`a term — its definition`). Don't write `---` or `--` in source.
+  "Katalyst validates frontmatter", not "`katalyst` validates frontmatter."
+- **No em dashes.** They read as an AI tell. Use a colon for a term and its
+  definition (`a term: its definition`), a comma or parentheses for an aside,
+  or split into two sentences. The `markdown_writing_tells` check flags them;
+  the full rubric is in `product/em-dash-rubric.md`.
 - **Person.** Second person ("you") and declarative by default. Reserve the
   first person ("I", "my") for the About-me and other named-author sections;
   never the editorial "we" (see Voice).

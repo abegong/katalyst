@@ -192,7 +192,7 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 }
 
 // selectedCollections returns the distinct collections touched by a
-// resolution — those selected wholesale and those owning a selected item —
+// resolution: those selected wholesale and those owning a selected item,
 // in name order, so collection-scoped checks run once each, deterministically.
 func selectedCollections(res *project.Resolution) []config.Collection {
 	byName := map[string]config.Collection{}

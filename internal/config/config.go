@@ -211,8 +211,8 @@ type Collection struct {
 }
 
 // CollectionVariant is one discriminated check group inside a collection. An
-// item whose metadata satisfies every predicate in Where — the first such
-// variant in declaration order — runs Checks on top of the collection's base
+// item whose metadata satisfies every predicate in Where, the first such
+// variant in declaration order, runs Checks on top of the collection's base
 // checks. A variant's `schema:` shorthand is folded into a leading object
 // check in Checks, mirroring a collection's `schema:`.
 type CollectionVariant struct {
@@ -864,7 +864,7 @@ func resolve(root, p string) string {
 
 // caseStyleNames and targetNames mirror the values the filesystem checks
 // accept. They are duplicated here (not imported from internal/checks)
-// because checks imports config — importing back would cycle.
+// because checks imports config, importing back would cycle.
 var caseStyleNames = map[string]bool{
 	"kebab": true, "snake": true, "screaming-snake": true,
 	"camel": true, "pascal": true, "point": true, "lower": true,

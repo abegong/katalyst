@@ -1,7 +1,7 @@
 # Katalyst
 
 > [!WARNING]
-> **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet — but I'd genuinely love your feedback as it takes shape.
+> **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet, but I'd genuinely love your feedback as it takes shape.
 
 Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
@@ -14,23 +14,23 @@ Katalyst gives you and your agent tools to solve problems like these:
 - "My agent is supposed to store and curate notes for me, but I spend way too much time checking its work."
 - "I want to change how I'm storing my data, but migration would be a big pain."
 
-If you want to be confident that your content/data/memory is always in good shape — even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans — then Katalyst is for you.
+If you want to be confident that your content/data/memory is always in good shape, even when it's maintained by sometimes-sloppy agents and sometimes-sloppy humans, then Katalyst is for you.
 
 Need a quick shape profile of an existing wiki before authoring rules? Use
 `katalyst inspect <path>` to report frontmatter, markdown, and filename
-conventions as evidence — and, once you've configured collections,
+conventions as evidence, and, once you've configured collections,
 `katalyst inspect <collection>` to profile a collection's items. The full
 command surface (including `inspect`) is in the
 [command reference](https://abegong.github.io/katalyst/reference/commands/).
 
 > [!TIP]
-> **New to Katalyst?** [Get started »](https://abegong.github.io/katalyst/getting-started/) — install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
+> **New to Katalyst?** [Get started »](https://abegong.github.io/katalyst/getting-started/): install the CLI, scaffold a `.katalyst/` project, and run your first checks in a few minutes.
 
 ## Key features
 
 ### Catalog the content you already have
 
-Katalyst comes with tools and skills to take stock of your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and — if needed — get more organized.
+Katalyst comes with tools and skills to take stock of your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and, if needed, get more organized.
 
 Compared to having an LLM scan every file or write its own bash scripts, this approach can save a ton of tokens. It also lets you take advantage of skills, tools and strategies curated by a community of people who've faced similar challenges.
 
@@ -38,10 +38,10 @@ Compared to having an LLM scan every file or write its own bash scripts, this ap
 
 Curation always requires shared language and consistent structure. Katalyst provides tools for declaring structure and rules for your content in your knowledge base.
 
-- *Markdown content* — required sections, naming conventions, templates, etc.
-- *File structure* — naming conventions, preferred and required extensions, directory structures, etc.
-- *Metadata* — required fields, types, enums, numeric ranges, and full JSON Schema validation of frontmatter.
-- *Object relationships* — links, summaries, tables of contents, sequential numbering, etc.
+- *Markdown content:* required sections, naming conventions, templates, etc.
+- *File structure:* naming conventions, preferred and required extensions, directory structures, etc.
+- *Metadata:* required fields, types, enums, numeric ranges, and full JSON Schema validation of frontmatter.
+- *Object relationships:* links, summaries, tables of contents, sequential numbering, etc.
 
 ### Reshape as needed
 
@@ -69,12 +69,12 @@ Express the same rules in a project's own vocabulary and conventions.
 
 ### Built for both humans and agents
 
-Ergonomics matter — especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
+Ergonomics matter: especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
 
-- *Speed* — fast enough to run on every write.
-- *Discoverability* — an agent can find the schemas and structure on its own.
-- *Readability* — rules and content stay legible to humans and agents alike.
-- *Extensibility* — add new check types as needs grow.
+- *Speed:* fast enough to run on every write.
+- *Discoverability:* an agent can find the schemas and structure on its own.
+- *Readability:* rules and content stay legible to humans and agents alike.
+- *Extensibility:* add new check types as needs grow.
 
 ## What if structure was light?
 
@@ -82,11 +82,11 @@ Curating your content with the right structure makes it more useful, but it also
 
 As a result, most structured data systems were rigid and hard to change. Most unstructured knowledge bases were either chronically outdated, or very limited in scope.
 
-As AI starts to infuse our work, curating knowledge is going to become even more important — a massive potential unlock for people who want to work more productively and creatively with agents.
+As AI starts to infuse our work, curating knowledge is going to become even more important, a massive potential unlock for people who want to work more productively and creatively with agents.
 
-What if structure were light — easy to add, easy to maintain, easy to change?
+What if structure were light: easy to add, easy to maintain, easy to change?
 
-In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information — it's having a shared language and structure to organize what we've learned, and to act on it together.
+In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information: it's having a shared language and structure to organize what we've learned, and to act on it together.
 
 ## Installation
 
@@ -113,13 +113,13 @@ katalyst inspect ./my-knowledge-base
 ## No, really, you should try it out
 
 - [Build the CLI and run your first checks](https://abegong.github.io/katalyst/getting-started/).
-- [Contribute](https://abegong.github.io/katalyst/contributing/) — how we plan and document changes.
+- [Contribute](https://abegong.github.io/katalyst/contributing/), how we plan and document changes.
 
 ## About me
 
 I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great Expectations](https://greatexpectations.io), the leading open-source tool for data quality.
 
-I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously — if you're trying Katalyst, I'd love to hear from you.
+I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously: if you're trying Katalyst, I'd love to hear from you.
 
 More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).
 

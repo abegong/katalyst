@@ -1014,7 +1014,7 @@ func TestSchemaNames_returnsSortedNames(t *testing.T) {
 func TestLoad_parsesWritingTells(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n",
+		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
 	})
 	cfg, err := config.Load(dir)
 	if err != nil {

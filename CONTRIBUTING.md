@@ -14,9 +14,9 @@ project, and feedback, issues, and pull requests are all welcome.
 Katalyst has a deliberate process for planning and documenting changes. Before
 opening a non-trivial PR, please skim:
 
-- [How we plan](https://abegong.github.io/katalyst/contributing/how-we-plan/) —
+- [How we plan](https://abegong.github.io/katalyst/contributing/how-we-plan/):
   specs and plans precede implementation.
-- [How we document](https://abegong.github.io/katalyst/contributing/how-we-document/) —
+- [How we document](https://abegong.github.io/katalyst/contributing/how-we-document/):
   the docs follow the [Diátaxis](https://diataxis.fr) framework.
 
 ## Development setup
@@ -50,7 +50,7 @@ make docs-serve
 ```
 
 The check-type reference under `docs/content/reference/check-types` is
-generated from the checks registry — run `make docs-gen` after adding or
+generated from the checks registry, run `make docs-gen` after adding or
 changing a check type, and commit the result.
 
 ## Pull requests

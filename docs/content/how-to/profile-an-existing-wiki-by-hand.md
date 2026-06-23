@@ -5,14 +5,14 @@ weight = 5
 
 # Profile an existing wiki by hand
 
-You have a directory of markdown — a vault, a docs tree, a knowledge base —
+You have a directory of markdown: a vault, a docs tree, a knowledge base,
 and you want a Katalyst schema for it. Rather than guess the conventions,
 `inspect` measures them. This guide turns an existing corpus into a draft
 schema **by reading the evidence yourself**. To hand that judgment to an agent
 instead, see [Profile an existing wiki with an
 agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}).
 
-`inspect` reports **evidence** — counts and distributions — never
+`inspect` reports **evidence**, counts and distributions, never
 recommendations. Reading the evidence and deciding the schema is your call. It
 runs in **two layers**: point it at a **directory** to profile a raw store
 (no project needed), or at a configured **collection** to profile its items.
@@ -28,7 +28,7 @@ katalyst inspect ./wiki
 ```
 
 `document_shape` clusters files into **candidate collections** by a composite
-fingerprint — frontmatter keys, body section skeleton, and file naming — so you
+fingerprint (frontmatter keys, body section skeleton, and file naming) so you
 can see what natural groups exist:
 
 ```
@@ -40,7 +40,7 @@ can see what natural groups exist:
 ```
 
 `file_tree` reports the file types and naming conventions per directory. Use
-this layer to decide **which directories are collections** — here, 139 files
+this layer to decide **which directories are collections**: here, 139 files
 share one shape, so `./wiki` is a single `books` collection with three
 outliers.
 
@@ -67,7 +67,7 @@ collection inspectors over its items:
 katalyst inspect books
 ```
 
-`object_fields` is a **data dictionary** over the items' frontmatter — per
+`object_fields` is a **data dictionary** over the items' frontmatter, per
 field, presence over `n`, observed types, value cardinality, and the common
 values when the set is small:
 
@@ -88,7 +88,7 @@ save the report, use `-o report.md`.
 
 ## 4. Read the evidence
 
-Translate the counts into schema decisions yourself — the threshold is your
+Translate the counts into schema decisions yourself, the threshold is your
 judgment, not the tool's:
 
 | Evidence | What it tells you | A reasonable reading |
@@ -101,8 +101,8 @@ judgment, not the tool's:
 | `file_tree` naming (step 1) | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
 
 The denominator `n` is always reported, so you decide what "nearly every item"
-means. The outliers — the one-of-142 missing `author`, the `document_shape`
-outlier with spaces in its name — are exactly the files a schema will flag.
+means. The outliers: the one-of-142 missing `author`, the `document_shape`
+outlier with spaces in its name, are exactly the files a schema will flag.
 
 ## 5. Draft a schema and check
 
@@ -141,11 +141,11 @@ katalyst check books
 
 The files that already follow the conventions pass; the outliers the evidence
 flagged light up as violations. From there you tighten the schema, relax a
-field to optional, or fix the stray files — then re-run. That loop — *inspect →
-draft → check → fix the holdouts* — is the whole onboarding.
+field to optional, or fix the stray files, then re-run. That loop, *inspect →
+draft → check → fix the holdouts*, is the whole onboarding.
 
 ## See also
 
-- [Profile an existing wiki with an agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}) — the same loop, driven by an agent.
-- [Inspectors reference]({{< relref "../reference/inspectors/_index.md" >}}) — every inspector and what it reports.
-- [Add a schema]({{< relref "add-a-schema.md" >}}) — bind the draft to a collection.
+- [Profile an existing wiki with an agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}): the same loop, driven by an agent.
+- [Inspectors reference]({{< relref "../reference/inspectors/_index.md" >}}), every inspector and what it reports.
+- [Add a schema]({{< relref "add-a-schema.md" >}}), bind the draft to a collection.

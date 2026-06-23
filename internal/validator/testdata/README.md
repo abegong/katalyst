@@ -19,7 +19,7 @@ CLI tests only need a schema that accepts/rejects a frontmatter blob;
 these tests need every constraint the validator can apply.
 
 Tiny malformed snippets (e.g. `{ "type": 123 }` in `TestLoad_invalidSchema`)
-stay inline — the exact bytes are the assertion.
+stay inline, the exact bytes are the assertion.
 
 ## Adding a fixture
 

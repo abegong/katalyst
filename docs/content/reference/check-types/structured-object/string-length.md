@@ -18,9 +18,9 @@ Constrain the minimum and/or maximum length of a string field.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key to check. |
-| `min_length` | no | — | Minimum length. At least one of `min_length`/`max_length` is required. |
-| `max_length` | no | — | Maximum length. At least one of `min_length`/`max_length` is required. |
+| `field` | yes | - | Frontmatter key to check. |
+| `min_length` | no | - | Minimum length. At least one of `min_length`/`max_length` is required. |
+| `max_length` | no | - | Maximum length. At least one of `min_length`/`max_length` is required. |
 
 ## Example
 

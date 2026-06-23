@@ -5,13 +5,13 @@ draft = true
 +++
 
 <!--
-TEMPLATE — copy this file into docs/ as a top-level tutorial (or a new
+TEMPLATE, copy this file into docs/ as a top-level tutorial (or a new
 docs/tutorials/ section once there's more than one) and fill it in.
 Derived from getting-started.md.
 
 This page IS: a learning-oriented lesson. The reader follows it start to
 finish and ends with something working. Every command is shown with its
-expected output. You guarantee success — the reader does not make choices.
+expected output. You guarantee success, the reader does not make choices.
 
 This page is NOT: a how-to (no "pick the task you need"), a reference (no
 exhaustive option tables), or an explanation (no design rationale). Link out
@@ -35,7 +35,7 @@ assumed (e.g. a working toolchain).
 <expected output>
 ```
 
-A sentence of orientation — what just happened and why.
+A sentence of orientation, what just happened and why.
 
 ## 2. <Next step>
 

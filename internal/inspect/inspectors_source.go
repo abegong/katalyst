@@ -48,8 +48,8 @@ func (FileTreeContent) Inspect(v SourceView, p Params) Evidence {
 }
 
 // DocumentShape clusters markdown files into candidate collections on a
-// composite fingerprint — frontmatter keys, body section skeleton, and file
-// type/naming — so a class agrees on metadata AND structure AND convention, not
+// composite fingerprint: frontmatter keys, body section skeleton, and file
+// type/naming, so a class agrees on metadata AND structure AND convention, not
 // frontmatter alone. The renamed, widened frontmatter_shape. Filesystem-specific.
 type DocumentShape struct{}
 

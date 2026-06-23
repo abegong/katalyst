@@ -2,8 +2,8 @@
 // check type is built on (Context, Check, CollectionCheck, Violation) plus the
 // registry that check types self-register with.
 //
-// Each check type lives in a per-family subpackage — structuredobject,
-// markdownbodytext, filesystem, plaintext — with one file per check type
+// Each check type lives in a per-family subpackage: structuredobject,
+// markdownbodytext, filesystem, plaintext, with one file per check type
 // holding its struct, Run, Descriptor, and an init() that calls Register. The
 // subpackages import this core; this core imports none of them. Callers wire
 // every family in by blank-importing internal/checks/all.
@@ -25,7 +25,7 @@ type Context struct {
 
 // Severity classifies how serious a violation is. The zero value is
 // SeverityError, so any check that does not set it keeps failing the run;
-// SeverityWarning is advisory — it is reported but never changes the exit
+// SeverityWarning is advisory, it is reported but never changes the exit
 // code. Warnings exist for judgment-call checks (prose tells, style nits)
 // where a human decides per instance rather than the build deciding for
 // them.

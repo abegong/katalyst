@@ -18,8 +18,8 @@ Constrain the characters allowed in the item's path.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `deny` | no | — | Forbidden substrings (e.g. a space). Use `deny` or `allow`, not both. |
-| `allow` | no | — | The only permitted characters; the path separator is always allowed. |
+| `deny` | no | - | Forbidden substrings (e.g. a space). Use `deny` or `allow`, not both. |
+| `allow` | no | - | The only permitted characters; the path separator is always allowed. |
 
 ## Example
 

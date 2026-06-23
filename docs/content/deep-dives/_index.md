@@ -6,7 +6,7 @@ bookCollapseSection = true
 
 # Deep dives
 
-Understanding-oriented discussion of the *why* behind Katalyst — the
+Understanding-oriented discussion of the *why* behind Katalyst, the
 [vision and scope]({{< relref "vision.md" >}}), the [core
 concepts]({{< relref "core-concepts.md" >}}) the tool is built on, the
 [domain model]({{< relref "domain-model.md" >}}) that instantiates them in

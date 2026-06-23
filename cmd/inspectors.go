@@ -11,7 +11,7 @@ import (
 )
 
 // newInspectorsCmd builds the `inspectors` resource noun: a read-only view of
-// the inspector registry (inspect.Descriptors() / inspect.Layers()) — the same
+// the inspector registry (inspect.Descriptors() / inspect.Layers()), the same
 // catalog cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
 // CRUD-shaped sub-verbs (list, show) rather than acting when invoked bare, so it
 // matches the check-types/collection/item/schema nouns. It loads no project, so
@@ -20,7 +20,7 @@ func newInspectorsCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "inspectors",
 		Short: "Inspect the inspectors the engine can run, grouped by layer.",
-		Long: `inspectors is a read-only view of the engine's inspector registry — the same
+		Long: `inspectors is a read-only view of the engine's inspector registry, the same
 catalog cmd/gendocs renders and that the inspect command runs. List every
 inspector grouped by layer (raw-source, collection), or show one inspector's
 docs-style readout. It reads no project, so it runs in any directory.`,

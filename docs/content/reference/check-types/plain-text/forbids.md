@@ -18,10 +18,10 @@ Forbid a regular expression from appearing in the body text.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `pattern` | yes | — | Go regular expression, matched unanchored. |
+| `pattern` | yes | - | Go regular expression, matched unanchored. |
 | `target` | no | `body` | Span selector: body, line, first-line, or matched-lines. |
-| `select` | no | — | Line-filter regex; required for and only valid with target matched-lines. |
-| `fix` | no | — | Optional replacement template (regexp capture syntax) applied to the matched text by the fix command. |
+| `select` | no | - | Line-filter regex; required for and only valid with target matched-lines. |
+| `fix` | no | - | Optional replacement template (regexp capture syntax) applied to the matched text by the fix command. |
 
 ## Example
 

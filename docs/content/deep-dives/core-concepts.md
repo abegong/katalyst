@@ -7,23 +7,23 @@ weight = 20
 
 > **Status: work in progress.** This is a deliberately abstract sketch,
 > captured as concepts are introduced. It is not about `katalyst`
-> specifically — katalyst is one instantiation among many. Expect breaking
+> specifically, katalyst is one instantiation among many. Expect breaking
 > revisions until the concepts settle.
 
 ## Goal
 
 We tend to think about data in one of two modes:
 
-- **Structured** — tables with column definitions, schemas, types,
+- **Structured:** tables with column definitions, schemas, types,
   queries. Databases, warehouses, document stores.
-- **Unstructured** — files, blobs, free-form text. Filesystems, object
+- **Unstructured:** files, blobs, free-form text. Filesystems, object
   stores, "data lakes."
 
 Tools, vocabulary, and mental models usually pick a side. A SQL DBA
 and a markdown-vault note-taker have almost no shared language for
-their work, even though the operations they want to perform —
+their work, even though the operations they want to perform:
 *describe the shape of this data, find data that matches, change it
-safely, check that constraints hold* — are essentially the same.
+safely, check that constraints hold*, are essentially the same.
 
 This document collects concepts that **bridge structured and
 unstructured data**: terms general enough to describe a Postgres
@@ -41,11 +41,11 @@ Examples:
 
 - A filesystem (files on a disk).
 - A SQLite database.
-- A filesystem *and* a SQLite database in combination — a data
+- A filesystem *and* a SQLite database in combination, a data
   interface can be heterogeneous.
 - A structured backend such as DuckDB, MongoDB, or Postgres.
 - An interface in front of any of those (read-only views, query APIs,
-  federated readers all count; *storing* data is not a requirement —
+  federated readers all count; *storing* data is not a requirement,
   only *defining and exposing* it).
 
 ### Item
@@ -78,7 +78,7 @@ Examples:
 - A column definition (name + type) in a relational database table.
 - A field within a MongoDB document.
 - A key inside a markdown file's frontmatter.
-- A document metadata — including things like its
+- A document metadata, including things like its
   name, path, or how it's stored.
 
 ### Operation
@@ -93,7 +93,7 @@ Examples:
 
 - **Read** an item by identifier.
 - **List** the items in a collection.
-- **Write**, **delete**, **create** — the obvious mutations.
+- **Write**, **delete**, **create**, the obvious mutations.
 - **Search** items by raw content (substring or semantic similarity).
 - **Query** items by structured attribute values.
 - **Diff**
@@ -107,10 +107,10 @@ type configured for a collection.
 
 Examples:
 
-- Type validation — an attribute must be a certain type.
-- A foreign key constraint — an attribute must reference an item in another collection.
-- Uniqueness — no two items in the collection share a value for this attribute.
-- API-level validation — an attribute must satisfy a business rule (e.g. a valid email domain).
+- Type validation, an attribute must be a certain type.
+- A foreign key constraint, an attribute must reference an item in another collection.
+- Uniqueness, no two items in the collection share a value for this attribute.
+- API-level validation, an attribute must satisfy a business rule (e.g. a valid email domain).
 
 ## Examples
 
@@ -134,9 +134,9 @@ Here are a few more examples, to help ground these concepts.
 - These checks are required in order to guarantee that the system can provide its catalog of operations.
 - In other words, schemas and structuredness are a means to an end. They're about enforcing checks in order to provide a catalog of operations.
 
-For how these general concepts are instantiated in katalyst specifically — the
+For how these general concepts are instantiated in katalyst specifically, the
 concrete `Document`, `Schema`, `Collection`, and `Check` types and the
-invariants between them — see the [domain model]({{< relref "domain-model.md" >}}).
+invariants between them, see the [domain model]({{< relref "domain-model.md" >}}).
 For how they translate to today's code, see the per-package `README.md` files
 under `internal/` (notably `internal/config`, `internal/frontmatter`, and
 `internal/checks`).

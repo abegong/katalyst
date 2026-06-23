@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// RenderJSON serializes evidence as an indented JSON array — the machine form
+// RenderJSON serializes evidence as an indented JSON array, the machine form
 // for callers that parse results. Each record is enriched with its one-line
 // description from the registry. JSON is never truncated: it must stay complete
 // and parseable. One of two projections of the same evidence; RenderMarkdown is

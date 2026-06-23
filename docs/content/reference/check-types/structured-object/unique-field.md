@@ -10,7 +10,7 @@ aliases = ["/reference/rules/structured-object/unique-field/"]
 
 `kind: filesystem_unique_field`
 
-**Scope:** collection — runs once per collection over all its items.
+**Scope:** collection, runs once per collection over all its items.
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Require that no two items share a value for a frontmatter field.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key whose value must be unique across the collection. |
+| `field` | yes | - | Frontmatter key whose value must be unique across the collection. |
 
 ## Example
 

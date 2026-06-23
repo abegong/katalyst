@@ -1,8 +1,10 @@
 # Em-dash removal rubric (draft)
 
-Status: **draft for review.** No prose has been changed yet. This document is
-the decision aid we will apply to decide, per occurrence, whether and how to
-replace an em dash (or a similar decorative character).
+Status: **applied.** The repo has been swept per this rubric (category 1 uses
+colons; the docs dogfood keeps the `markdown_writing_tells` warning). The
+document now stands as the convention and the reference for future edits. The
+em-dash guidance in `.cursor/skills/write-docs/SKILL.md` has been reversed to
+match.
 
 ## Why this exists
 
@@ -191,12 +193,17 @@ routinely needs an author's eye; do not automate it.
 6. Re-run `katalyst check`; the `markdown_writing_tells` warning count is the
    progress meter.
 
+## Decisions
+
+- Category 1 uses a colon (`**Term:** gloss`), not a spaced hyphen. Resolved.
+- `markdown_writing_tells` stays wired into the docs dogfood. The sweep took
+  the warning count from 319 to ~13, all of which are intentional: the `⚠️`
+  callout icons, em dashes and ellipses inside code blocks, and a few
+  legitimate words. Resolved.
+
 ## Open questions
 
-- Do we want category 1 to use a colon, or keep ` - ` (spaced hyphen)? Colon
-  is recommended here; confirm before bulk-applying.
-- Should `markdown_writing_tells` stay wired into the docs dogfood while the
-  backlog is large (319 warnings today), or be left as an on-demand check
-  until the sweep is done?
 - A smarter classifier (issue #57) could collapse categories 5-8 into a single
-  judged decision; worth it before a manual pass?
+  judged decision; worth it before the next manual pass?
+- The judgment categories were applied to most, not every, instance. A later
+  pass (human or classifier) can revisit the remainder.

@@ -177,8 +177,8 @@ func TestPredicate_Matches(t *testing.T) {
 	mustMatch("kind=section", true)
 	mustMatch("kind=page", false)
 	mustMatch("year>=1965", true)
-	mustMatch("!draft", true)   // absent field
-	mustMatch("kind", true)     // existence
+	mustMatch("!draft", true) // absent field
+	mustMatch("kind", true)   // existence
 
 	// typeMismatch threads through to match: "error" surfaces the error,
 	// "skip" reports a non-match.

@@ -11,7 +11,7 @@ import (
 )
 
 // inspectRepo scaffolds a small markdown tree (no .katalyst) and returns its
-// directory — a raw store for the source layer.
+// directory, a raw store for the source layer.
 func inspectRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()

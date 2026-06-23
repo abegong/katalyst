@@ -36,7 +36,7 @@ type Descriptor struct {
 	CheckType config.CheckType `json:"check_type"`
 	// Family groups the check type by source-data kind: "structuredObject",
 	// "markdownBodyText", "fileSystem", or "plainText". Family and granularity
-	// are orthogonal — a collection-scoped check is grouped by the data it
+	// are orthogonal, a collection-scoped check is grouped by the data it
 	// reads, not by its scope (e.g. unique_field is structuredObject).
 	Family string `json:"family"`
 	// Slug is the page basename under the family directory.
@@ -125,7 +125,7 @@ var (
 // Register records a check type: its Descriptor plus optional constructors. A
 // check type calls this from an init() in its own file. build may be nil for a
 // collection-scoped (or specially-built) check; buildColl may be nil for a
-// per-item check. Duplicate kinds panic — a programming error caught at startup.
+// per-item check. Duplicate kinds panic, a programming error caught at startup.
 func Register(desc Descriptor, build Builder, buildColl CollectionBuilder) {
 	if _, dup := byKind[desc.CheckType]; dup {
 		panic("checks: duplicate registration for kind " + string(desc.CheckType))

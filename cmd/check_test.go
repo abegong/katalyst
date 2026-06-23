@@ -194,7 +194,7 @@ variants:
 func TestCheck_variant_routesByMetadata(t *testing.T) {
 	dir := setupVariantRepo(t, variantPagesConfig)
 	// A section page: base title + the section variant. weight and an H1 are
-	// NOT required (they live in the content variant) — this is the exemption.
+	// NOT required (they live in the content variant), this is the exemption.
 	mustWrite(t, filepath.Join(dir, "pages/intro.md"), "---\nkind: section\ntitle: Intro\n---\n")
 	// A content page satisfies base title + content weight + requires_h1.
 	mustWrite(t, filepath.Join(dir, "pages/guide.md"), "---\nkind: page\ntitle: Guide\nweight: 1\n---\n# Guide\n")
@@ -233,7 +233,7 @@ func TestCheck_variant_additiveBaseSchema(t *testing.T) {
 
 func TestCheck_variant_firstMatchWins(t *testing.T) {
 	// Two overlapping variants: a section page matches both, but only the
-	// first (requires_h1, no weight) applies — the second's weight is not
+	// first (requires_h1, no weight) applies, the second's weight is not
 	// enforced.
 	body := `path: pages
 pattern: "**/*.md"
@@ -401,7 +401,7 @@ func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *tes
 func TestCheck_writingTells_warnButPass(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"collections/notes.yaml": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n",
+		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/x.md"),

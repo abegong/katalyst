@@ -18,7 +18,7 @@ Require that a frontmatter field exists.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key that must be present. |
+| `field` | yes | - | Frontmatter key that must be present. |
 
 ## Example
 

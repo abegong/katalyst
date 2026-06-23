@@ -337,7 +337,7 @@ func trimOneNewline(b []byte) []byte {
 // the end of the metadata block and the start of the body.
 //
 // closeStart is the index in b where the closing-fence line begins.
-// closeEnd is the index of the first byte of the body — past the fence
+// closeEnd is the index of the first byte of the body, past the fence
 // and its trailing newline (if any).
 func findClosingFence(b []byte, fence string) (closeStart, closeEnd int, ok bool) {
 	cursor := 0

@@ -85,8 +85,8 @@ The same DSL is intended to be exposed through several form factors:
    (for example SQLite, PostgreSQL, MongoDB).
 
 These form factors share one core idea: schemas and linters are closely
-related and should compose across storage boundaries. The conceptual basis —
-why each backend tier unlocks new operations — is in
+related and should compose across storage boundaries. The conceptual basis,
+why each backend tier unlocks new operations, is in
 [Progressive operations]({{< relref "progressive-operations.md" >}}) and the
 [core concepts]({{< relref "core-concepts.md" >}}).
 
@@ -104,6 +104,6 @@ JSON, SQL-backed records), markdown content, and file/directory structures,
 along with more storage backends and tooling that reuses validation rules for
 additional operations (especially migrations).
 
-This page is intentionally directional — treat it as scope and rationale, not
+This page is intentionally directional: treat it as scope and rationale, not
 a frozen specification. The implementation here represents an early, practical
 slice of the broader goal.

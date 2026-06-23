@@ -64,7 +64,7 @@ func run() error {
 	}
 
 	// Inspectors reference: a section index, a landing page per layer, and one
-	// page per inspector — mirroring the check-types tree so `inspectors show`
+	// page per inspector, mirroring the check-types tree so `inspectors show`
 	// detail is documented and discoverable, not only a grouped index.
 	if err := os.RemoveAll(inspectorsOut); err != nil {
 		return err
@@ -99,7 +99,7 @@ func inspectorsIndex(layers []inspect.Layer, byLayer map[string][]inspect.Descri
 	fmt.Fprint(&b, "+++\ntitle = \"Inspectors\"\nweight = 45\nbookCollapseSection = true\n+++\n\n")
 	fmt.Fprintln(&b, inspectorsGeneratedNote)
 	fmt.Fprint(&b, "\n# Inspectors reference\n\n")
-	fmt.Fprint(&b, "Inspectors describe the shape of content and return evidence — counts and ")
+	fmt.Fprint(&b, "Inspectors describe the shape of content and return evidence: counts and ")
 	fmt.Fprint(&b, "distributions, never recommendations. They are the descriptive dual of ")
 	fmt.Fprint(&b, "[check types]({{< relref \"../check-types/_index.md\" >}}) and drive the ")
 	fmt.Fprint(&b, "[`inspect`]({{< relref \"../commands.md\" >}}) command. They come in two layers: ")
@@ -113,7 +113,7 @@ func inspectorsIndex(layers []inspect.Layer, byLayer map[string][]inspect.Descri
 		}
 		fmt.Fprintf(&b, "\n## %s\n\n%s\n\n", layer.Title, layer.Intro)
 		for _, d := range ds {
-			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}) — %s\n", d.Title, layer.ID, d.Slug, plain(d.Summary))
+			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}): %s\n", d.Title, layer.ID, d.Slug, plain(d.Summary))
 		}
 	}
 	return b.String()
@@ -126,7 +126,7 @@ func inspectorLayerIndex(layer inspect.Layer, ds []inspect.Descriptor, weight in
 	fmt.Fprintf(&b, "\n%s\n\n", layer.Intro)
 	fmt.Fprint(&b, "Inspectors in this layer:\n\n")
 	for _, d := range ds {
-		fmt.Fprintf(&b, "- [%s]({{< relref \"%s.md\" >}}) — %s\n", d.Title, d.Slug, plain(d.Summary))
+		fmt.Fprintf(&b, "- [%s]({{< relref \"%s.md\" >}}): %s\n", d.Title, d.Slug, plain(d.Summary))
 	}
 	return b.String()
 }
@@ -138,7 +138,7 @@ func inspectorPage(d inspect.Descriptor, weight int) string {
 	fmt.Fprintf(&b, "\n## Inspector ID\n\n`%s`\n\n", d.Name)
 	fmt.Fprintf(&b, "## Layer\n\n%s\n\n", d.Layer)
 	fmt.Fprintf(&b, "## Purpose\n\n%s\n\n", d.Summary)
-	fmt.Fprint(&b, "## Usage\n\nInspectors emit evidence — counts and distributions — for the reader to ")
+	fmt.Fprint(&b, "## Usage\n\nInspectors emit evidence: counts and distributions, for the reader to ")
 	fmt.Fprint(&b, "judge. Run this one with:\n\n")
 	fmt.Fprintf(&b, "```\nkatalyst inspect <target> --inspector %s\n```\n", d.Name)
 	return b.String()
@@ -157,7 +157,7 @@ func sectionIndex(families []checks.Family, byFamily map[string][]checks.Descrip
 	for _, fam := range families {
 		fmt.Fprintf(&b, "\n## %s\n\n%s\n\n", fam.Title, fam.Intro)
 		for _, d := range byFamily[fam.ID] {
-			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}) — %s\n", d.Title, fam.Slug, d.Slug, plain(d.Summary))
+			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}): %s\n", d.Title, fam.Slug, d.Slug, plain(d.Summary))
 		}
 	}
 	return b.String()
@@ -170,7 +170,7 @@ func familyIndex(fam checks.Family, ds []checks.Descriptor, weight int) string {
 	fmt.Fprintf(&b, "\n%s\n\n", fam.Intro)
 	fmt.Fprint(&b, "Check types in this family:\n\n")
 	for _, d := range ds {
-		fmt.Fprintf(&b, "- [%s]({{< relref \"%s.md\" >}}) — %s\n", d.Title, d.Slug, plain(d.Summary))
+		fmt.Fprintf(&b, "- [%s]({{< relref \"%s.md\" >}}): %s\n", d.Title, d.Slug, plain(d.Summary))
 	}
 	return b.String()
 }
@@ -181,10 +181,10 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 	fmt.Fprintln(&b, generatedNote)
 	fmt.Fprintf(&b, "\n## Check type ID\n\n`kind: %s`\n\n", d.CheckType)
 	if d.Scope == "collection" {
-		fmt.Fprint(&b, "**Scope:** collection — runs once per collection over all its items.\n\n")
+		fmt.Fprint(&b, "**Scope:** collection, runs once per collection over all its items.\n\n")
 	}
 	if d.Severity == "warning" {
-		fmt.Fprint(&b, "**Severity:** warning — reported for review; never fails a run.\n\n")
+		fmt.Fprint(&b, "**Severity:** warning, reported for review; never fails a run.\n\n")
 	}
 	fmt.Fprintf(&b, "## Purpose\n\n%s\n\n", d.Summary)
 	if len(d.Fields) > 0 {
@@ -197,7 +197,7 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 			}
 			def := f.Default
 			if def == "" {
-				def = "—"
+				def = "-"
 			} else {
 				def = "`" + def + "`"
 			}

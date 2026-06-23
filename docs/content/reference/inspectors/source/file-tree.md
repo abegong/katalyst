@@ -15,11 +15,11 @@ source
 
 ## Purpose
 
-Profile each directory's file types, naming, and depth — opening no files.
+Profile each directory's file types, naming, and depth, opening no files.
 
 ## Usage
 
-Inspectors emit evidence — counts and distributions — for the reader to judge. Run this one with:
+Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
 katalyst inspect <target> --inspector file_tree

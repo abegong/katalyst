@@ -18,8 +18,8 @@ Bound the character length of a name.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `min` | no | — | Minimum length (at least one of min/max). |
-| `max` | no | — | Maximum length (at least one of min/max). |
+| `min` | no | - | Minimum length (at least one of min/max). |
+| `max` | no | - | Maximum length (at least one of min/max). |
 | `target` | no | `filename` | What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`. |
 
 ## Example

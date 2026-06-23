@@ -18,7 +18,7 @@ Require path-valued frontmatter fields to resolve to real files.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `fields` | yes | — | Frontmatter keys holding a path (string) or list of paths, resolved relative to the item. |
+| `fields` | yes | - | Frontmatter keys holding a path (string) or list of paths, resolved relative to the item. |
 
 ## Example
 
