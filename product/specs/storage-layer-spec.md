@@ -136,11 +136,19 @@ type CollectionDefinition interface {
 }
 ```
 
-The exact home of `Item` (today in `internal/project`) versus a move into
-`internal/storage` is a packaging detail resolved during implementation; the
-contract is what matters. `FilesystemCollectionDefinition` implements every
-method by lifting the current `project` bodies verbatim — this spec is a
-refactor behind a new boundary, not a behavior change.
+`FilesystemCollectionDefinition` is constructed from an instance's config (its
+`root` plus the `collections:` block) and implements every method by lifting the
+current `internal/project` bodies verbatim — this spec is a refactor behind a
+new boundary, not a behavior change.
+
+**Packaging note (internal only).** `project.Item` is the struct
+`{Collection, ID, Path}` defined in `internal/project/project.go`. Because the
+new interface lives in `internal/storage` and its methods return items,
+`internal/project` would import `internal/storage` while `internal/storage`
+would need `Item` — an import cycle. The fix is to relocate the `Item` type
+definition down into `internal/storage` (with `project` re-exporting or wrapping
+it if convenient). This is pure code organization with no user-visible effect;
+it is called out only so the implementer expects it.
 
 ### Two-way mapping: keep stem-only now, port the GX template later
 
@@ -172,48 +180,68 @@ made concrete.
 
 ### Config surface
 
-A `StorageInstance` becomes a declarable config object, joining `schemas/` and
-`collections/` as a convention-discovered kind:
+A **StorageInstance declares its own collections**, the way a Great
+Expectations `Datasource` embeds its `DataConnector` and assets. The instance
+config carries the connection detail (`type`, `root`) plus a `collections:`
+block — and that block *is* the `FilesystemCollectionDefinition`, mapping the
+instance's contents onto one or more named collections. There is no separate
+top-level `collections/` kind: a collection is always declared inside the
+instance whose store holds it. Schemas stay their own kind (a schema by name
+can back collections across instances).
 
-```
-.katalyst/
-  config.yaml
-  schemas/
-  collections/
-  storage/
-    notes-vault.yaml          # one StorageInstance per file; name = stem
-```
+Two equivalent forms, chosen by the same `discovery` machinery
+`internal/config` already applies to schemas and collections:
+
+**General case — one file per instance** (`discovery: convention`, the default):
 
 ```yaml
-# .katalyst/storage/notes-vault.yaml
+# .katalyst/storage/local.yaml — instance name "local" is the filename stem.
 type: filesystem
-root: .                       # directory, relative to the repo root
+root: .                      # directory, relative to the repo root
+collections:
+  books:
+    path: notes/books
+    pattern: "*.md"          # optional; default "*.md"
+    schema: book
+    checks:
+      - kind: markdown_title_matches_h1
+  notes:
+    path: notes
+    schema: note
 ```
 
-A collection points at the instance whose contents it maps:
+**Very small projects — inline in `config.yaml`** (`discovery: explicit`):
 
 ```yaml
-# .katalyst/collections/books.yaml
-storage: notes-vault          # optional; defaults to the implicit local instance
-path: notes/books
-pattern: "*.md"
-schema: book
-checks: [ ... ]
+# .katalyst/config.yaml
+storage:
+  discovery: explicit
+  defs:
+    local:
+      type: filesystem
+      root: .
+      collections:
+        notes: { path: notes, schema: note }
 ```
 
-**Backward compatibility.** When no `storage/` is declared and a collection
-omits `storage:`, Katalyst synthesizes one implicit `filesystem` instance
-rooted at the repo root — exactly today's behavior. Every existing config keeps
-working untouched; `storage/` is purely additive.
+Both are supported; pick by project size (the maintainer's call: inline for the
+very small, a file-per-instance directory for the general case). This is exactly
+the convention-vs-explicit choice schemas and collections already offer
+(`internal/config/README.md`).
 
-**One definition → many collections** is realized as follows: a single
-StorageInstance (one directory tree) backs multiple collections that each
-declare their own `path`/`pattern` against it. A directory holding files for
-two collections is two collection files sharing one `storage:` instance with
-different patterns. The `FilesystemCollectionDefinition` for an instance
-enumerates all collections bound to it and answers `Collections()` with that
-set. (Whether collections are *also* expressible inline in a single definition
-file, GX-asset-style, is Open Question 1.)
+**No implicit instances.** Katalyst never synthesizes a storage instance at
+runtime. Instead, `katalyst init` writes a default one — `storage/local.yaml`
+with `type: filesystem`, `root: .` — reproducing today's behavior *explicitly*,
+on disk and reviewable. A selector that resolves into a missing instance is a
+usage error, never a silent default.
+
+**One definition → many collections** is the `collections:` block above: one
+`FilesystemCollectionDefinition` (one instance, one tree) yielding several
+collections. A directory holding files for two collections is two entries under
+`collections:` sharing the instance's `root` with different `path`/`pattern`. A
+single file mapping into *more than one* collection stays out of scope —
+invariant #4 (a file belongs to exactly one collection) is retained, per the
+maintainer's deferral.
 
 ### What this spec builds vs. defers
 
@@ -222,12 +250,21 @@ Builds now:
 - `internal/storage` package: `StorageType` registry, `StorageInstance`,
   `CollectionDefinition` interface, `Granularity`, `Reference`.
 - `FilesystemCollectionDefinition` wrapping today's `Items`/`ItemPath`/
-  `Unmatched`/`ItemAt` logic, behavior-preserving.
+  `Unmatched`/`ItemAt` logic, behavior-preserving, built from an instance's
+  `collections:` block.
 - `internal/project` refactored to drive the interface; selectors, CRUD verbs,
   and the check engine untouched.
-- `storage/` config kind + collection `storage:` ref + the implicit default
-  instance.
+- `storage` as a config kind that **embeds** its collections (convention
+  `storage/` directory + explicit `config.yaml` form), replacing the standalone
+  `collections/` kind.
+- `katalyst init` writing a default `local` filesystem instance.
 - The `connector` → triad doc/vocabulary migration.
+
+This **replaces the standalone `.katalyst/collections/` kind**: existing
+collection files must move into a storage instance's `collections:` block. Given
+the project's early-days status (the docs already carry an "early days" warning),
+this is an accepted breaking config change, called out in the configuration
+reference rather than papered over with a compatibility shim.
 
 Defers (seam left open, not implemented):
 
@@ -237,92 +274,52 @@ Defers (seam left open, not implemented):
 - A `doctor`/`explain` command (GX's `self_check`: "here are your collections,
   some examples, and what matched nothing").
 - Any non-filesystem StorageType.
-- A file mapping into more than one collection (see Open Question 3).
+- Multiple CollectionDefinitions per instance (GX allowed several
+  `DataConnector`s per `Datasource`); one mapping per instance is enough now.
+- A file mapping into more than one collection — invariant #4 retained.
 
 ## Open Questions
 
-1. **Definition-centric vs. collection-centric config for "one definition →
-   many collections."**
+1. **Per-collection reviewability when one instance holds many collections.**
 
-   **Context.** The maintainer chose "one CollectionDefinition yields N
-   collections." There are two ways to express that in `.katalyst/`, and they
-   differ in where a collection's `checks:` are authored.
-
-   **Choices & tradeoffs.**
-   - **(A) Collection-centric (recommended).** Keep one file per collection
-     under `collections/`, each with its own `checks:`; collections share a
-     StorageInstance via `storage:`. "One definition → many collections" is an
-     emergent property (many collection files, one instance). *Buys:* minimal
-     churn, today's per-collection check authoring is preserved, invariant
-     "a collection owns its checks" is untouched. *Costs:* the
-     `CollectionDefinition` is then mostly a *code* seam, not a first-class
-     config file — slightly less faithful to the maintainer's phrasing of a
-     definition that "maps a filesystem to one or more collections."
-   - **(B) Definition-centric (GX-faithful).** A new `collections/`-style file
-     *is* the definition: it names a StorageInstance and enumerates several
-     collections inline (GX "configured assets"), each with its pattern and
-     checks. *Buys:* one file describes a whole tree's mapping; closest to GX
-     and to "a definition yields many collections." *Costs:* larger change to
-     how checks are authored; a collection's config is no longer one
-     self-contained file; the load/merge path in `internal/config` grows.
-   - **(C) Hybrid.** Support both: the implicit default for a lone collection
-     stays one-file (sugar), and a definition file can group several. *Costs:*
-     two code paths to maintain and document.
-
-   **Recommendation:** (A). It satisfies the locked decision with the least
-   disruption and keeps `CollectionDefinition` as the narrow seam issue #31
-   actually asks for. Revisit (B)/(C) only if a real layout proves (A)
-   awkward.
-
-2. **StorageInstance config: own `storage/` kind vs. a `storage:` section in
-   `config.yaml`.**
-
-   **Context.** Instances need a config home. Existing kinds (`schemas`,
-   `collections`) are convention-discovered directories *and* can be listed
-   explicitly under `config.yaml` (`discovery: explicit`).
+   **Context.** The decided model embeds every collection in its instance's
+   `collections:` block. That diverges from a decision the project made
+   deliberately and documented in `internal/config/README.md`: collections were
+   split into one reviewable file each precisely so a change to one is a small,
+   isolated diff. A filesystem instance with twenty collections is now one large
+   file — every collection edit touches it, and review loses the per-collection
+   locality the directory layout bought. (GX accepted this: a `Datasource`'s
+   connectors and assets all live in one block.)
 
    **Choices & tradeoffs.**
-   - **(A) New `storage/` directory kind (recommended).** Mirrors
-     `schemas/`/`collections/` exactly, including the `discovery`/`format`
-     machinery in `internal/config`. *Buys:* consistency, one file per instance,
-     name-from-stem. *Costs:* a third kind to wire through `loadX`.
-   - **(B) A `storage:` map in `config.yaml`.** Instances are usually few and
-     small (a type + a root). *Buys:* less ceremony for the common one-instance
-     case. *Costs:* inconsistent with the directory-per-definition convention
-     the project deliberately chose (`internal/config/README.md`).
+   - **(A) Inline-only.** Collections live only in the instance config. *Buys:*
+     one model, closest to GX and to the decision just made; the instance file is
+     the single source of its mapping. *Costs:* large single file for large
+     instances; reintroduces the very "one big file" the project moved away from.
+   - **(B) Inline + optional per-collection files (recommended).** Default is
+     inline (A). As an escape hatch, an instance may point a collection at its
+     own file (e.g. `collections: { books: { $file: books.yaml } }`, or an
+     instance-scoped `storage/local/` directory), restoring one-reviewable-file
+     diffs for projects that outgrow inline. *Buys:* small projects stay simple,
+     large projects keep locality. *Costs:* a second authoring path to document
+     and load; mild "two ways to do it."
+   - **(C) Defer.** Ship inline-only now; add the escape hatch only if a real
+     project feels the pain. *Buys:* least to build. *Costs:* the large-file
+     regression ships first and may bite dogfooding (katalyst's own docs config).
 
-   **Recommendation:** (A), for consistency. The implicit default instance
-   means the common case still writes nothing.
+   **Recommendation:** (B) as the eventual shape, but (C) is a reasonable
+   *sequencing* — ship inline, hold the per-file hatch until needed — since the
+   seam doesn't change either way. This is the one place the decided model
+   trades against an established project value, so it's flagged for an explicit
+   call rather than assumed.
 
-3. **The "one file maps to more than one collection" case — confirm deferral.**
-
-   **Context.** The maintainer flagged this as exotic and chose to defer it.
-   Recording it explicitly so the interface doesn't accidentally foreclose it.
-   Domain-model invariant #4 ("a file belongs to exactly one collection")
-   currently holds and `Resolve` de-duplicates by path.
-
-   **Choices & tradeoffs.** Keep invariant #4 (a `Reference` resolves to one
-   collection+item) — simplest, matches today, keeps check ownership and
-   selector resolution unambiguous. The seam does not *prevent* a future
-   many-to-one mapping (nothing in the interface asserts uniqueness), so
-   lifting it later is additive.
-
-   **Recommendation:** Confirm deferral; keep invariant #4 and note the
-   future possibility in the reframed deep dive. *(Pre-answered as "defer";
-   listed so it's recorded in Design when this closes.)*
-
-4. **Package boundary: does `Item` move to `internal/storage`?**
-
-   **Context.** `project.Item` is `{Collection, ID, Path}`. If
-   `CollectionDefinition` lives in `internal/storage` and returns items, either
-   `storage` imports `project` (and `project` imports `storage` → cycle) or
-   `Item` moves down to `storage`.
-
-   **Choices & tradeoffs.** (A) Move `Item` (and likely `Selector`/`Resolution`
-   stay in `project`) into `internal/storage`; `project` re-exports or wraps.
-   (B) Define a smaller `storage.Unit` and have `project` adapt it to `Item`.
-   *Recommendation:* (A) — fewest types, no adapter layer — but this is an
-   implementation detail to settle in the plan, not a user-visible decision.
+_All other questions from the prior draft are resolved and folded into Design:
+the config is definition-centric with collections embedded in their instance
+(OQ1 → "Config surface"); storage supports both a `storage/` directory and an
+inline `config.yaml` form (OQ2 → "Config surface"); the file-in-many-collections
+case is deferred with invariant #4 retained (OQ3 → "Config surface"); and the
+`Item` package relocation is an internal detail (OQ4 → the packaging note under
+"The seam")._
 
 ## Documentation updates
 
@@ -340,12 +337,16 @@ Defers (seam left open, not implemented):
   **StorageType**, **StorageInstance**, **CollectionDefinition**, and
   **Granularity** (and keep **Coordinates**/**Data reference** if the reframed
   deep dive retains them).
-- `reference/configuration.md`: document the `storage/` kind, the
-  `type`/`root` keys, the collection `storage:` ref, and the implicit default
-  instance.
+- `reference/configuration.md`: document the `storage/` kind with embedded
+  `collections:`, the `type`/`root` keys, the convention vs. inline-`config.yaml`
+  forms, that `init` writes a default `local` instance, and that the standalone
+  `collections/` kind is **replaced** (a breaking change for existing configs).
+- `getting-started.md`: the walkthrough that writes `.katalyst/collections/`
+  moves to declaring collections inside `storage/local.yaml`.
 - `deep-dives/domain-model.md` (lines 169–170): update the Selector note's
   `connectors.md` relref to `storage.md` and the "connector coordinates"
-  wording.
+  wording; revisit the "A collection owns its checks" invariant text now that
+  collections are declared inside an instance.
 - `contributing/how-we-document.md` (line 28) and `how-we-plan.md` (line 79):
   swap "connectors" for "storage" in the evergreen-deep-dive references.
 
@@ -353,17 +354,22 @@ Defers (seam left open, not implemented):
 
 - `internal/storage/doc.go`: new package doc — the three concepts, the two-way
   contract, granularity, and the GX provenance/correction.
-- `internal/config/README.md`: document the `storage/` kind and the
-  collection `storage:` field; note the implicit default instance.
+- `internal/config/README.md`: document the `storage/` kind with embedded
+  collections, the two authoring forms, and that `init` writes the default
+  instance (no runtime synthesis); update the "Why named collections" section,
+  which currently assumes a standalone `collections/` kind.
 - `internal/project/` package doc: update to say it now consumes the
   `internal/storage` seam rather than implementing the mapping.
 - `AGENTS.md`: record the convention "path ⇄ item-identity translation passes
   through `internal/storage.CollectionDefinition`; do not inline filesystem
   assumptions elsewhere."
 
-**Specs (cross-references, not user docs):** `product/specs/cli-spec.md`,
-`product/specs/dogfood-docs-spec.md`, and `product/v0-implementation-plan.md`
-mention `connectors.md`; update those relrefs to `storage.md` when this ships.
+**Specs (cross-references, not user docs):** `product/specs/cli-spec.md`
+(both its `connectors.md` relrefs *and* its `katalyst init` description, which
+says init creates empty `schemas/` and `collections/` dirs — now it writes a
+default storage instance), `product/specs/dogfood-docs-spec.md`, and
+`product/v0-implementation-plan.md` mention `connectors.md`/`collections/`;
+update those when this ships.
 
 ## Appendix: GX → Katalyst mapping (carried from the deep dive)
 
@@ -384,5 +390,3 @@ Lessons carried verbatim from GX's own TODOs: prefer a two-way **template** over
 regex inversion; the **pattern owns the extension**; keep **collection identity
 separate from coordinates** (GX leaked `data_asset_name` into the coordinate map
 and regretted it — see `util.py` line 116).
-</content>
-</invoke>
