@@ -1,11 +1,12 @@
 # Text checks: regex and string policy over body content
 
 > **Status: planning.** Adds text rules that run regex/string-policy checks
-> directly against an item's body (and against plain-text files with no
+> directly against an item's body text (and against plain-text files with no
 > frontmatter), with line-level diagnostics and optional auto-fixes. Resolves
-> issue #49. **Open structural question:** whether these ship as a new fourth
-> `text` family or are arranged some other way — parked for discussion (Open
-> Question 1); the rest of the design is independent of it.
+> issue #49. The structural question — where these rules live in the taxonomy —
+> is **resolved**: they form a new **`plainText`** check-type family inside the
+> four-family model this PR adopts (see [Check-type families](#check-type-families)).
+> One naming question remains open (Open Question 1: the denylist kind's name).
 
 ## Overview
 
@@ -19,7 +20,7 @@ and fences, not arbitrary line shapes. This spec adds three rules —
 `text_requires` and `text_forbids` (regex), and a `text_denylist` of literal
 substrings — that target the body directly through a span selector (`body`,
 lines, lines matching a regex), with line-level diagnostics and an optional
-declared **fix**.
+declared **fix**. They constitute the new `plainText` family.
 
 ## Value
 
@@ -27,22 +28,126 @@ declared **fix**.
   whitespace," "title line has no period," "forbidden phrasing") are the rules
   authors hit first in a writing vault, and today they need external linters or
   brittle wrappers. One documented surface (`pattern`, `target`) covers them.
-- **Plain-text files are in scope, not just frontmatter-bearing markdown.** The
-  parser already returns the entire file as `Body` when there is no frontmatter
+- **Plain text is a source kind, not a file type.** The `plainText` family
+  applies anywhere text content exists: a bare `.txt` item **and** the body of a
+  markdown file (see [the family model](#check-type-families)). The parser
+  already returns the entire file as `Body` when there is no frontmatter
   (`frontmatter.go:138`), so a collection of `.txt` or frontmatter-less `.md`
-  files can be linted the same way — the rule just needs to read `Body`.
+  files lints the same way a markdown body does — the rule just reads `Body`.
 - **Fixable where it's safe.** Many prose violations (a stray trailing period, a
   forbidden synonym) are a mechanical search-and-replace. Letting a rule declare
   its own fix makes `katalyst fix` repair them, extending `fix` from a
   frontmatter formatter to a body repairer **only where the author opts in**.
 
+## Check-type families
+
+The storage layer (#31) makes it possible to say precisely what a check-type
+family *is*, so this spec adopts that model rather than the older ad-hoc
+"objects / markdown / filesystem" grouping.
+
+**A `checkTypeFamily` groups check types by the kind of *source data* they
+operate on** — not by file format, and not by `StorageType`. After this PR there
+are four:
+
+| `checkTypeFamily` | Source data it reads | `kind` prefix | Replaces today's |
+|---|---|---|---|
+| `plainText` | text content as raw characters and lines | `text_` | *(new)* |
+| `markdownBodyText` | the same text, parsed as markdown — headings, lists, tables, fences | `markdown_` | `markdown` |
+| `structuredObject` | a parsed object: typed key/value fields | `object_` | `objects` |
+| `fileSystem` | the item's address and naming in a filesystem store | `filesystem_` | `filesystem` |
+
+(The family *id* and the `kind` *prefix* are intentionally distinct — short
+prefixes like `text_`/`object_` read better on individual kinds than the family
+name would. Family ids appear in prose and group the reference docs; renaming the
+existing three is a mechanical label + docs-slug change with kinds untouched —
+see [Documentation updates](#documentation-updates).)
+
+Future families slot in the same way — e.g. `tableRow` (like `structuredObject`,
+but fields are columns and are uniform across rows).
+
+### Families don't map one-to-one to file formats or storage types
+
+An **Item can carry data for several families at once**; its `StorageType` /
+`StorageInstance` (via the backend's `CollectionDefinition`) decides which
+combination is available:
+
+| Item | Families it exposes |
+|---|---|
+| `.txt` | `plainText` |
+| `.md` | `markdownBodyText` + `plainText` (one body) · `structuredObject` (frontmatter) |
+| `.json` | `structuredObject` |
+| `.txt` + `.json` sidecar *(future)* | `plainText` + `structuredObject` |
+| `.md` + `.json` sidecar *(future)* | `markdownBodyText` + `plainText` + `structuredObject` ×2 (frontmatter + sidecar) |
+
+Three consequences shape this spec:
+
+1. **`plainText` ⊆ `markdownBodyText` in applicability.** A markdown body is text
+   that *additionally* has structure, so an item with a markdown body exposes
+   **both** families on the same bytes: `markdownBodyText` adds the
+   structure-aware checks (header, bullet list, table), while every `plainText`
+   check (`text_requires`, `text_forbids`, `text_denylist`) still applies. This
+   is the whole point of #49 — the text rules must run against markdown bodies,
+   not only bare `.txt` files — and the family model now states it as a rule
+   rather than a special case.
+
+2. **`fileSystem` is the backend-coupled family — the one exception to "families
+   don't map to a `StorageType`."** `plainText` / `markdownBodyText` /
+   `structuredObject` are content the item *carries* and are backend-agnostic.
+   `fileSystem` is not content; it's the item's address and naming *in a
+   filesystem store*, which exists **only** for the filesystem backend (a
+   `sqlite` item has no filename). A future SQL backend would expose its own
+   coupled family. This spec adds nothing to `fileSystem`; it's noted so the
+   family is described honestly rather than as a peer of the content families.
+
+3. **Family is orthogonal to granularity.** `checkTypeFamily` answers *which
+   source data*; `storage.Granularity` (item vs collection) answers *how many
+   units a verdict spans*. They are independent axes: today's collection-scoped
+   uniqueness over a frontmatter field is `(structuredObject, collection)`, not a
+   `fileSystem` check — it was only filed under `filesystem` historically. **The
+   three rules in this spec are `(plainText, item)`**: per-item, no sibling
+   context. (How check scoping behaves when checks run directly over a raw
+   `StorageInstance` rather than through a Collection is not yet settled; it does
+   not affect these item-scoped rules and is out of scope here.)
+
+### Source addressing when an item carries multiple sources (forward-looking)
+
+Today an item exposes at most one body (text) and one `structuredObject`
+(frontmatter), so a check never has to say *which* source it runs against — the
+default is unambiguous. The sidecar cases above break that: a `.md` + `.json`
+item carries **two** `structuredObject`s (frontmatter and sidecar), and a `.txt`
++ `.json` item carries a `plainText` source *and* a `structuredObject`. Check
+instances will then need to name their source.
+
+**Proposal — the `CollectionDefinition` owns it.** It is already the two-way
+mapping that turns a backend's contents into `Item`s (`internal/storage`), and
+it is the *only* layer that knows the physical layout (that this `.md` has
+frontmatter, that a sidecar `.json` sits beside it). So:
+
+- Extend the storage `Item` (today `{Collection, ID, Path}`) to expose a set of
+  **named sources**, each tagged with its `checkTypeFamily` — e.g.
+  `{ body: markdownBodyText|plainText, frontmatter: structuredObject,
+  meta: structuredObject }`. The `CollectionDefinition` populates them; config
+  and checks stay backend-agnostic and reference a source by **handle**, never by
+  file.
+- Check instances gain an optional **`source:`** handle. It **defaults to the
+  sole source of the check type's family**, so every collection that has one body
+  and one frontmatter object — i.e. all of today's — needs no `source:`, and the
+  text rules in this spec require none. The field's semantics are reserved now;
+  the multi-source backends that need it are deferred.
+
+This answers "where does multi-object addressing live?" — the
+`CollectionDefinition` and the `Item` it yields, not the check config.
+
 ## Current State
 
-- **Three families, none reads raw body text.** `internal/checks/registry.go`
-  defines `objects`, `markdown`, and `filesystem` families (`Families()`).
+- **Today's three families, none reads raw body text.**
+  `internal/checks/registry.go` defines `objects`, `markdown`, and `filesystem`
+  families (`Families()`) — to be relabeled `structuredObject`,
+  `markdownBodyText`, and `fileSystem` under the model above.
   `object`/`filesystem` never look at the body; the `markdown` family does, but
   only through structure-aware helpers (`firstH1`, `heading`, fence scanning in
-  `internal/checks/markdown.go`).
+  `internal/checks/markdown.go`). The new `plainText` family is the first to read
+  the body as raw text.
 - **The body is already available, line-numbered.** Every check receives
   `Context{Doc *frontmatter.Document, …}` (`internal/checks/checks.go:6`).
   `Doc.Body []byte` holds the body and `Doc.BodyLine` is the 1-based line where
@@ -50,7 +155,8 @@ declared **fix**.
   body into `(line, text)` pairs via `markdownLines(body, bodyLine)`
   (`markdown.go:171`); text rules reuse that exact helper for per-line
   diagnostics. For a file with no frontmatter, `Body` is the whole file and
-  `BodyLine` is 1 (`frontmatter.go:138`), so line numbers stay correct.
+  `BodyLine` is 1 (`frontmatter.go:138`), so line numbers stay correct — this is
+  what lets one `plainText` rule serve both a markdown body and a bare `.txt`.
 - **A regex check type already exists, but anchored and over the filename.**
   `filesystem_name_regex` compiles `^(?:pattern)$` and tests the basename
   (`config.go:792`, `engine.go:156`). Its anchoring is wrong for prose: text
@@ -69,18 +175,20 @@ declared **fix**.
   dispatched type has no Descriptor, and `cmd/gendocs` renders
   `docs/content/reference/check-types/` from the Descriptors.
 - **Checks are per-item.** Text rules need no sibling context, so they implement
-  the existing per-item `Check.Run(ctx) []Violation` contract.
+  the existing per-item `Check.Run(ctx) []Violation` contract — `(plainText,
+  item)` in the family/granularity model above.
 
 ## Design
 
-### Family placement (parked)
+### Family placement (resolved)
 
-Where these rules live in the docs taxonomy — a new fourth `text` family, or
-some other arrangement — is **Open Question 1** and is being discussed
-separately. The rest of this Design (span selector, the three rules, fix) holds
-regardless of that answer; the family decision changes only the `Family` value in
-the registry and the reference subdirectory the pages render into. The spec
-provisionally writes them as a `text` family so the examples read concretely.
+The three rules form the new **`plainText`** family: a truthful intro ("text
+content as raw characters and lines, independent of markdown structure"), honest
+that the rules apply to `.txt` items as well as markdown bodies, and — via
+`plainText` ⊆ `markdownBodyText` — guaranteed to run on markdown bodies too. The
+registry gains the `plainText` family and relabels the existing three to the
+model's names; the rest of this Design (span selector, the three rules, fix) is
+independent of the taxonomy.
 
 ### The span selector: `target`
 
@@ -134,8 +242,7 @@ one is a literal denylist.
   word-ban that a regex alternation (`TODO|FIXME|XXX`) expresses awkwardly and
   with escaping hazards. It honors `target` like the regex rules and is
   report-only (no `fix`; reach for `text_forbids` with a `fix` when a literal
-  needs rewriting). This is the dedicated list kind chosen in Open Question 3;
-  its **name is Open Question 2**.
+  needs rewriting). The dedicated list kind; its **name is Open Question 1**.
 
 Diagnostics name the failing span(s): `text_forbids`/`text_denylist` report each
 matching span (denylist names the offending value); `text_requires match: all`
@@ -213,35 +320,14 @@ quoting the pattern with regex delimiters (and a denylist value with quotes).
 structs sharing a `spans(ctx) []span` helper (each span carries text + start
 line) and compiled regexes. `cmd/engine.go` dispatches them; `cmd/fix.go` gains a
 body pass that applies declared replacements and re-checks. `registry.go` gets
-the Descriptors and, per Open Question 1, possibly a fourth `Family`.
+the Descriptors and the new `plainText` `Family`.
 
 ## Open Questions
 
-### 1. Family placement (structural; parked for discussion)
+### 1. Name for the literal-denylist kind
 
-**Context.** Check types are grouped into *families* — `objects`, `markdown`,
-`filesystem` — defined by `Families()` in `internal/checks/registry.go`. A
-family fixes the docs subdirectory (`reference/check-types/<family>/`), the intro
-copy, and how `katalyst check-types list` groups output. Text rules need a home.
-The `markdown` family already reads the body, but only through markdown-*aware*
-helpers (headings, fences); text rules are structure-agnostic and also apply to
-non-markdown `.txt` files.
-
-**Choices & tradeoffs.**
-
-| Option | Buys | Costs |
-|---|---|---|
-| New `text` family | A truthful intro ("raw body content, independent of markdown structure"); honest that rules apply to `.txt` | A fourth family is more surface for users to learn and docs to maintain |
-| Fold into `markdown` | No new family; all body checks in one place | Forces the markdown intro to also mean "arbitrary regex over raw text," blurring markdown-aware vs structure-agnostic, and misreads for `.txt` |
-| Rename to a broader family (`content`) spanning markdown + text | One body-content family | Renames existing markdown pages/kinds — real churn for a taxonomy bet |
-
-**Recommendation.** New `text` family: the structure-agnostic vs markdown-aware
-distinction is real and keeps each family intro true. Your call.
-
-### 2. Name for the literal-denylist kind
-
-**Context.** Open Question 3 settled on a dedicated kind that forbids a list of
-literal substrings (regex metacharacters inert). The spec provisionally calls it
+**Context.** This spec settled on a dedicated kind that forbids a list of literal
+substrings (regex metacharacters inert). It provisionally calls it
 `text_denylist`; the earlier draft's `text_forbids_substrings` was rejected as
 clunky. The name should read well next to `text_requires`/`text_forbids` and the
 existing `*_in` / `*_enum` membership kinds, and signal "a set of literal strings
@@ -263,20 +349,31 @@ call.
 
 ## Documentation updates
 
-- **Generated reference** — add the `Descriptor`s (and, per OQ1, a `text`
-  `Family`) in `internal/checks/registry.go`, then `make docs-gen` to render the
-  reference page(s) (do not hand-edit). New kinds then appear in `katalyst
-  check-types list`; the `registry_test.go` parity test enforces they ship
-  documented.
+- **Family relabel.** `internal/checks/registry.go` adopts the four-family
+  model: rename `objects`→`structuredObject`, `markdown`→`markdownBodyText`,
+  `filesystem`→`fileSystem`, and add `plainText`. This is mechanical — the family
+  *id*, its intro copy, and the docs-dir slug change; `kind` ids
+  (`object_*`/`markdown_*`/`filesystem_*`) are untouched. Docs subdirectories use
+  kebab slugs (`structured-object/`, `markdown-body-text/`, `file-system/`,
+  `plain-text/`). **Recommendation:** land the relabel as a small precursor PR so
+  the text-checks diff stays focused on the new family and its three kinds.
+- **Generated reference** — add the `Descriptor`s and the `plainText` `Family`,
+  then `make docs-gen` to render the reference page(s) (do not hand-edit). New
+  kinds then appear in `katalyst check-types list`; the `registry_test.go` parity
+  test enforces they ship documented.
 - **User docs (Hugo)** — `docs/content/how-to/configure-rules.md` gains text-rule
   examples (forbid `TODO` via `text_denylist`; ban a trailing period on the first
   line with a `fix`). `docs/content/reference/configuration.md` documents the
   span selector, the `match` knob, the unanchored-regex limitation, the opt-in
   `fix` and its re-check, and that text rules lint frontmatter-less files when the
   collection `pattern` matches them.
-- **Glossary** — `docs/content/reference/glossary.md` gains "text rule" and
-  "span" entries; the existing **Body** entry supplies the target term.
-- **Developer docs** — root `AGENTS.md` records the span-selector model, the
+- **Glossary** — `docs/content/reference/glossary.md` gains `checkTypeFamily`
+  (and the four families), "text rule", and "span" entries, and notes that an
+  item can carry several families; the existing **Body** and **Granularity**
+  entries supply the rest of the vocabulary.
+- **Developer docs** — root `AGENTS.md` records the four-family model
+  (source-data grouping; `plainText` ⊆ `markdownBodyText`; `fileSystem` as the
+  backend-coupled exception; family ⊥ granularity), the span-selector model, the
   unanchored-regex divergence from `filesystem_name_regex`, and the opt-in
   body-fix extension to the `fix` contract (which `cmd/fix.go`'s "never invents"
   note must now cross-reference). `internal/checks` package docs cover the
@@ -290,6 +387,13 @@ call.
 - **Inline examples on check types** (pass/fail samples that document and
   self-test a rule, including its fix) — **issue #52**. A cross-cutting mechanism
   beyond the text family; out of scope here.
+- **Multi-source items and the `source:` handle** — needed only when an item
+  carries more than one source of a family (sidecar metadata files). The model
+  and proposal are above ([Source addressing](#source-addressing-when-an-item-carries-multiple-sources-forward-looking));
+  the implementation waits on a backend that produces such items.
+- **Check scoping over raw `StorageInstance`s** (rather than through a
+  Collection) — open in the storage design; does not affect these item-scoped
+  rules.
 
 ## Test checklist (what the pending tests assert)
 
@@ -319,5 +423,8 @@ Fix:
 - [ ] `text_forbids` without `fix` stays report-only; `fix` still preserves body
 
 Registry / docs:
-- [ ] every new kind has a Descriptor (parity stays green)
+- [ ] the `plainText` family renders; the three kinds have Descriptors (parity
+      stays green)
 - [ ] `make docs-gen` renders the reference cleanly
+- [ ] the family relabel keeps `object_*`/`markdown_*`/`filesystem_*` kind ids
+      unchanged
