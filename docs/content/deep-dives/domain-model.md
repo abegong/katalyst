@@ -15,10 +15,10 @@ MongoDB collection, see [core concepts]({{< relref "core-concepts.md" >}}).
 For *what* the commands do, see the [getting-started
 tutorial]({{< relref "../getting-started.md" >}}) and the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
-For *why* specific design choices were made, see the per-package `README.md`
-files under `internal/` (for example `internal/config`) and the
-[commands]({{< relref "../reference/commands.md" >}}) reference. For
-*how the code is laid out*, see the repo's `AGENTS.md` files.
+For *why* specific design choices were made, these deep dives are the home for
+the behavioral rationale; a package's implementation-depth reasoning
+additionally lives in its `doc.go` or `README.md`. For *how the code is laid
+out*, see the repo's `AGENTS.md` files.
 
 ## At a glance
 
@@ -299,11 +299,12 @@ layer, anything else is a path for the raw-source layer, and renders the
 evidence as Markdown (default) or JSON. Both layers are built from a few
 reusable measurement primitives (`object_fields`, `markdown_body`,
 file-metadata). Inspectors have their own registry and per-layer parity test,
-mirroring checks, so none ships undocumented. The design rationale
-(evidence-not-verdicts, the determinism dividing line, the two-layer split)
-lives in the package's own docs, `go doc ./internal/inspect`, next to the
-code; see [the reference]({{< relref "../reference/inspectors/_index.md" >}})
-for the inspector set.
+mirroring checks, so none ships undocumented. Their rationale -
+evidence-not-verdicts, the determinism dividing line, the two-layer split - is
+the behavioral heart of inspectors; the implementation-depth detail lives next
+to the code in `go doc ./internal/inspect`. See [the
+reference]({{< relref "../reference/inspectors/_index.md" >}}) for the inspector
+set.
 
 ## Lifecycle of `check`
 

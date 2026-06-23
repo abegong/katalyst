@@ -17,7 +17,8 @@ how the [storage layer]({{< relref "storage.md" >}}) maps stores onto the model,
 and how operations grow richer as a backend's capabilities increase. For the
 short version, start with [Welcome]({{< relref "../welcome.md" >}}).
 
-Rationale that is tied to a specific subsystem lives next to the code, in the
-per-package `README.md` files under `internal/` (for example
-`internal/config`, `internal/frontmatter`, and `internal/checks`). The pages
-here cover the cross-cutting *why* that no single package owns.
+These pages carry the **behavioral *why*** - any rationale a user can observe,
+whatever subsystem it touches. The narrower *why* that only matters once you are
+reading a package's code lives next to that code, in its `doc.go` or co-located
+`README.md` (for example `internal/config`, `internal/frontmatter`, and
+`internal/checks`).

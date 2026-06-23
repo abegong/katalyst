@@ -108,7 +108,7 @@ GX shipped both, and they map cleanly onto Katalyst verbs:
 
 GX tracked files that matched no pattern (`get_unmatched_data_references`)
 rather than silently dropping them. Katalyst already treats unmatched as an
-error (see `internal/config/README.md`). GX's `self_check`, "here are your
+error. GX's `self_check`, "here are your
 collections, some examples, and the files that matched nothing", is the
 template for a future `doctor` / `explain` that diagnoses a definition's mapping.
 
