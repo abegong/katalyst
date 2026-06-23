@@ -180,15 +180,6 @@ The data flow per item, end to end:
    collection whose directory contains it.
 4. **Unmatched is an error, not a warning.** Silent skips hide config drift.
 
-## Out of scope today
-
-- **Relations between documents.** A schema constrains one document at a time;
-  no `$ref` across documents, no foreign keys. Planned.
-- **Schema evolution.** No "this field was renamed in v2" migrations. Planned.
-- **Query.** No "find all docs where year > 1980." Planned.
-- **Derived state.** `.katalyst/` holds only hand-authored config; nothing is
-  generated into it. Every run is stateless.
-
 ## See also
 
 - The [configuration reference]({{< relref "../reference/configuration.md" >}})
