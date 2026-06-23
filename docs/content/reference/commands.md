@@ -192,6 +192,34 @@ katalyst check-types show <check-type> [--json]
 
 Exits `0`, or `2` for an unknown family or check type.
 
+## `inspectors`
+
+`inspectors` is a resource noun (the descriptive dual of `check-types`): a
+read-only view of the inspectors the engine can run, read from its registry,
+the same catalog the [inspectors reference]({{< relref "inspectors/_index.md" >}})
+is generated from. It takes no selector and reads no project, so it runs in any
+directory. Invoked bare it prints help; the work happens under its sub-verbs.
+
+```bash
+katalyst inspectors list [--layer <layer>] [--json]
+katalyst inspectors show <inspector> [--json]
+```
+
+- `katalyst inspectors list`, every inspector grouped by layer (`source`,
+  `collection`): inspector name and purpose.
+- `katalyst inspectors list --layer <layer>`, narrow the list to one layer.
+- `katalyst inspectors show <inspector>`, a docs-style readout for one
+  inspector: layer context, purpose, and the other inspectors in its layer.
+- `--json`: on either sub-verb, a machine-readable descriptor array (`list`)
+  or a single object (`show`), so an editor or skill reads the catalog instead
+  of hardcoding it.
+
+The two layers mirror how [`inspect`]({{< relref "commands.md#inspect" >}})
+runs: `source` inspectors profile a raw store, `collection` inspectors profile
+a configured collection.
+
+Exits `0`, or `2` for an unknown layer or inspector.
+
 ## `init`
 
 ```bash

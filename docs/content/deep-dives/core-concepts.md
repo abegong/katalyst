@@ -97,7 +97,8 @@ Examples:
 - **Search** items by raw content (substring or semantic similarity).
 - **Query** items by structured attribute values.
 - **Diff**
-- **Aggregate** across items in a collection.
+- **Aggregate** across items in a collection, the descriptive operation
+  inspectors provide.
 
 ### Check
 
@@ -111,6 +112,26 @@ Examples:
 - A foreign key constraint, an attribute must reference an item in another collection.
 - Uniqueness, no two items in the collection share a value for this attribute.
 - API-level validation, an attribute must satisfy a business rule (e.g. a valid email domain).
+
+### Inspector
+
+An **inspector** is the descriptive dual of a check, and the operation that
+realizes **Aggregate** above. Where a check asserts a condition and returns
+violations, an inspector *measures* a condition and returns **evidence**, counts
+and distributions, never a verdict. A check asks "is `status` one of {read,
+reading}?"; the matching inspector asks "what is the distribution of `status`?"
+and answers `{read: 80, reading: 12}`.
+
+Inspectors come in two layers, by what they measure and how they reach it:
+
+- **Raw-source** inspectors profile a backend store directly, before any
+  collection is configured, the onboarding case ("what's in this directory?").
+- **Collection** inspectors profile a configured collection's items, addressed
+  by item identity and probed through the same substrate the checks use.
+
+Reading the evidence and deciding what to do with it, that a field present in
+94% of items should become `required`, is judgment that stays with the reader (a
+human or an agent), never the inspector.
 
 ## Examples
 
@@ -135,8 +156,8 @@ Here are a few more examples, to help ground these concepts.
 - In other words, schemas and structuredness are a means to an end. They're about enforcing checks in order to provide a catalog of operations.
 
 For how these general concepts are instantiated in katalyst specifically, the
-concrete `Document`, `Schema`, `Collection`, and `Check` types and the
-invariants between them, see the [domain model]({{< relref "domain-model.md" >}}).
+concrete `Document`, `Schema`, `Collection`, `Check`, and `Inspector` types and
+the invariants between them, see the [domain model]({{< relref "domain-model.md" >}}).
 For how they translate to today's code, see the per-package `README.md` files
-under `internal/` (notably `internal/config`, `internal/frontmatter`, and
-`internal/checks`).
+under `internal/` (notably `internal/config`, `internal/frontmatter`,
+`internal/checks`, and `internal/inspect`).
