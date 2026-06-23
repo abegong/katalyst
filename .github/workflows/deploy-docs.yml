@@ -1,21 +1,28 @@
 name: deploy-docs
 
-# Publishes the Hugo docs site to the `gh-pages` branch on every push to main.
-# Pages must be configured with Source: "Deploy from a branch" -> gh-pages /
-# (root) (Settings > Pages). PR previews (see preview-docs.yml) deploy into the
-# pr-preview/ subdirectory of the same branch, so the main deploy excludes that
-# directory when cleaning to avoid wiping live previews.
+# Publishes the production Hugo docs site to GitHub Pages on every push to main.
 #
-# The ci.yml `docs` job still validates the build on pull requests; this
-# workflow only deploys from main.
+# Source model: Pages is configured with Source: "GitHub Actions" (Settings >
+# Pages), so this workflow IS the deploy — it uploads the built site as a Pages
+# artifact and calls the Pages deploy API. There is no `gh-pages` branch in this
+# model; nothing serves from a branch.
+#
+# Division of labor (see docs/content/contributing/how-we-document.md):
+#   - Production site  -> this workflow (Pages, "GitHub Actions" source).
+#   - Per-PR previews  -> Netlify Deploy Previews (netlify.toml); not a workflow.
+#   - Build validation -> the `docs` job in ci.yml (builds + lints, never deploys).
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege for a Pages-Actions deploy: read the repo, write a Pages
+# deployment, and mint the OIDC token actions/deploy-pages needs.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 # Allow one concurrent deployment; don't cancel an in-progress publish.
 concurrency:
@@ -23,7 +30,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,12 +44,18 @@ jobs:
           extended: true
       - name: Build docs
         run: make docs-build   # outputs the minified site to docs/public
-      - name: Deploy to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: docs/public
-          branch: gh-pages
-          # Wipe stale files on each deploy, but keep the PR previews that
-          # preview-docs.yml publishes under pr-preview/.
-          clean: true
-          clean-exclude: pr-preview/
+          path: docs/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
