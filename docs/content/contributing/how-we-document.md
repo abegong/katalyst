@@ -50,24 +50,23 @@ Code-level API and symbol documentation lives in the code as Go doc comments,
 not in the Hugo tree. Keep the design narrative here **minimal** - a short
 orienting comment, with a dedicated `doc.go` only when a package needs a brief
 tour (`internal/inspect/doc.go` is the worked example); it surfaces in `go doc`.
-The fuller implementation-depth *why* - a package's architecture and
-load-bearing decisions - belongs in its `AGENTS.md` (below); the *behavioral*
-why a user can observe belongs in `deep-dives/`. Use godoc headings
-(`# Heading`), prose, and short lists; a table belongs in `AGENTS.md` or the
-reference.
+A package's architecture and design rationale do **not** live here: they go in
+the subsystem's `deep-dives/` page, which the package's `AGENTS.md` points to.
+Use godoc headings (`# Heading`), prose, and short lists; tables and diagrams
+belong in the deep-dive or the reference.
 
 ### 3. `AGENTS.md` files
 
-Conventions and architecture for anyone *writing code* in the repo. **What goes
-here:** naming conventions, required patterns, gotchas, the *why* behind a code
-constraint, and a concise account of the **module's architecture** - how it is
-shaped and the load-bearing decisions, the implementation-depth *why* you care
-about with the source open. **What doesn't:** user-facing usage (→ `docs/`), the
-behavioral *why* a user can observe (→ `docs/deep-dives/`), or API-level symbol
-detail (→ Go doc comments).
+Conventions for anyone *writing code* in the repo, plus a **pointer** to the
+subsystem's architecture deep-dive. **What goes here:** naming conventions,
+required patterns, gotchas, the *why* behind a code constraint, and a link to
+the package's `deep-dives/` page. **What doesn't:** the architecture narrative
+itself (→ `docs/deep-dives/`), user-facing usage (→ `docs/`), the behavioral
+*why* a user can observe (→ `docs/deep-dives/`), or API-level symbol detail
+(→ Go doc comments).
 
 Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where a
-package has rules or architecture that don't belong at the root. Keep each file
+package has rules of its own or a deep-dive worth pointing at. Keep each file
 concise and to the point. Examples live in tests, not a separate examples file:
 a `*_test.go` is the canonical, executable example.
 
@@ -102,7 +101,7 @@ type rather than guessed up front.
 
 ## Style
 
-- **Keep `AGENTS.md` concise:** conventions and architecture, tightly written, not walls of text.
+- **Keep `AGENTS.md` concise:** conventions plus a pointer to the architecture deep-dive, not the architecture itself.
 - **Don't repeat root standards** in co-located docs; document only what's
   specific to that location.
 - **Update docs in the same change** that establishes a convention or ships
@@ -128,9 +127,9 @@ in the em-dash rubric draft under `product/`.
 
 ## Tool-specific files
 
-`AGENTS.md` is the source of truth for code-writing conventions and module
-architecture. Other tools read their own files; keep them thin and pointed at
-`AGENTS.md`.
+`AGENTS.md` is the source of truth for code-writing conventions, and points to
+the architecture deep-dives. Other tools read their own files; keep them thin
+and pointed at `AGENTS.md`.
 
 - **`.cursor/skills/`:** reusable skills (e.g. `add-katalyst-rule`). Skills
   are *actions*, not conventions; conventions stay in `AGENTS.md`.

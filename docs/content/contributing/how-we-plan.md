@@ -23,13 +23,12 @@ will do.
 ## Where rationale and open questions live
 
 There is **no `decisions.md`** and no ADR log. When a change locks in a
-choice, its rationale graduates next to the thing it explains, **split by
-altitude**: the behavioral *why* a user can observe into the relevant
-[`deep-dives/`]({{< relref "../deep-dives/_index.md" >}}) page, and the
-implementation-depth *why* into the package's `AGENTS.md` (or a `doc.go` for a
-brief package tour). Either way it is written into prose beside what it
-explains. When the choice supersedes an
-earlier approach, that same home notes the old approach and why it changed.
+choice, its rationale graduates into the docs: the behavioral *why* a user can
+observe and the subsystem's architecture both go into the relevant
+[`deep-dives/`]({{< relref "../deep-dives/_index.md" >}}) page, and the package's
+`AGENTS.md` carries only its code conventions and a pointer there. It is written
+into prose beside what it explains. When the choice supersedes an earlier
+approach, that same page notes the old approach and why it changed.
 
 Open questions get no standing file. While a change is in flight they live in
 its `product/specs/` spec; otherwise they are GitHub issues.
@@ -49,9 +48,9 @@ Track status as a line at the top of the spec/plan.
 
 1. **Write the spec.** Problem, design, open questions. Status: **planning**.
 2. **Resolve open questions.** Fold each resolution into the design. The
-   locked rationale is destined for the thing it explains, `deep-dives/` for
-   the behavioral *why* and `AGENTS.md` for the implementation-depth *why*: at
-   graduation, not a separate log.
+   locked rationale is destined for the relevant `deep-dives/` page - both the
+   behavioral *why* and the subsystem architecture - at graduation, not a
+   separate log.
 3. **Write the plan.** Phases and steps that reference the spec.
 4. **Implement, tests first.** Per `AGENTS.md`, new behavior arrives with a
    failing test. Scaffold the spec's test checklist as failing tests, then
@@ -65,12 +64,12 @@ When a spec reaches **done**, pull its durable content into permanent docs
 and retire the spec. Targets, see [How we
 document]({{< relref "how-we-document.md" >}}) for what belongs where:
 
-- **`AGENTS.md`:** new code conventions and **module architecture** - the
-  implementation-depth rationale (rejected alternatives, "why not X") that only
-  matters with the source open.
+- **`AGENTS.md`:** new code conventions, plus a pointer to the subsystem's
+  architecture deep-dive.
 - **Go doc comments:** API/symbol docs, with minimal design narrative.
-- **`docs/deep-dives/`:** the **behavioral** *why* - any rationale a user can
-  observe, whatever subsystem it touches.
+- **`docs/deep-dives/`:** the **behavioral** *why* and the subsystem
+  **architecture** - any rationale a user can observe, plus how the module is
+  built.
 - **`docs/reference/`:** the precise surface; for checks, regenerate
   `reference/check-types/` with `make docs-gen`.
 - **`docs/how-to/` and `docs/getting-started.md`:** user-facing usage.
@@ -86,8 +85,8 @@ updated in place.
 When moving a spec to **done**:
 
 - [ ] `AGENTS.md` updated with any new conventions/gotchas.
-- [ ] Behavioral *why* captured in `docs/deep-dives/`; implementation-depth
-      rationale and architecture in the package's `AGENTS.md`.
+- [ ] Behavioral *why* and subsystem architecture captured in
+      `docs/deep-dives/`; `AGENTS.md` points there.
 - [ ] `docs/reference/` updated; `make docs-gen` run if a check changed.
 - [ ] New vocabulary added to the glossary.
 - [ ] User-facing changes reflected in `docs/how-to`, `getting-started.md`,
