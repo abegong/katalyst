@@ -5,7 +5,8 @@
 > frontmatter), with line-level diagnostics and optional auto-fixes. Resolves
 > issue #49. The structural question — where these rules live in the taxonomy —
 > is **resolved**: they form a new **`plainText`** check-type family inside the
-> four-family model this PR adopts (see [Check-type families](#check-type-families)).
+> four-family model this PR introduces (see [Check-type families](#check-type-families)),
+> with the relabel/restructure of the existing three families deferred to #56.
 > All open questions are resolved; the design is ready to implement.
 
 ## Overview
@@ -337,13 +338,16 @@ the Descriptors and the new `plainText` `Family`.
 
 ## Documentation updates
 
-- **Family relabel — precursor, tracked in #56.** The four-family relabel
-  (`objects`→`structuredObject`, `markdown`→`markdownBodyText`,
-  `filesystem`→`fileSystem`; kebab docs slugs; `kind` ids untouched) lands as part
-  of the **checks reorganization** (#56: per-family packages, one check type per
-  file, co-located self-registering descriptors), which sequences **before** this
-  PR. This spec's job is then only to *add* the `plainText` family and its three
-  kinds into that structure.
+- **This PR ships first; the relabel/restructure follows in #56.** Per the
+  chosen sequencing, the text checks land in the *current* single-package
+  `internal/checks/` structure: add the `plainText` family and its three kinds to
+  the existing `registry.go`, `normalizeCheck`, and `engine.go` dispatch,
+  alongside today's `objects`/`markdown`/`filesystem`. The four-family **relabel**
+  (`objects`→`structuredObject`, etc.) and the per-family **package restructure**
+  with self-registering descriptors are deferred to **#56**, which also brings
+  `plainText`'s siblings into the model's names. Interim casing is mixed (three
+  lowercase families + `plainText`, docs slug `plain-text/`); #56 unifies it.
+  `kind` ids (`text_*`) are stable across both.
 - **Generated reference** — add the `Descriptor`s and the `plainText` `Family`,
   then `make docs-gen` to render the reference page(s) (do not hand-edit). New
   kinds then appear in `katalyst check-types list`; the `registry_test.go` parity

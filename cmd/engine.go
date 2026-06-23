@@ -167,6 +167,28 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 			checkList = append(checkList, checks.ParentDirMatchesField{Field: ch.Field})
 		case config.CheckFilesystemReferencedFiles:
 			checkList = append(checkList, checks.ReferencedFilesExist{Fields: ch.Fields})
+		case config.CheckTextRequires:
+			checkList = append(checkList, checks.TextRequires{
+				Re:      regexp.MustCompile(ch.Pattern),
+				Pattern: ch.Pattern,
+				Target:  ch.Target,
+				Select:  compileSelect(ch.Select),
+				All:     ch.Match == "all",
+			})
+		case config.CheckTextForbids:
+			checkList = append(checkList, checks.TextForbids{
+				Re:      regexp.MustCompile(ch.Pattern),
+				Pattern: ch.Pattern,
+				Target:  ch.Target,
+				Select:  compileSelect(ch.Select),
+				Fix:     ch.Fix,
+			})
+		case config.CheckTextDenylist:
+			checkList = append(checkList, checks.TextDenylist{
+				Values: ch.Values,
+				Target: ch.Target,
+				Select: compileSelect(ch.Select),
+			})
 		}
 	}
 
@@ -191,6 +213,16 @@ func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionChe
 		}
 	}
 	return out
+}
+
+// compileSelect compiles the matched-lines line-filter regex, or returns nil
+// when no select is configured. The pattern was validated at load time, so a
+// compile failure here is impossible.
+func compileSelect(sel string) *regexp.Regexp {
+	if sel == "" {
+		return nil
+	}
+	return regexp.MustCompile(sel)
 }
 
 // projectFor wraps a loaded config in a project.
