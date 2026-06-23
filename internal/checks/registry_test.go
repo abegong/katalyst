@@ -72,12 +72,13 @@ func TestDescriptorMetadata(t *testing.T) {
 	}
 }
 
-// TestDescriptorLibrary checks that every descriptor naming a library names a
-// registered one. An empty Library is legal during the staged migration of
-// native check types onto CheckLibrary.
+// TestDescriptorLibrary enforces that every check type names a registered
+// library. With the native families migrated onto CheckLibrary, every check
+// type has an owning library, so an empty Library is now a registration bug.
 func TestDescriptorLibrary(t *testing.T) {
 	for _, d := range checks.Descriptors() {
 		if d.Library == "" {
+			t.Errorf("kind %q names no library; every check type must register through a CheckLibrary", d.CheckType)
 			continue
 		}
 		if _, ok := checks.LibraryByName(d.Library); !ok {

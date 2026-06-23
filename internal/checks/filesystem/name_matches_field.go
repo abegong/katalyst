@@ -60,7 +60,7 @@ func slugify(s string) string {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameMatchesField,
 		Family:    "fileSystem",
 		Slug:      "name-matches-field",

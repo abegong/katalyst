@@ -55,7 +55,7 @@ func (c PathCharset) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemPathCharset,
 		Family:    "fileSystem",
 		Slug:      "path-charset",

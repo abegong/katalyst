@@ -1,0 +1,24 @@
+package plaintext
+
+import "github.com/abegong/katalyst/internal/checks"
+
+// libraryName is the native CheckLibrary that provides this package's check
+// types. Library is provenance (who runs the check), orthogonal to a check
+// type's family (the source data it reads).
+const libraryName = "plaintext"
+
+// library is the native CheckLibrary for the plaintext check types. Native
+// libraries run in-process and are always available.
+type library struct{}
+
+func (library) Name() string     { return libraryName }
+func (library) Available() error { return nil }
+
+func init() { checks.RegisterLibrary(library{}) }
+
+// register records a check type owned by this library, stamping
+// Descriptor.Library so each check type's init need not repeat it.
+func register(d checks.Descriptor, build checks.Builder, buildColl checks.CollectionBuilder) {
+	d.Library = libraryName
+	checks.Register(d, build, buildColl)
+}

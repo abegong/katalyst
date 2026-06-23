@@ -58,10 +58,29 @@ func TestRegisterLibrary_duplicatePanics(t *testing.T) {
 	checks.RegisterLibrary(fakeLib{name: "test-dup"})
 }
 
-// A native check type names no library yet, so LibraryFor returns no owner.
-func TestLibraryFor_nativeKindHasNoLibrary(t *testing.T) {
-	if lib, ok := checks.LibraryFor(config.CheckMarkdownSingleH1); ok {
-		t.Errorf("LibraryFor(native kind) = %q, want none", lib.Name())
+// A native check type resolves to its family's library now that the native
+// families register as CheckLibraries.
+func TestLibraryFor_nativeKindResolvesToLibrary(t *testing.T) {
+	lib, ok := checks.LibraryFor(config.CheckMarkdownSingleH1)
+	if !ok {
+		t.Fatalf("LibraryFor(native kind) returned no library")
+	}
+	if lib.Name() != "markdownbodytext" {
+		t.Errorf("LibraryFor(markdown_single_h1) = %q, want markdownbodytext", lib.Name())
+	}
+}
+
+// Each native family registers as an always-available CheckLibrary.
+func TestNativeLibraries_registeredAndAvailable(t *testing.T) {
+	for _, name := range []string{"filesystem", "plaintext", "markdownbodytext", "structuredobject"} {
+		lib, ok := checks.LibraryByName(name)
+		if !ok {
+			t.Errorf("native library %q is not registered", name)
+			continue
+		}
+		if err := lib.Available(); err != nil {
+			t.Errorf("native library %q should always be available, got %v", name, err)
+		}
 	}
 }
 

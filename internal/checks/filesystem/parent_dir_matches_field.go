@@ -44,7 +44,7 @@ func (c ParentDirMatchesField) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemParentDirMatchesFld,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-matches-field",

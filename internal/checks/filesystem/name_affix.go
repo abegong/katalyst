@@ -35,7 +35,7 @@ func (c NameAffix) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameAffix,
 		Family:    "fileSystem",
 		Slug:      "name-affix",

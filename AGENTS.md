@@ -127,8 +127,9 @@ you add a fixture.
 - Each check type lives in its own file in a per-family package under
   `internal/checks/` (`structuredobject`, `markdownbodytext`, `filesystem`,
   `plaintext`), holding its struct, `Run`, `Descriptor`, and an `init()` that
-  calls `checks.Register`. The core `checks` package owns the shared types and
-  registry and imports none of the families; callers blank-import
+  registers it through the package's `register` helper (in `library.go`), which
+  stamps `Descriptor.Library`. The core `checks` package owns the shared types
+  and registry and imports none of the families; callers blank-import
   `internal/checks/all` to wire them all in. To add a check type, add one file
   (and a `config.CheckType` constant + `normalizeCheck` case, which `checks`
   can't own because it imports `config`).
@@ -144,19 +145,20 @@ you add a fixture.
   (`unique_field` → `structuredObject`, `unique_filename` → `fileSystem`). The
   `kind` id is the wire contract and never changes, even when the family does.
 - A **CheckLibrary** (`internal/checks`, `CheckLibrary`/`SchemaLibrary`) is the
-  *provider* behind a check type. Native families are libraries with nothing
-  extra; a **schema-backed** library (`internal/checks/jsonschema`, the only one
-  today) implements `SchemaLibrary` to compile a named schema and reports
-  `Available()` (nil in-process; an out-of-process tool probes its binary). A
-  library's `init()` calls `checks.RegisterLibrary` alongside its
-  `checks.Register` calls, and its check types set `Descriptor.Library` to the
-  library `Name()`. **Library is provenance, orthogonal to family**
-  (source-data kind): `object` (json-schema) and `object_required_field`
-  (native) are both `structuredObject`. The engine resolves a kind's library via
-  `checks.LibraryFor` and fails the run on `Available()` error. The `object`
-  schema-selection precedence lives in `jsonschema.Resolve`, not the engine;
-  schemas stay flat under `.katalyst/schemas/`, resolved to a library by the
-  binding's `kind`.
+  *provider* behind a check type. Every check type has one: the four native
+  families each register a library in their `library.go` (with `Name()`,
+  `Available()` returning nil, and the `register` helper that stamps
+  `Descriptor.Library`); a **schema-backed** library
+  (`internal/checks/jsonschema`, the only one today) also implements
+  `SchemaLibrary` to compile a named schema and probes `Available()` (an
+  out-of-process tool checks its binary). `registry_test.go` enforces that every
+  check type names a registered library. **Library is provenance, orthogonal to
+  family** (source-data kind): `object` (json-schema) and `object_required_field`
+  (structuredobject) are both the `structuredObject` family. The engine resolves
+  a kind's library via `checks.LibraryFor` and fails the run on `Available()`
+  error. The `object` schema-selection precedence lives in `jsonschema.Resolve`,
+  not the engine; schemas stay flat under `.katalyst/schemas/`, resolved to a
+  library by the binding's `kind`.
 - Filesystem name/path check types share a **target × rule** shape: a `target`
   (`filename`, `filename-ext`, `parent-dir`, `path-segments`) resolved by
   `resolveTarget` in `internal/checks/filesystem/common.go`, against which a rule runs.

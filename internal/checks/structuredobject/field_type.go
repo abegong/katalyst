@@ -36,7 +36,7 @@ func (o ObjectFieldType) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckObjectFieldType,
 		Family:    "structuredObject",
 		Slug:      "field-type",

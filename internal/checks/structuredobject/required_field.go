@@ -25,7 +25,7 @@ func (o ObjectRequiredField) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	checks.Register(checks.Descriptor{
+	register(checks.Descriptor{
 		CheckType: config.CheckObjectRequiredField,
 		Family:    "structuredObject",
 		Slug:      "required-field",
