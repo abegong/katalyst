@@ -113,7 +113,7 @@ katalyst inspect ./my-knowledge-base
 ## No, really, you should try it out
 
 - [Build the CLI and run your first checks](https://abegong.github.io/katalyst/getting-started/).
-- [Contribute](https://abegong.github.io/katalyst/contributing/), how we plan and document changes.
+- [Contribute](https://abegong.github.io/katalyst/contributing/how-to-contribute/): dev setup, plus how we plan and document changes.
 
 ## About me
 
