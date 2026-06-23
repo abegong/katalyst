@@ -124,12 +124,10 @@ own files; keep them thin and pointed at `AGENTS.md`.
   are *actions*, not conventions; conventions stay in `AGENTS.md`.
 - **`.claude/`:** Claude Code local settings, not a documentation source.
 
-
-### Building and deploying docs
+## Building and deploying docs
 
 How the site is **built, previewed, and published** (the publish/preview/
 validate split, the GitHub Pages "Actions" source invariant) is infra detail,
 so it lives next to the workflow files in
 [`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
 not in this user-facing tree. Read it before touching `deploy-docs.yml`.
-
