@@ -1,16 +1,11 @@
 name: deploy-docs
 
-# Publishes the production Hugo docs site to GitHub Pages on every push to main.
+# Publishes the production docs site to GitHub Pages on every push to main.
 #
-# Source model: Pages is configured with Source: "GitHub Actions" (Settings >
-# Pages), so this workflow IS the deploy — it uploads the built site as a Pages
-# artifact and calls the Pages deploy API. There is no `gh-pages` branch in this
-# model; nothing serves from a branch.
-#
-# Division of labor (see docs/content/contributing/how-we-document.md):
-#   - Production site  -> this workflow (Pages, "GitHub Actions" source).
-#   - Per-PR previews  -> Netlify Deploy Previews (netlify.toml); not a workflow.
-#   - Build validation -> the `docs` job in ci.yml (builds + lints, never deploys).
+# Pages Source is "GitHub Actions", so this workflow IS the deploy: it uploads
+# the built site as a Pages artifact and calls the Pages deploy API. There is
+# no `gh-pages` branch. Do NOT switch to a branch-push action — see the rationale
+# and the three docs paths in .github/workflows/README.md.
 
 on:
   push:

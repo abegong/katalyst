@@ -41,6 +41,14 @@ merged**. A spec is deleted when its work lands and its durable content
 graduates into `docs/`. Nothing evergreen lives in `product/`, it is
 staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 
+### `.github/workflows/README.md`, the docs build & deploy pipeline
+
+How the site is **built, previewed, and published** (the publish/preview/
+validate split, the GitHub Pages "Actions" source invariant) is infra detail,
+so it lives next to the workflow files in
+[`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
+not in this user-facing tree. Read it before touching `deploy-docs.yml`.
+
 ### `AGENTS.md`, code-writing conventions
 
 Rules for anyone *writing code* in the repo: commands, layout, testing
