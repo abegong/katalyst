@@ -1,7 +1,7 @@
 # Katalyst
 
 > [!WARNING]
-> **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet, but I'd genuinely love your feedback as it takes shape.
+> **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet. If you have feedback, open an [issue](https://github.com/abegong/katalyst/issues/new/choose), or open a [pull request](https://github.com/abegong/katalyst/pulls) if you have a fix.
 
 Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
@@ -119,7 +119,7 @@ katalyst inspect ./my-knowledge-base
 
 I'm Abe Gong, a technical founder with a deep love for data/ML/AI and open source. I'm the co-creator of [Great Expectations](https://greatexpectations.io), the leading open-source tool for data quality.
 
-I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously: if you're trying Katalyst, I'd love to hear from you.
+I'm fascinated by AI and the way it's changing how we work and collaborate, and I'm building Katalyst in the open to explore it. I take user feedback seriously: open an [issue](https://github.com/abegong/katalyst/issues/new/choose) for bugs, questions, or requests, or open a [pull request](https://github.com/abegong/katalyst/pulls) if you have a concrete fix.
 
 More about me: [LinkedIn](https://www.linkedin.com/in/abe-gong-8a77034/) · [twitter/x](https://x.com/AbeGong) · [personal site](https://www.abegong.com/).
 

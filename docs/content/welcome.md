@@ -1,12 +1,10 @@
 +++
-title = "Why Katalyst?"
+title = "Welcome"
 weight = 10
+aliases = ["why-katalyst"]
 +++
 
-# Why Katalyst?
-
-> [!WARNING]
-> ⚠️ **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet, but I'd genuinely love your feedback as it takes shape.
+# Welcome
 
 Katalyst is a *content consistency layer*, designed for people and agents who curate persistent memory, wikis, and knowledge bases.
 
@@ -32,37 +30,54 @@ If you want to be confident that your content/data/memory is always in good shap
 
 ### Catalog the content you already have
 
-Katalyst comes with tools and skills to take stock of your content, no matter what state it's in today. It can help you (and your agents) figure out what you've got, map out the important concepts, and, if needed, get more organized.
+Katalyst comes with tools and skills to take stock of your content, no matter
+what state it's in today. It can help you (and your agents) figure out what
+you've got, map out the important concepts, and, if needed, get more
+organized.
 
-Compared to having an LLM scan every file or write its own bash scripts, this approach can save a ton of tokens. It also lets you take advantage of skills, tools and strategies curated by a community of people who've faced similar challenges.
+Compared to having an LLM scan every file or write its own bash scripts, this
+approach can save a ton of tokens. It also lets you take advantage of skills,
+tools and strategies curated by a community of people who've faced similar
+challenges.
 
 ### Define the language and structure that work best for you
 
-Curation always requires shared language and consistent structure. Katalyst provides tools for declaring structure and rules for your content in your knowledge base.
+Curation always requires shared language and consistent structure. Katalyst
+provides tools for declaring structure and rules for your content in your
+knowledge base.
 
-- *Markdown content:* required sections, naming conventions, templates, etc.
-- *File structure:* naming conventions, preferred and required extensions, directory structures, etc.
-- *Metadata:* required fields, types, enums, numeric ranges, and full
-  JSON Schema validation of frontmatter.
-- *Object relationships:* links, summaries, tables of contents, sequential numbering, etc.
+Rule layers include:
+
+- *Markdown content*: required sections, naming conventions, templates, and
+  related conventions.
+- *File structure*: naming conventions, preferred and required extensions, and
+  directory structures.
+- *Metadata*: required fields, types, enums, numeric ranges, and full JSON
+  Schema validation of frontmatter.
+- *Object relationships*: links, summaries, tables of contents, and sequential
+  numbering.
 
 ### Reshape as needed
 
 As your content evolves, Katalyst gives you tools to navigate change.
 
-  - *Add or change checks*
-  - *Change the structure of your content*
-  - *Change your storage layer*
+Common updates include:
+
+- *Rules*: add or change checks.
+- *Content shape*: change the structure of your content.
+- *Storage*: change your storage layer.
 
 ## Design principles
 
 ### Lightweight, deployable anywhere
 
-You can run Katalyst as a linter, a CLI, or a server. Use only the infrastructure that you need for your particular use case.
+You can run Katalyst as a linter, a CLI, or a server. Use only the
+infrastructure that you need for your particular use case.
 
 ### Model- and backend-agnostic
 
-I'm building Katalyst to work with a variety of filesystems and databases. It isn't tied to any one data store.
+I'm building Katalyst to work with a variety of filesystems and databases. It
+isn't tied to any one data store.
 
 Similarly, you choose which model to use.
 
@@ -72,12 +87,15 @@ Express the same rules in a project's own vocabulary and conventions.
 
 ### Built for both humans and agents
 
-Ergonomics matter: especially for agents. An agent should be able to read the rules, find what it needs, and extend them without ceremony:
+Ergonomics matter: especially for agents. An agent should be able to read the
+rules, find what it needs, and extend them without ceremony:
 
-  - *Speed:* fast enough to run on every write.
-  - *Discoverability:* an agent can find the schemas and structure on its own.
-  - *Readability:* rules and content stay legible to humans and agents alike.
-  - *Extensibility:* add new check types as needs grow.
+This means optimizing for:
+
+- *Speed*: fast enough to run on every write.
+- *Discoverability*: an agent can find the schemas and structure on its own.
+- *Readability*: rules and content stay legible to humans and agents alike.
+- *Extensibility*: add new check types as needs grow.
 
 ## What if structure was light?
 
@@ -90,6 +108,8 @@ As AI starts to infuse our work, curating knowledge is going to become even more
 What if structure were light: easy to add, easy to maintain, easy to change?
 
 In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information: it's having a shared language and structure to organize what we've learned, and to act on it together.
+
+For more on these ideas, see [Deep dives]({{< relref "deep-dives/_index.md" >}}), especially [Vision and scope]({{< relref "deep-dives/vision.md" >}}).
 
 ## No, really, you should try it out
 

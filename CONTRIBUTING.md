@@ -1,7 +1,10 @@
 # Contributing to Katalyst
 
 Thanks for your interest in Katalyst! It's an experimental, in-the-open
-project, and feedback, issues, and pull requests are all welcome.
+project. Open an [issue](https://github.com/abegong/katalyst/issues/new/choose)
+for bugs, questions, and requests, or open a
+[pull request](https://github.com/abegong/katalyst/pulls) when you have a
+concrete change to propose.
 
 **Full contributor guide:**
 https://abegong.github.io/katalyst/contributing/how-to-contribute/
