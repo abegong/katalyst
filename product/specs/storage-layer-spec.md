@@ -243,6 +243,20 @@ single file mapping into *more than one* collection stays out of scope —
 invariant #4 (a file belongs to exactly one collection) is retained, per the
 maintainer's deferral.
 
+**Per-collection files for large instances.** Inline is the default, but an
+instance whose `collections:` block grows unwieldy may externalize individual
+collections into their own files, restoring the one-reviewable-file-per-change
+locality the project values (`internal/config/README.md`, "Why named
+collections"). The instance config then carries connection detail plus a list of
+its collections, each of which may be defined inline *or* in its own file. The
+leading mechanism is an **instance-scoped directory** — e.g. an instance `local`
+reads `.katalyst/storage/local/<collection>.yaml`, mirroring how the top-level
+`collections/` directory works today — so small projects stay fully inline and
+large ones keep per-collection diffs. The exact key/layout (an instance-scoped
+directory vs. an in-block `$file:` reference) is settled in the plan; the design
+commitment is that **both inline and per-file authoring are supported**, chosen
+per instance.
+
 ### What this spec builds vs. defers
 
 Builds now:
@@ -280,46 +294,21 @@ Defers (seam left open, not implemented):
 
 ## Open Questions
 
-1. **Per-collection reviewability when one instance holds many collections.**
+_None._ Every question from the drafting conversation is resolved and folded
+into Design:
 
-   **Context.** The decided model embeds every collection in its instance's
-   `collections:` block. That diverges from a decision the project made
-   deliberately and documented in `internal/config/README.md`: collections were
-   split into one reviewable file each precisely so a change to one is a small,
-   isolated diff. A filesystem instance with twenty collections is now one large
-   file — every collection edit touches it, and review loses the per-collection
-   locality the directory layout bought. (GX accepted this: a `Datasource`'s
-   connectors and assets all live in one block.)
-
-   **Choices & tradeoffs.**
-   - **(A) Inline-only.** Collections live only in the instance config. *Buys:*
-     one model, closest to GX and to the decision just made; the instance file is
-     the single source of its mapping. *Costs:* large single file for large
-     instances; reintroduces the very "one big file" the project moved away from.
-   - **(B) Inline + optional per-collection files (recommended).** Default is
-     inline (A). As an escape hatch, an instance may point a collection at its
-     own file (e.g. `collections: { books: { $file: books.yaml } }`, or an
-     instance-scoped `storage/local/` directory), restoring one-reviewable-file
-     diffs for projects that outgrow inline. *Buys:* small projects stay simple,
-     large projects keep locality. *Costs:* a second authoring path to document
-     and load; mild "two ways to do it."
-   - **(C) Defer.** Ship inline-only now; add the escape hatch only if a real
-     project feels the pain. *Buys:* least to build. *Costs:* the large-file
-     regression ships first and may bite dogfooding (katalyst's own docs config).
-
-   **Recommendation:** (B) as the eventual shape, but (C) is a reasonable
-   *sequencing* — ship inline, hold the per-file hatch until needed — since the
-   seam doesn't change either way. This is the one place the decided model
-   trades against an established project value, so it's flagged for an explicit
-   call rather than assumed.
-
-_All other questions from the prior draft are resolved and folded into Design:
-the config is definition-centric with collections embedded in their instance
-(OQ1 → "Config surface"); storage supports both a `storage/` directory and an
-inline `config.yaml` form (OQ2 → "Config surface"); the file-in-many-collections
-case is deferred with invariant #4 retained (OQ3 → "Config surface"); and the
-`Item` package relocation is an internal detail (OQ4 → the packaging note under
-"The seam")._
+- Collections are declared **inside their StorageInstance**, definition-centric
+  / GX `Datasource`-style → "Config surface."
+- Storage supports **both** a `storage/` directory (general) and an inline
+  `config.yaml` form (very small projects) → "Config surface."
+- **No runtime synthesis**; `katalyst init` writes a default `local` instance →
+  "Config surface."
+- **Inline + optional per-collection files** for instances that outgrow one
+  block → "Config surface," *Per-collection files for large instances*.
+- The file-in-many-collections case is **deferred**, invariant #4 retained →
+  "Config surface."
+- The `Item` package relocation is an internal detail → "The seam," packaging
+  note.
 
 ## Documentation updates
 
