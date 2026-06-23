@@ -142,8 +142,13 @@ wrappers that point a primitive at an input.
 
 - **`object_fields`** — a **data dictionary** over a set of objects (maps). Per
   field, it reports: presence/frequency over `n`, observed type histogram, value
-  cardinality, and the most common values (the enum signal, with counts). The
-  five `object_field_*` inspectors are exactly the columns of this one table.
+  cardinality, and the most common values (the enum signal, with counts). Only
+  **scalar** values are characterized, and the dictionary keeps **string and
+  numeric scalars distinct** — a numeric field's values are never lumped with a
+  string field's, so a numeric enum and a string enum read differently. Array
+  and nested-object values are counted as present and typed but not characterized
+  further; deepening that is deferred to [#58](https://github.com/abegong/katalyst/issues/58).
+  The five `object_field_*` inspectors are exactly the columns of this one table.
 - **`markdown_body`** — a structure profile over a set of markdown bodies, with
   facets for heading shape, recurring sections, and code fences. The three
   `markdown_*` inspectors are facets of this one walk.
@@ -224,6 +229,13 @@ inspector and check semantics identical and removes the duplication above. Layer
 1 has no checks to dual against (it predates configuration), so it probes with
 parse + storage-native attributes directly.
 
+**Minimal touch, by design.** A parallel branch is reworking the check
+substrate, so this work depends on the **smallest possible exported surface**
+from `internal/checks` and defers any deeper extraction (e.g. a shared
+`internal/probe` package) to coordinate with that branch rather than racing it.
+Where a needed helper isn't yet exported, the collection inspectors use a thin
+local adapter instead of refactoring `internal/checks` on this branch.
+
 ### Per-directory profiles, kept small (the shared summarizer)
 
 `file_tree*` and `document_shape` both emit per-directory / per-cluster output,
@@ -248,13 +260,26 @@ candidate **storage layout**; one "classes + outliers" renderer serves both.
 ### Parameters (first inspector parameter)
 
 inspect-spec resolved "initial inspectors are parameterless in v1." This spec
-supersedes that: the summarizer needs a tunable **collapse tolerance** — how
-similar two profiles (directory profiles, or file fingerprints) must be to share
-a class. Higher tolerance merges more into fewer classes (smaller output, big
-buckets + outliers); lower tolerance keeps finer distinctions. It is passed to
-the inspector via the `Params` channel and surfaced as a command flag (e.g.
-`--tolerance`/`--collapse`). Exact name and scale are plan-level; the design
-commitment is that inspectors now take parameters and this is the first.
+supersedes that: the summarizer takes a **collapse tolerance** — how similar two
+profiles (directory profiles, or file fingerprints) must be to share a class.
+Higher tolerance merges more into fewer classes (smaller output); lower keeps
+finer distinctions.
+
+The tolerance can be expressed three ways, and all three are supported:
+
+- **Named level** — `--detail exact | grouped | coarse`, the everyday surface.
+  **Default: `grouped`.**
+- **Similarity proportion** — a 0–1 fraction of fingerprint dimensions that must
+  match, for precise, continuous control.
+- **Max-classes budget** — an integer cap on how many classes to show, for
+  directly bounding output size.
+
+They are **mutually exclusive**: passing more than one is a usage error
+(exit 2), mirroring the `--try`/`--schema` exclusion in inspect-spec. The chosen
+value reaches the inspector through the `Params` channel. Exact flag names are
+plan-level; the settled decisions are that inspectors now take parameters (this
+is the first), that all three forms exist, that they're mutually exclusive, and
+that the default is the `grouped` named level.
 
 ### Re-classification: 11 → 5
 
@@ -294,9 +319,15 @@ not an amputation.
 
 ### Command and registry surface
 
-- **`inspect` gains a layer notion.** An unconfigured path runs the raw-source
-  layer (onboarding); a configured collection selector runs the collection
-  layer. Grammar (argument type vs. explicit flag) is an open question below.
+- **`inspect` selects the layer from its argument.** The layer is inferred, not
+  flagged: if the argument resolves as a collection selector against the loaded
+  project config, `inspect` runs the **collection** layer; otherwise it treats
+  the argument as a filesystem path and runs the **raw-source** layer. With no
+  project config there are no collections, so it is always raw — the onboarding
+  case, flag-free (`inspect ./wiki`). The one case this forecloses — forcing the
+  raw view of a directory that *is* a configured collection — is niche; ship with
+  neither `--raw` nor `--collection`, and add an explicit override only if that
+  need ever materializes.
 - **Registry grows a `Layer` (and primitive) dimension.** `inspectors list`
   groups by layer alongside family; `gendocs` renders the layers as distinct
   sections; registry parity (`registry_test.go`) extends to both interfaces.
@@ -317,104 +348,27 @@ not an amputation.
 
 ## Open questions
 
-### 1. How does `inspect` choose which layer to run?
+All four resolved with the maintainer and folded into Design above:
 
-**Context.** `inspect <path>` today runs every inspector over a directory. With
-two layers the command must choose: the raw-source layer needs an *unconfigured*
-store (the onboarding case), the collection layer needs a resolved
-`config.Collection`. The two share no input type — a `storage.Reference`/path
-vs. a collection selector resolved against the project's config — so the command
-can't simply "run both."
+1. **Layer selection → inferred from the argument.** A selector that resolves
+   against the loaded config runs the collection layer; otherwise the argument is
+   a path and runs raw-source (always raw with no project config). No
+   `--raw`/`--collection` flag — the only foreclosed case, the raw view of a
+   configured collection, is niche and gets an override only if it's ever needed.
+   → *Command and registry surface.*
+2. **Collapse tolerance → three mutually-exclusive forms.** Named level
+   (`--detail`, default `grouped`), 0–1 similarity proportion, and max-classes
+   budget; passing more than one is a usage error. → *Parameters.*
+3. **Check substrate → export from `internal/checks`, minimal touch.** A parallel
+   branch is reworking the substrate, so depend on the smallest exported surface
+   (thin local adapter where a helper isn't exported yet) and defer a shared
+   package. → *Checks as the common substrate.*
+4. **Non-scalar fields → scalars only, string and numeric kept distinct.**
+   Array-element and nested-object characterization is deferred to
+   [#58](https://github.com/abegong/katalyst/issues/58). → *Measurement
+   primitives.*
 
-**Choices & tradeoffs.**
-
-- **Infer from the argument.** A bare path that isn't a configured collection →
-  raw-source; a selector that resolves against the project's collections
-  (`notes/books`) → collection layer. *Buys:* the onboarding call stays flag-free
-  (`inspect ./wiki`) and reads naturally. *Costs:* needs a precedence rule when a
-  path *also* falls inside a configured collection, and couples layer selection
-  to selector resolution.
-- **Explicit selector.** `inspect --raw <path>` vs. `inspect --collection <sel>`
-  (or `inspect source` / `inspect collection` subcommands). *Buys:* unambiguous
-  and self-documenting; no precedence rule. *Costs:* ceremony on the common
-  onboarding path, another flag to teach, and a step away from the bare
-  `inspect <path>` grammar in `cmd/AGENTS.md`.
-
-**Recommendation.** Infer from the argument, with an `--raw`/`--collection`
-override reserved for the ambiguous overlap case — frictionless onboarding plus
-an escape hatch. Your call; it sets the command grammar.
-
-### 2. What shape is the collapse-tolerance parameter?
-
-**Context.** The summarizer dedupes near-identical directory profiles (and file
-fingerprints) into named classes so output scales with the number of *distinct*
-profiles, not directories. The collapse tolerance — how close two profiles must
-be to share a class — is that knob, and the first inspector parameter
-(superseding inspect-spec's parameterless-v1 decision). Its scale, CLI surface,
-and whether `file_tree*` and `document_shape` share one are unsettled.
-
-**Choices & tradeoffs.**
-
-| Scale | Buys | Costs |
-|---|---|---|
-| 0–1 similarity proportion (fraction of fingerprint dimensions that must match) | precise, continuous | user must model the similarity metric; "0.8" means different things per inspector |
-| Named levels (`exact` / `grouped` / `coarse`) | teachable, self-documenting | coarse-grained; a preset may miss the sweet spot |
-| Max-classes budget ("show at most N classes") | directly controls output size — what the user actually wants | indirect about *what* merges; unstable as the corpus changes |
-
-Sharing: one shared knob (simpler surface) vs. per-inspector knobs (`file_tree*`
-and `document_shape` may want different sensitivity).
-
-**Recommendation.** Named levels on the CLI (`--detail exact|grouped|coarse`)
-mapping to internal proportions — teachable, with the numeric proportion kept
-available for a future override. One shared knob until evidence shows the two
-inspectors need different scales. Your call.
-
-### 3. Where does the check substrate live?
-
-**Context.** Collection inspectors probe items through "checks as substrate": the
-field-access, item-iteration, and type-coercion machinery `internal/checks`
-already owns, minus the verdict. That machinery is unexported today. Exposing it
-is what keeps inspector and check semantics from drifting — but *how* is open.
-
-**Choices & tradeoffs.**
-
-- **Export helpers from `internal/checks`.** *Buys:* one home for the field/item
-  logic, no new package, smallest move. *Costs:* widens the package's public
-  surface and creates an `internal/inspect` → `internal/checks` dependency that
-  may want inverting later.
-- **Extract a shared lower package** (e.g. `internal/probe`) that both `checks`
-  and `inspect` import. *Buys:* a clean dependency — both sit on the substrate,
-  neither on the other — and a named seam. *Costs:* refactoring `internal/checks`
-  onto it; more upfront churn.
-
-**Recommendation.** Export from `internal/checks` first; extract a shared package
-only when the coupling bites (a second backend, or the raw layer needing the same
-probes). Defer the refactor until there's a second caller. Method-level detail is
-plan-level, but this architectural fork belongs in the spec.
-
-### 4. How deeply does `object_fields` characterize non-scalar fields?
-
-**Context.** `object_fields` builds a per-field data dictionary. Today only
-scalar values enter the value set; arrays and objects are counted as present and
-typed but not characterized further. A `tags: [a, b, c]` array or a nested
-`meta: {…}` object therefore reports little. How far should the dictionary go?
-
-**Choices & tradeoffs.**
-
-- **Scalars only (status quo).** *Buys:* simple, bounded output. *Costs:* a
-  `tags` array — ubiquitous in wikis — reports only "present, array," missing the
-  element distribution an agent needs to spot an enum-of-tags.
-- **Characterize array elements.** Treat `tags: [a,b,c]` as a multiset of scalar
-  elements and run the dictionary over the flattened elements (cardinality,
-  common values). *Buys:* tag/label fields become as legible as scalar enums.
-  *Costs:* a second aggregation mode; ambiguous for arrays of objects.
-- **Recurse into nested objects.** Flatten `meta.x` into dotted keys and
-  dictionary those too. *Buys:* full coverage. *Costs:* key explosion and output
-  growth; thin signal for deeply nested data.
-
-**Recommendation.** Scalars now, plus array-element characterization for arrays
-*of scalars* (covers the common tag case); defer nested-object recursion until a
-corpus needs it. Your call on whether array handling is in the first cut.
+Still open: _None._
 
 ## Rejected alternatives
 
@@ -450,6 +404,8 @@ Layers & addressing:
 Primitives:
 - [ ] `object_fields` reports presence, type histogram, cardinality, and common
       values; the five old `object_field_*` map onto its columns
+- [ ] `object_fields` keeps string and numeric scalar value sets distinct; array
+      and nested-object values are typed but not characterized (per #58)
 - [ ] running `object_fields` inside `document_shape` clusters yields per-cluster
       marginals (e.g. a field 100% in one class, 0% in another)
 - [ ] `markdown_body` reports heading shape, recurring sections, code fences as
@@ -479,3 +435,5 @@ Registry / command:
 - [ ] `inspect` selects the raw layer for an unconfigured path and the
       collection layer for a configured selector
 - [ ] a tolerance flag reaches the inspector via `Params`
+- [ ] the collapse tolerance defaults to `--detail grouped`; passing two of the
+      three forms (level / proportion / budget) is a usage error (exit 2)
