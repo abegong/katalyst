@@ -317,19 +317,104 @@ not an amputation.
 
 ## Open questions
 
-- **`inspect` grammar for layer selection** — argument type (raw path → Layer 1;
-  collection selector in a configured project → Layer 2) vs. an explicit flag.
-  Leaning argument-type to keep onboarding (`inspect ./wiki`) flag-free.
-- **Tolerance parameter shape** — name, scale (0–1 proportion? discrete
-  levels?), and whether `file_tree*` and `document_shape` share one knob or take
-  separate ones.
-- **`SourceView` / `CollectionView` concrete shapes** — plan-level; the spec
-  fixes only that they are two distinct addressing surfaces and that
-  `CollectionView` exposes the probe API, not raw paths.
-- **How much of `internal/checks` is exported as the substrate** — a new
-  exported helper vs. a small shared package.
-- **`object_fields` over nested/array values** — how deep the dictionary
-  characterizes non-scalar fields (today: scalars only enter the value set).
+### 1. How does `inspect` choose which layer to run?
+
+**Context.** `inspect <path>` today runs every inspector over a directory. With
+two layers the command must choose: the raw-source layer needs an *unconfigured*
+store (the onboarding case), the collection layer needs a resolved
+`config.Collection`. The two share no input type — a `storage.Reference`/path
+vs. a collection selector resolved against the project's config — so the command
+can't simply "run both."
+
+**Choices & tradeoffs.**
+
+- **Infer from the argument.** A bare path that isn't a configured collection →
+  raw-source; a selector that resolves against the project's collections
+  (`notes/books`) → collection layer. *Buys:* the onboarding call stays flag-free
+  (`inspect ./wiki`) and reads naturally. *Costs:* needs a precedence rule when a
+  path *also* falls inside a configured collection, and couples layer selection
+  to selector resolution.
+- **Explicit selector.** `inspect --raw <path>` vs. `inspect --collection <sel>`
+  (or `inspect source` / `inspect collection` subcommands). *Buys:* unambiguous
+  and self-documenting; no precedence rule. *Costs:* ceremony on the common
+  onboarding path, another flag to teach, and a step away from the bare
+  `inspect <path>` grammar in `cmd/AGENTS.md`.
+
+**Recommendation.** Infer from the argument, with an `--raw`/`--collection`
+override reserved for the ambiguous overlap case — frictionless onboarding plus
+an escape hatch. Your call; it sets the command grammar.
+
+### 2. What shape is the collapse-tolerance parameter?
+
+**Context.** The summarizer dedupes near-identical directory profiles (and file
+fingerprints) into named classes so output scales with the number of *distinct*
+profiles, not directories. The collapse tolerance — how close two profiles must
+be to share a class — is that knob, and the first inspector parameter
+(superseding inspect-spec's parameterless-v1 decision). Its scale, CLI surface,
+and whether `file_tree*` and `document_shape` share one are unsettled.
+
+**Choices & tradeoffs.**
+
+| Scale | Buys | Costs |
+|---|---|---|
+| 0–1 similarity proportion (fraction of fingerprint dimensions that must match) | precise, continuous | user must model the similarity metric; "0.8" means different things per inspector |
+| Named levels (`exact` / `grouped` / `coarse`) | teachable, self-documenting | coarse-grained; a preset may miss the sweet spot |
+| Max-classes budget ("show at most N classes") | directly controls output size — what the user actually wants | indirect about *what* merges; unstable as the corpus changes |
+
+Sharing: one shared knob (simpler surface) vs. per-inspector knobs (`file_tree*`
+and `document_shape` may want different sensitivity).
+
+**Recommendation.** Named levels on the CLI (`--detail exact|grouped|coarse`)
+mapping to internal proportions — teachable, with the numeric proportion kept
+available for a future override. One shared knob until evidence shows the two
+inspectors need different scales. Your call.
+
+### 3. Where does the check substrate live?
+
+**Context.** Collection inspectors probe items through "checks as substrate": the
+field-access, item-iteration, and type-coercion machinery `internal/checks`
+already owns, minus the verdict. That machinery is unexported today. Exposing it
+is what keeps inspector and check semantics from drifting — but *how* is open.
+
+**Choices & tradeoffs.**
+
+- **Export helpers from `internal/checks`.** *Buys:* one home for the field/item
+  logic, no new package, smallest move. *Costs:* widens the package's public
+  surface and creates an `internal/inspect` → `internal/checks` dependency that
+  may want inverting later.
+- **Extract a shared lower package** (e.g. `internal/probe`) that both `checks`
+  and `inspect` import. *Buys:* a clean dependency — both sit on the substrate,
+  neither on the other — and a named seam. *Costs:* refactoring `internal/checks`
+  onto it; more upfront churn.
+
+**Recommendation.** Export from `internal/checks` first; extract a shared package
+only when the coupling bites (a second backend, or the raw layer needing the same
+probes). Defer the refactor until there's a second caller. Method-level detail is
+plan-level, but this architectural fork belongs in the spec.
+
+### 4. How deeply does `object_fields` characterize non-scalar fields?
+
+**Context.** `object_fields` builds a per-field data dictionary. Today only
+scalar values enter the value set; arrays and objects are counted as present and
+typed but not characterized further. A `tags: [a, b, c]` array or a nested
+`meta: {…}` object therefore reports little. How far should the dictionary go?
+
+**Choices & tradeoffs.**
+
+- **Scalars only (status quo).** *Buys:* simple, bounded output. *Costs:* a
+  `tags` array — ubiquitous in wikis — reports only "present, array," missing the
+  element distribution an agent needs to spot an enum-of-tags.
+- **Characterize array elements.** Treat `tags: [a,b,c]` as a multiset of scalar
+  elements and run the dictionary over the flattened elements (cardinality,
+  common values). *Buys:* tag/label fields become as legible as scalar enums.
+  *Costs:* a second aggregation mode; ambiguous for arrays of objects.
+- **Recurse into nested objects.** Flatten `meta.x` into dotted keys and
+  dictionary those too. *Buys:* full coverage. *Costs:* key explosion and output
+  growth; thin signal for deeply nested data.
+
+**Recommendation.** Scalars now, plus array-element characterization for arrays
+*of scalars* (covers the common tag case); defer nested-object recursion until a
+corpus needs it. Your call on whether array handling is in the first cut.
 
 ## Rejected alternatives
 
