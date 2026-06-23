@@ -34,6 +34,11 @@ type Field struct {
 type Descriptor struct {
 	// CheckType is the value used as `kind:` in a collection's checks.
 	CheckType config.CheckType `json:"check_type"`
+	// Library names the CheckLibrary that provides this check type
+	// (Descriptor.Library == library.Name()), e.g. "json-schema". Empty until
+	// a check type is migrated onto a library; resolved by LibraryFor. Library
+	// is provenance, orthogonal to Family (source-data kind).
+	Library string `json:"library,omitempty"`
 	// Family groups the check type by source-data kind: "structuredObject",
 	// "markdownBodyText", "fileSystem", or "plainText". Family and granularity
 	// are orthogonal, a collection-scoped check is grouped by the data it
