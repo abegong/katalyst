@@ -23,21 +23,22 @@
   margin-inline-start: 1.25rem;
 }
 
-// Global status callout rendered under the TOC.
-.book-toc .book-toc-warning {
-  margin-top: 1rem;
-  padding: 0.5rem 0.75rem;
-  border-inline-start: 0.25rem solid var(--color-accent-warning);
+// Global status note rendered under the TOC.
+.book-toc :is(.book-toc-note, .book-toc-warning) {
+  margin-top: 0.9rem;
+  padding: 0.45rem 0.6rem;
+  border-inline-start: 0.18rem solid var(--gray-500);
   border-radius: var(--border-radius);
-  background: var(--color-accent-warning-tint);
+  background: var(--gray-100);
   color: var(--body-font-color);
-  line-height: 1.5;
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
-.book-toc .book-toc-warning p {
+.book-toc :is(.book-toc-note, .book-toc-warning) p {
   margin: 0;
 }
 
-.book-toc .book-toc-warning a {
+.book-toc :is(.book-toc-note, .book-toc-warning) a {
   display: inline;
 }
