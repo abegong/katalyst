@@ -12,7 +12,15 @@ Like most knowledge bases, Katalyst's documentation must balance two objectives:
 
 We do this by dividing documentation across four areas, each with a specific purpose.
 
-{List doc types and purposes, in bullet form.}
+- **Published documentation (Hugo):** everything users and agents need to
+  understand and use Katalyst - tutorials, how-to, reference, and the
+  behavioral *why* in deep-dives. The public, durable home.
+- **Go doc comments:** code-level API and design detail that only matters with
+  the source open, kept beside the code so it stays correct.
+- **`AGENTS.md` files:** conventions, required patterns, and gotchas for writing
+  code in the repo - a lean root file plus co-located per-package files.
+- **In-flight specs and plans:** `product/` staging for changes not yet merged;
+  each is deleted once its durable content graduates into the homes above.
 
 By clearly delineating when and where to update documentation, this approach lets us minimize duplication and the risk of content drift, while still serving a wide variety of needs. That said, some overlap in content is unavoidable. Some judgement calls about what information belongs where will always be necessary. Making these judgement calls is up to the project maintainers.
 
