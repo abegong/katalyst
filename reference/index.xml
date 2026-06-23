@@ -119,7 +119,15 @@ how each term maps onto today&amp;rsquo;s code is documented in the per-package
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Target&lt;/strong&gt;&lt;/td&gt;
-					&lt;td&gt;The slice of a path a filesystem name/path check type tests: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt; (every directory segment plus the basename).&lt;/td&gt;
+					&lt;td&gt;The slice of a path a filesystem name/path check type tests: &lt;code&gt;filename&lt;/code&gt;, &lt;code&gt;filename-ext&lt;/code&gt;, &lt;code&gt;parent-dir&lt;/code&gt;, or &lt;code&gt;path-segments&lt;/code&gt; (every directory segment plus the basename). For a text rule, the slice of body it tests — see Span.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Text rule&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;A &lt;code&gt;text_*&lt;/code&gt; check (&lt;code&gt;text_requires&lt;/code&gt;, &lt;code&gt;text_forbids&lt;/code&gt;, &lt;code&gt;text_denylist&lt;/code&gt;) that tests the body as raw text — a regex or a literal denylist — independent of markdown structure. Applies to plain-text items too.&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;&lt;strong&gt;Span&lt;/strong&gt;&lt;/td&gt;
+					&lt;td&gt;The slice of body text a text rule is evaluated against, chosen by its &lt;code&gt;target&lt;/code&gt;: the whole &lt;code&gt;body&lt;/code&gt;, each &lt;code&gt;line&lt;/code&gt;, the &lt;code&gt;first-line&lt;/code&gt;, or &lt;code&gt;matched-lines&lt;/code&gt; (lines matching a &lt;code&gt;select&lt;/code&gt; regex).&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;strong&gt;Violation&lt;/strong&gt;&lt;/td&gt;
