@@ -1,5 +1,5 @@
 +++
-title = "Writing Tells"
+title = "Writing tells"
 weight = 70
 aliases = ["/reference/rules/markdown-body-text/writing-tells/"]
 +++

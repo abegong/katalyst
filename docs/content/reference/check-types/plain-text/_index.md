@@ -1,5 +1,5 @@
 +++
-title = "Plain Text Check Types"
+title = "Plain text check types"
 weight = 40
 bookCollapseSection = true
 aliases = ["/reference/rules/plain-text/"]

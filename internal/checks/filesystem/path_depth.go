@@ -56,7 +56,7 @@ func init() {
 		CheckType: config.CheckFilesystemPathDepth,
 		Family:    "fileSystem",
 		Slug:      "path-depth",
-		Title:     "Path Depth",
+		Title:     "Path depth",
 		Summary:   "Bound directory nesting relative to the collection root.",
 		Fields: []checks.Field{
 			{Name: "min", Required: false, Desc: "Minimum depth (at least one of min/max)."},

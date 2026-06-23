@@ -121,7 +121,7 @@ type governanceDoc struct {
 // GitHub requires them at the repo root for its community-health features, so
 // the root files are canonical and these pages are generated from them.
 var governanceDocs = []governanceDoc{
-	{src: "CODE_OF_CONDUCT.md", out: "docs/content/contributing/code-of-conduct.md", title: "Code of Conduct", weight: 70},
+	{src: "CODE_OF_CONDUCT.md", out: "docs/content/contributing/code-of-conduct.md", title: "Code of conduct", weight: 70},
 	{src: "SECURITY.md", out: "docs/content/contributing/security.md", title: "Security policy", weight: 80},
 }
 

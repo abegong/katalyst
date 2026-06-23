@@ -1,5 +1,5 @@
 +++
-title = "File Tree"
+title = "File tree"
 weight = 10
 +++
 

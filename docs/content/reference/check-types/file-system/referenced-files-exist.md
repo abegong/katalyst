@@ -1,5 +1,5 @@
 +++
-title = "Referenced Files Exist"
+title = "Referenced files exist"
 weight = 120
 aliases = ["/reference/rules/file-system/referenced-files-exist/"]
 +++

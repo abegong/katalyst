@@ -42,7 +42,7 @@ func init() {
 		CheckType: config.CheckFilesystemNameLength,
 		Family:    "fileSystem",
 		Slug:      "name-length",
-		Title:     "Name Length",
+		Title:     "Name length",
 		Summary:   "Bound the character length of a name.",
 		Fields: []checks.Field{
 			{Name: "min", Required: false, Desc: "Minimum length (at least one of min/max)."},

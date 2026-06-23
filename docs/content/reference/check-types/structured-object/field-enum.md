@@ -1,5 +1,5 @@
 +++
-title = "Field Enum"
+title = "Field enum"
 weight = 10
 aliases = ["/reference/rules/structured-object/field-enum/"]
 +++

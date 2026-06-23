@@ -35,7 +35,7 @@ func init() {
 		CheckType: config.CheckMarkdownRequiredSection,
 		Family:    "markdownBodyText",
 		Slug:      "required-section",
-		Title:     "Required Section",
+		Title:     "Required section",
 		Summary:   "Require that a heading with specific text exists somewhere in the body.",
 		Fields: []checks.Field{
 			{Name: "heading", Required: true, Desc: "Heading text that must appear."},

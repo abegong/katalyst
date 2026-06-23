@@ -59,7 +59,7 @@ func init() {
 		CheckType: config.CheckFilesystemPathCharset,
 		Family:    "fileSystem",
 		Slug:      "path-charset",
-		Title:     "Path Charset",
+		Title:     "Path charset",
 		Summary:   "Constrain the characters allowed in the item's path.",
 		Fields: []checks.Field{
 			{Name: "deny", Required: false, Desc: "Forbidden substrings (e.g. a space). Use `deny` or `allow`, not both."},

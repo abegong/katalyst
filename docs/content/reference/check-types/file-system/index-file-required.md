@@ -1,5 +1,5 @@
 +++
-title = "Index File Required"
+title = "Index file required"
 weight = 20
 aliases = ["/reference/rules/file-system/index-file-required/"]
 +++

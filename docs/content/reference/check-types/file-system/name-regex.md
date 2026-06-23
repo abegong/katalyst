@@ -1,5 +1,5 @@
 +++
-title = "Name Regex"
+title = "Name regex"
 weight = 70
 aliases = ["/reference/rules/file-system/name-regex/"]
 +++

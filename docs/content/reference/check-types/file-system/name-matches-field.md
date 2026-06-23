@@ -1,5 +1,5 @@
 +++
-title = "Name Matches Field"
+title = "Name matches field"
 weight = 60
 aliases = ["/reference/rules/file-system/name-matches-field/"]
 +++

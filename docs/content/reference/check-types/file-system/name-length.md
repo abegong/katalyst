@@ -1,5 +1,5 @@
 +++
-title = "Name Length"
+title = "Name length"
 weight = 50
 aliases = ["/reference/rules/file-system/name-length/"]
 +++

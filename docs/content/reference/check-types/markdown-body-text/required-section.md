@@ -1,5 +1,5 @@
 +++
-title = "Required Section"
+title = "Required section"
 weight = 30
 aliases = ["/reference/rules/markdown-body-text/required-section/"]
 +++

@@ -1,5 +1,5 @@
 +++
-title = "Unique Filename"
+title = "Unique filename"
 weight = 130
 aliases = ["/reference/rules/file-system/unique-filename/"]
 +++

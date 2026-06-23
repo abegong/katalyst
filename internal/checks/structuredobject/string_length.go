@@ -56,7 +56,7 @@ func init() {
 		CheckType: config.CheckObjectStringLength,
 		Family:    "structuredObject",
 		Slug:      "string-length",
-		Title:     "String Length",
+		Title:     "String length",
 		Summary:   "Constrain the minimum and/or maximum length of a string field.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key to check."},

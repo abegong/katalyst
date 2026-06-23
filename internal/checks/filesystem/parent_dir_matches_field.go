@@ -48,7 +48,7 @@ func init() {
 		CheckType: config.CheckFilesystemParentDirMatchesFld,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-matches-field",
-		Title:     "Parent Directory Matches Field",
+		Title:     "Parent directory matches field",
 		Summary:   "Require the parent directory name to equal a frontmatter field.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key compared to the parent directory name."},

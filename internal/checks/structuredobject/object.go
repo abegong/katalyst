@@ -36,7 +36,7 @@ func init() {
 		CheckType: config.CheckObject,
 		Family:    "structuredObject",
 		Slug:      "object",
-		Title:     "Object Validation",
+		Title:     "Object validation",
 		Summary:   "Validate frontmatter metadata against a named JSON Schema from `schemas:`.",
 		Fields: []checks.Field{
 			{Name: "schema", Required: true, Desc: "Name of an entry in `schemas:`."},

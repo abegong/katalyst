@@ -1,5 +1,5 @@
 +++
-title = "No Heading Level Jumps"
+title = "No heading level jumps"
 weight = 20
 aliases = ["/reference/rules/markdown-body-text/no-heading-level-jumps/"]
 +++

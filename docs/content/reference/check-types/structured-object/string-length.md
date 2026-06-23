@@ -1,6 +1,6 @@
 +++
-title = "String Length"
-weight = 60
+title = "String length"
+weight = 70
 aliases = ["/reference/rules/structured-object/string-length/"]
 +++
 

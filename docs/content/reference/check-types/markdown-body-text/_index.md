@@ -1,5 +1,5 @@
 +++
-title = "Markdown Body Text Check Types"
+title = "Markdown body text check types"
 weight = 20
 bookCollapseSection = true
 aliases = ["/reference/rules/markdown-body-text/"]
@@ -11,10 +11,10 @@ Markdown body-text check types validate relationships between frontmatter metada
 
 Check types in this family:
 
-- [Code Fence Language Required]({{< relref "code-fence-language-required.md" >}}): Require that opening fenced code blocks include a language tag.
-- [No Heading Level Jumps]({{< relref "no-heading-level-jumps.md" >}}): Disallow jumps larger than one heading level (for example H1 -> H3).
-- [Required Section]({{< relref "required-section.md" >}}): Require that a heading with specific text exists somewhere in the body.
+- [Code fence language required]({{< relref "code-fence-language-required.md" >}}): Require that opening fenced code blocks include a language tag.
+- [No heading level jumps]({{< relref "no-heading-level-jumps.md" >}}): Disallow jumps larger than one heading level (for example H1 -> H3).
+- [Required section]({{< relref "required-section.md" >}}): Require that a heading with specific text exists somewhere in the body.
 - [Requires H1]({{< relref "requires-h1.md" >}}): Require at least one H1 heading in the markdown body.
 - [Single H1]({{< relref "single-h1.md" >}}): Require that the markdown body contains at most one H1 heading.
-- [Title Matches H1]({{< relref "title-matches-h1.md" >}}): Require a frontmatter field to match the first H1 heading in the body.
-- [Writing Tells]({{< relref "writing-tells.md" >}}): Warn on likely AI-writing tells (em dashes, decorative emoji, overused words, stock phrases) for human review.
+- [Title matches H1]({{< relref "title-matches-h1.md" >}}): Require a frontmatter field to match the first H1 heading in the body.
+- [Writing tells]({{< relref "writing-tells.md" >}}): Warn on likely AI-writing tells (em dashes, decorative emoji, overused words, stock phrases) for human review.

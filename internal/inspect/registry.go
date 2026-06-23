@@ -77,7 +77,7 @@ func Descriptors() []Descriptor {
 			Layer:   "source",
 			Family:  "filesystem",
 			Slug:    "file-tree",
-			Title:   "File Tree",
+			Title:   "File tree",
 			Summary: "Profile each directory's file types, naming, and depth, opening no files.",
 		},
 		{
@@ -85,7 +85,7 @@ func Descriptors() []Descriptor {
 			Layer:   "source",
 			Family:  "structural",
 			Slug:    "file-tree-content",
-			Title:   "File Tree (deep)",
+			Title:   "File tree (deep)",
 			Summary: "Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.",
 		},
 		{
@@ -93,7 +93,7 @@ func Descriptors() []Descriptor {
 			Layer:   "source",
 			Family:  "structural",
 			Slug:    "document-shape",
-			Title:   "Document Shape",
+			Title:   "Document shape",
 			Summary: "Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.",
 		},
 		{
@@ -101,7 +101,7 @@ func Descriptors() []Descriptor {
 			Layer:   "collection",
 			Family:  "object",
 			Slug:    "object-fields",
-			Title:   "Object Fields",
+			Title:   "Object fields",
 			Summary: "A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.",
 		},
 		{
@@ -109,7 +109,7 @@ func Descriptors() []Descriptor {
 			Layer:   "collection",
 			Family:  "markdown",
 			Slug:    "markdown-body",
-			Title:   "Markdown Body",
+			Title:   "Markdown body",
 			Summary: "Body conventions across items: heading shape and recurring sections.",
 		},
 	}

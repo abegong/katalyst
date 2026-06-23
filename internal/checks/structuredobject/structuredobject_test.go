@@ -104,3 +104,44 @@ func TestUniqueField_flagsDuplicateValues(t *testing.T) {
 		t.Fatalf("expected one duplicate-slug violation, got %v", violations)
 	}
 }
+
+func TestObjectSentenceCaseRun_flagsTitleCase(t *testing.T) {
+	allow := map[string]bool{"Katalyst": true}
+	cases := []struct {
+		title string
+		want  bool // true if a violation is expected
+	}{
+		{"Progressive Operations", true},
+		{"Progressive operations", false},
+		{"Getting Started", true},
+		{"Code of Conduct", true},
+		{"Why Katalyst?", false},    // allowlisted proper noun
+		{"Validate in CI", false},   // acronym
+		{"Requires H1", false},      // letter+digit acronym
+		{"File tree (deep)", false}, // parenthesized lowercase
+		{"lowercase opener", true},  // first word must be capitalized
+		{"Add a schema", false},
+	}
+	for _, tc := range cases {
+		doc := checktest.MustParseDoc(t, "---\ntitle: x\n---\n# x\n")
+		got := structuredobject.ObjectSentenceCase{Field: "title", Allow: allow}.Run(checks.Context{
+			FilePath: "docs/x.md",
+			Doc:      doc,
+			Meta:     map[string]any{"title": tc.title},
+		})
+		if (len(got) > 0) != tc.want {
+			t.Errorf("title %q: expected violation=%v, got %v", tc.title, tc.want, got)
+		}
+	}
+}
+
+func TestObjectSentenceCaseRun_skipsMissingOrNonString(t *testing.T) {
+	doc := checktest.MustParseDoc(t, "---\ntitle: x\n---\n# x\n")
+	check := structuredobject.ObjectSentenceCase{Field: "title"}
+	if got := check.Run(checks.Context{Doc: doc, Meta: map[string]any{}}); got != nil {
+		t.Errorf("missing field should not violate, got %v", got)
+	}
+	if got := check.Run(checks.Context{Doc: doc, Meta: map[string]any{"title": 42}}); got != nil {
+		t.Errorf("non-string field should not violate, got %v", got)
+	}
+}

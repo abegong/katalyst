@@ -39,7 +39,7 @@ func init() {
 		CheckType: config.CheckMarkdownCodeFenceHasLanguage,
 		Family:    "markdownBodyText",
 		Slug:      "code-fence-language-required",
-		Title:     "Code Fence Language Required",
+		Title:     "Code fence language required",
 		Summary:   "Require that opening fenced code blocks include a language tag.",
 		ConfigExample: `collections:
   notes:

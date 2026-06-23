@@ -36,7 +36,7 @@ func init() {
 		CheckType: config.CheckFilesystemExtensionIn,
 		Family:    "fileSystem",
 		Slug:      "extension-in",
-		Title:     "Extension In",
+		Title:     "Extension in",
 		Summary:   "Allow only specific file extensions.",
 		Fields: []checks.Field{
 			{Name: "values", Required: true, Desc: "Allowed extensions, including the leading dot."},

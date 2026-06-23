@@ -36,7 +36,7 @@ func init() {
 		CheckType: config.CheckFilesystemUniqueField,
 		Family:    "structuredObject",
 		Slug:      "unique-field",
-		Title:     "Unique Field",
+		Title:     "Unique field",
 		Summary:   "Require that no two items share a value for a frontmatter field.",
 		Scope:     "collection",
 		Fields: []checks.Field{

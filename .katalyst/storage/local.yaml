@@ -16,6 +16,12 @@ collections:
     checks:
       - kind: filesystem_extension_in
         values: [.md]
+      # TOC titles use sentence case, not Title Case ("Progressive operations",
+      # not "Progressive Operations"). Katalyst is the lone proper noun in the
+      # docs; acronyms like CI and H1 are exempt automatically.
+      - kind: object_sentence_case
+        field: title
+        allow: [Katalyst]
       # Advisory (warning severity): surfaces AI-writing tells for review.
       # Never fails the build. See
       # docs/content/contributing/how-we-document.md.

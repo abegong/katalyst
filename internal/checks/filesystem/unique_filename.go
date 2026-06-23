@@ -28,7 +28,7 @@ func init() {
 		CheckType: config.CheckFilesystemUniqueFilename,
 		Family:    "fileSystem",
 		Slug:      "unique-filename",
-		Title:     "Unique Filename",
+		Title:     "Unique filename",
 		Summary:   "Require that no two items in the collection share a basename.",
 		Scope:     "collection",
 		ConfigExample: `collections:

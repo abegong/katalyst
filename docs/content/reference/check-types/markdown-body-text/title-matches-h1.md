@@ -1,5 +1,5 @@
 +++
-title = "Title Matches H1"
+title = "Title matches H1"
 weight = 60
 aliases = ["/reference/rules/markdown-body-text/title-matches-h1/"]
 +++

@@ -112,10 +112,10 @@ func TestCheckTypesList_familyFiltersList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("check-types list --family markdownBodyText: %v", err)
 	}
-	if !strings.Contains(stdout, "Markdown Body Text Check Types") {
-		t.Errorf("expected Markdown Body Text Check Types heading, got: %q", stdout)
+	if !strings.Contains(stdout, "Markdown body text check types") {
+		t.Errorf("expected Markdown body text check types heading, got: %q", stdout)
 	}
-	if strings.Contains(stdout, "Structured Object Check Types") || strings.Contains(stdout, "File System Check Types") {
+	if strings.Contains(stdout, "Structured object check types") || strings.Contains(stdout, "File system check types") {
 		t.Errorf("expected only the markdown body text family, got: %q", stdout)
 	}
 	if !strings.Contains(stdout, "markdown_single_h1") {
@@ -188,7 +188,7 @@ func TestCheckTypesShow_showsFamilyContextAndSiblings(t *testing.T) {
 		t.Fatalf("check-types show object_field_enum: %v", err)
 	}
 	// Breadcrumb + family intro give the docs-traversal context.
-	if !strings.Contains(stdout, "Structured Object Check Types › Field Enum") {
+	if !strings.Contains(stdout, "Structured object check types › Field enum") {
 		t.Errorf("expected breadcrumb header, got: %q", stdout)
 	}
 	if !strings.Contains(stdout, "Structured-object check types validate structured frontmatter") {

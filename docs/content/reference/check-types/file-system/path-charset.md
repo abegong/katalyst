@@ -1,5 +1,5 @@
 +++
-title = "Path Charset"
+title = "Path charset"
 weight = 100
 aliases = ["/reference/rules/file-system/path-charset/"]
 +++

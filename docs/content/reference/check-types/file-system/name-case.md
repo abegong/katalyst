@@ -1,5 +1,5 @@
 +++
-title = "Name Case"
+title = "Name case"
 weight = 40
 aliases = ["/reference/rules/file-system/name-case/"]
 +++
