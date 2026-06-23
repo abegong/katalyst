@@ -194,7 +194,7 @@ variants:
 func TestCheck_variant_routesByMetadata(t *testing.T) {
 	dir := setupVariantRepo(t, variantPagesConfig)
 	// A section page: base title + the section variant. weight and an H1 are
-	// NOT required (they live in the content variant) — this is the exemption.
+	// NOT required (they live in the content variant), this is the exemption.
 	mustWrite(t, filepath.Join(dir, "pages/intro.md"), "---\nkind: section\ntitle: Intro\n---\n")
 	// A content page satisfies base title + content weight + requires_h1.
 	mustWrite(t, filepath.Join(dir, "pages/guide.md"), "---\nkind: page\ntitle: Guide\nweight: 1\n---\n# Guide\n")
@@ -233,7 +233,7 @@ func TestCheck_variant_additiveBaseSchema(t *testing.T) {
 
 func TestCheck_variant_firstMatchWins(t *testing.T) {
 	// Two overlapping variants: a section page matches both, but only the
-	// first (requires_h1, no weight) applies — the second's weight is not
+	// first (requires_h1, no weight) applies, the second's weight is not
 	// enforced.
 	body := `path: pages
 pattern: "**/*.md"
@@ -395,5 +395,29 @@ func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *tes
 	}
 	if !strings.Contains(stderr, "a.md") || !strings.Contains(stderr, "b.md") {
 		t.Errorf("expected both colliding files named, got: %q", stderr)
+	}
+}
+
+func TestCheck_writingTells_warnButPass(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "notes/x.md"),
+		"---\ntitle: X\n---\n# X\n\nWe delve in — carefully.\n")
+
+	stdout, stderr, err := runRoot(t, "check", "notes/x")
+	if err != nil {
+		t.Fatalf("warnings must not fail the run, got: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "x.md: OK") {
+		t.Errorf("expected OK on stdout (warnings are advisory), got: %q", stdout)
+	}
+	if !strings.Contains(stderr, "warning:") {
+		t.Errorf("expected a warning line on stderr, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "em dash") {
+		t.Errorf("expected the em-dash tell, got: %q", stderr)
 	}
 }

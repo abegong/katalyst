@@ -8,7 +8,7 @@ weight = 10
 ## Goals
 
 - Users and contributors both find what they need in one published tree.
-- One source of truth per topic — no drift between duplicate files.
+- One source of truth per topic, no drift between duplicate files.
 - Reference that is correct by construction (generated from code).
 - Docs live close to what they describe.
 
@@ -16,32 +16,32 @@ weight = 10
 
 Katalyst keeps documentation in a few homes.
 
-### `docs/` — the published site (Hugo)
+### `docs/`, the published site (Hugo)
 
 The durable home for everything a user needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
 
-- **`how-to/`** — task-oriented recipes.
-- **`reference/`** — information-oriented lookup: configuration, the
+- **`how-to/`:** task-oriented recipes.
+- **`reference/`:** information-oriented lookup: configuration, the
   generated check-type reference, the glossary, the command surface.
-- **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
+- **`deep-dives/`:** understanding-oriented "why" (the Diátaxis *explanation*
   quadrant): the vision and scope, the core concepts, the storage layer,
   progressive operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
   orientation page sits at the top level. Subsystem-specific rationale belongs
   with the code (package docs, including `doc.go` when long, or a co-located
   package `README.md`), not a per-feature explanation page that will drift.
-- **`contributing/`** — project and process records (this file,
+- **`contributing/`:** project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
-### `product/` — in-flight specs and plans only
+### `product/`, in-flight specs and plans only
 
 `product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
 merged**. A spec is deleted when its work lands and its durable content
-graduates into `docs/`. Nothing evergreen lives in `product/` — it is
+graduates into `docs/`. Nothing evergreen lives in `product/`, it is
 staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 
-### `AGENTS.md` — code-writing conventions
+### `AGENTS.md`, code-writing conventions
 
 Rules for anyone *writing code* in the repo: commands, layout, testing
 style, code style. **What goes here:** naming conventions, required
@@ -54,24 +54,24 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### Go doc comments — code-level API docs **and package architecture**
+### Go doc comments, code-level API docs **and package architecture**
 
 Package- and symbol-level documentation lives in the code as Go doc
 comments, not in Markdown. This is also the home for a package's
-**architecture and design rationale** — why it is shaped the way it is, the
+**architecture and design rationale:** why it is shaped the way it is, the
 load-bearing decisions, and the alternatives rejected. When that narrative
 outgrows a leading file comment, give it a dedicated `doc.go`
 (`internal/inspect/doc.go` is the worked example). Co-locating the *why* with
 the code keeps it in the same diff and out of a separate `explanation/` page
 that drifts; it also surfaces in `go doc`. Use godoc headings (`# Heading`),
-prose, and short lists — not tables; if you reach for a table, it belongs in
+prose, and short lists, not tables; if you reach for a table, it belongs in
 the reference.
 
 ## Generated reference
 
 Check-type pages under `docs/reference/check-types/` are **generated** from the
 checks registry (`internal/checks/registry.go`) by `cmd/gendocs`. Do not edit
-them by hand — run `make docs-gen` and commit the result. CI fails if a
+them by hand, run `make docs-gen` and commit the result. CI fails if a
 registered check type has no page, so a new check type cannot ship
 undocumented. To add a check type, see
 [add-katalyst-check-type](../../.cursor/skills/add-katalyst-check-type/SKILL.md).
@@ -91,7 +91,7 @@ type rather than guessed up front.
 
 ## Style
 
-- **Keep `AGENTS.md` lean** — conventions, not walls of text.
+- **Keep `AGENTS.md` lean:** conventions, not walls of text.
 - **Don't repeat root standards** in co-located docs; document only what's
   specific to that location.
 - **Update docs in the same change** that establishes a convention or ships
@@ -102,11 +102,24 @@ type rather than guessed up front.
 - **Match the existing pages'** TOML `+++` frontmatter and `{{</* relref */>}}`
   cross-links.
 
+## Watch for AI-writing tells
+
+The [`markdown_writing_tells`]({{< relref "../reference/check-types/markdown-body-text/writing-tells.md" >}})
+check surfaces likely "AI slop": decorative punctuation, overused words, and
+stock phrases, as **warnings**: it reports each hit but never fails the run.
+It is a review aid, not a gate; many hits are fine in context, and there is no
+allow list. A hit is a prompt to look, and the fix for each is a judgment call.
+
+The docs collection runs it (see `.katalyst/collections/pages.yaml`), so
+`katalyst check` prints each tell as a `warning:` line and still exits 0. How
+to act on a flagged em dash (and which conventions to keep) is being worked out
+in the em-dash rubric draft under `product/`.
+
 ## Tool-specific files
 
 `AGENTS.md` is the source of truth for conventions. Other tools read their
 own files; keep them thin and pointed at `AGENTS.md`.
 
-- **`.cursor/skills/`** — reusable skills (e.g. `add-katalyst-rule`). Skills
+- **`.cursor/skills/`:** reusable skills (e.g. `add-katalyst-rule`). Skills
   are *actions*, not conventions; conventions stay in `AGENTS.md`.
-- **`.claude/`** — Claude Code local settings, not a documentation source.
+- **`.claude/`:** Claude Code local settings, not a documentation source.

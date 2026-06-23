@@ -9,8 +9,8 @@ What `katalyst` is *about*: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.
 
 This page is katalyst-specific. For the general, tool-agnostic model these
-concepts instantiate — the same vocabulary applied to a Postgres table or a
-MongoDB collection — see [core concepts]({{< relref "core-concepts.md" >}}).
+concepts instantiate, the same vocabulary applied to a Postgres table or a
+MongoDB collection, see [core concepts]({{< relref "core-concepts.md" >}}).
 
 For *what* the commands do, see the [getting-started
 tutorial]({{< relref "../getting-started.md" >}}) and the
@@ -65,7 +65,7 @@ flowchart LR
 The unit of work. A file on disk with two optional regions:
 
 - A **frontmatter** block at the very top of the file, in YAML (`---`
-  fences), TOML (`+++` fences), or JSON (`{ … }`) — the formats Hugo,
+  fences), TOML (`+++` fences), or JSON (`{ … }`): the formats Hugo,
   Obsidian, and Jekyll emit. The source format is detected on read and
   preserved by `fix`.
 - A **body**, everything after the closing fence.
@@ -98,7 +98,7 @@ A schema has two identities:
   `book.json` → `book`). The name is the stable public handle used by inline
   `schema:` directives and `schema show`. Paths can change; names should not.
 
-`--schema <path>` bypasses the name layer entirely — useful for ad-hoc
+`--schema <path>` bypasses the name layer entirely, useful for ad-hoc
 runs but skips name-based identity.
 
 In memory, schemas are `validator.Schema`: a thin wrapper around
@@ -161,8 +161,8 @@ How commands name what to operate on. Three shapes, from broad to narrow:
 
 | Selector | Scope |
 |---|---|
-| *(none)* | the whole project — every collection |
-| `<collection>` | one collection — all its items |
+| *(none)* | the whole project, every collection |
+| `<collection>` | one collection, all its items |
 | `<collection>/<item>` | a single item |
 
 Selectors are shared by `check`, `fix`, and the `item` subcommands. They are
@@ -175,13 +175,13 @@ item is named by one coordinate (its stem); richer layouts grow into more.
 A per-document opt-in to a specific schema. Treated as **metadata about
 katalyst itself, not user data**: the resolver reads it to choose a
 schema, then strips it from `Meta` before passing to the validator. This
-matters when a schema uses `additionalProperties: false` — the document
+matters when a schema uses `additionalProperties: false`, the document
 can still "name itself" without the directive becoming a validation
 violation.
 
 ### Resolver
 
-Not a persistent entity — a per-`check`-invocation object. Owns:
+Not a persistent entity, a per-`check`-invocation object. Owns:
 
 1. The object-schema selection policy (which schema applies to an item?).
 2. A compiled-schema cache keyed by absolute path. The cache makes
@@ -194,14 +194,14 @@ The selection policy, highest precedence first:
 | 1 | `--schema <path>` flag          | Always, for every item in the invocation |
 | 2 | Inline `schema: <name>` in FM   | When (1) absent and `Meta["schema"]` is a known name |
 | 3 | The collection's object check   | When (1) and (2) absent |
-| — | None                            | The item simply runs no object check |
+|, | None                            | The item simply runs no object check |
 
 Markdown and filesystem checks always come from the collection, regardless
 of how the object schema is resolved.
 
 ### Check
 
-A single check run against an item — a type constraint, a heading requirement,
+A single check run against an item: a type constraint, a heading requirement,
 a filename convention. Each comes from one of the check types Katalyst ships,
 in three families:
 
@@ -212,7 +212,7 @@ in three families:
   `markdown_single_h1`, `markdown_no_heading_level_jumps`,
   `markdown_required_section`, `markdown_code_fence_language_required`.
 - **Filesystem**: name and path conventions built on a shared **target**
-  (`filename`, `filename-ext`, `parent-dir`, `path-segments`) — `name_case`,
+  (`filename`, `filename-ext`, `parent-dir`, `path-segments`): `name_case`,
   `name_matches_field`, `name_affix`, `name_regex`, `name_length`,
   `path_charset`, `path_depth`, `parent_dir_matches_field`, `extension_in`,
   `parent_dir_in`, `referenced_files_exist`, plus **collection-scoped** checks
@@ -240,7 +240,7 @@ The product of running an item's checks. Two states:
 When combined with `Document.Lines`, a violation becomes a
 `path:line: /pointer: message` user-visible line. If the exact pointer has
 no recorded line (e.g. for "missing required property" errors), the resolver
-walks up to the nearest ancestor that does — pointing at the parent object
+walks up to the nearest ancestor that does, pointing at the parent object
 is better than pointing at nothing.
 
 ### Inspector
@@ -248,17 +248,17 @@ is better than pointing at nothing.
 The descriptive dual of a check, in `internal/inspect`. A check asks "does
 this item satisfy a predicate?" and returns violations; an **inspector** asks
 "what is the distribution of this aspect across the corpus?" and returns
-**evidence** — counts and distributions with the file count `n` as the
+**evidence:** counts and distributions with the file count `n` as the
 denominator. It realizes the `aggregate` operation from the [core
 concepts]({{< relref "../deep-dives/core-concepts.md" >}}).
 
 Inspectors are read-only and never recommend. They report that `status` is
 present in 142 of 142 items with three distinct values; deciding that this
 warrants a `required` field with an `enum` is *judgment* that belongs to
-whoever reads the evidence — a human or an agent — not to the inspector.
+whoever reads the evidence, a human or an agent, not to the inspector.
 
 Inspectors come in **two layers**, distinguished by how they reference the
-data — the same seam as [storage]({{< relref "storage.md" >}}):
+data, the same seam as [storage]({{< relref "storage.md" >}}):
 
 - **Raw-source** inspectors profile a backend store directly, before any
   collection configuration, addressed by backend-native reference (a path
@@ -271,14 +271,14 @@ data — the same seam as [storage]({{< relref "storage.md" >}}):
   here.
 
 The [`inspect`]({{< relref "../reference/commands.md" >}}) command infers the
-layer from its argument — a configured collection name runs the collection
-layer, anything else is a path for the raw-source layer — and renders the
+layer from its argument, a configured collection name runs the collection
+layer, anything else is a path for the raw-source layer, and renders the
 evidence as Markdown (default) or JSON. Both layers are built from a few
 reusable measurement primitives (`object_fields`, `markdown_body`,
 file-metadata). Inspectors have their own registry and per-layer parity test,
 mirroring checks, so none ships undocumented. The design rationale
 (evidence-not-verdicts, the determinism dividing line, the two-layer split)
-lives in the package's own docs — `go doc ./internal/inspect` — next to the
+lives in the package's own docs, `go doc ./internal/inspect`, next to the
 code; see [the reference]({{< relref "../reference/inspectors/_index.md" >}})
 for the inspector set.
 
@@ -314,13 +314,13 @@ Much simpler. For each item:
 
 1. Read bytes.
 2. Parse to `Document`.
-3. If no frontmatter, return verbatim — `fix` never invents structure.
+3. If no frontmatter, return verbatim, `fix` never invents structure.
 4. Marshal `Meta` with top-level keys sorted alphabetically, yaml.v3
    default block style.
 5. Re-assemble: `---\n<sorted yaml>\n---\n<body>`. Body bytes are
    preserved verbatim; one trailing newline is enforced on the file.
 6. Compare against the original. If unchanged, do nothing. Otherwise
-   atomically rewrite (temp file + rename) — or, with `--check`, print the
+   atomically rewrite (temp file + rename), or, with `--check`, print the
    path and accumulate exit-1 status.
 
 See [Commands]({{< relref "../reference/commands.md" >}}) for why `fix` is
@@ -339,8 +339,8 @@ tests; a few are protected only by code review and convention.
 3. **The `schema:` directive is katalyst metadata, not user data.** It
    influences resolution but never reaches the validator.
 4. **A collection owns its checks; an item belongs to one collection.**
-   An item's collection is unambiguous — the one whose directory contains it
-   — and never decided by glob ordering *across* collections. *Within* a
+   An item's collection is unambiguous, the one whose directory contains it
+, and never decided by glob ordering *across* collections. *Within* a
    collection, an item's checks are the base checks plus those of the first
    [variant]({{< relref "../reference/configuration.md" >}}#variants) whose
    `when` predicates its metadata satisfies; first-match-wins applies only

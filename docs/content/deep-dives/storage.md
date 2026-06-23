@@ -15,7 +15,7 @@ weight = 40
 
 The **storage layer** is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: *what collections and items does this store
-contain, and where does each one live?* — in both directions. It is Katalyst's
+contain, and where does each one live?*, in both directions. It is Katalyst's
 realization of the **data interface** concept from the
 [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
@@ -25,8 +25,8 @@ that forces the granularity question below.
 ## Three concepts
 
 The layer is three named pieces, not one. Earlier drafts called the whole thing
-a *connector*; that single word was doing two jobs — *how do I reach the store*
-and *how does its content map to the model* — so it was split:
+a *connector*; that single word was doing two jobs, *how do I reach the store*
+and *how does its content map to the model*, so it was split:
 
 | Concept | Meaning |
 |---|---|
@@ -34,7 +34,7 @@ and *how does its content map to the model* — so it was split:
 | **StorageInstance** | A specific, connectable instance of a StorageType, plus the information needed to reach it (for `filesystem`, a root directory). |
 | **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. `FilesystemCollectionDefinition` is the first; one definition may yield **more than one** collection. |
 
-In config, a StorageInstance declares the collections it maps — the instance
+In config, a StorageInstance declares the collections it maps, the instance
 file *is* where the CollectionDefinition lives (see
 [Configuration]({{< relref "../reference/configuration.md" >}})). In code, the
 seam is `internal/storage.CollectionDefinition`; `internal/project` consumes it
@@ -57,7 +57,7 @@ the StorageInstance versus CollectionDefinition split here.
 - **Reverse (reconstruction):** `coordinates → fill a template → path`.
 
 The reverse direction is **not optional**. Katalyst needs it the moment
-`item add notes/dune` has to decide *what file to create* — that is the same
+`item add notes/dune` has to decide *what file to create*, that is the same
 path-reconstruction problem. Today it is the degenerate, stem-only case
 (`Reference(c, id) → <dir>/<id>.md`); it grows with the layout.
 
@@ -68,15 +68,15 @@ path-reconstruction problem. Today it is the degenerate, stem-only case
 | Datasource | **StorageInstance** (+ its StorageType) |
 | **DataConnector** | **CollectionDefinition** |
 | DataAsset (`data_asset_name`) | **Collection** |
-| **Batch / BatchDefinition** | **Item** *(markdown)* / Collection *(tabular)* — see granularity |
+| **Batch / BatchDefinition** | **Item** *(markdown)* / Collection *(tabular)*, see granularity |
 | PartitionDefinition (`group_names` → values) | the item's **coordinates** (today: the stem) |
 | BatchRequest / PartitionQuery | a **selector** (the [addressing] grammar) |
-| BatchSpec | the resolved fetch instruction (a `Reference` — the file path) |
+| BatchSpec | the resolved fetch instruction (a `Reference`, the file path) |
 | Configured vs. Inferred | `check` (declared) vs. `infer` / `profile` (discovered) |
 
 ### The granularity principle (locked)
 
-**"What does one matched store unit become?" has no global answer — it is a
+**"What does one matched store unit become?" has no global answer, it is a
 property each StorageType declares for its backend.**
 
 - **Markdown filesystem:** one file = one **Item**; a directory of files =
@@ -85,7 +85,7 @@ property each StorageType declares for its backend.**
   **Items** (`UnitIsCollection`).
 
 This is why a GX *Batch* maps to a Katalyst *Item* in the markdown world but
-to a *Collection* in the tabular world — and both are correct. The definition
+to a *Collection* in the tabular world, and both are correct. The definition
 absorbs that impedance: alongside the path↔coordinates mapping, it declares the
 **level** at which a store's units attach to the collection/item hierarchy.
 
@@ -97,10 +97,10 @@ single item across a whole unit (a markdown file) are both valid.
 
 GX shipped both, and they map cleanly onto Katalyst verbs:
 
-- **Configured** — collections and their patterns are declared explicitly (the
+- **Configured:** collections and their patterns are declared explicitly (the
   instance's `collections:` block). This is the `check` path: known structure,
   enforced. *Shipped.*
-- **Inferred** — collection names and structure are *discovered* by applying
+- **Inferred:** collection names and structure are *discovered* by applying
   the pattern to whatever is in the store. This is the `infer` / `profile`
   path: structure read out of the data. *Planned.*
 
@@ -108,8 +108,8 @@ GX shipped both, and they map cleanly onto Katalyst verbs:
 
 GX tracked files that matched no pattern (`get_unmatched_data_references`)
 rather than silently dropping them. Katalyst already treats unmatched as an
-error (see `internal/config/README.md`). GX's `self_check` — "here are your
-collections, some examples, and the files that matched nothing" — is the
+error (see `internal/config/README.md`). GX's `self_check`, "here are your
+collections, some examples, and the files that matched nothing", is the
 template for a future `doctor` / `explain` that diagnoses a definition's mapping.
 
 ## Variants route checks, not membership
@@ -117,7 +117,7 @@ template for a future `doctor` / `explain` that diagnoses a definition's mapping
 A collection may run different checks on different items via
 [variants]({{< relref "../reference/configuration.md" >}}#variants), but that is
 a *check-engine* concern, not a storage one. A variant's discriminator is a
-predicate over an item's **metadata** — portable across every StorageType, since
+predicate over an item's **metadata**: portable across every StorageType, since
 each yields a metadata map (frontmatter for a file, columns for a row). It never
 touches the seam: membership, `Unmatched`, and `Reference` stay governed by the
 definition's `pattern`. Discriminating by *path* would be a storage-type-scoped
@@ -136,15 +136,15 @@ selector grammar and the definition's pattern are two views of the same thing.
 Reuse as-is:
 
 - The contract is **two-way**, not one-way (discovery *and* reconstruction).
-- **Configured / Inferred ≙ `check` / `infer`** — same axis, already planned.
+- **Configured / Inferred ≙ `check` / `infer`:** same axis, already planned.
 - **Surface unmatched**, don't swallow it.
-- **Coordinates = selector** — design them as one concept.
+- **Coordinates = selector:** design them as one concept.
 
 Do better than GX did (straight from its own TODOs in the recovered code):
 
 - **Prefer an inherently two-way template** (`{name}_{year}.md`) over inverting
   an arbitrary regex. GX inverted a capture-group regex into a `str.format`
-  template and the author flagged it as *"almost certainly still brittle"* — a
+  template and the author flagged it as *"almost certainly still brittle"*, a
   template is bidirectional by construction; a regex is not.
 - **The pattern must own the file extension**, or reconstruction is ambiguous
   when several extensions are allowed (a GX limitation noted in `util.py`).
@@ -169,7 +169,7 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 
 | Term | Meaning |
 |---|---|
-| **StorageType** | A known backend kind (filesystem, sqlite, …). |
+| **StorageType** | A known backend kind (filesystem, sqlite, ...). |
 | **StorageInstance** | A configured instance of a StorageType plus how to reach it. |
 | **CollectionDefinition** | The backend↔domain two-way mapping; yields one or more collections. |
 | **Data reference** | A backend-native locator (file path, S3 key, table name). |

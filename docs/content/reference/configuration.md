@@ -36,15 +36,15 @@ inline instead of as files.
 
 ## Schemas
 
-Each file under `.katalyst/schemas/` is a JSON Schema. Its **name** — the
-filename stem — is the stable public handle used by `schema show <name>`, by
+Each file under `.katalyst/schemas/` is a JSON Schema. Its **name**, the
+filename stem, is the stable public handle used by `schema show <name>`, by
 an inline `schema: <name>` key in a document's frontmatter, and by a
 collection's `schema:` shorthand. The path can move; the name should not.
 
 ## Storage instances
 
-A **storage instance** is one configured backend store — today always the local
-filesystem — plus the collections it maps onto the domain model. Each file under
+A **storage instance** is one configured backend store, today always the local
+filesystem, plus the collections it maps onto the domain model. Each file under
 `.katalyst/storage/` is one instance, named for its filename stem. There is no
 implicit instance; `katalyst init` writes a default `local` one.
 
@@ -52,7 +52,7 @@ implicit instance; `katalyst init` writes a default `local` one.
 |---|---|---|---|
 | `type` | no | `filesystem` | Backend kind. `filesystem` is the only kind today. |
 | `root` | no | `.` | Instance root directory, relative to the repo root. Collection paths resolve against it. |
-| `collections` | no | — | Map of collection name → definition (see below). |
+| `collections` | no | - | Map of collection name → definition (see below). |
 
 ```yaml
 # .katalyst/storage/local.yaml
@@ -78,9 +78,9 @@ Collections are declared inside their storage instance, under `collections:`.
 |---|---|---|---|
 | `path` | no | the collection name | Directory, relative to the instance `root`. |
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
-| `schema` | no | — | Schema name; shorthand for a leading `object` check. |
-| `checks` | no | — | List of checks (see below). |
-| `query` | no | — | `item list` query behavior for this collection (see [`query`](#query)). |
+| `schema` | no | - | Schema name; shorthand for a leading `object` check. |
+| `checks` | no | - | List of checks (see below). |
+| `query` | no | - | `item list` query behavior for this collection (see [`query`](#query)). |
 
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match
@@ -130,12 +130,12 @@ chosen by `target`:
 | `matched-lines` | each body line matching `select: <regex>` |
 
 - `text_requires` and `text_forbids` take a Go `pattern`, matched **unanchored**
-  (it must appear *somewhere* in a span — unlike `filesystem_name_regex`, which
-  anchors with `^…$`). `text_requires` also takes `match: any` (default — at
+  (it must appear *somewhere* in a span: unlike `filesystem_name_regex`, which
+  anchors with `^…$`). `text_requires` also takes `match: any` (default, at
   least one span matches) or `match: all` (every span must match).
 - `text_denylist` takes `values:`, a list of literal substrings; regex
   metacharacters are inert.
-- `text_forbids` may declare a `fix:` — a replacement template (`$1`, `${name}`
+- `text_forbids` may declare a `fix:`: a replacement template (`$1`, `${name}`
   capture syntax) applied to the matched text by `katalyst fix`. The fix
   re-checks its own work and fails rather than writing a file the rule would
   still reject. `text_requires` and `text_denylist` are report-only.
@@ -165,7 +165,7 @@ pages:
 ```
 
 **`when`** is a list of [`item list --filter`]({{< relref "commands.md" >}})
-predicates (`field=value`, `field>=n`, `field=~regex`, `!field`, …), evaluated
+predicates (`field=value`, `field>=n`, `field=~regex`, `!field`, ...), evaluated
 against the item's frontmatter. All entries must hold (AND). Three shapes are
 accepted, the first two desugaring to the third:
 
@@ -176,7 +176,7 @@ when: { where: ["kind=section"] }
 ```
 
 **Resolution.** An item runs the base checks plus the checks of the **first**
-variant (in list order) whose `when` it satisfies — at most one variant
+variant (in list order) whose `when` it satisfies, at most one variant
 applies. A variant *adds* to the base, so a check belongs in a variant exactly
 when some page type must skip it: in the example, `weight` and the H1
 requirement apply to content pages but not section indexes. A variant may
@@ -232,15 +232,15 @@ highest-precedence first:
 1. `--schema <path>` flag (applies to every selected item).
 2. Inline `schema: <name>` key in the item's frontmatter.
 3. The collection's `object` check (from `schema:` or an explicit entry), plus
-   the matched [variant](#variants)'s schema — both apply, additively.
+   the matched [variant](#variants)'s schema: both apply, additively.
 
 Markdown and filesystem checks always come from the collection (and the matched
 variant), even when `--schema` is used.
 
 ## See also
 
-- [Check types reference]({{< relref "check-types/_index.md" >}}) — every check type.
-- [Storage layer]({{< relref "../deep-dives/storage.md" >}}) — the storage
+- [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
+- [Storage layer]({{< relref "../deep-dives/storage.md" >}}), the storage
   instance / collection-definition model and its lineage.
-- `internal/config/README.md` — configuration rationale: storage instances,
+- `internal/config/README.md`, configuration rationale: storage instances,
   three-tier resolution, unmatched-as-error.

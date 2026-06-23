@@ -18,7 +18,7 @@ Allow only specific file extensions.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `values` | yes | — | Allowed extensions, including the leading dot. |
+| `values` | yes | - | Allowed extensions, including the leading dot. |
 
 ## Example
 

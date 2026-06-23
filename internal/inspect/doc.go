@@ -1,4 +1,4 @@
-// Package inspect profiles content and returns evidence — the descriptive dual
+// Package inspect profiles content and returns evidence, the descriptive dual
 // of internal/checks. A check asserts a predicate; an inspector reports the
 // distribution that predicate would be tested against.
 //
@@ -9,12 +9,12 @@
 //   - The raw-source layer (SourceInspector over a SourceView) measures a
 //     backend store directly, before any collection configuration, addressed by
 //     backend-native reference (a relative path today). It answers "what is in
-//     this store?" — the onboarding case. file_tree, file_tree_content, and
+//     this store?" The onboarding case. file_tree, file_tree_content, and
 //     document_shape live here. AppliesTo gates backend-specific inspectors.
 //   - The collection layer (CollectionInspector over a CollectionView) measures
 //     a configured collection's items, addressed by domain identity
 //     (collection + item id) and reached through the project's
-//     CollectionDefinition — never a raw path. object_fields and markdown_body
+//     CollectionDefinition, never a raw path. object_fields and markdown_body
 //     live here.
 //
 // The two are distinct interfaces, not one type at two scopes, precisely
@@ -26,13 +26,13 @@
 // Most measurement lives in three reusable, layer-agnostic primitives, so the
 // inspectors are thin wrappers that point a primitive at an input:
 //
-//   - objectFields — a data dictionary over a set of object maps: per field,
+//   - objectFields: a data dictionary over a set of object maps: per field,
 //     presence, type histogram, scalar cardinality, and an enum-candidate value
 //     set. String and numeric scalars are kept distinct; arrays and nested
 //     objects are typed but not yet characterized (issue #58).
-//   - markdownBody — heading-shape and recurring-section facets over a set of
+//   - markdownBody, heading-shape and recurring-section facets over a set of
 //     bodies.
-//   - fileMetadata — path-level conventions (type, naming, depth) over a set of
+//   - fileMetadata: path-level conventions (type, naming, depth) over a set of
 //     references, opening no files.
 //
 // The same objectFields primitive runs over a collection's items (collection
@@ -66,8 +66,8 @@
 // The summarizing inspectors (file_tree, document_shape) collapse near-identical
 // profiles into named classes via summarize, so output is proportional to the
 // number of distinct profiles, not the number of directories or files; the rest
-// are reported as outliers. Params carries the collapse tolerance — the first
-// inspector parameter — in three mutually-exclusive forms (a named detail level,
+// are reported as outliers. Params carries the collapse tolerance, the first
+// inspector parameter: in three mutually-exclusive forms (a named detail level,
 // a similarity proportion, or a max-classes budget).
 //
 // # Output
@@ -79,7 +79,7 @@
 // # Division of labor
 //
 // Katalyst provides the instruments; a human or an agent is the profiler. The
-// intended workflow is a loop — inspect, draft a schema, check, fix the
-// holdouts — but the forming, drafting, and threshold-choosing live with
+// intended workflow is a loop: inspect, draft a schema, check, fix the
+// holdouts, but the forming, drafting, and threshold-choosing live with
 // whoever drives the tool, not in this package.
 package inspect

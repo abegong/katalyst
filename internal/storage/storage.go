@@ -34,7 +34,7 @@ const (
 	UnitIsCollection
 )
 
-// Reference is a backend-native locator — a file path today, a table name or
+// Reference is a backend-native locator: a file path today, a table name or
 // object key later. Kept opaque so non-filesystem backends are not forced into
 // path semantics.
 type Reference string

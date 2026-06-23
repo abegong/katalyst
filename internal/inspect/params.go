@@ -13,7 +13,7 @@ const (
 )
 
 // Params carries inspector parameters. Today it holds only the summarizer's
-// collapse tolerance — the first inspector parameter. Inspectors that don't
+// collapse tolerance, the first inspector parameter. Inspectors that don't
 // summarize ignore it.
 type Params struct {
 	mode       collapseMode

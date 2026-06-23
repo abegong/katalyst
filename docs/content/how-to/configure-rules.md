@@ -29,7 +29,7 @@ omit `pattern`, it defaults to `*.md`.
 
 ## 2. Attach checks
 
-Add a `checks` list. Each entry names a `kind` and its required keys — see
+Add a `checks` list. Each entry names a `kind` and its required keys, see
 the [check types reference]({{< relref "../reference/check-types/_index.md" >}})
 for every check type:
 
@@ -48,7 +48,7 @@ collections:
         style: kebab
 ```
 
-A collection must have at least one check — either a `schema` (see [Add a
+A collection must have at least one check, either a `schema` (see [Add a
 schema]({{< relref "add-a-schema.md" >}})) or a non-empty `checks` list.
 
 ## 3. Run it
@@ -63,8 +63,8 @@ nothing is silently skipped.
 
 ## Lint the body as text
 
-The checks above read frontmatter and filenames. To lint the **body** itself —
-as raw text, regardless of markdown structure — use the `text_*` rules. Each
+The checks above read frontmatter and filenames. To lint the **body** itself,
+as raw text, regardless of markdown structure, use the `text_*` rules. Each
 takes a regex `pattern` (or a list of literal `values`) and an optional `target`
 selecting which slice of the body to test (`body`, `line`, `first-line`,
 `matched-lines`):
@@ -83,8 +83,8 @@ checks:
     values: [FIXME, XXX]
 ```
 
-Because text rules read only the body, they also lint **plain-text items** — a
-`.txt` file, or a markdown file with no frontmatter — so a collection with
+Because text rules read only the body, they also lint **plain-text items**, a
+`.txt` file, or a markdown file with no frontmatter, so a collection with
 `pattern: "*.txt"` works the same way.
 
 A `text_forbids` rule may declare a `fix`: a replacement template (`$1`,
@@ -101,9 +101,9 @@ checks:
 
 ## Apply different checks per page type
 
-When one collection holds more than one kind of item — say a Hugo content tree
+When one collection holds more than one kind of item, say a Hugo content tree
 where section landing pages (`_index.md`, carrying `bookCollapseSection`) sit
-beside ordinary content pages — use **variants** to diverge the checks. Each
+beside ordinary content pages, use **variants** to diverge the checks. Each
 variant's `when` is a metadata predicate (the same grammar as
 [`item list --filter`]({{< relref "../reference/commands.md" >}})); an item runs
 the base checks plus the first matching variant's.
@@ -122,7 +122,7 @@ pages:
           field: weight
 ```
 
-Put a check in a variant — not the base — exactly when some page type must
+Put a check in a variant, not the base, exactly when some page type must
 *skip* it. To require that every item match some variant, add
 `useExhaustiveVariants: true`; an unmatched item then fails with `matches no
 variant`. Discrimination is by frontmatter only; selecting items by path is not

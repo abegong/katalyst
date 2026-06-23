@@ -9,10 +9,10 @@ How we use specs and plans to design, build, and document changes.
 
 ## Two doc types
 
-- **Spec** — *what* and *why*: the problem, the design, domain-model and
+- **Spec:** *what* and *why*: the problem, the design, domain-model and
   architecture impact, open questions. A spec is a design doc in
   `product/specs/{slug}-spec.md`.
-- **Plan** — *how*: the step-by-step implementation, broken into phases, that
+- **Plan:** *how*: the step-by-step implementation, broken into phases, that
   references its spec (`{slug}-plan.md`). A spec can exist without a plan; a
   plan always references a spec.
 
@@ -48,8 +48,8 @@ Track status as a line at the top of the spec/plan.
 
 1. **Write the spec.** Problem, design, open questions. Status: **planning**.
 2. **Resolve open questions.** Fold each resolution into the design. The
-   locked rationale is destined for the thing it explains — package docs for
-   subsystem choices, or a cross-cutting `deep-dives/` page — at graduation,
+   locked rationale is destined for the thing it explains, package docs for
+   subsystem choices, or a cross-cutting `deep-dives/` page: at graduation,
    not a separate log.
 3. **Write the plan.** Phases and steps that reference the spec.
 4. **Implement, tests first.** Per `AGENTS.md`, new behavior arrives with a
@@ -61,24 +61,24 @@ Track status as a line at the top of the spec/plan.
 ## Graduating content
 
 When a spec reaches **done**, pull its durable content into permanent docs
-and retire the spec. Targets — see [How we
+and retire the spec. Targets, see [How we
 document]({{< relref "how-we-document.md" >}}) for what belongs where:
 
-- **`AGENTS.md`** — new code conventions, required patterns, gotchas.
-- **Package docs** — package/API behavior and subsystem architecture
+- **`AGENTS.md`:** new code conventions, required patterns, gotchas.
+- **Package docs:** package/API behavior and subsystem architecture
   rationale (including rejected alternatives and "why not X"), in a `doc.go`
   when long.
-- **`docs/deep-dives/`** — cross-cutting conceptual changes and rationale
+- **`docs/deep-dives/`:** cross-cutting conceptual changes and rationale
   that no single package owns.
-- **`docs/reference/`** — the precise surface; for checks, regenerate
+- **`docs/reference/`:** the precise surface; for checks, regenerate
   `reference/check-types/` with `make docs-gen`.
-- **`docs/how-to/` and `docs/getting-started.md`** — user-facing usage.
-- **`docs/reference/glossary.md`** — new vocabulary.
-- **`README.md`** — pointer/overview updates.
+- **`docs/how-to/` and `docs/getting-started.md`:** user-facing usage.
+- **`docs/reference/glossary.md`:** new vocabulary.
+- **`README.md`:** pointer/overview updates.
 
 Evergreen deep-dive docs (the storage layer, progressive operations) and the
 per-package `README.md` files under `internal/` are *not* specs and don't get
-retired — they're updated in place.
+retired: they're updated in place.
 
 ### Graduation checklist
 

@@ -11,6 +11,6 @@ Plain-text check types validate body content as raw text, independent of markdow
 
 Check types in this family:
 
-- [Denylist]({{< relref "denylist.md" >}}) — Forbid any of a list of literal substrings in the body text.
-- [Forbids]({{< relref "forbids.md" >}}) — Forbid a regular expression from appearing in the body text.
-- [Requires]({{< relref "requires.md" >}}) — Require a regular expression to appear in the body text.
+- [Denylist]({{< relref "denylist.md" >}}): Forbid any of a list of literal substrings in the body text.
+- [Forbids]({{< relref "forbids.md" >}}): Forbid a regular expression from appearing in the body text.
+- [Requires]({{< relref "requires.md" >}}): Require a regular expression to appear in the body text.

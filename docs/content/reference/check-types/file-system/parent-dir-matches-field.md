@@ -18,7 +18,7 @@ Require the parent directory name to equal a frontmatter field.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key compared to the parent directory name. |
+| `field` | yes | - | Frontmatter key compared to the parent directory name. |
 
 ## Example
 

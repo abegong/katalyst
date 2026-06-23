@@ -72,7 +72,7 @@ func Load(name string, r io.Reader) (*Schema, error) {
 
 // LoadYAML compiles a schema authored in YAML. A JSON Schema is just a
 // data shape, so the YAML is decoded and re-encoded as JSON, then handed
-// to Load — the schema compiles through the exact path a .json file does,
+// to Load: the schema compiles through the exact path a .json file does,
 // with no second compiler to keep in sync.
 func LoadYAML(name string, r io.Reader) (*Schema, error) {
 	var doc any

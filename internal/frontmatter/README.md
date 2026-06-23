@@ -14,7 +14,7 @@ The unit of work. A file on disk with two optional regions:
   |--------|-------|-----------------|
   | YAML   | `---` | Jekyll, Obsidian, Hugo |
   | TOML   | `+++` | Hugo, Obsidian, Jekyll |
-  | JSON   | `{` … `}` | Hugo |
+  | JSON   | `{` ... `}` | Hugo |
 
   These are the three formats Hugo, Obsidian, and Jekyll emit. Whatever the
   source format, the parsed `Meta` is a plain `map[string]any`, so checks and
@@ -42,18 +42,18 @@ on line 2 of the original file.
 
 **Line tracking is full for YAML only.** For TOML and JSON, `Lines` is empty
 today; checks degrade gracefully (they emit the error without a line number).
-Richer line tracking for the other formats is a planned follow-up — see the
+Richer line tracking for the other formats is a planned follow-up, see the
 note in the package doc comment.
 
 ## Why `fix` is deliberately opinionated
 
 `katalyst fix` rewrites frontmatter in one canonical form **in the file's own
-format** — TOML stays TOML, JSON stays JSON, YAML stays YAML. `fix` never
+format**: TOML stays TOML, JSON stays JSON, YAML stays YAML. `fix` never
 converts between formats. Canonically, that means:
 
 - the source format is preserved (same fence, same syntax),
 - top-level keys sorted alphabetically,
-- each format's default block/indent style — yaml.v3 block style, the
+- each format's default block/indent style: yaml.v3 block style, the
   `go-toml` default, two-space-indented JSON,
 - exactly one trailing newline,
 - body bytes preserved verbatim.
@@ -70,7 +70,7 @@ style simply don't run `fix`. Because the body is preserved byte-for-byte,
 `fix` is safe to run across an entire repo without touching prose.
 
 **Trade-off:** comments inside the frontmatter block are not preserved. That
-is by design — frontmatter is structured data, not prose — and will be
+is by design (frontmatter is structured data, not prose) and will be
 revisited only if it hurts in practice.
 
 `--check` makes `fix` non-destructive: it writes nothing, prints the items
@@ -85,8 +85,8 @@ story moved to a later, opt-in command (working name `patch`).
 Silently injecting placeholder values is hostile: it can mask real problems,
 create merge conflicts, and produce documents that *pass* schema validation
 while being semantically wrong. Katalyst would rather ship nothing than ship
-that. A safer design — interactive, or constrained to filling a schema's
-declared `default:` — deserves its own command and explicit per-field
+that. A safer design: interactive, or constrained to filling a schema's
+declared `default:`, deserves its own command and explicit per-field
 opt-in. Until then, `fix` only ever normalizes what is already there; it
 never creates structure (step 3 of its lifecycle returns a frontmatter-less
 file untouched).
@@ -97,14 +97,14 @@ For each item:
 
 1. Read bytes.
 2. Parse to `Document`.
-3. If no frontmatter, return verbatim — `fix` never invents structure.
+3. If no frontmatter, return verbatim, `fix` never invents structure.
 4. Marshal `Meta` with top-level keys sorted alphabetically, in
    `Document.Format`'s native syntax and default style.
 5. Re-assemble in the same format: `---\n<yaml>\n---\n<body>`,
    `+++\n<toml>\n+++\n<body>`, or `{…}\n<body>` for JSON. Body bytes are
    preserved verbatim; one trailing newline is enforced on the file.
 6. Compare against the original. If unchanged, do nothing. Otherwise
-   atomically rewrite (temp file + rename) — or, with `--check`, print the
+   atomically rewrite (temp file + rename), or, with `--check`, print the
    path and accumulate exit-1 status.
 
 ## Invariants

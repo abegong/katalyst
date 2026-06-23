@@ -29,7 +29,7 @@ const scaffoldConfig = `# katalyst project configuration.
 `
 
 // scaffoldLocalStorage is the default storage instance written by init: the
-// local filesystem rooted at the project. There is no implicit instance —
+// local filesystem rooted at the project. There is no implicit instance,
 // this file is what makes the default explicit. Collections are declared
 // inline here (or split into .katalyst/storage/local/<name>.yaml).
 const scaffoldLocalStorage = `# The default storage instance: the local filesystem, rooted at the project.

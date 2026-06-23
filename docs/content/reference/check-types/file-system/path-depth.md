@@ -18,8 +18,8 @@ Bound directory nesting relative to the collection root.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `min` | no | — | Minimum depth (at least one of min/max). |
-| `max` | no | — | Maximum depth; `0` means a flat collection (at least one of min/max). |
+| `min` | no | - | Minimum depth (at least one of min/max). |
+| `max` | no | - | Maximum depth; `0` means a flat collection (at least one of min/max). |
 
 ## Example
 

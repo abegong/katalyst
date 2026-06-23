@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/index-file-required/"]
 
 `kind: filesystem_index_file_required`
 
-**Scope:** collection — runs once per collection over all its items.
+**Scope:** collection, runs once per collection over all its items.
 
 ## Purpose
 

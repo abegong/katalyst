@@ -68,9 +68,9 @@ func TestCheckTypes_splitsRequiredAndOptionalKeys(t *testing.T) {
 		t.Errorf("expected optional min/max on number_range line: %q", line)
 	}
 
-	// A no-field check shows an em dash on both sides.
+	// A no-field check shows a dash placeholder on both sides.
 	line = lineContaining(t, stdout, "markdown_single_h1")
-	if strings.Count(line, "—") < 2 {
+	if strings.Count(line, "-") < 2 {
 		t.Errorf("expected dashes for no-field check: %q", line)
 	}
 }

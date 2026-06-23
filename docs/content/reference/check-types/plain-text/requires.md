@@ -18,9 +18,9 @@ Require a regular expression to appear in the body text.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `pattern` | yes | — | Go regular expression, matched unanchored (appears somewhere in the span). |
+| `pattern` | yes | - | Go regular expression, matched unanchored (appears somewhere in the span). |
 | `target` | no | `body` | Span selector: body, line, first-line, or matched-lines. |
-| `select` | no | — | Line-filter regex; required for and only valid with target matched-lines. |
+| `select` | no | - | Line-filter regex; required for and only valid with target matched-lines. |
 | `match` | no | `any` | For multi-span targets: any (at least one span matches) or all (every span matches). |
 
 ## Example

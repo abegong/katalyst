@@ -88,7 +88,7 @@ func (v SourceView) Root() string { return v.root }
 // N is the number of files discovered.
 func (v SourceView) N() int { return len(v.files) }
 
-// ParseCount reports how many files the view has opened to parse — 0 until a
+// ParseCount reports how many files the view has opened to parse, 0 until a
 // content inspector triggers the markdown parse, which proves file_tree opens
 // nothing.
 func (v SourceView) ParseCount() int { return v.md.count }

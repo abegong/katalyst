@@ -7,7 +7,7 @@ root: .
 collections:
   pages:
     # One collection over the whole content tree. The `page` schema asserts the
-    # contract common to every page type — content pages, section _index.md
+    # contract common to every page type: content pages, section _index.md
     # files, and the generated check-type reference alike: a non-empty `title`,
     # with `weight`/`draft`/`bookCollapseSection`/`aliases` typed when present.
     path: docs/content
@@ -16,15 +16,19 @@ collections:
     checks:
       - kind: filesystem_extension_in
         values: [.md]
+      # Advisory (warning severity): surfaces AI-writing tells for review.
+      # Never fails the build. See
+      # docs/content/contributing/how-we-document.md.
+      - kind: markdown_writing_tells
     # Per-page-type enforcement via variants (#41). Section landing pages carry
     # `bookCollapseSection`; everything else is a content page that must declare
-    # its sort `weight`. Section indexes are exempt — they match no variant and
+    # its sort `weight`. Section indexes are exempt, they match no variant and
     # run the base contract alone.
     #
-    # Checks that single out a page type by *path* rather than frontmatter —
+    # Checks that single out a page type by *path* rather than frontmatter,
     # `markdown_requires_h1` (the generated reference pages under
     # check-types/ have no H1) or a kebab-case filename rule (every `_index.md`
-    # would fail it) — still wait on #41's deferred path discrimination, so they
+    # would fail it), still wait on #41's deferred path discrimination, so they
     # are not added here yet.
     variants:
       - when: "!bookCollapseSection"

@@ -5,14 +5,14 @@ weight = 20
 
 # Add a schema
 
-JSON Schema is how Katalyst validates the *shape* of an item's frontmatter —
+JSON Schema is how Katalyst validates the *shape* of an item's frontmatter:
 required keys, types, ranges. This guide registers a schema and binds it to a
 collection.
 
 ## 1. Write the schema file
 
 Put a JSON Schema (draft 2020-12) under `.katalyst/schemas/`. Its **name** is
-the filename stem — `book.json` registers a schema named `book`, with no
+the filename stem: `book.json` registers a schema named `book`, with no
 separate registration step:
 
 ```json
@@ -28,7 +28,7 @@ separate registration step:
 }
 ```
 
-The name — not the path — is the stable handle the rest of the config uses, so
+The name, not the path, is the stable handle the rest of the config uses, so
 the file is free to move as long as its stem stays the same.
 
 ## 2. Bind it to a collection
@@ -46,7 +46,7 @@ collections:
     schema: book
 ```
 
-Equivalently, add an explicit object check to `checks` — useful when you mix
+Equivalently, add an explicit object check to `checks`, useful when you mix
 it with markdown or filesystem checks:
 
 ```yaml

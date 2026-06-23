@@ -18,7 +18,7 @@ Require that the file's parent directory name is in an allowed set.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `values` | yes | — | Allowed parent directory names. |
+| `values` | yes | - | Allowed parent directory names. |
 
 ## Example
 

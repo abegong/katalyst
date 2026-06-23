@@ -10,5 +10,5 @@ Collection inspectors profile a configured collection's items, probing them thro
 
 Inspectors in this layer:
 
-- [Object Fields]({{< relref "object-fields.md" >}}) — A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
-- [Markdown Body]({{< relref "markdown-body.md" >}}) — Body conventions across items: heading shape and recurring sections.
+- [Object Fields]({{< relref "object-fields.md" >}}): A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
+- [Markdown Body]({{< relref "markdown-body.md" >}}): Body conventions across items: heading shape and recurring sections.

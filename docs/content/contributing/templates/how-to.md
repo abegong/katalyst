@@ -5,7 +5,7 @@ draft = true
 +++
 
 <!--
-TEMPLATE — copy this file into docs/how-to/ and fill it in.
+TEMPLATE, copy this file into docs/how-to/ and fill it in.
 Derived from how-to/configure-rules.md.
 
 This page IS: a task-oriented recipe for a reader who already knows the

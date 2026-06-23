@@ -75,7 +75,7 @@ func (e *engine) compile(path string) (*validator.Schema, error) {
 // When the collection declares variants, the first variant whose `when`
 // predicates the item's metadata satisfies contributes its checks on top of
 // the base set (additively, through the same precedence). An item that matches
-// no variant runs the base only — or, under useExhaustiveVariants, fails with
+// no variant runs the base only, or, under useExhaustiveVariants, fails with
 // "matches no variant".
 func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.Check, error) {
 	cfg := e.proj.Config()
@@ -152,7 +152,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	}
 
 	// A collection with variants is validated to carry some check config, and
-	// an unrouted item under lenient mode legitimately runs nothing — so the
+	// an unrouted item under lenient mode legitimately runs nothing, so the
 	// empty-list guard only applies to plain (variant-less) collections.
 	if len(checkList) == 0 && !c.HasCollectionChecks() && len(c.Variants) == 0 {
 		return nil, errors.New("no checks configured for collection")

@@ -19,7 +19,7 @@ Parse markdown and profile each directory's content shape: parse rate, frontmatt
 
 ## Usage
 
-Inspectors emit evidence — counts and distributions — for the reader to judge. Run this one with:
+Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
 katalyst inspect <target> --inspector file_tree_content

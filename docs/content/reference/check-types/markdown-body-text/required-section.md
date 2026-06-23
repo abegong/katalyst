@@ -18,7 +18,7 @@ Require that a heading with specific text exists somewhere in the body.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `heading` | yes | — | Heading text that must appear. |
+| `heading` | yes | - | Heading text that must appear. |
 
 ## Example
 

@@ -47,12 +47,13 @@ func validateItemWrite(e *engine, c config.Collection, path string, src []byte) 
 		Doc:      doc,
 		Meta:     instance,
 	}, checkList)
-	if len(result) == 0 {
-		return nil
-	}
 
+	// Only error-severity violations block a write; warnings are advisory.
 	var lines []string
 	for _, v := range result {
+		if v.Severity == checks.SeverityWarning {
+			continue
+		}
 		loc := v.Path
 		if loc == "" {
 			loc = "/"
@@ -62,6 +63,9 @@ func validateItemWrite(e *engine, c config.Collection, path string, src []byte) 
 		} else {
 			lines = append(lines, fmt.Sprintf("%s: %s: %s", path, loc, v.Message))
 		}
+	}
+	if len(lines) == 0 {
+		return nil
 	}
 	return errors.New(strings.Join(lines, "\n"))
 }

@@ -65,11 +65,11 @@ Match `.cursor/skills/write-docs/SKILL.md`:
 
 ## Core objects
 
-**Term** — Definition. Optional second sentence on what it does.
+**Term:** Definition. Optional second sentence on what it does.
 
 - **Verb the term.** One-line rule, directly under the term.
 
-**Term** — Definition. …
+**Term:** Definition. ...
 
 ## Relationships
 
@@ -115,8 +115,8 @@ doc.
 
 ## Exemplars
 
-- `docs/reference/glossary.md` — the canonical katalyst vocabulary:
-  bold-term-em-dash definitions used across code, docs, and copy.
+- `docs/reference/glossary.md`: the canonical katalyst vocabulary:
+  bold-term-colon definitions used across code, docs, and copy.
 - `docs/deep-dives/core-concepts.md` — the abstract, cross-system model (data
   interface, item, collection, attribute, operation, check), with an examples
   table mapping it onto Postgres, MongoDB, CSVs, and more.

@@ -18,8 +18,8 @@ Require that a frontmatter field has a specific type.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key to check. |
-| `type` | yes | — | One of `string`, `boolean`, `array`, `object`, `number`, `integer`. |
+| `field` | yes | - | Frontmatter key to check. |
+| `type` | yes | - | One of `string`, `boolean`, `array`, `object`, `number`, `integer`. |
 
 ## Example
 

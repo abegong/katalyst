@@ -18,9 +18,9 @@ Constrain a numeric field to a minimum and/or maximum value.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key to check. |
-| `min` | no | — | Inclusive lower bound. At least one of `min`/`max` is required. |
-| `max` | no | — | Inclusive upper bound. At least one of `min`/`max` is required. |
+| `field` | yes | - | Frontmatter key to check. |
+| `min` | no | - | Inclusive lower bound. At least one of `min`/`max` is required. |
+| `max` | no | - | Inclusive upper bound. At least one of `min`/`max` is required. |
 
 ## Example
 

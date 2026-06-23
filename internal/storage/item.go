@@ -9,7 +9,7 @@ import "github.com/abegong/katalyst/internal/config"
 // type alias.
 type Item struct {
 	Collection config.Collection
-	// ID is the collection-relative identifier — the filename stem for the
+	// ID is the collection-relative identifier, the filename stem for the
 	// flat filesystem case, a richer set of coordinates for layouts that grow.
 	ID string
 	// Path is the absolute path to the item file (a filesystem Reference,

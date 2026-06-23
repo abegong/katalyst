@@ -43,7 +43,7 @@ type Family struct {
 func Families() []Family {
 	return []Family{
 		{ID: "structural", Title: "Structural", Intro: "Structural inspectors report corpus-level facts: how files parse and how their frontmatter is shaped."},
-		{ID: "object", Title: "Object", Intro: "Object inspectors report the distribution of frontmatter fields — presence, types, values."},
+		{ID: "object", Title: "Object", Intro: "Object inspectors report the distribution of frontmatter fields: presence, types, values."},
 		{ID: "markdown", Title: "Markdown", Intro: "Markdown inspectors report body conventions: headings and sections."},
 		{ID: "filesystem", Title: "Filesystem", Intro: "Filesystem inspectors report filename and path conventions across the corpus."},
 	}
@@ -78,7 +78,7 @@ func Descriptors() []Descriptor {
 			Family:  "filesystem",
 			Slug:    "file-tree",
 			Title:   "File Tree",
-			Summary: "Profile each directory's file types, naming, and depth — opening no files.",
+			Summary: "Profile each directory's file types, naming, and depth, opening no files.",
 		},
 		{
 			Name:    "file_tree_content",

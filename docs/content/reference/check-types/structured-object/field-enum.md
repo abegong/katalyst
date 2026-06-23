@@ -18,8 +18,8 @@ Require that a field is one of a fixed set of values.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `field` | yes | — | Frontmatter key to check. |
-| `values` | yes | — | Allowed values. |
+| `field` | yes | - | Frontmatter key to check. |
+| `values` | yes | - | Allowed values. |
 
 ## Example
 

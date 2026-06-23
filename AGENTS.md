@@ -1,11 +1,11 @@
 # AGENTS.md
 
-Conventions for anyone — human or AI — making changes in this repo.
+Conventions for anyone, human or AI, making changes in this repo.
 
 For *what* the project does and how to use the CLI, see [`README.md`](README.md)
 and the user docs under `docs/`.
 For *why* the design is the way it is, see the deep-dive pages under
-`docs/deep-dives/` — rationale lives on each topic's page; there is no central
+`docs/deep-dives/`, rationale lives on each topic's page; there is no central
 decisions log.
 For *how we plan and document* changes, see
 [`docs/contributing/how-we-plan.md`](docs/contributing/how-we-plan.md) and
@@ -44,7 +44,7 @@ in `docs/go.mod` and is managed by `make docs-deps` (`hugo mod get`).
 Katalyst **dogfoods itself on those docs.** The repo-root `.katalyst/`
 directory configures a single `pages` collection over `docs/content/`, and the
 CI `docs` job runs `./bin/katalyst check` after the Hugo build. A docs change
-that breaks the page frontmatter contract (`schemas/page.json` — `title`
+that breaks the page frontmatter contract (`schemas/page.json`, `title`
 required; `weight`/`draft`/`bookCollapseSection`/`aliases` typed) fails CI, so
 run `make build && ./bin/katalyst check` after editing docs. `.katalyst/` sits
 at the repo root (not under `docs/content/`) so the collection's recursive
@@ -56,14 +56,14 @@ importable from outside the module.
 The path ⇄ item-identity translation passes through
 `internal/storage.CollectionDefinition` (forward discovery + reverse
 reconstruction). Don't inline filesystem assumptions (globbing, stem-as-id,
-path joins) elsewhere — a second backend (SQLite) attaches by implementing that
+path joins) elsewhere, a second backend (SQLite) attaches by implementing that
 interface. `internal/config` owns the `.katalyst/` *vocabulary* (it validates
 the storage `type` against a parse-time allowlist) but never imports
 `internal/storage`, which depends on it.
 
 Per-item check *routing* (collection variants) lives in the check engine
 (`engine.checksFor`), keyed on the item's parsed metadata via
-`query.Predicate.Matches` — never on its path. Keep it that way: discrimination
+`query.Predicate.Matches`, never on its path. Keep it that way: discrimination
 by metadata is portable across backends and leaves the storage seam untouched.
 
 ## Testing
@@ -81,7 +81,7 @@ The project follows TDD. New behavior arrives with a failing test first.
 - **Filesystem isolation.** Anything that touches disk scaffolds into
   `t.TempDir()`. Nothing writes into the repo at test time.
 - **Helpers are per-file** and start with `t.Helper()`. Don't reach for a
-  shared `testutil` package — duplication of a five-line helper is cheaper
+  shared `testutil` package, duplication of a five-line helper is cheaper
   than a cross-package dependency.
 - **CLI tests drive the real Cobra root.** Build the command with
   `cmd.NewRootCmd()`, capture output via `SetOut` / `SetErr`, and invoke
@@ -116,7 +116,10 @@ you add a fixture.
 
 - Run `gofmt -w .` (or `make fmt`) before committing.
 - Don't add comments that just narrate what the code does. Comments
-  explain *why* — non-obvious intent, trade-offs, constraints — not *what*.
+  explain *why* (non-obvious intent, trade-offs, constraints) not *what*.
+- The `markdown_writing_tells` check surfaces likely AI-writing tells (em
+  dashes, decorative emoji, stock phrases) as warnings for review; see
+  `docs/content/contributing/how-we-document.md`.
 - Production code that needs a new test fixture: add it under the
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.
@@ -132,7 +135,7 @@ you add a fixture.
   of truth for check types: `cmd/engine` builds the runnable list by registry
   lookup (`Build`/`BuildCollection`), and both `cmd/gendocs` and `katalyst
   check-types list` read `Descriptors()`/`Families()`. `registry_test.go` fails
-  if a dispatched check type has no descriptor — a new check type ships with its
+  if a dispatched check type has no descriptor, a new check type ships with its
   descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
   contract for `katalyst check-types list --json`; keep them stable.
 - A check type's **family** groups it by source-data kind, and is orthogonal to
@@ -144,11 +147,11 @@ you add a fixture.
   `resolveTarget` in `internal/checks/filesystem/common.go`, against which a rule runs.
   Targets that span directories (`path-segments`, `path_depth`, `path_charset`)
   resolve relative to `Context.CollectionRoot`, populated by the per-item check
-  pass — don't assume `FilePath` alone is enough.
+  pass, don't assume `FilePath` alone is enough.
 - **Text check types** (`text_requires`/`text_forbids`/`text_denylist`) lint the
   body as raw text over a **span selector** (`target`:
   `body`/`line`/`first-line`/`matched-lines`), sharing `textSpans` in
-  `internal/checks/plaintext/common.go`. Their regex is compiled **unanchored** — the
+  `internal/checks/plaintext/common.go`. Their regex is compiled **unanchored**, the
   deliberate divergence from `filesystem_name_regex`'s `^…$`. `text_forbids` may
   carry an opt-in `fix` template, applied to the body by `cmd/fix.go`, which then
   re-checks its own work; this is the one place `fix` rewrites the body rather
@@ -160,6 +163,6 @@ you add a fixture.
   `CollectionBuilder` (not a per-item builder); `engine.collectionChecksFor`
   builds them via `checks.BuildCollection` and a second pass in `cmd/check.go`
   re-scans the *whole* collection via `project.Items`, independent of the
-  selector — a uniqueness verdict is only correct against every item. Mark such
+  selector, a uniqueness verdict is only correct against every item. Mark such
   types in `config.collectionScopedTypes` and set `Scope: "collection"` on their
   descriptor.

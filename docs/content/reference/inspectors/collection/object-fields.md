@@ -19,7 +19,7 @@ A data dictionary over item frontmatter: per-field presence, types, cardinality,
 
 ## Usage
 
-Inspectors emit evidence — counts and distributions — for the reader to judge. Run this one with:
+Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
 katalyst inspect <target> --inspector object_fields

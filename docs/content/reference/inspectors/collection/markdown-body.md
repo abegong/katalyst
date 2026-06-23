@@ -19,7 +19,7 @@ Body conventions across items: heading shape and recurring sections.
 
 ## Usage
 
-Inspectors emit evidence — counts and distributions — for the reader to judge. Run this one with:
+Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
 katalyst inspect <target> --inspector markdown_body

@@ -5,13 +5,13 @@ weight = 30
 
 # Progressive Operations
 
-_How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn't._
+_How data interfaces evolve as query complexity grows. Each tier unlocks new operations, but requires structural commitments the previous tier doesn't._
 
-The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary — each tier is driven by a class of operations that can't be satisfied at the previous level.
+The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary, each tier is driven by a class of operations that can't be satisfied at the previous level.
 
 ---
 
-## Tier 1 — Filesystem
+## Tier 1, Filesystem
 
 **Structural commitment:** none beyond path conventions
 
@@ -19,7 +19,7 @@ The core thesis: many knowledge systems start as filesystems and progressively a
 - Read/write by path
 - List/enumerate (directory traversal)
 - Full-text search (grep-style, substring match)
-- Vector/semantic search — operates on raw content; no schema required
+- Vector/semantic search, operates on raw content; no schema required
 
 **Limitations:**
 - Queries are global scans (no index)
@@ -28,32 +28,32 @@ The core thesis: many knowledge systems start as filesystems and progressively a
 
 ---
 
-## Tier 2 — Document Store
+## Tier 2, Document Store
 
 **Structural commitment:** optional schemas (e.g. frontmatter conventions). Not enforced, but consistently applied.
 
 **Operations unlocked:**
 - Query by structured fields across documents ("all people where `closeness: close`")
-- Faceted search — filter + sort by frontmatter fields
+- Faceted search, filter + sort by frontmatter fields
 - Vector search becomes schema-aware (can filter semantic results by field values)
 - Field-level updates (change one field without rewriting the whole file)
 
 **Limitations:**
-- No enforced referential integrity — relationships are naming conventions, not constraints
+- No enforced referential integrity: relationships are naming conventions, not constraints
 - Aggregations are fragile (depend on field consistency)
 - Many-to-many relationships require awkward denormalization
 
 ---
 
-## Tier 3 — Relational
+## Tier 3, Relational
 
 **Structural commitment:** schemas required, foreign keys, typed fields
 
 **Operations unlocked:**
 - Relational queries ("meetings attended by this person", "all open action items from meetings this month")
-- Foreign key constraints — referential integrity enforced
+- Foreign key constraints, referential integrity enforced
 - Aggregations ("intros sent per quarter, by status")
-- Time series — just a table with a timestamp column; no special tier needed
+- Time series, just a table with a timestamp column; no special tier needed
 
 **Limitations:**
 - Many-to-many relationships require join tables (that's Tier 4)
@@ -61,7 +61,7 @@ The core thesis: many knowledge systems start as filesystems and progressively a
 
 ---
 
-## Tier 4 — Join Tables
+## Tier 4, Join Tables
 
 **Structural commitment:** intersection tables for many-to-many relationships
 
@@ -72,7 +72,7 @@ The core thesis: many knowledge systems start as filesystems and progressively a
 
 ---
 
-## Tier 5 — Graph
+## Tier 5, Graph
 
 **Structural commitment:** relationships are first-class entities with their own attributes and types
 

@@ -7,7 +7,7 @@ weight = 50
 
 The `katalyst` CLI carries two command grammars on purpose, and keeps them
 apart. Knowing which grammar a command belongs to tells you how to invoke it,
-what its selector means, and — when you add a command — where it goes.
+what its selector means, and, when you add a command, where it goes.
 
 ## Two families
 
@@ -23,7 +23,7 @@ katalyst check notes              # one collection
 katalyst fix notes/dune schemas   # mixed depth, many targets
 ```
 
-`check` and `fix` are the blessed verbs. `init` is a lone **project verb** —
+`check` and `fix` are the blessed verbs. `init` is a lone **project verb**:
 a lifecycle operation on the project itself, with no noun and no selector.
 
 **Resource nouns** operate *on* one kind of resource. The noun names the
@@ -37,7 +37,7 @@ katalyst check-types show object_required_field
 ```
 
 `check-types`, `collection`, `item`, and `schema` are resource nouns. A noun
-invoked bare (`katalyst item`) prints help — it is never itself an action.
+invoked bare (`katalyst item`) prints help, it is never itself an action.
 
 ## The placement rule
 
@@ -53,7 +53,7 @@ When a new command arrives, one question decides its shape:
 
 Concretely, the rule forbids three things:
 
-- **No top-level CRUD verbs.** CRUD lives under its noun — `item add`, never a
+- **No top-level CRUD verbs.** CRUD lives under its noun: `item add`, never a
   bare `add` that has to guess its noun.
 - **No cross-cutting verb buried under a noun.** A content-wide operation
   stays a blessed verb; `check` does not become `item check` /

@@ -18,7 +18,7 @@ Validate frontmatter metadata against a named JSON Schema from `schemas:`.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `schema` | yes | — | Name of an entry in `schemas:`. |
+| `schema` | yes | - | Name of an entry in `schemas:`. |
 
 ## Example
 

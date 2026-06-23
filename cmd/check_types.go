@@ -11,7 +11,7 @@ import (
 )
 
 // newCheckTypesCmd builds the `check-types` resource noun: a read-only view of
-// the check registry (checks.Descriptors() / checks.Families()) — the same
+// the check registry (checks.Descriptors() / checks.Families()), the same
 // catalog cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
 // CRUD-shaped sub-verbs (list, show) rather than acting when invoked bare, so
 // it matches the collection/item/schema nouns. It loads no project, so its
@@ -21,7 +21,7 @@ func newCheckTypesCmd() *cobra.Command {
 		Use:     "check-types",
 		Aliases: []string{"rules"},
 		Short:   "Inspect the check types the engine can enforce, grouped by family.",
-		Long: `check-types is a read-only view of the engine's check registry — the same
+		Long: `check-types is a read-only view of the engine's check registry, the same
 catalog cmd/gendocs renders. List every check type grouped by family, or show one
 check type's docs-style readout. It reads no project, so it runs in any directory.`,
 	}
@@ -126,6 +126,11 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 		scope = "item"
 	}
 	fmt.Fprintf(out, "scope:   %s\n", scope)
+	sev := d.Severity
+	if sev == "" {
+		sev = "error"
+	}
+	fmt.Fprintf(out, "severity: %s\n", sev)
 	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
 	fmt.Fprintf(out, "\n%s\n", fam.Intro)
 
@@ -140,7 +145,7 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 			}
 			def := f.Default
 			if def == "" {
-				def = "—"
+				def = "-"
 			}
 			fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\n", f.Name, req, def, plainSummary(f.Desc))
 		}
@@ -212,7 +217,7 @@ func familySiblings(d checks.Descriptor) []string {
 }
 
 // splitFields partitions a check type's fields into comma-joined required and
-// optional name lists, using an em dash when a side is empty.
+// optional name lists, using a dash when a side is empty.
 func splitFields(fields []checks.Field) (required, optional string) {
 	var req, opt []string
 	for _, f := range fields {
@@ -227,7 +232,7 @@ func splitFields(fields []checks.Field) (required, optional string) {
 
 func joinOrDash(names []string) string {
 	if len(names) == 0 {
-		return "—"
+		return "-"
 	}
 	return strings.Join(names, ", ")
 }

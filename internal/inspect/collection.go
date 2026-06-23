@@ -12,7 +12,7 @@ import (
 // CollectionView is the collection layer's addressing surface: a resolved
 // collection and its items, parsed once. Items are addressed by domain identity
 // (their Item.ID), and the bytes are reached through the project's
-// CollectionDefinition — collection inspectors never see a raw path. Parsing
+// CollectionDefinition, collection inspectors never see a raw path. Parsing
 // here is a thin local adapter over frontmatter.Parse; it deliberately does not
 // reach into internal/checks, which a parallel branch is reworking
 // (inspector-layers-spec.md, Q3).
@@ -59,7 +59,7 @@ func (v CollectionView) IDs() []string {
 	return ids
 }
 
-// Frontmatter returns the frontmatter map of every item that carries one — the
+// Frontmatter returns the frontmatter map of every item that carries one, the
 // input to the object_fields primitive.
 func (v CollectionView) Frontmatter() []map[string]any {
 	var out []map[string]any
@@ -71,7 +71,7 @@ func (v CollectionView) Frontmatter() []map[string]any {
 	return out
 }
 
-// Bodies returns the body and title of every parsed item — the input to the
+// Bodies returns the body and title of every parsed item, the input to the
 // markdown_body primitive.
 func (v CollectionView) Bodies() []mdInput {
 	var out []mdInput

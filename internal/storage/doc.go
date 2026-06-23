@@ -1,5 +1,5 @@
 // Package storage is the seam between a backend store and the katalyst domain
-// model — issue #31's "narrow interface."
+// model, issue #31's "narrow interface."
 //
 // # Three concepts
 //
@@ -13,8 +13,8 @@
 // # The two-way contract
 //
 // A CollectionDefinition maps in both directions: forward (discover the
-// collections and items a store holds — Collections, Items, Unmatched) and
-// reverse (reconstruct a backend locator from an item identity — Reference).
+// collections and items a store holds: Collections, Items, Unmatched) and
+// reverse (reconstruct a backend locator from an item identity, Reference).
 // The reverse direction is mandatory: `item add notes/dune` needs it to decide
 // which file to create. Today an item is identified by one coordinate (its
 // filename stem) and Reference is Join(dir, id+ext); richer layouts grow into

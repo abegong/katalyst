@@ -5,9 +5,9 @@ draft = true
 +++
 
 <!--
-TEMPLATE — copy this file into docs/reference/ and fill it in.
+TEMPLATE, copy this file into docs/reference/ and fill it in.
 
-This page IS: an information-oriented description of one thing — a config
+This page IS: an information-oriented description of one thing, a config
 key, a command, a check type, a term. It is looked up, not read top to
 bottom. It is accurate, complete, and austere.
 

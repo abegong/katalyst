@@ -132,27 +132,45 @@ func checkItem(out, errOut io.Writer, e *engine, item project.Item) (bool, error
 		Doc:            doc,
 		Meta:           instance,
 	}, checkList)
-	if len(result) == 0 {
+
+	errCount := 0
+	for _, v := range result {
+		printViolation(errOut, item.Path, v)
+		if v.Severity != checks.SeverityWarning {
+			errCount++
+		}
+	}
+	// Warnings are advisory: an item with only warnings still passes.
+	if errCount == 0 {
 		fmt.Fprintf(out, "%s: OK\n", item.Path)
 		return true, nil
-	}
-
-	for _, v := range result {
-		loc := v.Path
-		if loc == "" {
-			loc = "/"
-		}
-		if v.Line > 0 {
-			fmt.Fprintf(errOut, "%s:%d: %s: %s\n", item.Path, v.Line, loc, v.Message)
-		} else {
-			fmt.Fprintf(errOut, "%s: %s: %s\n", item.Path, loc, v.Message)
-		}
 	}
 	return false, nil
 }
 
-// itemStatus runs an item's checks and returns the number of violations
-// (or an error if the file couldn't be read/parsed). Used by `item list`.
+// printViolation writes one violation. Errors keep the original
+// `path[:line]: /loc: message` form; warnings carry a "warning:" marker so
+// they read as advisory and are easy to filter.
+func printViolation(w io.Writer, path string, v checks.Violation) {
+	loc := v.Path
+	if loc == "" {
+		loc = "/"
+	}
+	marker := ""
+	if v.Severity == checks.SeverityWarning {
+		marker = "warning: "
+	}
+	if v.Line > 0 {
+		fmt.Fprintf(w, "%s:%d: %s%s: %s\n", path, v.Line, marker, loc, v.Message)
+	} else {
+		fmt.Fprintf(w, "%s: %s%s: %s\n", path, marker, loc, v.Message)
+	}
+}
+
+// itemStatus runs an item's checks and returns the number of error-severity
+// violations (or an error if the file couldn't be read/parsed). Warnings are
+// advisory and do not count toward an item's failing status. Used by
+// `item list`.
 func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) {
 	doc, err := parseItem(item.Path)
 	if err != nil {
@@ -164,11 +182,17 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 	}
 	instance := dropKey(doc.Meta, "schema")
 	result := checks.RunAll(checks.Context{FilePath: item.Path, CollectionRoot: c.Dir, Doc: doc, Meta: instance}, checkList)
-	return len(result), nil
+	errCount := 0
+	for _, v := range result {
+		if v.Severity != checks.SeverityWarning {
+			errCount++
+		}
+	}
+	return errCount, nil
 }
 
 // selectedCollections returns the distinct collections touched by a
-// resolution — those selected wholesale and those owning a selected item —
+// resolution: those selected wholesale and those owning a selected item,
 // in name order, so collection-scoped checks run once each, deterministically.
 func selectedCollections(res *project.Resolution) []config.Collection {
 	byName := map[string]config.Collection{}
@@ -217,8 +241,14 @@ func runCollectionChecks(errOut io.Writer, e *engine, collections []config.Colle
 			})
 		}
 		for _, v := range checks.RunCollectionAll(ctx, collChecks) {
-			fmt.Fprintf(errOut, "%s: %s\n", v.File, v.Message)
-			bad = true
+			marker := ""
+			if v.Severity == checks.SeverityWarning {
+				marker = "warning: "
+			}
+			fmt.Fprintf(errOut, "%s: %s%s\n", v.File, marker, v.Message)
+			if v.Severity != checks.SeverityWarning {
+				bad = true
+			}
 		}
 	}
 	return bad, nil

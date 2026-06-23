@@ -18,8 +18,8 @@ Require a name to start with a prefix and/or end with a suffix.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `prefix` | no | — | Required name prefix (at least one of prefix/suffix). |
-| `suffix` | no | — | Required name suffix (at least one of prefix/suffix). |
+| `prefix` | no | - | Required name prefix (at least one of prefix/suffix). |
+| `suffix` | no | - | Required name suffix (at least one of prefix/suffix). |
 | `target` | no | `filename` | What to test: `filename`, `filename-ext`, or `parent-dir`. |
 
 ## Example

@@ -18,9 +18,9 @@ Forbid any of a list of literal substrings in the body text.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `values` | yes | — | Literal substrings to forbid; regex metacharacters are inert. |
+| `values` | yes | - | Literal substrings to forbid; regex metacharacters are inert. |
 | `target` | no | `body` | Span selector: body, line, first-line, or matched-lines. |
-| `select` | no | — | Line-filter regex; required for and only valid with target matched-lines. |
+| `select` | no | - | Line-filter regex; required for and only valid with target matched-lines. |
 
 ## Example
 

@@ -19,7 +19,7 @@ Cluster files into candidate collections by a composite fingerprint of frontmatt
 
 ## Usage
 
-Inspectors emit evidence — counts and distributions — for the reader to judge. Run this one with:
+Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
 katalyst inspect <target> --inspector document_shape

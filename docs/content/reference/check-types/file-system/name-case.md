@@ -18,7 +18,7 @@ Require a name (or path segments) to follow a case style.
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `style` | yes | — | One of `kebab`, `snake`, `screaming-snake`, `camel`, `pascal`, `point`, `lower`. |
+| `style` | yes | - | One of `kebab`, `snake`, `screaming-snake`, `camel`, `pascal`, `point`, `lower`. |
 | `target` | no | `filename` | What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`. |
 
 ## Example

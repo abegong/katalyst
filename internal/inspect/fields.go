@@ -3,14 +3,14 @@ package inspect
 import "strconv"
 
 // maxValueSet caps how many distinct values objectFields will enumerate for a
-// field. Above it, only the cardinality is reported — a wide-open field is not
+// field. Above it, only the cardinality is reported, a wide-open field is not
 // an enum candidate, so listing every value adds noise.
 const maxValueSet = 12
 
 // objectFields builds a data dictionary over a set of objects (frontmatter
 // maps). Per field it reports presence over n, an observed type histogram,
-// scalar value cardinality, and — when the field is a single-scalar-type enum
-// candidate — the value set with counts. String and numeric scalars are kept
+// scalar value cardinality, and, when the field is a single-scalar-type enum
+// candidate, the value set with counts. String and numeric scalars are kept
 // distinct: a numeric 5 and the string "5" are different values and never share
 // a value set. Array and object values are typed but contribute no value set
 // (deepening that is issue #58). This is the object_fields primitive; the five
@@ -57,7 +57,7 @@ func objectFields(objs []map[string]any) map[string]any {
 		}
 		// Emit a value set only for a single-scalar-type field small enough to
 		// be an enum candidate. A field mixing scalar kinds (or carrying
-		// non-scalars) reports cardinality only — the type histogram already
+		// non-scalars) reports cardinality only, the type histogram already
 		// shows the mix, and merging kinds would lump string with numeric.
 		if !a.nonScalar && len(a.byKind) == 1 && cardinality > 0 && cardinality <= maxValueSet {
 			for _, set := range a.byKind {

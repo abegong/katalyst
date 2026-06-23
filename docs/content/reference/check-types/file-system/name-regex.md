@@ -18,7 +18,7 @@ Require a name to match a regular expression (anchored).
 
 | Field | Required | Default | Meaning |
 |---|---|---|---|
-| `pattern` | yes | — | Regular expression; matched anchored (`^pattern$`). |
+| `pattern` | yes | - | Regular expression; matched anchored (`^pattern$`). |
 | `target` | no | `filename` | What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`. |
 
 ## Example

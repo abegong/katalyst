@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/unique-filename/"]
 
 `kind: filesystem_unique_filename`
 
-**Scope:** collection — runs once per collection over all its items.
+**Scope:** collection, runs once per collection over all its items.
 
 ## Purpose
 
