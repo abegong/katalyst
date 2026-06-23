@@ -120,22 +120,35 @@ you add a fixture.
 - Production code that needs a new test fixture: add it under the
   consuming package's `testdata/`, embed it in `fixtures_test.go`, and
   note it in that package's `testdata/README.md`.
-- The check registry (`internal/checks/registry.go`) is the single source of
-  truth for check types. Both `cmd/gendocs` and `katalyst check-types list` read
-  it, and `registry_test.go` fails if a dispatched check type has no descriptor
-  — a new check type ships with its descriptor. The `json:` tags on
-  `Descriptor`/`Field` are the published wire contract for `katalyst check-types
-  list --json`; keep them stable.
+- Each check type lives in its own file in a per-family package under
+  `internal/checks/` (`structuredobject`, `markdownbodytext`, `filesystem`,
+  `plaintext`), holding its struct, `Run`, `Descriptor`, and an `init()` that
+  calls `checks.Register`. The core `checks` package owns the shared types and
+  registry and imports none of the families; callers blank-import
+  `internal/checks/all` to wire them all in. To add a check type, add one file
+  (and a `config.CheckType` constant + `normalizeCheck` case, which `checks`
+  can't own because it imports `config`).
+- The check registry (populated by those `Register` calls) is the single source
+  of truth for check types: `cmd/engine` builds the runnable list by registry
+  lookup (`Build`/`BuildCollection`), and both `cmd/gendocs` and `katalyst
+  check-types list` read `Descriptors()`/`Families()`. `registry_test.go` fails
+  if a dispatched check type has no descriptor — a new check type ships with its
+  descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
+  contract for `katalyst check-types list --json`; keep them stable.
+- A check type's **family** groups it by source-data kind, and is orthogonal to
+  its granularity: a collection-scoped check is filed by the data it reads
+  (`unique_field` → `structuredObject`, `unique_filename` → `fileSystem`). The
+  `kind` id is the wire contract and never changes, even when the family does.
 - Filesystem name/path check types share a **target × rule** shape: a `target`
   (`filename`, `filename-ext`, `parent-dir`, `path-segments`) resolved by
-  `resolveTarget` in `internal/checks/filesystem.go`, against which a rule runs.
+  `resolveTarget` in `internal/checks/filesystem/common.go`, against which a rule runs.
   Targets that span directories (`path-segments`, `path_depth`, `path_charset`)
   resolve relative to `Context.CollectionRoot`, populated by the per-item check
   pass — don't assume `FilePath` alone is enough.
 - **Text check types** (`text_requires`/`text_forbids`/`text_denylist`) lint the
   body as raw text over a **span selector** (`target`:
   `body`/`line`/`first-line`/`matched-lines`), sharing `textSpans` in
-  `internal/checks/text.go`. Their regex is compiled **unanchored** — the
+  `internal/checks/plaintext/common.go`. Their regex is compiled **unanchored** — the
   deliberate divergence from `filesystem_name_regex`'s `^…$`. `text_forbids` may
   carry an opt-in `fix` template, applied to the body by `cmd/fix.go`, which then
   re-checks its own work; this is the one place `fix` rewrites the body rather
@@ -143,8 +156,9 @@ you add a fixture.
   `check` runs every configured check on frontmatter-less items too (no
   "no frontmatter" rejection).
 - **Collection-scoped check types** implement `checks.CollectionCheck`
-  (`RunCollection(CollectionContext)`), not `Check`. They are dispatched in
-  `engine.collectionChecksFor` and run by a second pass in `cmd/check.go` that
+  (`RunCollection(CollectionContext)`), not `Check`. They register a
+  `CollectionBuilder` (not a per-item builder); `engine.collectionChecksFor`
+  builds them via `checks.BuildCollection` and a second pass in `cmd/check.go`
   re-scans the *whole* collection via `project.Items`, independent of the
   selector — a uniqueness verdict is only correct against every item. Mark such
   types in `config.collectionScopedTypes` and set `Scope: "collection"` on their

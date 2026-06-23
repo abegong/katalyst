@@ -179,8 +179,9 @@ katalyst check-types list [--family <family>] [--json]
 katalyst check-types show <check-type> [--json]
 ```
 
-- `katalyst check-types list` — every check type grouped by family (objects,
-  markdown, filesystem): check type, purpose, required keys, optional keys.
+- `katalyst check-types list` — every check type grouped by family
+  (structuredObject, markdownBodyText, fileSystem, plainText): check type,
+  purpose, required keys, optional keys.
 - `katalyst check-types list --family <family>` — narrow the list to one family.
 - `katalyst check-types show <check-type>` — a docs-style readout for one check
   type: family context, purpose, full key table, example config, and the other

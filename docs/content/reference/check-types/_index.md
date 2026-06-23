@@ -11,51 +11,51 @@ aliases = ["/reference/rules/"]
 
 The check types `katalyst` runs against each item, grouped by family. These pages are generated from the checks registry, so they always match the shipped engine.
 
-## Object Check Types
+## Structured Object Check Types
 
-Object check types validate structured frontmatter fields using schema-backed checks.
+Structured-object check types validate structured frontmatter fields using schema-backed checks.
 
-- [Object Validation]({{< relref "objects/object.md" >}}) — Validate frontmatter metadata against a named JSON Schema from schemas:.
-- [Required Field]({{< relref "objects/required-field.md" >}}) — Require that a frontmatter field exists.
-- [Field Type]({{< relref "objects/field-type.md" >}}) — Require that a frontmatter field has a specific type.
-- [Field Enum]({{< relref "objects/field-enum.md" >}}) — Require that a field is one of a fixed set of values.
-- [Number Range]({{< relref "objects/number-range.md" >}}) — Constrain a numeric field to a minimum and/or maximum value.
-- [String Length]({{< relref "objects/string-length.md" >}}) — Constrain the minimum and/or maximum length of a string field.
+- [Field Enum]({{< relref "structured-object/field-enum.md" >}}) — Require that a field is one of a fixed set of values.
+- [Field Type]({{< relref "structured-object/field-type.md" >}}) — Require that a frontmatter field has a specific type.
+- [Number Range]({{< relref "structured-object/number-range.md" >}}) — Constrain a numeric field to a minimum and/or maximum value.
+- [Object Validation]({{< relref "structured-object/object.md" >}}) — Validate frontmatter metadata against a named JSON Schema from schemas:.
+- [Required Field]({{< relref "structured-object/required-field.md" >}}) — Require that a frontmatter field exists.
+- [String Length]({{< relref "structured-object/string-length.md" >}}) — Constrain the minimum and/or maximum length of a string field.
+- [Unique Field]({{< relref "structured-object/unique-field.md" >}}) — Require that no two items share a value for a frontmatter field.
 
-## Markdown Check Types
+## Markdown Body Text Check Types
 
-Markdown check types validate relationships between frontmatter metadata and markdown body content.
+Markdown body-text check types validate relationships between frontmatter metadata and markdown body content.
 
-- [Title Matches H1]({{< relref "markdown/title-matches-h1.md" >}}) — Require a frontmatter field to match the first H1 heading in the body.
-- [Requires H1]({{< relref "markdown/requires-h1.md" >}}) — Require at least one H1 heading in the markdown body.
-- [Single H1]({{< relref "markdown/single-h1.md" >}}) — Require that the markdown body contains at most one H1 heading.
-- [No Heading Level Jumps]({{< relref "markdown/no-heading-level-jumps.md" >}}) — Disallow jumps larger than one heading level (for example H1 -> H3).
-- [Required Section]({{< relref "markdown/required-section.md" >}}) — Require that a heading with specific text exists somewhere in the body.
-- [Code Fence Language Required]({{< relref "markdown/code-fence-language-required.md" >}}) — Require that opening fenced code blocks include a language tag.
+- [Code Fence Language Required]({{< relref "markdown-body-text/code-fence-language-required.md" >}}) — Require that opening fenced code blocks include a language tag.
+- [No Heading Level Jumps]({{< relref "markdown-body-text/no-heading-level-jumps.md" >}}) — Disallow jumps larger than one heading level (for example H1 -> H3).
+- [Required Section]({{< relref "markdown-body-text/required-section.md" >}}) — Require that a heading with specific text exists somewhere in the body.
+- [Requires H1]({{< relref "markdown-body-text/requires-h1.md" >}}) — Require at least one H1 heading in the markdown body.
+- [Single H1]({{< relref "markdown-body-text/single-h1.md" >}}) — Require that the markdown body contains at most one H1 heading.
+- [Title Matches H1]({{< relref "markdown-body-text/title-matches-h1.md" >}}) — Require a frontmatter field to match the first H1 heading in the body.
 
-## Filesystem Check Types
+## File System Check Types
 
-Filesystem check types validate filename and path conventions for markdown items.
+File-system check types validate filename and path conventions for items.
 
-- [Name Case]({{< relref "filesystem/name-case.md" >}}) — Require a name (or path segments) to follow a case style.
-- [Name Matches Field]({{< relref "filesystem/name-matches-field.md" >}}) — Require a name to equal a frontmatter field, optionally slugified.
-- [Name Affix]({{< relref "filesystem/name-affix.md" >}}) — Require a name to start with a prefix and/or end with a suffix.
-- [Path Charset]({{< relref "filesystem/path-charset.md" >}}) — Constrain the characters allowed in the item's path.
-- [Name Regex]({{< relref "filesystem/name-regex.md" >}}) — Require a name to match a regular expression (anchored).
-- [Name Length]({{< relref "filesystem/name-length.md" >}}) — Bound the character length of a name.
-- [Path Depth]({{< relref "filesystem/path-depth.md" >}}) — Bound directory nesting relative to the collection root.
-- [Parent Directory Matches Field]({{< relref "filesystem/parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
-- [Referenced Files Exist]({{< relref "filesystem/referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
-- [Unique Filename]({{< relref "filesystem/unique-filename.md" >}}) — Require that no two items in the collection share a basename.
-- [Unique Field]({{< relref "filesystem/unique-field.md" >}}) — Require that no two items share a value for a frontmatter field.
-- [Index File Required]({{< relref "filesystem/index-file-required.md" >}}) — Require that every directory containing items has an index file.
-- [Extension In]({{< relref "filesystem/extension-in.md" >}}) — Allow only specific file extensions.
-- [Parent Directory In]({{< relref "filesystem/parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
+- [Extension In]({{< relref "file-system/extension-in.md" >}}) — Allow only specific file extensions.
+- [Index File Required]({{< relref "file-system/index-file-required.md" >}}) — Require that every directory containing items has an index file.
+- [Name Affix]({{< relref "file-system/name-affix.md" >}}) — Require a name to start with a prefix and/or end with a suffix.
+- [Name Case]({{< relref "file-system/name-case.md" >}}) — Require a name (or path segments) to follow a case style.
+- [Name Length]({{< relref "file-system/name-length.md" >}}) — Bound the character length of a name.
+- [Name Matches Field]({{< relref "file-system/name-matches-field.md" >}}) — Require a name to equal a frontmatter field, optionally slugified.
+- [Name Regex]({{< relref "file-system/name-regex.md" >}}) — Require a name to match a regular expression (anchored).
+- [Parent Directory In]({{< relref "file-system/parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
+- [Parent Directory Matches Field]({{< relref "file-system/parent-dir-matches-field.md" >}}) — Require the parent directory name to equal a frontmatter field.
+- [Path Charset]({{< relref "file-system/path-charset.md" >}}) — Constrain the characters allowed in the item's path.
+- [Path Depth]({{< relref "file-system/path-depth.md" >}}) — Bound directory nesting relative to the collection root.
+- [Referenced Files Exist]({{< relref "file-system/referenced-files-exist.md" >}}) — Require path-valued frontmatter fields to resolve to real files.
+- [Unique Filename]({{< relref "file-system/unique-filename.md" >}}) — Require that no two items in the collection share a basename.
 
-## Text Check Types
+## Plain Text Check Types
 
-Text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.
+Plain-text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.
 
-- [Requires]({{< relref "text/requires.md" >}}) — Require a regular expression to appear in the body text.
-- [Forbids]({{< relref "text/forbids.md" >}}) — Forbid a regular expression from appearing in the body text.
-- [Denylist]({{< relref "text/denylist.md" >}}) — Forbid any of a list of literal substrings in the body text.
+- [Denylist]({{< relref "plain-text/denylist.md" >}}) — Forbid any of a list of literal substrings in the body text.
+- [Forbids]({{< relref "plain-text/forbids.md" >}}) — Forbid a regular expression from appearing in the body text.
+- [Requires]({{< relref "plain-text/requires.md" >}}) — Require a regular expression to appear in the body text.

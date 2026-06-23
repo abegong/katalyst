@@ -1,4 +1,4 @@
-package checks
+package checks_test
 
 import (
 	"go/ast"
@@ -6,6 +6,9 @@ import (
 	"go/token"
 	"strconv"
 	"testing"
+
+	"github.com/abegong/katalyst/internal/checks"
+	_ "github.com/abegong/katalyst/internal/checks/all" // populate the registry
 )
 
 // TestDescriptorParity is the no-orphan guarantee: every check type
@@ -17,7 +20,7 @@ func TestDescriptorParity(t *testing.T) {
 	dispatched := dispatchedKinds(t)
 
 	registered := map[string]bool{}
-	for _, d := range Descriptors() {
+	for _, d := range checks.Descriptors() {
 		k := string(d.CheckType)
 		if registered[k] {
 			t.Errorf("duplicate descriptor for kind %q", k)
@@ -41,11 +44,11 @@ func TestDescriptorParity(t *testing.T) {
 // the generator has everything it needs.
 func TestDescriptorMetadata(t *testing.T) {
 	families := map[string]bool{}
-	for _, f := range Families() {
+	for _, f := range checks.Families() {
 		families[f.ID] = true
 	}
 	seenSlug := map[string]bool{}
-	for _, d := range Descriptors() {
+	for _, d := range checks.Descriptors() {
 		if d.Family == "" || !families[d.Family] {
 			t.Errorf("kind %q has unknown family %q", d.CheckType, d.Family)
 		}

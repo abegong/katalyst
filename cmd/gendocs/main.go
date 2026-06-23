@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
@@ -49,14 +50,14 @@ func run() error {
 	}
 
 	for fi, fam := range families {
-		dir := filepath.Join(outDir, fam.ID)
+		dir := filepath.Join(outDir, fam.Slug)
 		ds := byFamily[fam.ID]
 		// Family landing page; weight orders families within the section.
 		if err := write(filepath.Join(dir, "_index.md"), familyIndex(fam, ds, (fi+1)*10)); err != nil {
 			return err
 		}
 		for di, d := range ds {
-			if err := write(filepath.Join(dir, d.Slug+".md"), checkTypePage(d, (di+1)*10)); err != nil {
+			if err := write(filepath.Join(dir, d.Slug+".md"), checkTypePage(d, fam, (di+1)*10)); err != nil {
 				return err
 			}
 		}
@@ -156,7 +157,7 @@ func sectionIndex(families []checks.Family, byFamily map[string][]checks.Descrip
 	for _, fam := range families {
 		fmt.Fprintf(&b, "\n## %s\n\n%s\n\n", fam.Title, fam.Intro)
 		for _, d := range byFamily[fam.ID] {
-			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}) — %s\n", d.Title, fam.ID, d.Slug, plain(d.Summary))
+			fmt.Fprintf(&b, "- [%s]({{< relref \"%s/%s.md\" >}}) — %s\n", d.Title, fam.Slug, d.Slug, plain(d.Summary))
 		}
 	}
 	return b.String()
@@ -164,7 +165,7 @@ func sectionIndex(families []checks.Family, byFamily map[string][]checks.Descrip
 
 func familyIndex(fam checks.Family, ds []checks.Descriptor, weight int) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "+++\ntitle = \"%s\"\nweight = %d\nbookCollapseSection = true\naliases = [\"/reference/rules/%s/\"]\n+++\n\n", fam.Title, weight, fam.ID)
+	fmt.Fprintf(&b, "+++\ntitle = \"%s\"\nweight = %d\nbookCollapseSection = true\naliases = [\"/reference/rules/%s/\"]\n+++\n\n", fam.Title, weight, fam.Slug)
 	fmt.Fprintln(&b, generatedNote)
 	fmt.Fprintf(&b, "\n%s\n\n", fam.Intro)
 	fmt.Fprint(&b, "Check types in this family:\n\n")
@@ -174,9 +175,9 @@ func familyIndex(fam checks.Family, ds []checks.Descriptor, weight int) string {
 	return b.String()
 }
 
-func checkTypePage(d checks.Descriptor, weight int) string {
+func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "+++\ntitle = \"%s\"\nweight = %d\naliases = [\"/reference/rules/%s/%s/\"]\n+++\n\n", d.Title, weight, d.Family, d.Slug)
+	fmt.Fprintf(&b, "+++\ntitle = \"%s\"\nweight = %d\naliases = [\"/reference/rules/%s/%s/\"]\n+++\n\n", d.Title, weight, fam.Slug, d.Slug)
 	fmt.Fprintln(&b, generatedNote)
 	fmt.Fprintf(&b, "\n## Check type ID\n\n`kind: %s`\n\n", d.CheckType)
 	if d.Scope == "collection" {

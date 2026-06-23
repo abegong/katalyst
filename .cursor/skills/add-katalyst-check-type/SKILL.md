@@ -11,13 +11,14 @@ Use this skill to implement a new check type in this repo.
 ## Quick Start
 
 1. Define the new check type and config payload in `internal/config/config.go`.
-2. Implement check behavior in `internal/checks/`.
-3. Wire check instantiation in `cmd/engine.go` (`checksFor`).
-4. Ensure write-path validation uses it via `cmd/write_validation.go`.
-5. Add unit + integration tests and fixtures.
-6. Register a `Descriptor` in `internal/checks/registry.go` and regenerate the
-   check-types reference with `make docs-gen`.
-7. Run validation commands and report results.
+2. Implement the check in its family package under `internal/checks/<family>/`:
+   one new file holding the struct, `Run`, its `Descriptor`, and an `init()`
+   that calls `checks.Register` (this *is* the CLI wiring and the docs source).
+3. Ensure write-path validation uses it via `cmd/write_validation.go` (usually
+   automatic — it shares `engine.checksFor`).
+4. Add unit + integration tests and fixtures.
+5. Regenerate the check-types reference with `make docs-gen`.
+6. Run validation commands and report results.
 
 ## Required Workflow
 
@@ -26,12 +27,11 @@ Copy this checklist and keep it updated:
 ```text
 Check Type Task Progress:
 - [ ] 1) Config model updated
-- [ ] 2) Check implementation added
-- [ ] 3) CLI wiring updated
-- [ ] 4) Tests added/updated
-- [ ] 5) Fixtures/readmes updated
-- [ ] 6) Descriptor registered + reference regenerated
-- [ ] 7) Verification commands passed
+- [ ] 2) Check file added (struct + Run + Descriptor + Register)
+- [ ] 3) Tests added/updated
+- [ ] 4) Fixtures/readmes updated
+- [ ] 5) Reference regenerated
+- [ ] 6) Verification commands passed
 ```
 
 ## 1) Config Model
@@ -52,27 +52,31 @@ Add/extend tests in `internal/config/config_test.go`:
 
 ## 2) Check Implementation
 
-Add a new check type in `internal/checks/`:
+Add one file in the check type's family package — `internal/checks/structuredobject/`,
+`markdownbodytext/`, `filesystem/`, or `plaintext/` — picking the family by the
+*source data* the check reads (not its scope). Pattern it on a sibling file:
 
-- Follow the existing `Run(ctx Context) []Violation` pattern.
-- Prefer returning a pointer-like `Path` (`/field`) and `Line` when known.
+- The struct plus a `Run(ctx checks.Context) []checks.Violation` method (or
+  `RunCollection(checks.CollectionContext)` for a collection-scoped check).
+- Prefer a pointer-like `Path` (`/field`) and a `Line` when known. Use
+  `checks.LookupLine` for the line, and shared helpers (`checks.MarkdownLines`,
+  the family's `common.go`) rather than re-deriving.
+- An `init()` calling `checks.Register(descriptor, build, buildColl)`: a per-item
+  check passes a `build` closure and `nil` for `buildColl`; a collection-scoped
+  check passes `nil` and a `buildColl` closure. The closure constructs the check
+  from a `config.CheckInstance`. (The `object` check is the exception — it
+  registers a descriptor with nil builders because the engine builds it specially
+  to compile a schema.)
 - Keep logic deterministic and side-effect free.
 
-Update `internal/checks/checks_test.go` with focused unit tests.
+This is also the CLI wiring: `engine.checksFor` builds every non-object check by
+registry lookup, so no `cmd/engine.go` edit is needed. Add focused unit tests in
+the family package's `_test` suite, using `internal/checks/checktest` helpers.
 
-## 3) CLI Wiring
+Ensure `cmd/write_validation.go` still validates via the same pipeline (it shares
+`engine.checksFor`, so this is usually automatic).
 
-Edit `cmd/engine.go` in `checksFor(...)`:
-
-- Map the new `config.CheckType` to the new `checks.*` implementation.
-- Preserve precedence behavior:
-  - `--schema` overrides object schema checks only.
-  - non-object checks always come from the collection.
-
-Ensure `cmd/write_validation.go` still uses the same check pipeline for
-`item add`/`item update` strict validation.
-
-## 4) Tests and Fixtures
+## 3) Tests and Fixtures
 
 Integration tests:
 
@@ -91,20 +95,20 @@ Follow `AGENTS.md` testing rules:
 - stdlib assertions only
 - `t.TempDir()` isolation
 
-## 5) Docs
+## 4) Docs
 
 The check-types reference is **generated**, not hand-written. Do not edit
-`docs/reference/check-types/` directly.
+`docs/content/reference/check-types/` directly.
 
-- Add a `Descriptor` for the new check type in `internal/checks/registry.go`:
-  check type, family (`objects`/`markdown`/`filesystem`), slug, title, one-line
-  summary, any configuration `Fields`, and a `ConfigExample` snippet.
-- Run `make docs-gen` to regenerate `docs/reference/check-types/`, and commit
-  the result.
+- The `Descriptor` lives in the check type's own file (step 2). Set its family
+  (`structuredObject`/`markdownBodyText`/`fileSystem`/`plainText`), slug, title,
+  one-line summary, any configuration `Fields`, and a `ConfigExample` snippet.
+- Run `make docs-gen` to regenerate `docs/content/reference/check-types/`, and
+  commit the result.
 - `registry_test.go` enforces parity between `normalizeCheck`'s switch and the
-  descriptors, so a missing `Descriptor` fails the build.
+  registered descriptors, so a missing `Descriptor` fails the build.
 
-## 6) Verify
+## 5) Verify
 
 Run:
 
