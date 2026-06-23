@@ -9,7 +9,7 @@ An **inspector** profiles content and returns *evidence*: counts and
 distributions, never recommendations. Inspectors are the descriptive dual of
 [checks]({{< relref "checks.md" >}}) - a check asserts a predicate and reports
 violations; an inspector reports the distribution that predicate would be tested
-against. They drive the [`inspect`]({{< relref "../reference/commands.md" >}})
+against. They drive the [`inspect`]({{< relref "../reference/cli.md" >}})
 command. For the per-inspector catalog see the [inspectors
 reference]({{< relref "../reference/inspectors/_index.md" >}}); this page is the
 model and the rationale behind it.

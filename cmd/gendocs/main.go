@@ -150,7 +150,7 @@ func inspectorsIndex(layers []inspect.Layer, byLayer map[string][]inspect.Descri
 	fmt.Fprint(&b, "Inspectors describe the shape of content and return evidence: counts and ")
 	fmt.Fprint(&b, "distributions, never recommendations. They are the descriptive dual of ")
 	fmt.Fprint(&b, "[check types]({{< relref \"../check-types/_index.md\" >}}) and drive the ")
-	fmt.Fprint(&b, "[`inspect`]({{< relref \"../commands.md\" >}}) command. They come in two layers: ")
+	fmt.Fprint(&b, "[`inspect`]({{< relref \"../cli.md\" >}}) command. They come in two layers: ")
 	fmt.Fprint(&b, "raw-source inspectors profile a store before configuration, collection ")
 	fmt.Fprint(&b, "inspectors profile a configured collection. These pages are generated from the ")
 	fmt.Fprint(&b, "inspector registry, so they always match the shipped engine.\n")

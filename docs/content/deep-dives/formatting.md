@@ -6,7 +6,7 @@ weight = 60
 # Frontmatter and fix
 
 How Katalyst parses a markdown file's frontmatter, the in-memory document that
-produces, and why [`fix`]({{< relref "../reference/commands.md" >}}) rewrites
+produces, and why [`fix`]({{< relref "../reference/cli.md" >}}) rewrites
 that frontmatter the opinionated way it does. The parsing and formatting live in
 `internal/frontmatter`.
 

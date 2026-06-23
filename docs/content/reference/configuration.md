@@ -168,7 +168,7 @@ pages:
   useExhaustiveVariants: false   # default
 ```
 
-**`when`** is a list of [`item list --filter`]({{< relref "commands.md" >}})
+**`when`** is a list of [`item list --filter`]({{< relref "cli.md#filter-predicates" >}})
 predicates (`field=value`, `field>=n`, `field=~regex`, `!field`, ...), evaluated
 against the item's frontmatter. All entries must hold (AND). Three shapes are
 accepted, the first two desugaring to the third:
