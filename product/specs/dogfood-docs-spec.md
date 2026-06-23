@@ -8,7 +8,11 @@
 > precondition, not a separate effort. This spec covers both as one change.
 > #40 (TOML/JSON frontmatter support) was the blocking gap; it has merged, so
 > katalyst can now read the docs' TOML frontmatter. Per-page-type enforcement
-> (filename casing, section structure) is deferred to #41.
+> is **partially** unblocked: #41's collection variants now let frontmatter-
+> distinguishable types diverge (the `content_page` weight rule ships in
+> `.katalyst/storage/local.yaml`), but types separable only by *path* — the
+> generated reference pages, `_index.md` filename casing — still wait on #41's
+> deferred path discrimination.
 
 ## Overview
 

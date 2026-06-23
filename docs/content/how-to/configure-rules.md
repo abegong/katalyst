@@ -99,9 +99,38 @@ checks:
     fix: '$1'
 ```
 
+## Apply different checks per page type
+
+When one collection holds more than one kind of item — say a Hugo content tree
+where section landing pages (`_index.md`, carrying `bookCollapseSection`) sit
+beside ordinary content pages — use **variants** to diverge the checks. Each
+variant's `when` is a metadata predicate (the same grammar as
+[`item list --filter`]({{< relref "../reference/commands.md" >}})); an item runs
+the base checks plus the first matching variant's.
+
+```yaml
+pages:
+  path: docs/content
+  pattern: "**/*.md"
+  schema: page                    # base: every page needs a title
+  variants:
+    # Content pages must declare their sort weight; section landing pages
+    # (for which this `when` is false) are exempt and run the base alone.
+    - when: "!bookCollapseSection"
+      checks:
+        - kind: object_required_field
+          field: weight
+```
+
+Put a check in a variant — not the base — exactly when some page type must
+*skip* it. To require that every item match some variant, add
+`useExhaustiveVariants: true`; an unmatched item then fails with `matches no
+variant`. Discrimination is by frontmatter only; selecting items by path is not
+supported yet.
+
 ## See also
 
 - [Add a schema]({{< relref "add-a-schema.md" >}}) to validate frontmatter
   shape.
 - [Configuration reference]({{< relref "../reference/configuration.md" >}})
-  for every key.
+  for every key, including [`variants`]({{< relref "../reference/configuration.md" >}}#variants).

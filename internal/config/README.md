@@ -102,6 +102,23 @@ Markdown and filesystem checks are *not* subject to this precedence: they
 always come from the collection, since they describe the item's place in the
 project rather than its object shape.
 
+## Why variants discriminate by metadata, not path
+
+A collection's `variants:` let it run extra checks on a subset of items, chosen
+by the item's metadata. The discriminator (`when`) reuses the `item list
+--filter` predicate grammar (`internal/query`), so `config` validates each
+predicate at load via `query.ParseFilter` — a bad expression fails fast, located
+as `collection "x": variants[i]`. A variant's `schema:` folds into a leading
+object check exactly like a collection's, through the shared `buildChecks`, so
+the engine compiles base and variant through one path.
+
+The discriminator is metadata, not a glob, on purpose: metadata is the one
+property every item yields on every StorageType (frontmatter for a file, columns
+for a future row), so routing stays portable and the engine never imports
+`internal/storage`. Selecting by *path* is a storage-type-scoped condition,
+deferred. `config` imports `internal/query` (which imports no `config`, so no
+cycle); the actual matching happens in the engine at check time.
+
 ## Why unmatched files are errors
 
 A file that sits inside a collection's directory but does not match its

@@ -122,6 +122,15 @@ func splitOp(s string) (field string, o op, rhs string, ok bool) {
 	return "", 0, "", false
 }
 
+// Matches evaluates the predicate against an item's metadata map. It is the
+// exported, per-item evaluator reused by collection-variant discriminators
+// (cmd/engine.go) and by config validation, not only by item list. The
+// typeMismatch argument behaves as in Apply: "skip" reports a non-match on an
+// incomparable comparison, "error" returns a *TypeMismatchError.
+func (p Predicate) Matches(meta map[string]any, typeMismatch string) (bool, error) {
+	return p.match(meta, typeMismatch)
+}
+
 // match evaluates the predicate against an item's frontmatter. A missing
 // field never matches a comparison (only opExists/opAbsent observe absence).
 func (p Predicate) match(meta map[string]any, typeMismatch string) (bool, error) {

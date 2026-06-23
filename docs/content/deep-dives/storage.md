@@ -112,6 +112,17 @@ error (see `internal/config/README.md`). GX's `self_check` — "here are your
 collections, some examples, and the files that matched nothing" — is the
 template for a future `doctor` / `explain` that diagnoses a definition's mapping.
 
+## Variants route checks, not membership
+
+A collection may run different checks on different items via
+[variants]({{< relref "../reference/configuration.md" >}}#variants), but that is
+a *check-engine* concern, not a storage one. A variant's discriminator is a
+predicate over an item's **metadata** — portable across every StorageType, since
+each yields a metadata map (frontmatter for a file, columns for a row). It never
+touches the seam: membership, `Unmatched`, and `Reference` stay governed by the
+definition's `pattern`. Discriminating by *path* would be a storage-type-scoped
+condition; it is deferred precisely to keep the seam closed for now.
+
 ## Coordinates are the selector
 
 GX's `group_names` *are* the addressing grammar: a batch is addressed by its
