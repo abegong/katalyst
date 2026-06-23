@@ -30,16 +30,7 @@ safely, check that constraints hold&lt;/em&gt; — are essentially the same.&lt;
 &lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary — each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id="tier-1--filesystem"&gt;Tier 1 — Filesystem&lt;a class="anchor" href="#tier-1--filesystem"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;</description></item><item><title>Connectors</title><link>https://abegong.github.io/katalyst/deep-dives/connectors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/connectors/</guid><description>&lt;h1 id="connectors"&gt;Connectors&lt;a class="anchor" href="#connectors"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;blockquote class='book-hint '&gt;
-&lt;p&gt;&lt;strong&gt;Status: future — not shipped.&lt;/strong&gt; Captured now because it shapes the seams
-the current code leaves open. Katalyst today ships a single &lt;em&gt;trivial&lt;/em&gt;
-connector (one flat directory, &lt;code&gt;*.md&lt;/code&gt; files, filename stem = item id);
-everything here is what that abstraction grows into.&lt;/p&gt;
-&lt;/blockquote&gt;&lt;h2 id="what-a-connector-is"&gt;What a connector is&lt;a class="anchor" href="#what-a-connector-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;A &lt;strong&gt;connector&lt;/strong&gt; is the two-way mapping between a backend store and the
-Katalyst domain model. It answers: &lt;em&gt;what collections and items does this
-store contain, and where does each one live?&lt;/em&gt; — in both directions.&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;What &lt;code&gt;katalyst&lt;/code&gt; is &lt;em&gt;about&lt;/em&gt;: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.&lt;/p&gt;
 &lt;p&gt;This page is katalyst-specific. For the general, tool-agnostic model these
@@ -51,7 +42,22 @@ tutorial&lt;/a&gt; and the
 For &lt;em&gt;why&lt;/em&gt; specific design choices were made, see the per-package &lt;code&gt;README.md&lt;/code&gt;
 files under &lt;code&gt;internal/&lt;/code&gt; (for example &lt;code&gt;internal/config&lt;/code&gt;) and the
 &lt;a href="https://abegong.github.io/katalyst/reference/commands/"&gt;commands&lt;/a&gt; reference. For
-&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;em&gt;how the code is laid out&lt;/em&gt;, see the repo&amp;rsquo;s &lt;code&gt;AGENTS.md&lt;/code&gt; files.&lt;/p&gt;</description></item><item><title>Storage layer</title><link>https://abegong.github.io/katalyst/deep-dives/storage/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/storage/</guid><description>&lt;h1 id="storage-layer"&gt;Storage layer&lt;a class="anchor" href="#storage-layer"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;blockquote class='book-hint '&gt;
+&lt;p&gt;&lt;strong&gt;Status: partly shipped.&lt;/strong&gt; The seam and the config model exist
+(&lt;code&gt;internal/storage&lt;/code&gt;, storage instances under &lt;code&gt;.katalyst/storage/&lt;/code&gt;); the
+richer mapping (multi-coordinate templates, inferred mode, non-filesystem
+backends) is still ahead. This page describes the whole arc, and notes what
+is built versus planned.&lt;/p&gt;
+&lt;/blockquote&gt;&lt;h2 id="what-the-storage-layer-is"&gt;What the storage layer is&lt;a class="anchor" href="#what-the-storage-layer-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;The &lt;strong&gt;storage layer&lt;/strong&gt; is the two-way mapping between a backend store and the
+Katalyst domain model. It answers: &lt;em&gt;what collections and items does this store
+contain, and where does each one live?&lt;/em&gt; — in both directions. It is Katalyst&amp;rsquo;s
+realization of the &lt;strong&gt;data interface&lt;/strong&gt; concept from the
+&lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;: the filesystem is one
+backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
+The first real stress test will be &lt;strong&gt;SQLite&lt;/strong&gt;, because it is the first backend
+that forces the granularity question below.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
 apart. Knowing which grammar a command belongs to tells you how to invoke it,
 what its selector means, and — when you add a command — where it goes.&lt;/p&gt;

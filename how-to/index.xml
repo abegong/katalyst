@@ -20,11 +20,10 @@ and the loop stays debuggable.&lt;/p&gt;</description></item><item><title>Config
 &lt;p&gt;You have a directory of markdown files and want Katalyst to enforce checks on
 them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
 &lt;h2 id="1-point-a-collection-at-the-directory"&gt;1. Point a collection at the directory&lt;a class="anchor" href="#1-point-a-collection-at-the-directory"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;Create a collection file under &lt;code&gt;.katalyst/collections/&lt;/code&gt;. Its filename stem is
-the collection name; &lt;code&gt;path&lt;/code&gt; is the directory relative to the repo root:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# .katalyst/collections/posts.yaml&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;path&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;content/posts&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;If you omit &lt;code&gt;path&lt;/code&gt;, the directory defaults to the collection name. If you
-omit &lt;code&gt;pattern&lt;/code&gt;, it defaults to &lt;code&gt;*.md&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;Collections are declared inside a storage instance. In a fresh project that is
+&lt;code&gt;.katalyst/storage/local.yaml&lt;/code&gt; (the default filesystem instance). Add the
+collection under &lt;code&gt;collections:&lt;/code&gt;, keyed by its name; &lt;code&gt;path&lt;/code&gt; is the directory
+relative to the instance root:&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter —
 required keys, types, ranges. This guide registers a schema and binds it to a
 collection.&lt;/p&gt;
