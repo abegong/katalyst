@@ -132,6 +132,9 @@ const (
 	CheckFilesystemUniqueFilename      CheckType = "filesystem_unique_filename"
 	CheckFilesystemUniqueField         CheckType = "filesystem_unique_field"
 	CheckFilesystemIndexFileRequired   CheckType = "filesystem_index_file_required"
+	CheckTextRequires                  CheckType = "text_requires"
+	CheckTextForbids                   CheckType = "text_forbids"
+	CheckTextDenylist                  CheckType = "text_denylist"
 	defaultMarkdownTitleField                    = "title"
 	defaultFilesystemSlugField                   = "slug"
 )
@@ -165,6 +168,12 @@ type CheckInstance struct {
 	MaxInt    *int
 	Fields    []string
 	Name      string
+	// Match is the multi-span quantifier for text_requires ("any" or "all").
+	Match string
+	// Select is the line-filter regex for target "matched-lines" (text rules).
+	Select string
+	// Fix is the optional replacement template for text_forbids.
+	Fix string
 }
 
 // Collection is a named group of items backed by a directory of files.
@@ -280,6 +289,9 @@ type rawCheck struct {
 	Pattern   string   `yaml:"pattern"`
 	Fields    []string `yaml:"fields"`
 	Name      string   `yaml:"name"`
+	Match     string   `yaml:"match"`
+	Select    string   `yaml:"select"`
+	Fix       string   `yaml:"fix"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -788,6 +800,40 @@ func validateTarget(checkType, target string) error {
 	return fmt.Errorf("%s: unknown target %q", checkType, target)
 }
 
+// textTargetNames are the span selectors a text rule accepts. Empty defaults
+// to "body". These are distinct from the filesystem path targets.
+var textTargetNames = map[string]bool{
+	"body": true, "line": true, "first-line": true, "matched-lines": true,
+}
+
+// validateTextTarget allows an empty target (defaults to body) and rejects any
+// non-empty value outside the text span set.
+func validateTextTarget(checkType, target string) error {
+	if target == "" || textTargetNames[target] {
+		return nil
+	}
+	return fmt.Errorf("%s: unknown target %q", checkType, target)
+}
+
+// validateSelect enforces the matched-lines/select pairing: "select" is
+// required for target "matched-lines" and rejected for any other target. When
+// present it must be a valid regex.
+func validateSelect(checkType, target, sel string) error {
+	if target == "matched-lines" {
+		if sel == "" {
+			return fmt.Errorf(`%s: target "matched-lines" requires "select"`, checkType)
+		}
+		if _, err := regexp.Compile(sel); err != nil {
+			return fmt.Errorf("%s: invalid select %q: %w", checkType, sel, err)
+		}
+		return nil
+	}
+	if sel != "" {
+		return fmt.Errorf(`%s: "select" is only valid with target "matched-lines"`, checkType)
+	}
+	return nil
+}
+
 func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, error) {
 	checkType := CheckType(strings.TrimSpace(raw.Kind))
 	switch checkType {
@@ -957,6 +1003,67 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 		return CheckInstance{Type: checkType, Field: raw.Field}, nil
 	case CheckFilesystemIndexFileRequired:
 		return CheckInstance{Type: checkType, Name: raw.Name}, nil
+	case CheckTextRequires:
+		if raw.Pattern == "" {
+			return CheckInstance{}, errors.New(`text_requires requires "pattern"`)
+		}
+		if _, err := regexp.Compile(raw.Pattern); err != nil {
+			return CheckInstance{}, fmt.Errorf("text_requires: invalid pattern %q: %w", raw.Pattern, err)
+		}
+		match := raw.Match
+		if match == "" {
+			match = "any"
+		}
+		if match != "any" && match != "all" {
+			return CheckInstance{}, fmt.Errorf(`text_requires: "match" must be any or all (got %q)`, raw.Match)
+		}
+		if raw.Fix != "" {
+			return CheckInstance{}, errors.New(`text_requires does not support "fix"`)
+		}
+		if err := validateTextTarget("text_requires", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		if err := validateSelect("text_requires", raw.Target, raw.Select); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target, Match: match, Select: raw.Select}, nil
+	case CheckTextForbids:
+		if raw.Pattern == "" {
+			return CheckInstance{}, errors.New(`text_forbids requires "pattern"`)
+		}
+		if _, err := regexp.Compile(raw.Pattern); err != nil {
+			return CheckInstance{}, fmt.Errorf("text_forbids: invalid pattern %q: %w", raw.Pattern, err)
+		}
+		if raw.Match != "" {
+			return CheckInstance{}, errors.New(`text_forbids does not support "match"`)
+		}
+		if err := validateTextTarget("text_forbids", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		if err := validateSelect("text_forbids", raw.Target, raw.Select); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target, Select: raw.Select, Fix: raw.Fix}, nil
+	case CheckTextDenylist:
+		if len(raw.Values) == 0 {
+			return CheckInstance{}, errors.New(`text_denylist requires "values"`)
+		}
+		if raw.Pattern != "" {
+			return CheckInstance{}, errors.New(`text_denylist does not support "pattern"`)
+		}
+		if raw.Match != "" {
+			return CheckInstance{}, errors.New(`text_denylist does not support "match"`)
+		}
+		if raw.Fix != "" {
+			return CheckInstance{}, errors.New(`text_denylist does not support "fix"`)
+		}
+		if err := validateTextTarget("text_denylist", raw.Target); err != nil {
+			return CheckInstance{}, err
+		}
+		if err := validateSelect("text_denylist", raw.Target, raw.Select); err != nil {
+			return CheckInstance{}, err
+		}
+		return CheckInstance{Type: checkType, Values: raw.Values, Target: raw.Target, Select: raw.Select}, nil
 	case "":
 		return CheckInstance{}, errors.New(`check type is required`)
 	default:

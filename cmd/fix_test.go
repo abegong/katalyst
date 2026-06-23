@@ -23,6 +23,81 @@ func setupFixRepo(t *testing.T) string {
 	return dir
 }
 
+func setupFixRepoWith(t *testing.T, notesConfig string) string {
+	t.Helper()
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": storageLocal(map[string]string{"notes": notesConfig}),
+	})
+	chdir(t, dir)
+	return dir
+}
+
+func TestFix_textForbidsFix_rewritesOnlyMatch(t *testing.T) {
+	dir := setupFixRepoWith(t, `path: notes
+checks:
+  - kind: text_forbids
+    target: first-line
+    pattern: '\.(\s*)$'
+    fix: '$1'
+`)
+	p := filepath.Join(dir, "notes/doc.md")
+	mustWrite(t, p, "---\nt: 1\n---\n# Title.\nkeep this.\n")
+
+	if _, _, err := runRoot(t, "fix", "notes/doc"); err != nil {
+		t.Fatalf("fix: %v", err)
+	}
+	got, _ := os.ReadFile(p)
+	// First line loses its period; the later "keep this." line is untouched.
+	want := "---\nt: 1\n---\n# Title\nkeep this.\n"
+	if string(got) != want {
+		t.Errorf("after fix:\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestFix_textForbidsFix_badTemplateFails(t *testing.T) {
+	dir := setupFixRepoWith(t, `path: notes
+checks:
+  - kind: text_forbids
+    pattern: TODO
+    fix: TODO-DONE
+`)
+	p := filepath.Join(dir, "notes/doc.md")
+	mustWrite(t, p, "---\nt: 1\n---\nhas TODO here\n")
+
+	_, stderr, err := runRoot(t, "fix", "notes/doc")
+	if err == nil {
+		t.Fatal("expected fix to fail on a template that does not resolve the violation")
+	}
+	if !strings.Contains(stderr, "fix did not resolve the violation") {
+		t.Errorf("expected re-check failure message, got stderr: %q", stderr)
+	}
+	got, _ := os.ReadFile(p)
+	if !strings.Contains(string(got), "has TODO here") {
+		t.Errorf("file must be untouched on failure, got %q", got)
+	}
+}
+
+func TestFix_textForbidsWithoutFix_preservesBody(t *testing.T) {
+	dir := setupFixRepoWith(t, `path: notes
+checks:
+  - kind: text_forbids
+    pattern: TODO
+`)
+	p := filepath.Join(dir, "notes/doc.md")
+	mustWrite(t, p, "---\nzebra: 1\napple: 2\n---\n# Body TODO\nkeep\n")
+
+	if _, _, err := runRoot(t, "fix", "notes/doc"); err != nil {
+		t.Fatalf("fix: %v", err)
+	}
+	got, _ := os.ReadFile(p)
+	// Frontmatter is still canonicalized; the body (TODO and all) is verbatim.
+	want := "---\napple: 2\nzebra: 1\n---\n# Body TODO\nkeep\n"
+	if string(got) != want {
+		t.Errorf("after fix:\n got: %q\nwant: %q", got, want)
+	}
+}
+
 func TestFix_normalizesAndPreservesBody(t *testing.T) {
 	dir := setupFixRepo(t)
 	p := filepath.Join(dir, "notes/doc.md")

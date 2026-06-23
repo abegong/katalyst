@@ -70,6 +70,11 @@ func Families() []Family {
 			Title: "Filesystem Check Types",
 			Intro: "Filesystem check types validate filename and path conventions for markdown items.",
 		},
+		{
+			ID:    "text",
+			Title: "Text Check Types",
+			Intro: "Text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.",
+		},
 	}
 }
 
@@ -502,6 +507,64 @@ collections:
     checks:
       - kind: filesystem_parent_dir_in
         values: [books, people]`,
+		},
+		// --- text family ---
+		{
+			CheckType: config.CheckTextRequires,
+			Family:    "text",
+			Slug:      "requires",
+			Title:     "Requires",
+			Summary:   "Require a regular expression to appear in the body text.",
+			Fields: []Field{
+				{Name: "pattern", Required: true, Desc: "Go regular expression, matched unanchored (appears somewhere in the span)."},
+				{Name: "target", Required: false, Default: "body", Desc: "Span selector: body, line, first-line, or matched-lines."},
+				{Name: "select", Required: false, Desc: "Line-filter regex; required for and only valid with target matched-lines."},
+				{Name: "match", Required: false, Default: "any", Desc: "For multi-span targets: any (at least one span matches) or all (every span matches)."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: text_requires
+        pattern: Sources`,
+		},
+		{
+			CheckType: config.CheckTextForbids,
+			Family:    "text",
+			Slug:      "forbids",
+			Title:     "Forbids",
+			Summary:   "Forbid a regular expression from appearing in the body text.",
+			Fields: []Field{
+				{Name: "pattern", Required: true, Desc: "Go regular expression, matched unanchored."},
+				{Name: "target", Required: false, Default: "body", Desc: "Span selector: body, line, first-line, or matched-lines."},
+				{Name: "select", Required: false, Desc: "Line-filter regex; required for and only valid with target matched-lines."},
+				{Name: "fix", Required: false, Desc: "Optional replacement template (regexp capture syntax) applied to the matched text by the fix command."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: text_forbids
+        target: line
+        pattern: '\bTODO\b'`,
+		},
+		{
+			CheckType: config.CheckTextDenylist,
+			Family:    "text",
+			Slug:      "denylist",
+			Title:     "Denylist",
+			Summary:   "Forbid any of a list of literal substrings in the body text.",
+			Fields: []Field{
+				{Name: "values", Required: true, Desc: "Literal substrings to forbid; regex metacharacters are inert."},
+				{Name: "target", Required: false, Default: "body", Desc: "Span selector: body, line, first-line, or matched-lines."},
+				{Name: "select", Required: false, Desc: "Line-filter regex; required for and only valid with target matched-lines."},
+			},
+			ConfigExample: `collections:
+  notes:
+    path: notes
+    checks:
+      - kind: text_denylist
+        values: [TODO, FIXME, XXX]`,
 		},
 	}
 }

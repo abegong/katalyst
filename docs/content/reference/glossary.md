@@ -26,7 +26,9 @@ how each term maps onto today's code is documented in the per-package
 | **Check instance** | One configured check attached to a collection: a check type plus its arguments (one YAML object under `checks:`). It runs against each item (object, markdown, or filesystem family). |
 | **Check** | Shorthand for a check instance when context is unambiguous. |
 | **Collection-scoped check** | A check type that runs once per collection over all its items (e.g. `filesystem_unique_filename`), rather than per item. It re-scans the full collection even under a single-item selector. |
-| **Target** | The slice of a path a filesystem name/path check type tests: `filename`, `filename-ext`, `parent-dir`, or `path-segments` (every directory segment plus the basename). |
+| **Target** | The slice of a path a filesystem name/path check type tests: `filename`, `filename-ext`, `parent-dir`, or `path-segments` (every directory segment plus the basename). For a text rule, the slice of body it tests — see Span. |
+| **Text rule** | A `text_*` check (`text_requires`, `text_forbids`, `text_denylist`) that tests the body as raw text — a regex or a literal denylist — independent of markdown structure. Applies to plain-text items too. |
+| **Span** | The slice of body text a text rule is evaluated against, chosen by its `target`: the whole `body`, each `line`, the `first-line`, or `matched-lines` (lines matching a `select` regex). |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
 | **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
 | **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |

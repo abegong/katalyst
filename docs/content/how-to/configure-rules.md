@@ -61,6 +61,44 @@ Each item prints `OK` or a `path:line: /pointer: message` violation. Files
 in `content/posts` that do not match the pattern are reported as errors, so
 nothing is silently skipped.
 
+## Lint the body as text
+
+The checks above read frontmatter and filenames. To lint the **body** itself —
+as raw text, regardless of markdown structure — use the `text_*` rules. Each
+takes a regex `pattern` (or a list of literal `values`) and an optional `target`
+selecting which slice of the body to test (`body`, `line`, `first-line`,
+`matched-lines`):
+
+```yaml
+checks:
+  # No line may contain "TODO".
+  - kind: text_forbids
+    target: line
+    pattern: '\bTODO\b'
+  # The body must mention "Sources" somewhere.
+  - kind: text_requires
+    pattern: Sources
+  # Ban a set of literal markers (regex metacharacters are inert).
+  - kind: text_denylist
+    values: [FIXME, XXX]
+```
+
+Because text rules read only the body, they also lint **plain-text items** — a
+`.txt` file, or a markdown file with no frontmatter — so a collection with
+`pattern: "*.txt"` works the same way.
+
+A `text_forbids` rule may declare a `fix`: a replacement template (`$1`,
+`${name}` capture syntax) applied to the matched text by `katalyst fix`. This
+one drops a trailing period from the first body line:
+
+```yaml
+checks:
+  - kind: text_forbids
+    target: first-line
+    pattern: '\.(\s*)$'
+    fix: '$1'
+```
+
 ## See also
 
 - [Add a schema]({{< relref "add-a-schema.md" >}}) to validate frontmatter

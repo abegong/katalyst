@@ -504,6 +504,102 @@ func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
 	}
 }
 
+func TestLoad_parsesTextChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+checks:
+  - kind: text_requires
+    pattern: Sources
+  - kind: text_requires
+    target: line
+    pattern: x
+    match: all
+  - kind: text_forbids
+    target: matched-lines
+    select: '^-'
+    pattern: '\bTODO\b'
+    fix: ''
+  - kind: text_denylist
+    values: [TODO, FIXME]
+`}),
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	notes, _ := cfg.Collection("notes")
+	got := notes.Checks
+	if len(got) != 4 {
+		t.Fatalf("expected 4 checks, got %d", len(got))
+	}
+	if got[0].Type != config.CheckTextRequires || got[0].Match != "any" {
+		t.Fatalf("check[0] = %+v, want text_requires default match any", got[0])
+	}
+	if got[1].Match != "all" || got[1].Target != "line" {
+		t.Fatalf("check[1] = %+v, want match all target line", got[1])
+	}
+	if got[2].Type != config.CheckTextForbids || got[2].Select != "^-" {
+		t.Fatalf("check[2] = %+v, want text_forbids select ^-", got[2])
+	}
+	if got[3].Type != config.CheckTextDenylist || len(got[3].Values) != 2 {
+		t.Fatalf("check[3] = %+v, want text_denylist with 2 values", got[3])
+	}
+}
+
+func TestLoad_rejectsInvalidTextCheckConfig(t *testing.T) {
+	cases := map[string]struct{ checks, want string }{
+		"requires needs pattern": {
+			"  - kind: text_requires\n", `text_requires requires "pattern"`,
+		},
+		"requires bad pattern": {
+			"  - kind: text_requires\n    pattern: '['\n", "invalid pattern",
+		},
+		"requires bad match": {
+			"  - kind: text_requires\n    pattern: x\n    match: some\n", `"match" must be any or all`,
+		},
+		"requires rejects fix": {
+			"  - kind: text_requires\n    pattern: x\n    fix: y\n", `does not support "fix"`,
+		},
+		"forbids needs pattern": {
+			"  - kind: text_forbids\n", `text_forbids requires "pattern"`,
+		},
+		"forbids rejects match": {
+			"  - kind: text_forbids\n    pattern: x\n    match: any\n", `does not support "match"`,
+		},
+		"denylist needs values": {
+			"  - kind: text_denylist\n", `text_denylist requires "values"`,
+		},
+		"denylist rejects fix": {
+			"  - kind: text_denylist\n    values: [x]\n    fix: y\n", `does not support "fix"`,
+		},
+		"unknown target": {
+			"  - kind: text_forbids\n    pattern: x\n    target: nope\n", "unknown target",
+		},
+		"select without matched-lines": {
+			"  - kind: text_forbids\n    pattern: x\n    select: '^-'\n", `only valid with target "matched-lines"`,
+		},
+		"matched-lines without select": {
+			"  - kind: text_forbids\n    pattern: x\n    target: matched-lines\n", `requires "select"`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeProject(t, dir, map[string]string{
+				"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
+			})
+			_, err := config.Load(dir)
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected error containing %q, got: %v", tc.want, err)
+			}
+		})
+	}
+}
+
 func TestLoad_explicitDiscovery_readsDefs(t *testing.T) {
 	// In explicit mode, the storage directory scan is ignored and the inline
 	// defs map in config.yaml is authoritative.

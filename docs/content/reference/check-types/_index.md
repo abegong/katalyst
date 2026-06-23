@@ -51,3 +51,11 @@ Filesystem check types validate filename and path conventions for markdown items
 - [Index File Required]({{< relref "filesystem/index-file-required.md" >}}) — Require that every directory containing items has an index file.
 - [Extension In]({{< relref "filesystem/extension-in.md" >}}) — Allow only specific file extensions.
 - [Parent Directory In]({{< relref "filesystem/parent-dir-in.md" >}}) — Require that the file's parent directory name is in an allowed set.
+
+## Text Check Types
+
+Text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.
+
+- [Requires]({{< relref "text/requires.md" >}}) — Require a regular expression to appear in the body text.
+- [Forbids]({{< relref "text/forbids.md" >}}) — Forbid a regular expression from appearing in the body text.
+- [Denylist]({{< relref "text/denylist.md" >}}) — Forbid any of a list of literal substrings in the body text.

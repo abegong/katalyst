@@ -111,11 +111,11 @@ func checkItem(out, errOut io.Writer, e *engine, item project.Item) (bool, error
 	if err != nil {
 		return false, err
 	}
-	if !doc.HasFrontmatter {
-		fmt.Fprintf(errOut, "%s: no frontmatter found\n", item.Path)
-		return false, nil
-	}
 
+	// A frontmatter-less file is not rejected outright: the configured checks
+	// run against it (text/filesystem rules lint the body and path; object
+	// checks surface their own "missing field" violations against the nil
+	// metadata).
 	checkList, err := e.checksFor(item.Collection, doc.Meta)
 	if err != nil {
 		return false, err
@@ -157,9 +157,6 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 	doc, err := parseItem(item.Path)
 	if err != nil {
 		return 0, err
-	}
-	if !doc.HasFrontmatter {
-		return 1, nil
 	}
 	checkList, err := e.checksFor(c, doc.Meta)
 	if err != nil {

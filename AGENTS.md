@@ -127,6 +127,16 @@ you add a fixture.
   Targets that span directories (`path-segments`, `path_depth`, `path_charset`)
   resolve relative to `Context.CollectionRoot`, populated by the per-item check
   pass — don't assume `FilePath` alone is enough.
+- **Text check types** (`text_requires`/`text_forbids`/`text_denylist`) lint the
+  body as raw text over a **span selector** (`target`:
+  `body`/`line`/`first-line`/`matched-lines`), sharing `textSpans` in
+  `internal/checks/text.go`. Their regex is compiled **unanchored** — the
+  deliberate divergence from `filesystem_name_regex`'s `^…$`. `text_forbids` may
+  carry an opt-in `fix` template, applied to the body by `cmd/fix.go`, which then
+  re-checks its own work; this is the one place `fix` rewrites the body rather
+  than only reformatting frontmatter. Because text rules read only the body,
+  `check` runs every configured check on frontmatter-less items too (no
+  "no frontmatter" rejection).
 - **Collection-scoped check types** implement `checks.CollectionCheck`
   (`RunCollection(CollectionContext)`), not `Check`. They are dispatched in
   `engine.collectionChecksFor` and run by a second pass in `cmd/check.go` that

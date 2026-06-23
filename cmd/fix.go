@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +43,7 @@ printed and the command exits with status 1. Use this in CI.`,
 
 			changed := false
 			for _, item := range res.Items {
-				didChange, err := formatOne(item.Path, checkOnly)
+				didChange, err := fixOne(item.Path, item.Collection, checkOnly)
 				if err != nil {
 					fmt.Fprintf(cmd.ErrOrStderr(), "%s: %v\n", item.Path, err)
 					return &exitError{code: exitValidationFail}
@@ -62,14 +65,20 @@ printed and the command exits with status 1. Use this in CI.`,
 	return c
 }
 
-// formatOne returns whether path's content would change. When check is
-// false, the file is rewritten in place if its formatted form differs.
-func formatOne(path string, check bool) (changed bool, err error) {
+// fixOne returns whether path's content would change. It first applies any
+// opted-in text_forbids body fixes for the item's collection, then formats the
+// frontmatter. When check is false, the file is rewritten in place if the
+// result differs.
+func fixOne(path string, c config.Collection, check bool) (changed bool, err error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return false, err
 	}
-	formatted, err := frontmatter.Format(src)
+	fixed, err := applyTextFixes(src, c)
+	if err != nil {
+		return false, err
+	}
+	formatted, err := frontmatter.Format(fixed)
 	if err != nil {
 		return false, err
 	}
@@ -96,6 +105,55 @@ func formatOne(path string, check bool) (changed bool, err error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// applyTextFixes rewrites the body with the collection's opted-in text_forbids
+// fixes, then re-checks its own work: if a fix leaves the rule still violated
+// (a bad template), it fails rather than writing a still-broken file. Files in
+// collections with no text fixes are returned untouched.
+func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
+	fixers := textFixers(c)
+	if len(fixers) == 0 {
+		return src, nil
+	}
+	doc, err := frontmatter.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+	body := doc.Body
+	for _, f := range fixers {
+		body = f.ApplyFix(body)
+	}
+	rechecked := &frontmatter.Document{Body: body, BodyLine: doc.BodyLine}
+	for _, f := range fixers {
+		if len(f.Run(checks.Context{Doc: rechecked})) > 0 {
+			return nil, fmt.Errorf("fix did not resolve the violation for /%s/", f.Pattern)
+		}
+	}
+	// Body is a verbatim tail of src, so everything before it is the prefix.
+	prefix := src[:len(src)-len(doc.Body)]
+	out := make([]byte, 0, len(prefix)+len(body))
+	out = append(out, prefix...)
+	out = append(out, body...)
+	return out, nil
+}
+
+// textFixers builds the fixable text_forbids checks configured for a
+// collection (those with a non-empty fix template).
+func textFixers(c config.Collection) []checks.TextForbids {
+	var out []checks.TextForbids
+	for _, ch := range c.Checks {
+		if ch.Type == config.CheckTextForbids && ch.Fix != "" {
+			out = append(out, checks.TextForbids{
+				Re:      regexp.MustCompile(ch.Pattern),
+				Pattern: ch.Pattern,
+				Target:  ch.Target,
+				Select:  compileSelect(ch.Select),
+				Fix:     ch.Fix,
+			})
+		}
+	}
+	return out
 }
 
 // filepathDir returns the directory of path, defaulting to "." when path
