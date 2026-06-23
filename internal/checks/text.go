@@ -123,6 +123,40 @@ func (t TextForbids) Run(ctx Context) []Violation {
 	return out
 }
 
+// ApplyFix returns body with the forbidden pattern replaced by the rule's fix
+// template (regexp capture syntax) across its selected spans. It replaces only
+// matched substrings, never whole spans; a rule with no fix returns body
+// unchanged.
+func (t TextForbids) ApplyFix(body []byte) []byte {
+	if t.Fix == "" {
+		return body
+	}
+	if t.Target == "" || t.Target == "body" {
+		return t.Re.ReplaceAll(body, []byte(t.Fix))
+	}
+	lines := strings.Split(string(body), "\n")
+	switch t.Target {
+	case "first-line":
+		for i := range lines {
+			if strings.TrimSpace(lines[i]) != "" {
+				lines[i] = t.Re.ReplaceAllString(lines[i], t.Fix)
+				break
+			}
+		}
+	case "line":
+		for i := range lines {
+			lines[i] = t.Re.ReplaceAllString(lines[i], t.Fix)
+		}
+	case "matched-lines":
+		for i := range lines {
+			if t.Select != nil && t.Select.MatchString(lines[i]) {
+				lines[i] = t.Re.ReplaceAllString(lines[i], t.Fix)
+			}
+		}
+	}
+	return []byte(strings.Join(lines, "\n"))
+}
+
 // TextDenylist forbids any of a list of literal substrings. Matching is
 // literal (regex metacharacters are inert) via strings.Index.
 type TextDenylist struct {
