@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>How-to guides on Katalyst Documentation</title><link>https://abegong.github.io/katalyst/how-to/</link><description>Recent content in How-to guides on Katalyst Documentation</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://abegong.github.io/katalyst/how-to/index.xml" rel="self" type="application/rss+xml"/><item><title>Profile an existing wiki by hand</title><link>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-by-hand/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-by-hand/</guid><description>&lt;h1 id="profile-an-existing-wiki-by-hand"&gt;Profile an existing wiki by hand&lt;a class="anchor" href="#profile-an-existing-wiki-by-hand"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;p&gt;You have a directory of markdown — a vault, a docs tree, a knowledge base —
+&lt;p&gt;You have a directory of markdown: a vault, a docs tree, a knowledge base,
 and you want a Katalyst schema for it. Rather than guess the conventions,
 &lt;code&gt;inspect&lt;/code&gt; measures them. This guide turns an existing corpus into a draft
 schema &lt;strong&gt;by reading the evidence yourself&lt;/strong&gt;. To hand that judgment to an agent
 instead, see &lt;a href="https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/"&gt;Profile an existing wiki with an
 agent&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; reports &lt;strong&gt;evidence&lt;/strong&gt; — counts and distributions — never
+&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; reports &lt;strong&gt;evidence&lt;/strong&gt;, counts and distributions, never
 recommendations. Reading the evidence and deciding the schema is your call. It
 runs in &lt;strong&gt;two layers&lt;/strong&gt;: point it at a &lt;strong&gt;directory&lt;/strong&gt; to profile a raw store
 (no project needed), or at a configured &lt;strong&gt;collection&lt;/strong&gt; to profile its items.
@@ -26,12 +26,12 @@ them. This guide adds a collection and attaches checks to it.&lt;/p&gt;
 &lt;code&gt;.katalyst/storage/local.yaml&lt;/code&gt; (the default filesystem instance). Add the
 collection under &lt;code&gt;collections:&lt;/code&gt;, keyed by its name; &lt;code&gt;path&lt;/code&gt; is the directory
 relative to the instance root:&lt;/p&gt;</description></item><item><title>Add a schema</title><link>https://abegong.github.io/katalyst/how-to/add-a-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/add-a-schema/</guid><description>&lt;h1 id="add-a-schema"&gt;Add a schema&lt;a class="anchor" href="#add-a-schema"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter —
+&lt;p&gt;JSON Schema is how Katalyst validates the &lt;em&gt;shape&lt;/em&gt; of an item&amp;rsquo;s frontmatter:
 required keys, types, ranges. This guide registers a schema and binds it to a
 collection.&lt;/p&gt;
 &lt;h2 id="1-write-the-schema-file"&gt;1. Write the schema file&lt;a class="anchor" href="#1-write-the-schema-file"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;Put a JSON Schema (draft 2020-12) under &lt;code&gt;.katalyst/schemas/&lt;/code&gt;. Its &lt;strong&gt;name&lt;/strong&gt; is
-the filename stem — &lt;code&gt;book.json&lt;/code&gt; registers a schema named &lt;code&gt;book&lt;/code&gt;, with no
+the filename stem: &lt;code&gt;book.json&lt;/code&gt; registers a schema named &lt;code&gt;book&lt;/code&gt;, with no
 separate registration step:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-json" data-lang="json"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;$schema&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;https://json-schema.org/draft/2020-12/schema&amp;#34;&lt;/span&gt;,
@@ -42,7 +42,7 @@ separate registration step:&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;title&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minLength&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt; },
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#f92672"&gt;&amp;#34;year&amp;#34;&lt;/span&gt;: { &lt;span style="color:#f92672"&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style="color:#e6db74"&gt;&amp;#34;integer&amp;#34;&lt;/span&gt;, &lt;span style="color:#f92672"&gt;&amp;#34;minimum&amp;#34;&lt;/span&gt;: &lt;span style="color:#ae81ff"&gt;0&lt;/span&gt; }
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The name — not the path — is the stable handle the rest of the config uses, so
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The name, not the path, is the stable handle the rest of the config uses, so
 the file is free to move as long as its stem stays the same.&lt;/p&gt;</description></item><item><title>Validate in CI</title><link>https://abegong.github.io/katalyst/how-to/validate-in-ci/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/validate-in-ci/</guid><description>&lt;h1 id="validate-in-ci"&gt;Validate in CI&lt;a class="anchor" href="#validate-in-ci"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;Run Katalyst in continuous integration so malformed frontmatter and
 non-canonical formatting fail the build instead of reaching &lt;code&gt;main&lt;/code&gt;.&lt;/p&gt;

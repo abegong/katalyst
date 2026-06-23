@@ -17,7 +17,7 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;values&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;yes&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Literal substrings to forbid; regex metacharacters are inert.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
@@ -29,7 +29,7 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;select&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;no&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Line-filter regex; required for and only valid with target matched-lines.&lt;/td&gt;
 			&lt;/tr&gt;
 	&lt;/tbody&gt;
@@ -59,7 +59,7 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;pattern&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;yes&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Go regular expression, matched unanchored.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
@@ -71,13 +71,13 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;select&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;no&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Line-filter regex; required for and only valid with target matched-lines.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;fix&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;no&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Optional replacement template (regexp capture syntax) applied to the matched text by the fix command.&lt;/td&gt;
 			&lt;/tr&gt;
 	&lt;/tbody&gt;
@@ -108,7 +108,7 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;pattern&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;yes&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Go regular expression, matched unanchored (appears somewhere in the span).&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;
@@ -120,7 +120,7 @@
 			&lt;tr&gt;
 					&lt;td&gt;&lt;code&gt;select&lt;/code&gt;&lt;/td&gt;
 					&lt;td&gt;no&lt;/td&gt;
-					&lt;td&gt;—&lt;/td&gt;
+					&lt;td&gt;-&lt;/td&gt;
 					&lt;td&gt;Line-filter regex; required for and only valid with target matched-lines.&lt;/td&gt;
 			&lt;/tr&gt;
 			&lt;tr&gt;

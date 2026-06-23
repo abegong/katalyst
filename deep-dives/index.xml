@@ -11,31 +11,39 @@ make change rare. Rare change creates rigidity.&lt;/p&gt;</description></item><i
 &lt;blockquote class='book-hint '&gt;
 &lt;p&gt;&lt;strong&gt;Status: work in progress.&lt;/strong&gt; This is a deliberately abstract sketch,
 captured as concepts are introduced. It is not about &lt;code&gt;katalyst&lt;/code&gt;
-specifically — katalyst is one instantiation among many. Expect breaking
+specifically, katalyst is one instantiation among many. Expect breaking
 revisions until the concepts settle.&lt;/p&gt;
 &lt;/blockquote&gt;&lt;h2 id="goal"&gt;Goal&lt;a class="anchor" href="#goal"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;We tend to think about data in one of two modes:&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Structured&lt;/strong&gt; — tables with column definitions, schemas, types,
+&lt;li&gt;&lt;strong&gt;Structured:&lt;/strong&gt; tables with column definitions, schemas, types,
 queries. Databases, warehouses, document stores.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Unstructured&lt;/strong&gt; — files, blobs, free-form text. Filesystems, object
+&lt;li&gt;&lt;strong&gt;Unstructured:&lt;/strong&gt; files, blobs, free-form text. Filesystems, object
 stores, &amp;ldquo;data lakes.&amp;rdquo;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Tools, vocabulary, and mental models usually pick a side. A SQL DBA
 and a markdown-vault note-taker have almost no shared language for
-their work, even though the operations they want to perform —
+their work, even though the operations they want to perform:
 &lt;em&gt;describe the shape of this data, find data that matches, change it
-safely, check that constraints hold&lt;/em&gt; — are essentially the same.&lt;/p&gt;</description></item><item><title>Progressive Operations</title><link>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;p&gt;&lt;em&gt;How data interfaces evolve as query complexity grows. Each tier unlocks new operations — but requires structural commitments the previous tier doesn&amp;rsquo;t.&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary — each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
+safely, check that constraints hold&lt;/em&gt;, are essentially the same.&lt;/p&gt;</description></item><item><title>Progressive Operations</title><link>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;&lt;em&gt;How data interfaces evolve as query complexity grows. Each tier unlocks new operations, but requires structural commitments the previous tier doesn&amp;rsquo;t.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary, each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
 &lt;hr&gt;
-&lt;h2 id="tier-1--filesystem"&gt;Tier 1 — Filesystem&lt;a class="anchor" href="#tier-1--filesystem"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="tier-1-filesystem"&gt;Tier 1, Filesystem&lt;a class="anchor" href="#tier-1-filesystem"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;Structural commitment:&lt;/strong&gt; none beyond path conventions&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Operations unlocked:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Read/write by path&lt;/li&gt;
+&lt;li&gt;List/enumerate (directory traversal)&lt;/li&gt;
+&lt;li&gt;Full-text search (grep-style, substring match)&lt;/li&gt;
+&lt;li&gt;Vector/semantic search, operates on raw content; no schema required&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Limitations:&lt;/strong&gt;&lt;/p&gt;</description></item><item><title>Domain model</title><link>https://abegong.github.io/katalyst/deep-dives/domain-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/domain-model/</guid><description>&lt;h1 id="domain-model"&gt;Domain model&lt;a class="anchor" href="#domain-model"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;What &lt;code&gt;katalyst&lt;/code&gt; is &lt;em&gt;about&lt;/em&gt;: the concepts it manipulates, how they relate,
 and which invariants hold across the system. This is the conceptual map.&lt;/p&gt;
 &lt;p&gt;This page is katalyst-specific. For the general, tool-agnostic model these
-concepts instantiate — the same vocabulary applied to a Postgres table or a
-MongoDB collection — see &lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;.&lt;/p&gt;
+concepts instantiate, the same vocabulary applied to a Postgres table or a
+MongoDB collection, see &lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;For &lt;em&gt;what&lt;/em&gt; the commands do, see the &lt;a href="https://abegong.github.io/katalyst/getting-started/"&gt;getting-started
 tutorial&lt;/a&gt; and the
 &lt;a href="https://abegong.github.io/katalyst/reference/configuration/"&gt;configuration reference&lt;/a&gt;.
@@ -52,7 +60,7 @@ is built versus planned.&lt;/p&gt;
 &lt;/blockquote&gt;&lt;h2 id="what-the-storage-layer-is"&gt;What the storage layer is&lt;a class="anchor" href="#what-the-storage-layer-is"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;The &lt;strong&gt;storage layer&lt;/strong&gt; is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: &lt;em&gt;what collections and items does this store
-contain, and where does each one live?&lt;/em&gt; — in both directions. It is Katalyst&amp;rsquo;s
+contain, and where does each one live?&lt;/em&gt;, in both directions. It is Katalyst&amp;rsquo;s
 realization of the &lt;strong&gt;data interface&lt;/strong&gt; concept from the
 &lt;a href="https://abegong.github.io/katalyst/deep-dives/core-concepts/"&gt;core concepts&lt;/a&gt;: the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
@@ -60,7 +68,7 @@ The first real stress test will be &lt;strong&gt;SQLite&lt;/strong&gt;, because 
 that forces the granularity question below.&lt;/p&gt;</description></item><item><title>How the core commands are organized</title><link>https://abegong.github.io/katalyst/deep-dives/command-organization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/command-organization/</guid><description>&lt;h1 id="how-the-core-commands-are-organized"&gt;How the core commands are organized&lt;a class="anchor" href="#how-the-core-commands-are-organized"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;code&gt;katalyst&lt;/code&gt; CLI carries two command grammars on purpose, and keeps them
 apart. Knowing which grammar a command belongs to tells you how to invoke it,
-what its selector means, and — when you add a command — where it goes.&lt;/p&gt;
+what its selector means, and, when you add a command, where it goes.&lt;/p&gt;
 &lt;h2 id="two-families"&gt;Two families&lt;a class="anchor" href="#two-families"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;A top-level command is exactly one of two kinds.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Blessed verbs&lt;/strong&gt; operate &lt;em&gt;over&lt;/em&gt; content. The verb names a cross-cutting
