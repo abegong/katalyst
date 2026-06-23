@@ -47,10 +47,10 @@ would be dead on arrival the moment a second StorageType lands.
 After the storage refactor (#31), a collection is declared inside a storage
 instance and carries one check profile:
 
-- `internal/config/config.go:171` — `Collection{Name, Path, Dir, Pattern,
+- `internal/config/config.go:180` — `Collection{Name, Path, Dir, Pattern,
   Schema, Checks, Query, Storage}`. `Pattern` selects membership; `Schema`/
   `Checks` are the single profile applied to every item.
-- `internal/config/config.go:253` — `rawCollection{Path, Pattern, Schema,
+- `internal/config/config.go:262` — `rawCollection{Path, Pattern, Schema,
   Checks, Query}`, the YAML shape inside an instance's `collections:` block.
 - `cmd/engine.go:73` — `checksFor(c, meta)` builds an item's runnable check list
   from `c.Checks`. The list is a function of the collection alone, not of the
@@ -244,29 +244,114 @@ its rationale graduate into `domain-model.md` when this ships.
 
 ## Open Questions
 
-1. **Discriminator keyword shape.** Recommended: a `when:` block holding
-   `where:` (metadata predicates, the `--filter` grammar) and/or `path:` (a
-   filesystem glob), AND-combined, plus a bare-string `when: "<glob>"`
-   shorthand. Alternatives weighed: a flat `match:` glob (the rejected
-   glob-only design); `if:`/`unless:`; folding everything into one `where:` list
-   with a reserved `@path` field (collision risk — see Rejected alternatives).
-   Maintainer's call on the exact keys.
-2. **No-variant-match behavior.** An item matching `pattern` but no variant runs
-   the base profile only (recommended: lenient; pair with a trailing catch-all
-   variant when a project wants every item covered). The strict alternative —
-   error on an unrouted item — is heavier and can come later behind a collection
-   flag.
-3. **Native-condition evaluation mechanism.** How the engine learns whether a
-   `path:` condition matched without inlining path logic: a seam method
-   (`CollectionDefinition.Matches(c, ref, glob)`) versus the definition
-   pre-tagging each `Item` with the variant indices its reference satisfies.
-   Pre-tagging keeps all doublestar use inside `internal/storage` and avoids a
-   per-item seam call; settle in the plan.
-4. **Condition combinators.** `where:` entries AND together and `where:`+`path:`
-   AND together. Whether OR / NOT across conditions is needed now (e.g. a
-   variant for "drafts or future-dated") or deferred until a real case appears.
-   Recommended: AND-only now; the `--filter` grammar already gives per-field
-   negation (`!=`, `!field`), which covers most needs.
+### 1. What YAML shape names the discriminator?
+
+**Context.** A variant needs a syntax that says "which items am I for." Per
+Design, a discriminator combines a portable **metadata predicate** (the
+`item list --filter` grammar — `kind=section`, `weight>=1`, `!draft`) with an
+optional, filesystem-only **path glob** (`reference/**/*.md`). The keyword shape
+is the user-facing surface and the most expensive thing to change once configs
+exist in the wild, so it is worth settling before implementation, not during.
+
+**Choices & tradeoffs.**
+
+| Option | Shape | Buys | Costs / forecloses |
+|---|---|---|---|
+| **A — `when` block** (recommended) | `when: { where: [preds], path: glob }`, plus bare-string `when: "<glob>"` as `path` shorthand | Portable vs. storage-scoped selectors are visibly separated; the common filesystem case stays a one-liner; adding a third condition kind later is a new key, not a breaking change | Two nested keys for the full form |
+| **B — flat `match` glob** | `match: "<glob>"` | Minimal, familiar (mirrors `pattern`) | Glob-only — the rejected design (see Rejected alternatives); no metadata predicate, dead on a pathless backend |
+| **C — one `where` list, reserved `@path` field** | `where: ["@path=~^reference/", "kind=section"]` | A single grammar for everything | `@`-namespace needed to avoid colliding with a real frontmatter key named `path`; regex (`=~`) is clumsier than globs for paths; leaks backend-specific field names into the portable grammar |
+
+```yaml
+# Option A, full and shorthand forms
+variants:
+  - when:
+      where: ["kind=section"]      # portable predicate
+      path: "**/_index.md"         # AND a filesystem glob
+  - when: "reference/**/*.md"      # shorthand → when: { path: "reference/**/*.md" }
+```
+
+**Recommendation.** Option A. It keeps the portable predicate primary, fences
+the storage-type-specific selector in its own `path:` key, and the bare-string
+shorthand keeps the dominant filesystem case terse. Your call on the exact key
+names (`when`/`where`/`path` vs. `if`/`match`/…).
+
+### 2. What happens to an item that matches no variant?
+
+**Context.** An item is a collection **member** when it matches the collection's
+`pattern` (so it always runs the base `schema`/`checks`). Variants only *route*
+extra checks on top. So an "unrouted" item — a member matching no variant's
+`when` — is well defined; the open question is only whether that is allowed or an
+error. This matters because it decides whether a project can *prove* every member
+is covered by a variant, or merely hopes so.
+
+**Choices & tradeoffs.**
+- **Lenient — unrouted runs base only** (recommended). Buys: simplest model;
+  a collection with no variants behaves exactly as today. Costs: coverage is not
+  provably exhaustive — forget to write a variant for a new page type and its
+  items silently get only base checks. Forecloses nothing: strict mode can be
+  added later as an opt-in without changing existing configs.
+- **Strict — unrouted is an error.** Buys: an exhaustiveness guarantee (every
+  member is explicitly accounted for). Costs: every member must be routed, so a
+  catch-all variant becomes mandatory boilerplate; noisier for the common case
+  where base-only is fine.
+
+**Recommendation.** Lenient now. A project wanting exhaustiveness writes a
+trailing catch-all (`when: { path: "**/*" }` or a bare `when: "**/*"`); a
+`strict: true` collection flag can graduate the guarantee later if demand
+appears.
+
+### 3. Where does a `path:` condition get evaluated?
+
+**Context.** The two condition kinds resolve in different places (see Design,
+"Where the routing lives"): `where:` predicates run in the engine over item
+metadata, but a `path:` glob is a path operation, and the storage spec's
+AGENTS.md convention says path semantics stay behind the `internal/storage`
+seam. So the engine — which owns variant *routing* — must learn whether an
+item's backend reference satisfies a variant's `path:` glob *without* calling
+doublestar itself. How that information crosses the seam is unsettled.
+
+**Choices & tradeoffs.**
+- **Seam predicate method** — `CollectionDefinition.Matches(c, ref, glob)
+  (bool, error)`. Buys: a small, lazy interface; the engine asks per item, per
+  path-condition. Costs: a seam call inside the per-item hot loop, and the
+  engine still carries the raw glob string (a faint path assumption leaking
+  out).
+- **Pre-tagging at discovery** (recommended) — `Items()` returns each `Item`
+  already annotated with the indices of the variants whose `path:` its reference
+  satisfies (the definition has the `Collection`, which carries `Variants`, so
+  it can compute this while it is already globbing). Buys: *all* doublestar use
+  stays inside `internal/storage`; routing in the engine becomes a slice lookup;
+  no per-item seam call. Costs: `Items()` becomes variant-aware, and `Item` gains
+  a field (e.g. `MatchedPathVariants []int`).
+
+**Recommendation.** Pre-tagging — it keeps the seam genuinely closed and the
+engine path-agnostic. This is an internal mechanism with no config surface, so
+it can be finalized in the implementation plan rather than blocking the spec.
+
+### 4. Do variants need OR / NOT across conditions now?
+
+**Context.** Within one `when`, the conditions AND together (all `where:`
+predicates and the `path:` must hold). The `item list --filter` grammar this
+reuses is itself an AND of per-field predicates, with negation available
+*per field* (`kind!=section`, `!draft`). The open question is whether a single
+variant must also express **OR** ("drafts OR future-dated → this variant") or
+cross-condition **NOT**, which the AND-only model cannot.
+
+**Choices & tradeoffs.**
+- **AND-only now** (recommended). Buys: the grammar stays the one users already
+  know from `--filter`; no new operators. Costs: an intra-variant OR must be
+  written as two variants with duplicated `checks`. Mitigation: because variants
+  are first-match-wins, many "OR" needs are really "these two shapes get the
+  same treatment," which ordering already handles; per-field `!=`/`!field` covers
+  most negation.
+- **Add OR / NOT now.** Buys: one variant can capture a disjunction without
+  duplication. Costs: a richer matcher grammar (nested any/all/not) to design,
+  document, and test — surface area with, so far, no concrete motivating case in
+  #41 or the dogfooding corpus.
+
+**Recommendation.** AND-only now; revisit when a real disjunctive case appears.
+The matcher is `{Where, Path}` today; growing it into an any/all/not tree later
+is additive and need not break existing configs.
 
 ## Documentation updates
 
