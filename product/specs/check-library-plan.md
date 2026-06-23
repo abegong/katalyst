@@ -2,13 +2,15 @@
 
 > Spec: [CheckLibrary](./check-library-spec.md)
 >
-> **Status: planning.** Implements the spec's **first PR**: introduce
-> `CheckLibrary` / `SchemaLibrary` / `Schema` in `internal/checks`, migrate the
-> JSON Schema validator onto it as the first schema-backed library, and prove
-> the out-of-process seam with a fake library. Native-family migration and the
-> Vale library are staged follow-ups (see Sequencing). No user-visible behavior
-> changes: `.katalyst/schemas/` stays flat and every existing `cmd` test passes
-> unchanged.
+> **Status: implementing.** Phases 1–5 landed: `CheckLibrary` / `SchemaLibrary`
+> / `Schema` and the library registry are in `internal/checks`, the JSON Schema
+> validator moved to `internal/checks/jsonschema` as the first schema-backed
+> library, the engine compiles and gates availability through it, the
+> out-of-process seam is proven with fakes, and the docs carry the vocabulary.
+> `make all` and `docs-gen-check` are green. Native-family migration and the
+> Vale library remain staged follow-ups (see Sequencing). No user-visible
+> behavior change: `.katalyst/schemas/` stays flat and every existing `cmd` test
+> passes unchanged.
 
 ## Current State
 
