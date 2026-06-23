@@ -9,8 +9,9 @@ Katalyst reads a `.katalyst/` directory, found by walking upward from the
 current working directory to the nearest ancestor that contains one. That
 ancestor is the repo root; all relative paths resolve against it.
 
-For *why* the config is shaped this way, see `internal/config/README.md`. To
-set one up step by step, see [Configure checks for a
+For *why* the config is shaped this way, see [How collections
+work]({{< relref "../deep-dives/collections.md" >}}). To set one up step by
+step, see [Configure checks for a
 collection]({{< relref "../how-to/configure-rules.md" >}}).
 
 ## Layout
@@ -245,5 +246,6 @@ variant), even when `--schema` is used.
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
 - [Storage layer]({{< relref "../deep-dives/storage.md" >}}), the storage
   instance / collection-definition model and its lineage.
-- `internal/config/README.md`, configuration rationale: storage instances,
-  three-tier resolution, unmatched-as-error.
+- [How collections work]({{< relref "../deep-dives/collections.md" >}}), the
+  config/collection model and rationale: schema resolution, variants,
+  unmatched-as-error.
