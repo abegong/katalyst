@@ -41,6 +41,9 @@ filename stem, is the stable public handle used by `schema show <name>`, by
 an inline `schema: <name>` key in a document's frontmatter, and by a
 collection's `schema:` shorthand. The path can move; the name should not.
 
+Schemas are stored flat; the check library that compiles a schema is determined
+by the referencing check type's `kind` (the `object` check uses JSON Schema).
+
 ## Storage instances
 
 A **storage instance** is one configured backend store, today always the local

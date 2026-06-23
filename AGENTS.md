@@ -30,7 +30,8 @@ internal/config       .katalyst/ loader: schemas + storage instances (which embe
 internal/storage      backend↔domain seam: StorageType, CollectionDefinition, the filesystem mapping
 internal/project      collection/item domain layer: selectors, item enumeration (drives internal/storage)
 internal/frontmatter  YAML/TOML/JSON frontmatter parser + formatter, with line tracking
-internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
+internal/checks       check engine: per-family check types, the registry, and CheckLibrary providers
+internal/checks/jsonschema  the JSON Schema library (wraps santhosh-tekuri/jsonschema); provides the object check type
 internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
 cmd/gendocs           generates reference/check-types/ and reference/inspectors/ from the registries
 docs/                 Hugo docs site — users + contributors (content in docs/content/)
@@ -142,6 +143,20 @@ you add a fixture.
   its granularity: a collection-scoped check is filed by the data it reads
   (`unique_field` → `structuredObject`, `unique_filename` → `fileSystem`). The
   `kind` id is the wire contract and never changes, even when the family does.
+- A **CheckLibrary** (`internal/checks`, `CheckLibrary`/`SchemaLibrary`) is the
+  *provider* behind a check type. Native families are libraries with nothing
+  extra; a **schema-backed** library (`internal/checks/jsonschema`, the only one
+  today) implements `SchemaLibrary` to compile a named schema and reports
+  `Available()` (nil in-process; an out-of-process tool probes its binary). A
+  library's `init()` calls `checks.RegisterLibrary` alongside its
+  `checks.Register` calls, and its check types set `Descriptor.Library` to the
+  library `Name()`. **Library is provenance, orthogonal to family**
+  (source-data kind): `object` (json-schema) and `object_required_field`
+  (native) are both `structuredObject`. The engine resolves a kind's library via
+  `checks.LibraryFor` and fails the run on `Available()` error. The `object`
+  schema-selection precedence lives in `jsonschema.Resolve`, not the engine;
+  schemas stay flat under `.katalyst/schemas/`, resolved to a library by the
+  binding's `kind`.
 - Filesystem name/path check types share a **target × rule** shape: a `target`
   (`filename`, `filename-ext`, `parent-dir`, `path-segments`) resolved by
   `resolveTarget` in `internal/checks/filesystem/common.go`, against which a rule runs.
