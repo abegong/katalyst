@@ -6,7 +6,7 @@
 > issue #49. The structural question — where these rules live in the taxonomy —
 > is **resolved**: they form a new **`plainText`** check-type family inside the
 > four-family model this PR adopts (see [Check-type families](#check-type-families)).
-> One naming question remains open (Open Question 1: the denylist kind's name).
+> All open questions are resolved; the design is ready to implement.
 
 ## Overview
 
@@ -242,7 +242,7 @@ one is a literal denylist.
   word-ban that a regex alternation (`TODO|FIXME|XXX`) expresses awkwardly and
   with escaping hazards. It honors `target` like the regex rules and is
   report-only (no `fix`; reach for `text_forbids` with a `fix` when a literal
-  needs rewriting). The dedicated list kind; its **name is Open Question 1**.
+  needs rewriting). The dedicated list kind, named `text_denylist`.
 
 Diagnostics name the failing span(s): `text_forbids`/`text_denylist` report each
 matching span (denylist names the offending value); `text_requires match: all`
@@ -322,30 +322,18 @@ line) and compiled regexes. `cmd/engine.go` dispatches them; `cmd/fix.go` gains 
 body pass that applies declared replacements and re-checks. `registry.go` gets
 the Descriptors and the new `plainText` `Family`.
 
-## Open Questions
+## Resolved decisions
 
-### 1. Name for the literal-denylist kind
-
-**Context.** This spec settled on a dedicated kind that forbids a list of literal
-substrings (regex metacharacters inert). It provisionally calls it
-`text_denylist`; the earlier draft's `text_forbids_substrings` was rejected as
-clunky. The name should read well next to `text_requires`/`text_forbids` and the
-existing `*_in` / `*_enum` membership kinds, and signal "a set of literal strings
-that must not appear."
-
-**Choices & tradeoffs.**
-
-| Candidate | Reads as | Concern |
-|---|---|---|
-| `text_denylist` (provisional) | "a denylist of strings" | "denylist" implies an "allowlist" counterpart that won't exist |
-| `text_forbidden_terms` | "these terms are forbidden" | "terms" hints at words, not arbitrary substrings |
-| `text_banned_phrases` | "these phrases are banned" | "phrases" likewise leans word/phrase, not substring; new verb ("banned") |
-| `text_forbids` with a `values:` list (no new kind) | reuse one kind for regex *and* literal sets | overloads one kind with two matchers (`pattern` xor `values`); muddier validation and docs |
-
-**Recommendation.** `text_denylist` — shortest and most precise about "a set
-that must not appear," and the missing allowlist counterpart hasn't caused
-confusion for similar names elsewhere. Easy to rename before code lands. Your
-call.
+- **Family placement** — a new `plainText` family inside the four-family model
+  ([Check-type families](#check-type-families)); `plainText` ⊆ `markdownBodyText`
+  so the rules run on markdown bodies and bare `.txt` alike.
+- **Denylist kind name** — `text_denylist`. Read well next to
+  `text_requires`/`text_forbids`; the earlier `text_forbids_substrings` was
+  rejected as clunky, and the absent "allowlist" counterpart has not caused
+  confusion for similar names elsewhere.
+- **Lean v1 span selector** (`body`/`line`/`first-line`/`matched-lines`), `match:
+  any|all` on `text_requires`, opt-in `fix` on `text_forbids` only with a
+  re-check — all settled in earlier rounds and reflected above.
 
 ## Documentation updates
 
