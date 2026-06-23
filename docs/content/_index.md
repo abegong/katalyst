@@ -1,5 +1,6 @@
 +++
 title = "Katalyst Documentation"
+weight = 1
 +++
 
 # Katalyst

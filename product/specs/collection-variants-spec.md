@@ -1,6 +1,7 @@
 # Collection variants spec
 
-> **Status: planning.** Implements issue #41. Lets one collection apply
+> **Status: implementing (all phases landed; graduation pending merge).**
+> Implements issue #41. Lets one collection apply
 > different checks to different items, selected by a **discriminator** — a
 > predicate over an item's metadata. Builds on the storage layer
 > (`product/specs/storage-layer-spec.md`, #31): collections live inside a

@@ -2,14 +2,16 @@
 
 > Spec: [Collection variants](./collection-variants-spec.md)
 >
-> **Status: planning.** Adds an optional `variants:` layer to a collection: an
+> **Status: implementing (all phases landed; graduation pending merge).**
+> Adds an optional `variants:` layer to a collection: an
 > ordered list of metadata-discriminated check groups, plus a
 > `useExhaustiveVariants` flag. Discrimination reuses the `item list --filter`
 > predicate grammar (`internal/query`), so routing lives entirely in the check
-> engine and `internal/storage` is untouched. Sequenced **enabling change
-> first** (export predicate evaluation), then **config**, then **engine
-> behavior**, then **docs + dogfood + graduation** — each phase tests-first and
-> independently green.
+> engine and `internal/storage` is untouched. Phase 1 (export predicate
+> evaluation), Phase 2 (config model), Phase 3 (engine routing), and Phase 4
+> (docs + dogfood `weight`-on-content variant + this status) are all
+> implemented; `make all` is green and dogfood `check` passes. Retiring this
+> spec/plan (final graduation) waits on merge.
 
 ## Current State
 

@@ -339,8 +339,12 @@ tests; a few are protected only by code review and convention.
 3. **The `schema:` directive is katalyst metadata, not user data.** It
    influences resolution but never reaches the validator.
 4. **A collection owns its checks; an item belongs to one collection.**
-   There is no glob-ordering "first match wins" — an item's checks are the
-   checks of the collection whose directory contains it.
+   An item's collection is unambiguous — the one whose directory contains it
+   — and never decided by glob ordering *across* collections. *Within* a
+   collection, an item's checks are the base checks plus those of the first
+   [variant]({{< relref "../reference/configuration.md" >}}#variants) whose
+   `when` predicates its metadata satisfies; first-match-wins applies only
+   among one collection's own variants, never between collections.
 5. **Line numbers are file-relative and 1-indexed.** The opening `---`
    fence is line 1, so the first YAML key is typically line 2.
 6. **Unmatched is an error, not a warning.** Silent skips hide config

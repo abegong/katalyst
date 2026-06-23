@@ -61,6 +61,11 @@ interface. `internal/config` owns the `.katalyst/` *vocabulary* (it validates
 the storage `type` against a parse-time allowlist) but never imports
 `internal/storage`, which depends on it.
 
+Per-item check *routing* (collection variants) lives in the check engine
+(`engine.checksFor`), keyed on the item's parsed metadata via
+`query.Predicate.Matches` — never on its path. Keep it that way: discrimination
+by metadata is portable across backends and leaves the storage seam untouched.
+
 ## Testing
 
 The project follows TDD. New behavior arrives with a failing test first.

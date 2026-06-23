@@ -6,6 +6,11 @@
 // The pipeline mirrors MongoDB's find(filter).sort().skip().limit():
 // filter and grep (both ANDed predicates) narrow the set, then sort, skip,
 // and limit shape it, in that order.
+//
+// The Predicate type is reused beyond item list: collection-variant
+// discriminators (cmd/engine.go) parse a `when` expression with ParseFilter and
+// evaluate it per item with Predicate.Matches, so one predicate grammar serves
+// both filtering and per-item check routing.
 package query
 
 import (
