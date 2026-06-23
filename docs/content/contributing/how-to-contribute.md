@@ -22,8 +22,10 @@ change; for the project's planning and documentation process, see
 
 Put feedback in public artifacts so it stays searchable and actionable:
 
-- Open an issue for bugs, feature requests, confusing docs, and questions.
-- Open a PR when you have a concrete change ready to review.
+- Open an [issue](https://github.com/abegong/katalyst/issues/new/choose) for
+  bugs, feature requests, confusing docs, and questions.
+- Open a [pull request](https://github.com/abegong/katalyst/pulls) when you
+  have a concrete change ready to review.
 - Use the [Security policy]({{< relref "security.md" >}}) for sensitive reports.
 
 ## Development setup
