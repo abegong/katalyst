@@ -11,6 +11,7 @@ package all
 
 import (
 	_ "github.com/abegong/katalyst/internal/checks/filesystem"
+	_ "github.com/abegong/katalyst/internal/checks/jsonschema"
 	_ "github.com/abegong/katalyst/internal/checks/markdownbodytext"
 	_ "github.com/abegong/katalyst/internal/checks/plaintext"
 	_ "github.com/abegong/katalyst/internal/checks/structuredobject"

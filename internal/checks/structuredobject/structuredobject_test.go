@@ -9,30 +9,6 @@ import (
 	"github.com/abegong/katalyst/internal/checks/structuredobject"
 )
 
-func TestObjectRun_reportsLineForSchemaViolation(t *testing.T) {
-	doc := checktest.MustParseDoc(t, "---\ntitle: Dune\nyear: nope\n---\n# Dune\n")
-	schema := checktest.MustLoadSchema(t, `{"type":"object","properties":{"year":{"type":"integer"}},"required":["year"]}`)
-	meta := map[string]any{
-		"title": "Dune",
-		"year":  "nope",
-	}
-
-	violations := structuredobject.Object{Schema: schema}.Run(checks.Context{
-		FilePath: "notes/dune.md",
-		Doc:      doc,
-		Meta:     meta,
-	})
-	if len(violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(violations))
-	}
-	if violations[0].Path != "/year" {
-		t.Fatalf("expected /year path, got %q", violations[0].Path)
-	}
-	if violations[0].Line != 3 {
-		t.Fatalf("expected line 3, got %d", violations[0].Line)
-	}
-}
-
 func TestObjectRequiredFieldRun_detectsMissing(t *testing.T) {
 	doc := checktest.MustParseDoc(t, "---\ntitle: Dune\n---\n# Dune\n")
 	violations := structuredobject.ObjectRequiredField{Field: "year"}.Run(checks.Context{
