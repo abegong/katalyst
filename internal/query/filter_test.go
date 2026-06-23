@@ -156,6 +156,45 @@ func TestFilter_unparseableFrontmatter_matchesAbsent(t *testing.T) {
 	}
 }
 
+func TestPredicate_Matches(t *testing.T) {
+	meta := map[string]any{"kind": "section", "year": 1965}
+
+	mustMatch := func(expr string, want bool) {
+		t.Helper()
+		p, err := query.ParseFilter(expr)
+		if err != nil {
+			t.Fatalf("ParseFilter(%q): %v", expr, err)
+		}
+		got, err := p.Matches(meta, "skip")
+		if err != nil {
+			t.Fatalf("Matches(%q): %v", expr, err)
+		}
+		if got != want {
+			t.Errorf("Matches(%q) = %v, want %v", expr, got, want)
+		}
+	}
+
+	mustMatch("kind=section", true)
+	mustMatch("kind=page", false)
+	mustMatch("year>=1965", true)
+	mustMatch("!draft", true)   // absent field
+	mustMatch("kind", true)     // existence
+
+	// typeMismatch threads through to match: "error" surfaces the error,
+	// "skip" reports a non-match.
+	p, err := query.ParseFilter("year>=1965")
+	if err != nil {
+		t.Fatal(err)
+	}
+	strMeta := map[string]any{"year": "twenty"}
+	if got, err := p.Matches(strMeta, "skip"); got || err != nil {
+		t.Errorf("Matches skip on type mismatch = (%v, %v), want (false, nil)", got, err)
+	}
+	if _, err := p.Matches(strMeta, "error"); err == nil {
+		t.Error("Matches error mode on type mismatch: expected error")
+	}
+}
+
 func TestParseFilter_errors(t *testing.T) {
 	for _, expr := range []string{"", "=value", "title=~("} {
 		if _, err := query.ParseFilter(expr); err == nil {
