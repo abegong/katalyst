@@ -1,9 +1,10 @@
 +++
-title = "Why Katalyst?"
+title = "Welcome"
 weight = 10
+aliases = ["why-katalyst"]
 +++
 
-# Why Katalyst?
+# Welcome
 
 > [!WARNING]
 > ⚠️ **Katalyst is in its earliest days.** I'm actively building it in the open, which means things are incomplete, rough in places, and likely to change without notice. APIs, commands, config formats, and concepts can all break between commits. Please don't rely on it for anything important yet, but I'd genuinely love your feedback as it takes shape.

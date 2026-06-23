@@ -1,0 +1,16 @@
+{{- $target := relref . "welcome.md" -}}
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting to Welcome</title>
+    <meta http-equiv="refresh" content="0; url={{ $target }}">
+    <link rel="canonical" href="{{ $target }}">
+    <script>
+      window.location.replace({{ printf "%q" $target | safeJS }});
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to <a href="{{ $target }}">Welcome</a>.</p>
+  </body>
+</html>
