@@ -4,16 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
 	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
-	"github.com/abegong/katalyst/internal/checks/structuredobject"
+	"github.com/abegong/katalyst/internal/checks/jsonschema"
 	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/validator"
 )
+
+// libPathKey identifies a compiled schema in the engine cache: a (library,
+// absolute path) pair, so the same file compiled by two libraries stays
+// distinct.
+type libPathKey struct {
+	lib  string
+	path string
+}
 
 // engine resolves and compiles the checks for an item. It loads the
 // project config once and caches compiled schemas across items.
@@ -22,13 +28,13 @@ type engine struct {
 	// forcedPath is the --schema override; when set, every item gets this
 	// object schema regardless of inline key or collection config.
 	forcedPath string
-	cache      map[string]*validator.Schema
+	cache      map[libPathKey]checks.Schema
 }
 
 // newEngine loads the config from the working directory and validates the
 // optional --schema override. A missing config is a usage error.
 func newEngine(schemaFlag string) (*engine, error) {
-	e := &engine{cache: map[string]*validator.Schema{}}
+	e := &engine{cache: map[libPathKey]checks.Schema{}}
 	if schemaFlag != "" {
 		if _, err := os.Stat(schemaFlag); err != nil {
 			return nil, usageErr(fmt.Sprintf("--schema: %v", err))
@@ -43,28 +49,66 @@ func newEngine(schemaFlag string) (*engine, error) {
 	return e, nil
 }
 
-func (e *engine) compile(path string) (*validator.Schema, error) {
-	if cached, ok := e.cache[path]; ok {
+// compile compiles a schema through its owning library, caching the result per
+// (library, path). The library parses its own bytes, so the engine no longer
+// switches on file extension.
+func (e *engine) compile(sl checks.SchemaLibrary, name, path string) (checks.Schema, error) {
+	key := libPathKey{lib: sl.Name(), path: path}
+	if cached, ok := e.cache[key]; ok {
 		return cached, nil
 	}
-	f, err := os.Open(path)
+	src, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("open schema %s: %w", path, err)
 	}
-	defer f.Close()
-
-	var s *validator.Schema
-	switch strings.ToLower(filepath.Ext(path)) {
-	case ".yaml", ".yml":
-		s, err = validator.LoadYAML(path, f)
-	default:
-		s, err = validator.Load(path, f)
-	}
+	s, err := sl.CompileSchema(name, src)
 	if err != nil {
 		return nil, err
 	}
-	e.cache[path] = s
+	e.cache[key] = s
 	return s, nil
+}
+
+// ensureLibrariesAvailable fails the run if any library backing a non-object
+// check in the set is unavailable (e.g. an out-of-process tool's binary is
+// missing). Availability is a hard error so a misconfigured environment fails
+// loudly rather than silently skipping enforcement. The object check's library
+// is checked separately in objectLibrary, since the forced --schema and inline
+// schema: paths reach it without an object entry in the check list.
+func ensureLibrariesAvailable(effective []config.CheckInstance) error {
+	seen := map[string]bool{}
+	for _, ch := range effective {
+		if ch.Type == config.CheckObject {
+			continue
+		}
+		lib, ok := checks.LibraryFor(ch.Type)
+		if !ok || seen[lib.Name()] {
+			continue
+		}
+		seen[lib.Name()] = true
+		if err := lib.Available(); err != nil {
+			return fmt.Errorf("check library %q is unavailable: %w", lib.Name(), err)
+		}
+	}
+	return nil
+}
+
+// objectLibrary returns the JSON Schema library that owns the object check,
+// after confirming it is available. Availability is checked before any schema
+// is compiled so a missing engine fails the run loudly.
+func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
+	lib, ok := checks.LibraryFor(config.CheckObject)
+	if !ok {
+		return nil, fmt.Errorf("no library provides the %q check type", config.CheckObject)
+	}
+	if err := lib.Available(); err != nil {
+		return nil, fmt.Errorf("check library %q is unavailable: %w", lib.Name(), err)
+	}
+	sl, ok := lib.(checks.SchemaLibrary)
+	if !ok {
+		return nil, fmt.Errorf("check library %q does not compile schemas", lib.Name())
+	}
+	return sl, nil
 }
 
 // checksFor builds the runnable check list for one item. Object-schema
@@ -91,6 +135,10 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		effective = append(effective, matched.Checks...)
 	}
 
+	if err := ensureLibrariesAvailable(effective); err != nil {
+		return nil, err
+	}
+
 	checkList := make([]checks.Check, 0, len(effective))
 
 	inlineSchema := ""
@@ -98,37 +146,23 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		inlineSchema = strings.TrimSpace(raw)
 	}
 
-	switch {
-	case e.forcedPath != "":
-		schema, err := e.compile(e.forcedPath)
+	// The JSON Schema library owns the object-schema precedence policy
+	// (forced --schema, inline schema:, then collection object checks).
+	refs, err := jsonschema.Resolve(e.forcedPath, inlineSchema, effective, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(refs) > 0 {
+		sl, err := e.objectLibrary()
 		if err != nil {
 			return nil, err
 		}
-		checkList = append(checkList, structuredobject.Object{Schema: schema})
-	case inlineSchema != "":
-		path := cfg.SchemaPath(inlineSchema)
-		if path == "" {
-			return nil, fmt.Errorf("inline schema %q is not defined under .katalyst/schemas/", inlineSchema)
-		}
-		schema, err := e.compile(path)
-		if err != nil {
-			return nil, err
-		}
-		checkList = append(checkList, structuredobject.Object{Schema: schema})
-	default:
-		for _, ch := range effective {
-			if ch.Type != config.CheckObject {
-				continue
-			}
-			path := cfg.SchemaPath(ch.Schema)
-			if path == "" {
-				return nil, fmt.Errorf("collection object schema %q is not defined under .katalyst/schemas/", ch.Schema)
-			}
-			schema, err := e.compile(path)
+		for _, ref := range refs {
+			schema, err := e.compile(sl, ref.Name, ref.Path)
 			if err != nil {
 				return nil, err
 			}
-			checkList = append(checkList, structuredobject.Object{Schema: schema})
+			checkList = append(checkList, jsonschema.Object{Schema: schema})
 		}
 	}
 

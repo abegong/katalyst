@@ -1,6 +1,6 @@
 +++
 title = "Sentence case"
-weight = 60
+weight = 50
 aliases = ["/reference/rules/structured-object/sentence-case/"]
 +++
 

@@ -88,22 +88,42 @@ the opening `---` fence offset, so `Lines["/title"] = 2` means the
 
 ### Schema
 
-A JSON Schema (draft 2020-12 by default; the library supports 4 through
-2020-12) describing the legal shape of a document's `Meta`.
+The definition of a collection's shape, describing the legal form of an
+item's `Meta`. JSON Schema (draft 2020-12 by default; the library supports 4
+through 2020-12) is the format the JSON Schema library reads, but **Schema** is
+the katalyst concept, not the JSON Schema document specifically: a Vale style
+config expresses a schema too. See [CheckLibrary](#checklibrary).
 
 A schema has two identities:
 
-- A **path** on disk, where the JSON lives.
-- A **name**, by default its filename under `.katalyst/schemas/` (e.g.
-  `book.json` → `book`). The name is the stable public handle used by inline
-  `schema:` directives and `schema show`. Paths can change; names should not.
+- A **path** on disk, where the file lives, flat under `.katalyst/schemas/`.
+- A **name**, by default its filename (e.g. `book.json` → `book`). The name is
+  the stable public handle used by inline `schema:` directives and `schema
+  show`. Paths can change; names should not.
 
 `--schema <path>` bypasses the name layer entirely, useful for ad-hoc
 runs but skips name-based identity.
 
-In memory, schemas are `validator.Schema`: a thin wrapper around
+In memory, a compiled schema is a `checks.Schema` produced by a CheckLibrary.
+The JSON Schema library (`internal/checks/jsonschema`) wraps
 `santhosh-tekuri/jsonschema/v6`, kept so the rest of the codebase doesn't
-depend on the library directly.
+depend on the library directly. The library a given schema is compiled by is
+resolved from the referencing check type's `kind` (`object` → JSON Schema), not
+from where the file lives.
+
+### CheckLibrary
+
+The provider behind a check type. Native libraries (`filesystem`, `plaintext`,
+`markdownbodytext`, `structuredobject`) wrap hand-written checks; **schema-backed
+libraries** delegate to an external engine that compiles a named schema and runs
+items against it (`json-schema` today, a prose linter such as Vale next).
+
+A library is *who supplies and runs the engine*; a [family](#check) is *what
+data the check reads*. The two are orthogonal: the `structuredObject` family
+holds both `object` (the JSON Schema library) and `object_required_field` (the
+native `structuredobject` library). A schema-backed library also reports its
+own **availability**: an in-process engine is always available, while an
+out-of-process tool probes for its binary and fails the run when it is missing.
 
 ### Config
 
@@ -174,7 +194,7 @@ item is named by one coordinate (its stem); richer layouts grow into more.
 
 A per-document opt-in to a specific schema. Treated as **metadata about
 katalyst itself, not user data**: the resolver reads it to choose a
-schema, then strips it from `Meta` before passing to the validator. This
+schema, then strips it from `Meta` before the schema's check runs. This
 matters when a schema uses `additionalProperties: false`, the document
 can still "name itself" without the directive becoming a validation
 violation.
@@ -183,9 +203,12 @@ violation.
 
 Not a persistent entity, a per-`check`-invocation object. Owns:
 
-1. The object-schema selection policy (which schema applies to an item?).
-2. A compiled-schema cache keyed by absolute path. The cache makes
-   "check 10,000 files against the same schema" cost one compile.
+1. The object-schema selection policy (which schema applies to an item?),
+   which lives in the JSON Schema library (`jsonschema.Resolve`).
+2. A compiled-schema cache keyed by `(library, path)`. The cache makes
+   "check 10,000 files against the same schema" cost one compile, and
+   compilation goes through the owning library, not a hardcoded JSON Schema
+   call.
 
 The selection policy, highest precedence first:
 
@@ -337,7 +360,7 @@ tests; a few are protected only by code review and convention.
 2. **Schema names are stable; paths can move.** The `.katalyst/` config is the
    only place that knows how names map to paths.
 3. **The `schema:` directive is katalyst metadata, not user data.** It
-   influences resolution but never reaches the validator.
+   influences resolution but never reaches the schema check.
 4. **A collection owns its checks; an item belongs to one collection.**
    An item's collection is unambiguous, the one whose directory contains it
 , and never decided by glob ordering *across* collections. *Within* a

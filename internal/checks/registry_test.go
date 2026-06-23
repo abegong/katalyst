@@ -72,6 +72,20 @@ func TestDescriptorMetadata(t *testing.T) {
 	}
 }
 
+// TestDescriptorLibrary checks that every descriptor naming a library names a
+// registered one. An empty Library is legal during the staged migration of
+// native check types onto CheckLibrary.
+func TestDescriptorLibrary(t *testing.T) {
+	for _, d := range checks.Descriptors() {
+		if d.Library == "" {
+			continue
+		}
+		if _, ok := checks.LibraryByName(d.Library); !ok {
+			t.Errorf("kind %q names library %q, which is not registered", d.CheckType, d.Library)
+		}
+	}
+}
+
 // dispatchedKinds parses ../config/config.go and returns the set of check
 // kind string values that appear as case labels in normalizeCheck's switch.
 func dispatchedKinds(t *testing.T) map[string]bool {

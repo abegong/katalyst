@@ -12,6 +12,7 @@ concepts]({{< relref "core-concepts.md" >}}) the tool is built on, the
 [domain model]({{< relref "domain-model.md" >}}) that instantiates them in
 katalyst, and the deeper design discussions that no single page or package
 owns: how the [core commands are organized]({{< relref "command-organization.md" >}}),
+how [checks work]({{< relref "checks.md" >}}) and the libraries that run them,
 how the [storage layer]({{< relref "storage.md" >}}) maps stores onto the model,
 and how operations grow richer as a backend's capabilities increase. For the
 short version, start with [Welcome]({{< relref "../welcome.md" >}}).

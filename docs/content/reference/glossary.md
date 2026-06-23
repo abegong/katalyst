@@ -17,7 +17,8 @@ how each term maps onto today's code is documented in the per-package
 | **Metadata** | The parsed, in-memory structure of the frontmatter (a `map[string]any`). |
 | **Body** | Everything after the closing frontmatter fence. Preserved verbatim except by `fix`. |
 | **Document** | A parsed markdown file: frontmatter metadata + body + a line map. |
-| **Schema** | A JSON Schema document. Named in `schemas:`; located by path. |
+| **Schema** | The definition of a collection's shape, expressed in a CheckLibrary's format (JSON Schema today; a Vale style config later). Named in `schemas:`; located by path. The katalyst concept, not the JSON Schema document specifically. |
+| **CheckLibrary** | The provider behind a check type. Native libraries (`filesystem`, `plaintext`, `markdownbodytext`, `structuredobject`) wrap hand-written checks; schema-backed libraries (`json-schema`, Vale next) compile a named schema and run items against it, and report their own availability. A library is provenance, orthogonal to family (source-data kind). |
 | **Schema directive** | The inline `schema:` key inside a document's frontmatter, opting it into a named schema. |
 | **Collection** | A named entry in `collections:`: a directory, a filename `pattern`, and the checks its items must pass. |
 | **Item** | One file in a collection that matches its pattern. Its id is the filename stem. |
@@ -40,7 +41,7 @@ how each term maps onto today's code is documented in the per-package
 | **Fingerprint** | A file's composite signature (frontmatter keys, body section skeleton, and file type/naming) that `document_shape` clusters into candidate collections. |
 | **Profile class** | A group of near-identical profiles the summarizer collapses together, so output is proportional to the number of distinct profiles, not directories. |
 | **Repo root** | The directory containing the `.katalyst/` config directory; the base for all path resolution. |
-| **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas. |
+| **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas per `(library, path)`. |
 | **StorageType** | A known backend kind capable of holding collections and items (`filesystem` today; `sqlite`, `postgresql`, `mongodb` later). |
 | **StorageInstance** | A configured instance of a StorageType plus how to reach it (for `filesystem`, a root directory). Declared under `.katalyst/storage/`; it embeds the collections it maps. |
 | **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. Yields one or more collections; the filesystem is the only backend today. See [storage layer]({{< relref "../deep-dives/storage.md" >}}). |
@@ -53,8 +54,9 @@ how each term maps onto today's code is documented in the per-package
   **violation** is a check that failed. The [check types
   reference]({{< relref "check-types/_index.md" >}}) and `katalyst check-types
   list` enumerate check types.
-- Prefer **schema** for what users author and **validator** only for the
-  runtime check itself, never "validator" as a thing users write.
+- Prefer **schema** for what users author. The runtime check is the `object`
+  check type, provided by the JSON Schema **CheckLibrary**; "validator" is not a
+  thing users write.
 - Use **frontmatter** for the on-disk block and **metadata** for the parsed
   structure; they are not interchangeable.
 - Say **`.katalyst/`** or "the config" rather than an unqualified

@@ -106,6 +106,13 @@ A **check** asserts a condition on items or their attributes. A **check type**
 is a reusable definition of such a condition; a **check instance** is one check
 type configured for a collection.
 
+A check type is either implemented directly by the tool or **delegated to an
+external check library** that performs the check, a schema validator, a policy
+engine, a prose linter. The delegated engine compiles a definition (a schema)
+and runs items against it; the tool maps its findings back into checks. In
+katalyst this provider is a `CheckLibrary` (JSON Schema is the first); see the
+[domain model]({{< relref "domain-model.md" >}}).
+
 Examples:
 
 - Type validation, an attribute must be a certain type.

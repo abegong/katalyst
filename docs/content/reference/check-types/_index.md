@@ -18,11 +18,11 @@ Structured-object check types validate structured frontmatter fields using schem
 - [Field enum]({{< relref "structured-object/field-enum.md" >}}): Require that a field is one of a fixed set of values.
 - [Field type]({{< relref "structured-object/field-type.md" >}}): Require that a frontmatter field has a specific type.
 - [Number range]({{< relref "structured-object/number-range.md" >}}): Constrain a numeric field to a minimum and/or maximum value.
-- [Object validation]({{< relref "structured-object/object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
 - [Required field]({{< relref "structured-object/required-field.md" >}}): Require that a frontmatter field exists.
 - [Sentence case]({{< relref "structured-object/sentence-case.md" >}}): Require a string field to read as sentence case, not Title Case.
 - [String length]({{< relref "structured-object/string-length.md" >}}): Constrain the minimum and/or maximum length of a string field.
 - [Unique field]({{< relref "structured-object/unique-field.md" >}}): Require that no two items share a value for a frontmatter field.
+- [Object validation]({{< relref "structured-object/object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
 
 ## Markdown body text check types
 
