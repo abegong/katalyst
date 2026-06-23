@@ -370,6 +370,10 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 	if err != nil {
 		return fmt.Errorf("storage: %w", err)
 	}
+	exts, err := formatExts(k.Format)
+	if err != nil {
+		return fmt.Errorf("storage: %w", err)
+	}
 
 	defs := map[string]rawStorageInstance{}
 	if discovery == discoveryExplicit {
@@ -378,10 +382,6 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 		}
 		defs = k.Defs
 	} else {
-		exts, err := formatExts(k.Format)
-		if err != nil {
-			return fmt.Errorf("storage: %w", err)
-		}
 		found, err := scanKindDir(filepath.Join(c.Root, Dir, storageSubdir), exts)
 		if err != nil {
 			return fmt.Errorf("storage: %w", err)
@@ -409,7 +409,7 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 	// collision across instances is reported with both sides.
 	instanceOf := map[string]string{}
 	for _, name := range names {
-		inst, err := c.buildInstance(name, defs[name], projectQuery)
+		inst, err := c.buildInstance(name, defs[name], exts, projectQuery)
 		if err != nil {
 			return err
 		}
@@ -430,8 +430,12 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 
 // buildInstance turns one raw storage instance into a validated
 // StorageInstance, building each of its collections against the instance root.
-// The name comes from the source (filename stem or map key), never the body.
-func (c *Config) buildInstance(name string, ri rawStorageInstance, projectQuery *rawQuery) (StorageInstance, error) {
+// Collections come from the instance's inline `collections:` block and, as an
+// escape hatch for instances that outgrow inline, from one file per collection
+// under .katalyst/storage/<name>/. A name declared in both places is an error.
+// The instance name comes from the source (filename stem or map key), never the
+// body.
+func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *rawQuery) (StorageInstance, error) {
 	typ := ri.Type
 	if typ == "" {
 		typ = storageTypeFilesystem
@@ -446,15 +450,40 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, projectQuery 
 	}
 	instRoot := resolve(c.Root, rootRel)
 
-	colNames := make([]string, 0, len(ri.Collections))
-	for cn := range ri.Collections {
+	// Start with the inline collections, then fold in any per-collection files.
+	raws := make(map[string]rawCollection, len(ri.Collections))
+	for cn, rc := range ri.Collections {
+		raws[cn] = rc
+	}
+	instDir := filepath.Join(c.Root, Dir, storageSubdir, name)
+	found, err := scanKindDir(instDir, exts)
+	if err != nil {
+		return StorageInstance{}, fmt.Errorf("storage %q: %w", name, err)
+	}
+	for cn, path := range found {
+		if _, dup := raws[cn]; dup {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q is declared both inline and in a file", name, cn)
+		}
+		src, err := os.ReadFile(path)
+		if err != nil {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+		}
+		var rc rawCollection
+		if err := yaml.Unmarshal(src, &rc); err != nil {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+		}
+		raws[cn] = rc
+	}
+
+	colNames := make([]string, 0, len(raws))
+	for cn := range raws {
 		colNames = append(colNames, cn)
 	}
 	sort.Strings(colNames)
 
 	cols := make([]Collection, 0, len(colNames))
 	for _, cn := range colNames {
-		col, err := c.buildCollection(cn, ri.Collections[cn], instRoot, name, projectQuery)
+		col, err := c.buildCollection(cn, raws[cn], instRoot, name, projectQuery)
 		if err != nil {
 			return StorageInstance{}, err
 		}

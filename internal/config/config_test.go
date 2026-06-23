@@ -182,6 +182,58 @@ func TestLoad_instanceRoot_resolvesCollectionDirs(t *testing.T) {
 	}
 }
 
+func TestLoad_perCollectionFiles_inInstanceDir(t *testing.T) {
+	// A collection may live in its own file under storage/<instance>/, the
+	// escape hatch for instances that outgrow an inline block.
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":         minimalSchema,
+		"storage/local.yaml":        "type: filesystem\nroot: .\ncollections: {}\n",
+		"storage/local/books.yaml":  "path: notes/books\nschema: book\n",
+		"storage/local/people.yaml": "path: notes/people\nschema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got := cfg.CollectionNames(); strings.Join(got, ",") != "books,people" {
+		t.Fatalf("CollectionNames = %v, want [books people]", got)
+	}
+	books, _ := cfg.Collection("books")
+	if books.Storage != "local" {
+		t.Errorf("books.Storage = %q, want local", books.Storage)
+	}
+}
+
+func TestLoad_perCollectionFiles_coexistWithInline(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":        minimalSchema,
+		"storage/local.yaml":       localStorage(map[string]string{"books": "path: notes/books\nschema: book\n"}),
+		"storage/local/notes.yaml": "path: notes\nschema: book\n",
+	})
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got := cfg.CollectionNames(); strings.Join(got, ",") != "books,notes" {
+		t.Fatalf("CollectionNames = %v, want [books notes]", got)
+	}
+}
+
+func TestLoad_perCollectionFiles_rejectInlineCollision(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml":        minimalSchema,
+		"storage/local.yaml":       localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
+		"storage/local/notes.yaml": "path: other\nschema: book\n",
+	})
+	_, err := config.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "both inline and in a file") {
+		t.Fatalf("expected inline/file collision error, got: %v", err)
+	}
+}
+
 func TestLoad_ascendsToFindProject(t *testing.T) {
 	repo := t.TempDir()
 	writeProject(t, repo, nil)
