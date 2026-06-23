@@ -16,7 +16,7 @@ weight = 10
 
 Katalyst keeps documentation in a few homes.
 
-### `docs/`, the published site (Hugo)
+### 1. `docs/`, the published site (Hugo)
 
 The durable home for everything a user needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
@@ -34,22 +34,7 @@ The durable home for everything a user needs, organized by
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
-### `product/`, in-flight specs and plans only
-
-`product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
-merged**. A spec is deleted when its work lands and its durable content
-graduates into `docs/`. Nothing evergreen lives in `product/`, it is
-staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
-
-### `.github/workflows/README.md`, the docs build & deploy pipeline
-
-How the site is **built, previewed, and published** (the publish/preview/
-validate split, the GitHub Pages "Actions" source invariant) is infra detail,
-so it lives next to the workflow files in
-[`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
-not in this user-facing tree. Read it before touching `deploy-docs.yml`.
-
-### `AGENTS.md`, code-writing conventions
+### 2. `AGENTS.md`, code-writing conventions
 
 Rules for anyone *writing code* in the repo: commands, layout, testing
 style, code style. **What goes here:** naming conventions, required
@@ -62,7 +47,7 @@ a package has rules that don't belong at the root. Examples live in tests,
 not a separate examples file: a `*_test.go` is the canonical, executable
 example.
 
-### Go doc comments, code-level API docs **and package architecture**
+### 3. Go doc comments, code-level API docs **and package architecture**
 
 Package- and symbol-level documentation lives in the code as Go doc
 comments, not in Markdown. This is also the home for a package's
@@ -74,6 +59,13 @@ the code keeps it in the same diff and out of a separate `explanation/` page
 that drifts; it also surfaces in `go doc`. Use godoc headings (`# Heading`),
 prose, and short lists, not tables; if you reach for a table, it belongs in
 the reference.
+
+### 4. `product/`, in-flight specs and plans only
+
+`product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
+merged**. A spec is deleted when its work lands and its durable content
+graduates into `docs/`. Nothing evergreen lives in `product/`, it is
+staging, not a home. See [How we plan]({{< relref "how-we-plan.md" >}}).
 
 ## Generated reference
 
@@ -131,3 +123,13 @@ own files; keep them thin and pointed at `AGENTS.md`.
 - **`.cursor/skills/`:** reusable skills (e.g. `add-katalyst-rule`). Skills
   are *actions*, not conventions; conventions stay in `AGENTS.md`.
 - **`.claude/`:** Claude Code local settings, not a documentation source.
+
+
+### Building and deploying docs
+
+How the site is **built, previewed, and published** (the publish/preview/
+validate split, the GitHub Pages "Actions" source invariant) is infra detail,
+so it lives next to the workflow files in
+[`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
+not in this user-facing tree. Read it before touching `deploy-docs.yml`.
+
