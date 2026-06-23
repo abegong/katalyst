@@ -75,13 +75,17 @@ properties:
 ```
 
 ```yaml
-# .katalyst/collections/books.yaml
-path: wiki
-schema: book
-checks:
-  - kind: markdown_single_h1
-  - kind: filesystem_name_case
-    style: kebab
+# .katalyst/storage/local.yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: wiki
+    schema: book
+    checks:
+      - kind: markdown_single_h1
+      - kind: filesystem_name_case
+        style: kebab
 ```
 
 See [Add a schema]({{< relref "add-a-schema.md" >}}) for the binding details.

@@ -2,13 +2,14 @@
 
 > Spec: [Storage layer](./storage-layer-spec.md)
 >
-> **Status: implementing.** Phase 1 (the seam) landed: `internal/storage`
-> exists and `internal/project` delegates to it, with the existing suite green
-> unedited. Phases 2–4 pending. Splits the hardcoded filesystem mapping into
-> `internal/storage` (StorageType, StorageInstance, CollectionDefinition), then
-> moves the config model so a StorageInstance declares its own collections.
+> **Status: implementing (all phases landed; graduation pending merge).**
+> Phase 1 (the seam), Phase 2 (config model: storage instances embed their
+> collections), Phase 3 (per-collection-file escape hatch), and Phase 4 (docs:
+> `connectors.md` → `storage.md`, glossary, configuration, how-tos, AGENTS,
+> package docs) are all implemented; `make all` is green and dogfood `check`
+> passes. Retiring this spec/plan (the final graduation step) waits on merge.
 > Sequenced **seam first** (a behavior-preserving refactor the existing suite
-> guards unchanged), **config change second** (the breaking part), so risk is
+> guarded unchanged), **config change second** (the breaking part), so risk was
 > isolated per phase.
 
 ## Current State

@@ -38,7 +38,7 @@ For people working on Katalyst, and anyone who wants the bigger picture.
 
 - **[Deep dives]({{< relref "deep-dives/_index.md" >}})** — the *why*: the
   [vision and scope]({{< relref "deep-dives/vision.md" >}}), the [core
-  concepts]({{< relref "deep-dives/core-concepts.md" >}}), connectors,
+  concepts]({{< relref "deep-dives/core-concepts.md" >}}), the storage layer,
   progressive operations, and design rationale that no single package owns.
   Subsystem rationale lives next to the code in the per-package `README.md`
   files under `internal/`.

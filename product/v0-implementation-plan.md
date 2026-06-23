@@ -215,5 +215,5 @@ Files: `cmd/testdata/**`, `cmd/fixtures_test.go`, all `*_test.go`.
 - **`schema:` directive stripping.** `check` strips the inline `schema:`
   key before validation (so `additionalProperties: false` schemas don't
   reject self-describing docs). Preserve this in the rewrite.
-- **Out of scope (don't drift in):** connectors/non-FS backends, `diff`,
+- **Out of scope (don't drift in):** the storage layer / non-FS backends, `diff`,
   `query`, `infer`, `migrate`, `--json`, `--unset`, bulk-add, watch.

@@ -39,7 +39,7 @@ A capable agent then:
 2. **Sets thresholds** from the evidence — e.g. fields in ≥95% of files become
    `required`, a small stable value set becomes an `enum`, a consistent type
    becomes a `type` constraint.
-3. **Drafts** the `.katalyst/schemas/*` and `.katalyst/collections/*` files.
+3. **Drafts** the `.katalyst/schemas/*` and `.katalyst/storage/*` files.
 
 A prompt that works:
 

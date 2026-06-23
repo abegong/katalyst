@@ -28,10 +28,12 @@ katalyst check
 
 - `.katalyst/config.yaml` — commented project settings
 - `.katalyst/schemas/` — one schema per file (empty to start)
-- `.katalyst/collections/` — one collection per file (empty to start)
+- `.katalyst/storage/local.yaml` — the default storage instance (the local
+  filesystem), where you declare collections
 
-It writes no example content. Add a schema under `.katalyst/schemas/` and a
-collection under `.katalyst/collections/`, then run `katalyst check`.
+It writes no example content. Add a schema under `.katalyst/schemas/` and
+declare a collection inside `.katalyst/storage/local.yaml`, then run
+`katalyst check`.
 
 Next:
 - [Configuration]({{< relref "reference/configuration.md" >}})

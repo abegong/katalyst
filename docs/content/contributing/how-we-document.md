@@ -25,8 +25,8 @@ The durable home for everything a user needs, organized by
 - **`reference/`** — information-oriented lookup: configuration, the
   generated check-type reference, the glossary, the command surface.
 - **`deep-dives/`** — understanding-oriented "why" (the Diátaxis *explanation*
-  quadrant): the vision and scope, the core concepts, connectors, progressive
-  operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
+  quadrant): the vision and scope, the core concepts, the storage layer,
+  progressive operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
   orientation page sits at the top level. Subsystem-specific rationale belongs
   with the code (package docs, including `doc.go` when long, or a co-located
   package `README.md`), not a per-feature explanation page that will drift.

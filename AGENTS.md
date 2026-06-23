@@ -26,8 +26,9 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/config       .katalyst/ loader + named collection/schema resolution
-internal/project      collection/item domain layer: selectors, item enumeration
+internal/config       .katalyst/ loader: schemas + storage instances (which embed their collections)
+internal/storage      backend↔domain seam: StorageType, CollectionDefinition, the filesystem mapping
+internal/project      collection/item domain layer: selectors, item enumeration (drives internal/storage)
 internal/frontmatter  YAML/TOML/JSON frontmatter parser + formatter, with line tracking
 internal/validator    JSON Schema validation (wraps santhosh-tekuri/jsonschema)
 internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
@@ -51,6 +52,14 @@ unmatched-file scan never walks the config dir itself.
 
 Production code stays in `internal/` unless something genuinely needs to be
 importable from outside the module.
+
+The path ⇄ item-identity translation passes through
+`internal/storage.CollectionDefinition` (forward discovery + reverse
+reconstruction). Don't inline filesystem assumptions (globbing, stem-as-id,
+path joins) elsewhere — a second backend (SQLite) attaches by implementing that
+interface. `internal/config` owns the `.katalyst/` *vocabulary* (it validates
+the storage `type` against a parse-time allowlist) but never imports
+`internal/storage`, which depends on it.
 
 ## Testing
 

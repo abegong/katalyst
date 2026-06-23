@@ -1,13 +1,3 @@
-// Package storage is the seam between a backend store and the katalyst domain
-// model. A CollectionDefinition is the two-way mapping a backend implements:
-// forward (discover the collections and items a store holds) and reverse
-// (reconstruct a backend locator from an item identity). The filesystem is the
-// only backend today; the registry below is where a second one (SQLite, S3, a
-// database) attaches without the check engine, the CRUD verbs, or selector
-// parsing needing to know.
-//
-// See docs/content/deep-dives/storage.md for the conceptual model and the
-// Great Expectations lineage it adapts.
 package storage
 
 import "github.com/abegong/katalyst/internal/config"

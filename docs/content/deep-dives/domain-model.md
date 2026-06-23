@@ -166,9 +166,9 @@ How commands name what to operate on. Three shapes, from broad to narrow:
 | `<collection>/<item>` | a single item |
 
 Selectors are shared by `check`, `fix`, and the `item` subcommands. They are
-the present-day, degenerate case of the connector
-[coordinates]({{< relref "connectors.md" >}}) idea: today an item is named by
-one coordinate (its stem); richer layouts grow into more.
+the present-day, degenerate case of the
+[coordinates]({{< relref "storage.md" >}}) idea from the storage layer: today an
+item is named by one coordinate (its stem); richer layouts grow into more.
 
 ### Schema directive (`schema:` in frontmatter)
 
