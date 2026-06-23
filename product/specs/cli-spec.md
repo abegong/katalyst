@@ -20,7 +20,7 @@
 - Reuses the existing engine: config discovery, frontmatter parse with line
   tracking, JSON Schema validation, and the multi-check engine
   (`internal/checks/`).
-- Everything in [`connectors.md`](../connectors.md), `diff`, `query`, `infer`,
+- Everything in [`storage.md`](../../docs/content/deep-dives/storage.md), `diff`, `query`, `infer`,
   `migrate`, and machine-readable output is **out of scope** (see end).
 
 ## Concepts (recap)
@@ -31,7 +31,7 @@
   directory. Visible and addressable even when there is only one.
 - **Item** — one markdown file. Its **id** is the filename stem, defined as a
   *collection-relative identifier* (today equal to the stem; see
-  [`connectors.md`](../connectors.md) for how this grows).
+  [`storage.md`](../../docs/content/deep-dives/storage.md) for how this grows).
 
 ## Selector grammar
 
@@ -221,7 +221,7 @@ as `check`.)
   [`inspect-spec.md`](./inspect-spec.md).)
 - `schema check`/`validate`, `schema infer`, etc. (the `schema` noun stays at
   `list`/`show`).
-- Non-filesystem backends / the connector layer ([`connectors.md`](../connectors.md)).
+- Non-filesystem backends / the storage layer ([`storage.md`](../../docs/content/deep-dives/storage.md)).
 - Machine-readable output (`--json`) on `check`, `--unset`, bulk-add, watch
   mode. (`inspect` ships `--json`; `check --json` stays deferred with the
   counterfactual follow-up.)

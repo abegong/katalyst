@@ -17,7 +17,7 @@ func setupFixRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"collections/notes.yaml": fixNotesConfig,
+		"storage/local.yaml": storageLocal(map[string]string{"notes": fixNotesConfig}),
 	})
 	chdir(t, dir)
 	return dir

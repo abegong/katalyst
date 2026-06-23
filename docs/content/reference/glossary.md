@@ -34,7 +34,10 @@ how each term maps onto today's code is documented in the per-package
 | **Fingerprint** | The sorted set of a file's frontmatter keys, used by `frontmatter_shape` to group files into candidate collections. |
 | **Repo root** | The directory containing the `.katalyst/` config directory; the base for all path resolution. |
 | **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas. |
-| **Connector** | (Future) the two-way mapping between a backend store and the domain model. The filesystem is the only one today. |
+| **StorageType** | A known backend kind capable of holding collections and items (`filesystem` today; `sqlite`, `postgresql`, `mongodb` later). |
+| **StorageInstance** | A configured instance of a StorageType plus how to reach it (for `filesystem`, a root directory). Declared under `.katalyst/storage/`; it embeds the collections it maps. |
+| **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. Yields one or more collections; the filesystem is the only backend today. See [storage layer]({{< relref "../deep-dives/storage.md" >}}). |
+| **Granularity** | The level — item vs. collection — at which a StorageType attaches a store's units to the domain model (a markdown file is an item; a SQL table is a collection). |
 
 ## Usage notes
 

@@ -37,16 +37,20 @@ The shortest way is the `schema:` shorthand, which adds a single `object`
 check:
 
 ```yaml
-# .katalyst/collections/books.yaml
-path: notes/books
-schema: book
+# .katalyst/storage/local.yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: notes/books
+    schema: book
 ```
 
 Equivalently, add an explicit object check to `checks` — useful when you mix
 it with markdown or filesystem checks:
 
 ```yaml
-# .katalyst/collections/books.yaml
+# .katalyst/storage/local.yaml — under collections: books:
 path: notes/books
 checks:
   - kind: object

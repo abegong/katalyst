@@ -20,16 +20,19 @@ collection]({{< relref "../how-to/configure-rules.md" >}}).
   config.yaml          # optional: query defaults and discovery settings
   schemas/             # one JSON Schema file per named schema
     book.json
-  collections/         # one YAML file per named collection
-    books.yaml
+  storage/             # one file per storage instance
+    local.yaml         # an instance + the collections it declares
+    local/             # optional: one file per collection (escape hatch)
+      books.yaml
 ```
 
-By default, schemas and collections are discovered by **convention**: every
-file under `schemas/` is a schema whose name is its filename stem
-(`book.json` → `book`), and every file under `collections/` is a collection
-named for its filename stem (`books.yaml` → `books`). `config.yaml` is
-optional; it carries `query:` defaults and can switch a kind to **explicit**
-discovery, listing definitions inline instead of as files.
+By default, schemas and storage instances are discovered by **convention**:
+every file under `schemas/` is a schema whose name is its filename stem
+(`book.json` → `book`), and every file under `storage/` is a
+[storage instance](#storage-instances) named for its filename stem
+(`local.yaml` → `local`). `config.yaml` is optional; it carries `query:`
+defaults and can switch a kind to **explicit** discovery, listing definitions
+inline instead of as files.
 
 ## Schemas
 
@@ -38,32 +41,63 @@ filename stem — is the stable public handle used by `schema show <name>`, by
 an inline `schema: <name>` key in a document's frontmatter, and by a
 collection's `schema:` shorthand. The path can move; the name should not.
 
-## Collections
+## Storage instances
 
-Each file under `.katalyst/collections/` defines one collection: a directory
-of items plus the checks every item must pass. The filename stem is the
-collection name.
+A **storage instance** is one configured backend store — today always the local
+filesystem — plus the collections it maps onto the domain model. Each file under
+`.katalyst/storage/` is one instance, named for its filename stem. There is no
+implicit instance; `katalyst init` writes a default `local` one.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
-| `path` | no | the collection name | Directory, relative to the repo root. |
+| `type` | no | `filesystem` | Backend kind. `filesystem` is the only kind today. |
+| `root` | no | `.` | Instance root directory, relative to the repo root. Collection paths resolve against it. |
+| `collections` | no | — | Map of collection name → definition (see below). |
+
+```yaml
+# .katalyst/storage/local.yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: notes/books
+    schema: book
+    checks:
+      - kind: markdown_title_matches_h1
+```
+
+Collection names are unique across the whole project (selectors are
+`<collection>/<item>`, with no instance qualifier).
+
+## Collections
+
+A **collection** is a directory of items plus the checks every item must pass.
+Collections are declared inside their storage instance, under `collections:`.
+
+| Key | Required | Default | Meaning |
+|---|---|---|---|
+| `path` | no | the collection name | Directory, relative to the instance `root`. |
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `schema` | no | — | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | — | List of checks (see below). |
 | `query` | no | — | `item list` query behavior for this collection (see [`query`](#query)). |
 
-```yaml
-# .katalyst/collections/books.yaml
-path: notes/books
-schema: book
-checks:
-  - kind: markdown_title_matches_h1
-  - kind: filesystem_name_matches_field
-```
-
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match
 `pattern` are reported as errors.
+
+### Per-collection files
+
+An instance whose `collections:` block grows unwieldy may split collections into
+one file each under `.katalyst/storage/<instance>/<collection>.yaml`, named for
+its filename stem. Inline and per-file collections coexist; a name declared both
+inline and in a file is an error.
+
+```yaml
+# .katalyst/storage/local/books.yaml
+path: notes/books
+schema: book
+```
 
 ## `checks`
 
@@ -100,11 +134,12 @@ query:
 ```
 
 ```yaml
-# .katalyst/collections/books.yaml — override for one collection
-path: notes/books
-schema: book
-query:
-  filterTypeMismatch: error
+# under a storage instance's collections: — override for one collection
+books:
+  path: notes/books
+  schema: book
+  query:
+    filterTypeMismatch: error
 ```
 
 Resolution is highest-precedence first: the `--on-type-mismatch` /
@@ -127,5 +162,7 @@ Markdown and filesystem checks always come from the collection, even when
 ## See also
 
 - [Check types reference]({{< relref "check-types/_index.md" >}}) — every check type.
-- `internal/config/README.md` — configuration rationale: why named
-  collections, three-tier resolution, unmatched-as-error.
+- [Storage layer]({{< relref "../deep-dives/storage.md" >}}) — the storage
+  instance / collection-definition model and its lineage.
+- `internal/config/README.md` — configuration rationale: storage instances,
+  three-tier resolution, unmatched-as-error.

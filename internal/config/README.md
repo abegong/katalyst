@@ -15,35 +15,53 @@ from the working directory to the nearest ancestor that contains one. That
 ancestor becomes the repo root for all path resolution.
 
 The directory holds an optional `config.yaml`, one schema file per definition
-under `schemas/`, and one collection file per definition under `collections/`.
-A directory (rather than one big file) keeps each schema and collection in its
+under `schemas/`, and one storage-instance file per definition under `storage/`.
+A directory (rather than one big file) keeps each schema and instance in its
 own reviewable file and lets the name fall out of the filename by convention.
 A nearest-ancestor lookup mirrors `.git`, `.editorconfig`, and `go.mod` —
 familiar and predictable. Discovery resolves symlinks on both the root and the
 input path, because on macOS `$TMPDIR` lives behind `/var → /private/var` and
 relative-path resolution would otherwise produce garbage.
 
-`config.yaml` is YAML; schema and collection files default to YAML/JSON and the
+`config.yaml` is YAML; schema and storage files default to YAML/JSON and the
 accepted format is set per kind there. Default discovery is **convention** (one
 file per definition); a kind can be switched to **explicit** to list its
 definitions inline in `config.yaml` instead.
 
-## Why named collections
+## Why storage instances declare their collections
 
-By convention, each file under `schemas/` is a schema and each file under
-`collections/` is a collection, named for its filename stem:
+A **storage instance** is one configured backend store (the local filesystem
+today) plus the collections it maps onto the domain model. Collections are
+declared *inside* their instance — the instance file is where the
+CollectionDefinition lives (see `docs/content/deep-dives/storage.md`) — rather
+than as a standalone kind. By convention each file under `storage/` is one instance,
+named for its filename stem:
 
 ```yaml
-# .katalyst/collections/books.yaml
-path: notes/books
-schema: book
+# .katalyst/storage/local.yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: notes/books
+    schema: book
 ```
 
-A schema's **name** is the stable public handle (used by `schema show`, by
-inline `schema:` keys, and by a collection's `schema:` shorthand) while the
-path is free to move. A **collection** is a named directory with a filename
-`pattern` and the checks its items must pass. Keeping schemas and collections
-in separate kinds lets one schema back many collections without duplication.
+There is **no implicit instance**: `katalyst init` writes the default `local`
+one explicitly. A schema's **name** is the stable public handle (used by
+`schema show`, by inline `schema:` keys, and by a collection's `schema:`
+shorthand) while the path is free to move. A **collection** is a named directory
+with a filename `pattern` and the checks its items must pass. Schemas stay a
+separate kind so one schema can back many collections across instances.
+Collection names are unique project-wide, since a selector (`<collection>/<item>`)
+carries no instance qualifier.
+
+An instance that outgrows an inline `collections:` block may split collections
+into one file each under `storage/<instance>/<collection>.yaml`; inline and
+per-file coexist. The implementation registry of backend kinds lives in
+`internal/storage`; this package validates the declared `type` against a
+parse-time allowlist and otherwise treats it as opaque (it never imports
+`internal/storage`, which depends on it).
 
 ### Why this replaced the old anonymous `rules:` list
 

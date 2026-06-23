@@ -2,14 +2,16 @@
 // directory and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
-//  2. Which named collections exist, and what checks does each run?
+//  2. Which storage instances exist, what collections does each declare, and
+//     what checks does each collection run?
 //
 // A project is the nearest ancestor directory that contains a .katalyst/
-// subdirectory. Schemas and collections are each defined one named file
-// per definition under .katalyst/schemas/ and .katalyst/collections/
-// (discovery: convention, the default), or listed explicitly in
-// .katalyst/config.yaml (discovery: explicit). The file format (yaml,
-// json, or both) is also set per kind in config.yaml. See
+// subdirectory. Schemas are defined one named file per definition under
+// .katalyst/schemas/; storage instances one named file per instance under
+// .katalyst/storage/ (discovery: convention, the default), or listed
+// explicitly in .katalyst/config.yaml (discovery: explicit). A storage
+// instance embeds the collections it maps. The file format (yaml, json, or
+// both) is set per kind in config.yaml. See
 // docs/content/reference/configuration.md.
 package config
 
@@ -34,8 +36,8 @@ const configFile = "config.yaml"
 
 // Subdirectories of Dir holding one named file per definition.
 const (
-	schemasSubdir     = "schemas"
-	collectionsSubdir = "collections"
+	schemasSubdir = "schemas"
+	storageSubdir = "storage"
 )
 
 // Discovery modes for a kind (schemas or collections).
@@ -47,6 +49,18 @@ const (
 // defaultPattern is the glob applied to a collection's directory when the
 // collection does not set its own `pattern`.
 const defaultPattern = "*.md"
+
+// storageTypeFilesystem is the only backend kind with an implementation today.
+const storageTypeFilesystem = "filesystem"
+
+// knownStorageTypes is the parse-time allowlist of backend kinds. The
+// implementations live in internal/storage; config validates the declared
+// `type` here so a typo fails at load rather than at command time. This set
+// grows alongside the internal/storage registry when a backend is added (config
+// cannot import storage, which depends on config).
+var knownStorageTypes = map[string]bool{
+	storageTypeFilesystem: true,
+}
 
 // ErrNotFound is returned when no .katalyst/ directory is present in the
 // starting directory or any of its ancestors.
@@ -63,7 +77,27 @@ type Config struct {
 	Root string
 	// Schemas is name → absolute path.
 	Schemas map[string]string
-	// Collections in name order.
+	// Storage holds the configured storage instances, in name order. Each
+	// instance declares its own collections.
+	Storage []StorageInstance
+	// Collections is the flattened view across all instances, in name order.
+	// Collection names are unique project-wide (selectors carry no instance
+	// qualifier), so this is the canonical lookup most callers use.
+	Collections []Collection
+}
+
+// StorageInstance is one configured backend store plus the collections it maps
+// onto the domain model. For StorageType filesystem, Root is a directory.
+type StorageInstance struct {
+	// Name is the public handle (filename stem under .katalyst/storage/, or
+	// the key in the inline `storage.defs` map).
+	Name string
+	// Type is the backend kind, validated against knownStorageTypes.
+	Type string
+	// Root is the absolute, resolved instance root. Relative roots in the
+	// source resolve against the repo Root.
+	Root string
+	// Collections this instance declares, in name order.
 	Collections []Collection
 }
 
@@ -152,6 +186,9 @@ type Collection struct {
 	// Query holds the resolved `item list` query behavior for this
 	// collection (collection config over project config over defaults).
 	Query QuerySettings
+	// Storage is the name of the storage instance that declares this
+	// collection.
+	Storage string
 }
 
 // QuerySettings configures the behavior of `item list` filtering and
@@ -177,9 +214,9 @@ const (
 // absent file (or an absent block) means convention discovery with the
 // default YAML format.
 type rawConfig struct {
-	Schemas     rawSchemaKind     `yaml:"schemas"`
-	Collections rawCollectionKind `yaml:"collections"`
-	Query       *rawQuery         `yaml:"query"`
+	Schemas rawSchemaKind  `yaml:"schemas"`
+	Storage rawStorageKind `yaml:"storage"`
+	Query   *rawQuery      `yaml:"query"`
 }
 
 // rawQuery mirrors a `query:` block. A nil pointer (or a nil field within)
@@ -197,12 +234,20 @@ type rawSchemaKind struct {
 	Defs      map[string]string `yaml:"defs"`
 }
 
-// rawCollectionKind configures how collections are discovered. Defs is
-// consulted only when Discovery is "explicit" (name → definition).
-type rawCollectionKind struct {
-	Discovery string                   `yaml:"discovery"`
-	Format    string                   `yaml:"format"`
-	Defs      map[string]rawCollection `yaml:"defs"`
+// rawStorageKind configures how storage instances are discovered. Defs is
+// consulted only when Discovery is "explicit" (name → instance).
+type rawStorageKind struct {
+	Discovery string                        `yaml:"discovery"`
+	Format    string                        `yaml:"format"`
+	Defs      map[string]rawStorageInstance `yaml:"defs"`
+}
+
+// rawStorageInstance mirrors one storage instance: its backend type, its root,
+// and the collections it declares (name → definition).
+type rawStorageInstance struct {
+	Type        string                   `yaml:"type"`
+	Root        string                   `yaml:"root"`
+	Collections map[string]rawCollection `yaml:"collections"`
 }
 
 type rawCollection struct {
@@ -262,7 +307,7 @@ func Load(start string) (*Config, error) {
 	if err := cfg.loadSchemas(raw.Schemas); err != nil {
 		return nil, err
 	}
-	if err := cfg.loadCollections(raw.Collections, raw.Query); err != nil {
+	if err := cfg.loadStorage(raw.Storage, raw.Query); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -316,39 +361,41 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 	return nil
 }
 
-// loadCollections populates c.Collections (sorted by name) from either
-// the collections directory (convention) or an explicit defs map.
-func (c *Config) loadCollections(k rawCollectionKind, projectQuery *rawQuery) error {
+// loadStorage populates c.Storage and the flattened c.Collections (both sorted
+// by name) from either the storage directory (convention: one file per
+// instance) or an explicit defs map in config.yaml. Collection names are
+// validated unique across every instance.
+func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 	discovery, err := normDiscovery(k.Discovery)
 	if err != nil {
-		return fmt.Errorf("collections: %w", err)
+		return fmt.Errorf("storage: %w", err)
+	}
+	exts, err := formatExts(k.Format)
+	if err != nil {
+		return fmt.Errorf("storage: %w", err)
 	}
 
-	defs := map[string]rawCollection{}
+	defs := map[string]rawStorageInstance{}
 	if discovery == discoveryExplicit {
 		if len(k.Defs) == 0 {
-			return errors.New(`collections: discovery "explicit" requires a non-empty "defs" map`)
+			return errors.New(`storage: discovery "explicit" requires a non-empty "defs" map`)
 		}
 		defs = k.Defs
 	} else {
-		exts, err := formatExts(k.Format)
+		found, err := scanKindDir(filepath.Join(c.Root, Dir, storageSubdir), exts)
 		if err != nil {
-			return fmt.Errorf("collections: %w", err)
-		}
-		found, err := scanKindDir(filepath.Join(c.Root, Dir, collectionsSubdir), exts)
-		if err != nil {
-			return fmt.Errorf("collections: %w", err)
+			return fmt.Errorf("storage: %w", err)
 		}
 		for name, path := range found {
 			src, err := os.ReadFile(path)
 			if err != nil {
-				return fmt.Errorf("collection %q: %w", name, err)
+				return fmt.Errorf("storage %q: %w", name, err)
 			}
-			var rc rawCollection
-			if err := yaml.Unmarshal(src, &rc); err != nil {
-				return fmt.Errorf("collection %q: %w", name, err)
+			var ri rawStorageInstance
+			if err := yaml.Unmarshal(src, &ri); err != nil {
+				return fmt.Errorf("storage %q: %w", name, err)
 			}
-			defs[name] = rc
+			defs[name] = ri
 		}
 	}
 
@@ -358,20 +405,97 @@ func (c *Config) loadCollections(k rawCollectionKind, projectQuery *rawQuery) er
 	}
 	sort.Strings(names)
 
+	// instanceOf records which instance first claimed a collection name, so a
+	// collision across instances is reported with both sides.
+	instanceOf := map[string]string{}
 	for _, name := range names {
-		col, err := c.buildCollection(name, defs[name], projectQuery)
+		inst, err := c.buildInstance(name, defs[name], exts, projectQuery)
 		if err != nil {
 			return err
 		}
-		c.Collections = append(c.Collections, col)
+		for _, col := range inst.Collections {
+			if prev, dup := instanceOf[col.Name]; dup {
+				return fmt.Errorf("collection %q is declared by two storage instances (%q and %q); collection names must be unique across the project", col.Name, prev, name)
+			}
+			instanceOf[col.Name] = name
+			c.Collections = append(c.Collections, col)
+		}
+		c.Storage = append(c.Storage, inst)
 	}
+	sort.Slice(c.Collections, func(i, j int) bool {
+		return c.Collections[i].Name < c.Collections[j].Name
+	})
 	return nil
 }
 
+// buildInstance turns one raw storage instance into a validated
+// StorageInstance, building each of its collections against the instance root.
+// Collections come from the instance's inline `collections:` block and, as an
+// escape hatch for instances that outgrow inline, from one file per collection
+// under .katalyst/storage/<name>/. A name declared in both places is an error.
+// The instance name comes from the source (filename stem or map key), never the
+// body.
+func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *rawQuery) (StorageInstance, error) {
+	typ := ri.Type
+	if typ == "" {
+		typ = storageTypeFilesystem
+	}
+	if !knownStorageTypes[typ] {
+		return StorageInstance{}, fmt.Errorf("storage %q: unknown type %q", name, ri.Type)
+	}
+
+	rootRel := ri.Root
+	if rootRel == "" {
+		rootRel = "."
+	}
+	instRoot := resolve(c.Root, rootRel)
+
+	// Start with the inline collections, then fold in any per-collection files.
+	raws := make(map[string]rawCollection, len(ri.Collections))
+	for cn, rc := range ri.Collections {
+		raws[cn] = rc
+	}
+	instDir := filepath.Join(c.Root, Dir, storageSubdir, name)
+	found, err := scanKindDir(instDir, exts)
+	if err != nil {
+		return StorageInstance{}, fmt.Errorf("storage %q: %w", name, err)
+	}
+	for cn, path := range found {
+		if _, dup := raws[cn]; dup {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q is declared both inline and in a file", name, cn)
+		}
+		src, err := os.ReadFile(path)
+		if err != nil {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+		}
+		var rc rawCollection
+		if err := yaml.Unmarshal(src, &rc); err != nil {
+			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+		}
+		raws[cn] = rc
+	}
+
+	colNames := make([]string, 0, len(raws))
+	for cn := range raws {
+		colNames = append(colNames, cn)
+	}
+	sort.Strings(colNames)
+
+	cols := make([]Collection, 0, len(colNames))
+	for _, cn := range colNames {
+		col, err := c.buildCollection(cn, raws[cn], instRoot, name, projectQuery)
+		if err != nil {
+			return StorageInstance{}, err
+		}
+		cols = append(cols, col)
+	}
+	return StorageInstance{Name: name, Type: typ, Root: instRoot, Collections: cols}, nil
+}
+
 // buildCollection turns one raw collection definition into a validated
-// Collection. The name comes from the source (filename stem in convention
-// mode, map key in explicit mode), never from the file body.
-func (c *Config) buildCollection(name string, rc rawCollection, projectQuery *rawQuery) (Collection, error) {
+// Collection, resolving its directory against the owning instance's root. The
+// name comes from the source (map key), never the file body.
+func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instName string, projectQuery *rawQuery) (Collection, error) {
 	dirRel := rc.Path
 	if dirRel == "" {
 		// A collection without an explicit path defaults to a directory
@@ -417,11 +541,12 @@ func (c *Config) buildCollection(name string, rc rawCollection, projectQuery *ra
 	return Collection{
 		Name:    name,
 		Path:    dirRel,
-		Dir:     resolve(c.Root, dirRel),
+		Dir:     resolve(instRoot, dirRel),
 		Pattern: pattern,
 		Schema:  schemaName,
 		Checks:  checks,
 		Query:   query,
+		Storage: instName,
 	}, nil
 }
 
