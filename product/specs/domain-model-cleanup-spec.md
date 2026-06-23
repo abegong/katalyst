@@ -180,8 +180,15 @@ terminology-align the new pages.
   slim from the encyclopedic definitions into a general-altitude hub mirroring
   `domain-model.md`. Define each general term in a line, link to the glossary for
   the definition and to where the general idea is discussed (e.g. *operation* →
-  progressive-operations); keep only its own thesis (the structured/unstructured
-  bridge). Written in general terms only; drop "data interface" for storage terms.
+  progressive-operations). **Delete the "Goal" dichotomy** (duplicates
+  `vision.md`), keeping only the half-sentence that motivates a shared
+  cross-backend vocabulary. **Relocate the "Implications" operations-thesis**
+  (structuredness = which operations are supported; checks are the means) into
+  `progressive-operations.md` as its opening thesis, leaving a one-line pointer.
+  Written in general terms only; drop "data interface" for storage terms.
+- **`docs/content/deep-dives/progressive-operations.md`** — gains the
+  operations-thesis sentence relocated from core-concepts' Implications as its
+  lead, since the page already demonstrates the claim tier by tier.
 - **`docs/content/deep-dives/domain-model.md`** — **kept** as the katalyst hub
   #73 built. No structural change; terminology-align it (item/document,
   source/raw-source) and sharpen its one-line statement of how it differs from
