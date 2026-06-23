@@ -71,8 +71,8 @@ green.
   sets `Descriptor.Library`; the kind→library map then covers every check type.
 - **The Vale library.** `internal/checks/vale`, the `prose` check type, the real
   `vale --version` / `vale --output JSON` integration.
-- **Collection-scoped batching for out-of-process libraries.** A GitHub issue
-  opened on this PR's completion (per spec).
+- **Collection-scoped batching for out-of-process libraries.**
+  [#68](https://github.com/abegong/katalyst/issues/68).
 
 ## Phases
 
@@ -258,7 +258,7 @@ abstraction; defer the rest to the follow-up PRs that add libraries.
   the real `vale` subprocess integration are a later PR; this plan only proves
   the seam.
 - **Collection-scoped batching for out-of-process libraries.** Per-item is the
-  first cut; batching is a follow-up issue opened on this PR's completion (spec).
+  first cut; batching is [#68](https://github.com/abegong/katalyst/issues/68).
 - **Schema-discovery changes.** `.katalyst/schemas/` layout, discovery modes,
   and formats are untouched.
 - **Renaming the `object` kind or moving its family.** `object` stays

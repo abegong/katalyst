@@ -224,8 +224,8 @@ registry.
   `--schema` handling; prove the out-of-process seam with a fake library in
   tests. Native families and `cmd`/docs continue to pass unchanged.
 - **Fast-follow PR.** Migrate the four native families onto `CheckLibrary`.
-- **Follow-up issue (opened on this PR's completion).** Collection-scoped
-  batching for out-of-process libraries.
+- **Follow-up issue.** Collection-scoped batching for out-of-process libraries:
+  [#68](https://github.com/abegong/katalyst/issues/68).
 - **Later.** The full Vale library; any additional engines (CUE, Rego).
 
 ## Open Questions
