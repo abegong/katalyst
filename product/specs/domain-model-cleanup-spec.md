@@ -142,40 +142,25 @@ what keeps them sharing one vocabulary.
 - **Item primary, document specialized**; **attribute general, field
   specialized**, per the rule above.
 
-The remaining contested calls, *Query* and *engine*, are carried as open
-questions.
+Two contested calls, *Query* and *engine*, are **deferred to their own
+branches**: each is large enough to need separate treatment and would bloat this
+cleanup.
+
+- **Query** is genuinely contradictory across the sources (a supported operation
+  in core-concepts, *out of scope* in domain-model, shipped as `internal/query` +
+  `item list --filter` in code). Resolving it means deciding what query actually
+  is in katalyst today, which is its own investigation.
+- **Engine** is user-facing in CLI help yet defined in no doc. Whether to define
+  it or scrub it from help text is a small but separate sweep.
+
+Both are listed here only so the boundary is explicit; neither blocks the
+glossary or the doc reconciliation.
 
 ## Open Questions
 
-1. **The "Query" contradiction.**
-   **Context.** core-concepts lists *Query* as a supported operation;
-   domain-model lists it under *out of scope*; `internal/query` and `item list
-   --filter` exist in code today. The three sources disagree with each other and
-   with reality, and the right framing needs a closer look at what actually
-   shipped. (Owner is digging into this.)
-   **Choices & tradeoffs.**
-   - *Declare query partially shipped:* name what exists (single-collection
-     filter/sort via `item list`) and scope the gap (cross-collection query, a
-     dedicated `query` verb) as still out of scope. Honest about the code; needs
-     core-concepts and domain-model both reworded.
-   - *Keep "query" out of scope as a verb:* reframe `item list --filter` as a
-     listing convenience, not "query," and leave the `query` operation aspirational.
-     Simpler doc story; risks under-selling a real capability.
-   **Recommendation.** Lean toward *partially shipped*, name the shipped subset
-   and the gap so all three sources agree, but deferred to the owner's
-   investigation.
-
-2. **Define or drop "engine."**
-   **Context.** *Engine* appears in CLI help ("the engine can run/enforce") and
-   `cmd/engine.go`, but no doc defines it. It informally means the registry of
-   check types and inspectors the CLI runs.
-   **Choices & tradeoffs.** *Define it:* add a glossary entry and keep the help
-   text, one more term to maintain but the help copy already leans on it.
-   *Drop it:* rephrase help in terms of already-defined nouns (check types,
-   inspectors), fewer terms but a small help-text sweep.
-   **Recommendation.** Drop it from user-facing copy; it adds a term without a
-   concept users configure or address. Reword help to "the check types/inspectors
-   katalyst can run."
+_None._ Query and engine are deferred to their own branches (see Settled
+naming); the doc-consolidation plan (retire `domain-model.md`, slim
+`core-concepts.md`) is tracked against the post-rebase deep-dive layout.
 
 ## Documentation updates
 
@@ -184,21 +169,25 @@ questions.
   the specialization link), *operation*, *aggregate*, and *validation result*;
   fold *family* into its own row; apply the storage / source / item-document
   decisions.
-- **`docs/content/deep-dives/core-concepts.md`** — reframed to tool-agnostic
-  theory that links to the glossary for definitions; written in general terms
-  only; drop "data interface" for storage terms; fix the *Query* framing (OQ 1).
-- **`docs/content/deep-dives/domain-model.md`** — reframed to the katalyst
-  instantiation linking up to core-concepts and across to the glossary; apply the
-  item/document and source/raw-source decisions; refresh the stale Check list (it
-  predates `text_*`, `writing_tells`, `sentence_case`); reconcile the
-  out-of-scope *Query* note (OQ 1).
+- **`docs/content/deep-dives/core-concepts.md`** — slimmed to a tool-agnostic
+  conceptual map: define each general term in a line, link to its subsystem
+  deep-dive and the glossary, and stop re-specifying katalyst types; written in
+  general terms only; drop "data interface" for storage terms.
+- **`docs/content/deep-dives/domain-model.md`** — **retired.** Its unique content
+  (the schema-resolver precedence table, the per-item `check` lifecycle, a handful
+  of invariants) moves into `checks.md`/`storage.md`; the rest is already covered
+  by the dedicated deep-dives. See the consolidation plan.
+- **`docs/content/deep-dives/checks.md`** — absorbs the resolver precedence table,
+  the `check` lifecycle, and the schema-name/compilation/directive invariants from
+  the retired domain-model page; apply source/raw-source rename.
 - **`docs/content/deep-dives/storage.md`** — confirm wording now that "data
-  interface" is deprecated in favor of the storage vocabulary.
+  interface" is deprecated in favor of the storage vocabulary; absorb the
+  membership/unmatched invariants.
 - **Generated check-types/inspectors reference** — regenerate with `make
   docs-gen` if any family or layer label changes (e.g. raw-source → source);
   never hand-edit.
-- **`cmd/` help text** — apply the "engine" decision (OQ 2) and the
-  source/raw-source rename so help strings match the glossary.
+- **`cmd/` help text** — apply the source/raw-source rename so help strings match
+  the glossary.
 
 ## Rejected alternatives
 
