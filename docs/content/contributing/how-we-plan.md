@@ -26,8 +26,8 @@ There is **no `decisions.md`** and no ADR log. When a change locks in a
 choice, its rationale graduates next to the thing it explains, **split by
 altitude**: the behavioral *why* a user can observe into the relevant
 [`deep-dives/`]({{< relref "../deep-dives/_index.md" >}}) page, and the
-implementation-depth *why* into package docs (a `doc.go` when long, or a
-co-located `README.md`). Either way it is written into prose beside what it
+implementation-depth *why* into the package's `AGENTS.md` (or a `doc.go` for a
+brief package tour). Either way it is written into prose beside what it
 explains. When the choice supersedes an
 earlier approach, that same home notes the old approach and why it changed.
 
@@ -50,7 +50,7 @@ Track status as a line at the top of the spec/plan.
 1. **Write the spec.** Problem, design, open questions. Status: **planning**.
 2. **Resolve open questions.** Fold each resolution into the design. The
    locked rationale is destined for the thing it explains, `deep-dives/` for
-   the behavioral *why* and package docs for the implementation-depth *why*: at
+   the behavioral *why* and `AGENTS.md` for the implementation-depth *why*: at
    graduation, not a separate log.
 3. **Write the plan.** Phases and steps that reference the spec.
 4. **Implement, tests first.** Per `AGENTS.md`, new behavior arrives with a
@@ -65,10 +65,10 @@ When a spec reaches **done**, pull its durable content into permanent docs
 and retire the spec. Targets, see [How we
 document]({{< relref "how-we-document.md" >}}) for what belongs where:
 
-- **`AGENTS.md`:** new code conventions, required patterns, gotchas.
-- **Package docs (`doc.go` or co-located `README.md`):** API behavior and
-  **implementation-depth** rationale (rejected alternatives, "why not X") that
-  only matters with the source open.
+- **`AGENTS.md`:** new code conventions and **module architecture** - the
+  implementation-depth rationale (rejected alternatives, "why not X") that only
+  matters with the source open.
+- **Go doc comments:** API/symbol docs, with minimal design narrative.
 - **`docs/deep-dives/`:** the **behavioral** *why* - any rationale a user can
   observe, whatever subsystem it touches.
 - **`docs/reference/`:** the precise surface; for checks, regenerate
@@ -78,8 +78,8 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
 - **`README.md`:** pointer/overview updates.
 
 Evergreen deep-dive docs (the storage layer, progressive operations) and the
-per-package `README.md` files under `internal/` are *not* specs and don't get
-retired: they're updated in place.
+per-package `AGENTS.md` files are *not* specs and don't get retired: they're
+updated in place.
 
 ### Graduation checklist
 
@@ -87,7 +87,7 @@ When moving a spec to **done**:
 
 - [ ] `AGENTS.md` updated with any new conventions/gotchas.
 - [ ] Behavioral *why* captured in `docs/deep-dives/`; implementation-depth
-      rationale in package docs (`doc.go` or co-located `README.md`).
+      rationale and architecture in the package's `AGENTS.md`.
 - [ ] `docs/reference/` updated; `make docs-gen` run if a check changed.
 - [ ] New vocabulary added to the glossary.
 - [ ] User-facing changes reflected in `docs/how-to`, `getting-started.md`,

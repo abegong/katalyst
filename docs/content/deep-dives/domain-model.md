@@ -17,7 +17,7 @@ tutorial]({{< relref "../getting-started.md" >}}) and the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
 For *why* specific design choices were made, these deep dives are the home for
 the behavioral rationale; a package's implementation-depth reasoning
-additionally lives in its `doc.go` or `README.md`. For *how the code is laid
+additionally lives in its `AGENTS.md`. For *how the code is laid
 out*, see the repo's `AGENTS.md` files.
 
 ## At a glance

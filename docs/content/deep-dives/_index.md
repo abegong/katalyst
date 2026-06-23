@@ -19,6 +19,5 @@ short version, start with [Welcome]({{< relref "../welcome.md" >}}).
 
 These pages carry the **behavioral *why*** - any rationale a user can observe,
 whatever subsystem it touches. The narrower *why* that only matters once you are
-reading a package's code lives next to that code, in its `doc.go` or co-located
-`README.md` (for example `internal/config`, `internal/frontmatter`, and
-`internal/checks`).
+reading a package's code lives next to that code, in its `AGENTS.md` (for
+example `internal/config`, `internal/frontmatter`, and `internal/checks`).

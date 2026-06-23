@@ -46,38 +46,30 @@ The durable home for everything a user needs, organized by
 
 ### 2. Go doc comments
 
-Documentation that only matters once you are reading the code lives **with the
-code**, not in the Hugo tree: code-level API docs and a package's
-**implementation-depth rationale** - why it is built the way it is, the
-load-bearing decisions, the alternatives rejected. (The *behavioral* why a user
-can observe belongs in `deep-dives/`; this home is for the reasoning you only
-care about with the source open.) Two forms:
-
-- **Go doc comments** for API and symbol docs. When a package's design
-  narrative outgrows a leading file comment, give it a dedicated `doc.go`
-  (`internal/inspect/doc.go` is the worked example); it surfaces in `go doc`.
-- A co-located **`README.md`** when the doc is a package or directory
-  *overview*, benefits from GitHub rendering (tables, diagrams), or describes a
-  non-Go directory - `internal/config/README.md`, `internal/checks/README.md`,
-  and `.github/workflows/README.md` are current examples.
-
-Co-locating the *why* with the code keeps it in the same diff and out of a
-separate `explanation/` page that drifts. Use godoc headings (`# Heading`),
-prose, and short lists in doc comments; reach for a table in a `README.md` or
-the reference.
+Code-level API and symbol documentation lives in the code as Go doc comments,
+not in the Hugo tree. Keep the design narrative here **minimal** - a short
+orienting comment, with a dedicated `doc.go` only when a package needs a brief
+tour (`internal/inspect/doc.go` is the worked example); it surfaces in `go doc`.
+The fuller implementation-depth *why* - a package's architecture and
+load-bearing decisions - belongs in its `AGENTS.md` (below); the *behavioral*
+why a user can observe belongs in `deep-dives/`. Use godoc headings
+(`# Heading`), prose, and short lists; a table belongs in `AGENTS.md` or the
+reference.
 
 ### 3. `AGENTS.md` files
 
-Rules for anyone *writing code* in the repo: commands, layout, testing
-style, code style. **What goes here:** naming conventions, required
-patterns, gotchas, and the *why* behind a code constraint. **What doesn't:**
-conceptual explanations of how the system works (→ `docs/deep-dives/`),
-user-facing usage (→ `docs/`), or API-level detail (→ Go doc comments).
+Conventions and architecture for anyone *writing code* in the repo. **What goes
+here:** naming conventions, required patterns, gotchas, the *why* behind a code
+constraint, and a concise account of the **module's architecture** - how it is
+shaped and the load-bearing decisions, the implementation-depth *why* you care
+about with the source open. **What doesn't:** user-facing usage (→ `docs/`), the
+behavioral *why* a user can observe (→ `docs/deep-dives/`), or API-level symbol
+detail (→ Go doc comments).
 
-Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where
-a package has rules that don't belong at the root. Examples live in tests,
-not a separate examples file: a `*_test.go` is the canonical, executable
-example.
+Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where a
+package has rules or architecture that don't belong at the root. Keep each file
+concise and to the point. Examples live in tests, not a separate examples file:
+a `*_test.go` is the canonical, executable example.
 
 ### 4. Specs and plans
 
@@ -110,7 +102,7 @@ type rather than guessed up front.
 
 ## Style
 
-- **Keep `AGENTS.md` lean:** conventions, not walls of text.
+- **Keep `AGENTS.md` concise:** conventions and architecture, tightly written, not walls of text.
 - **Don't repeat root standards** in co-located docs; document only what's
   specific to that location.
 - **Update docs in the same change** that establishes a convention or ships
@@ -136,8 +128,9 @@ in the em-dash rubric draft under `product/`.
 
 ## Tool-specific files
 
-`AGENTS.md` is the source of truth for conventions. Other tools read their
-own files; keep them thin and pointed at `AGENTS.md`.
+`AGENTS.md` is the source of truth for code-writing conventions and module
+architecture. Other tools read their own files; keep them thin and pointed at
+`AGENTS.md`.
 
 - **`.cursor/skills/`:** reusable skills (e.g. `add-katalyst-rule`). Skills
   are *actions*, not conventions; conventions stay in `AGENTS.md`.
