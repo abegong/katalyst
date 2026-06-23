@@ -27,6 +27,8 @@ jobs:
       - name: Rule reference is generated and current
         run: make docs-gen-check
 
+  # Build/lint gate only — never deploys. See .github/workflows/README.md for
+  # how this relates to the publish (deploy-docs.yml) and preview (Netlify) paths.
   docs:
     runs-on: ubuntu-latest
     steps:
