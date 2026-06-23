@@ -25,7 +25,7 @@ stores, &amp;ldquo;data lakes.&amp;rdquo;&lt;/li&gt;
 and a markdown-vault note-taker have almost no shared language for
 their work, even though the operations they want to perform:
 &lt;em&gt;describe the shape of this data, find data that matches, change it
-safely, check that constraints hold&lt;/em&gt;, are essentially the same.&lt;/p&gt;</description></item><item><title>Progressive Operations</title><link>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
+safely, check that constraints hold&lt;/em&gt;, are essentially the same.&lt;/p&gt;</description></item><item><title>Progressive operations</title><link>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/deep-dives/progressive-operations/</guid><description>&lt;h1 id="progressive-operations"&gt;Progressive Operations&lt;a class="anchor" href="#progressive-operations"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;&lt;em&gt;How data interfaces evolve as query complexity grows. Each tier unlocks new operations, but requires structural commitments the previous tier doesn&amp;rsquo;t.&lt;/em&gt;&lt;/p&gt;
 &lt;p&gt;The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn&amp;rsquo;t arbitrary, each tier is driven by a class of operations that can&amp;rsquo;t be satisfied at the previous level.&lt;/p&gt;
 &lt;hr&gt;
