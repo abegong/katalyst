@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
+	"github.com/abegong/katalyst/internal/checks/structuredobject"
 	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/validator"
@@ -103,7 +104,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		if err != nil {
 			return nil, err
 		}
-		checkList = append(checkList, checks.Object{Schema: schema})
+		checkList = append(checkList, structuredobject.Object{Schema: schema})
 	case inlineSchema != "":
 		path := cfg.SchemaPath(inlineSchema)
 		if path == "" {
@@ -113,7 +114,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		if err != nil {
 			return nil, err
 		}
-		checkList = append(checkList, checks.Object{Schema: schema})
+		checkList = append(checkList, structuredobject.Object{Schema: schema})
 	default:
 		for _, ch := range effective {
 			if ch.Type != config.CheckObject {
@@ -127,86 +128,19 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 			if err != nil {
 				return nil, err
 			}
-			checkList = append(checkList, checks.Object{Schema: schema})
+			checkList = append(checkList, structuredobject.Object{Schema: schema})
 		}
 	}
 
+	// Every non-object, per-item check is built from its registry entry. The
+	// object check is handled above (it needs a compiled schema); collection-
+	// scoped checks have no per-item builder, so Build skips them here.
 	for _, ch := range effective {
-		switch ch.Type {
-		case config.CheckObjectRequiredField:
-			checkList = append(checkList, checks.ObjectRequiredField{Field: ch.Field})
-		case config.CheckObjectFieldType:
-			checkList = append(checkList, checks.ObjectFieldType{Field: ch.Field, Type: ch.FieldType})
-		case config.CheckObjectFieldEnum:
-			checkList = append(checkList, checks.ObjectFieldEnum{Field: ch.Field, Values: ch.Values})
-		case config.CheckObjectNumberRange:
-			checkList = append(checkList, checks.ObjectNumberRange{Field: ch.Field, Min: ch.Min, Max: ch.Max})
-		case config.CheckObjectStringLength:
-			checkList = append(checkList, checks.ObjectStringLength{
-				Field:     ch.Field,
-				MinLength: ch.MinLength,
-				MaxLength: ch.MaxLength,
-			})
-		case config.CheckMarkdownTitleMatchesH1:
-			checkList = append(checkList, checks.MarkdownTitleMatchesH1{Field: ch.Field})
-		case config.CheckMarkdownRequiresH1:
-			checkList = append(checkList, checks.MarkdownRequiresH1{})
-		case config.CheckMarkdownSingleH1:
-			checkList = append(checkList, checks.MarkdownSingleH1{})
-		case config.CheckMarkdownNoHeadingLevelJumps:
-			checkList = append(checkList, checks.MarkdownNoHeadingLevelJumps{})
-		case config.CheckMarkdownRequiredSection:
-			checkList = append(checkList, checks.MarkdownRequiredSection{Heading: ch.Heading})
-		case config.CheckMarkdownCodeFenceHasLanguage:
-			checkList = append(checkList, checks.MarkdownCodeFenceHasLanguage{})
-		case config.CheckFilesystemExtensionIn:
-			checkList = append(checkList, checks.FilesystemExtensionIn{Values: ch.Values})
-		case config.CheckFilesystemParentDirIn:
-			checkList = append(checkList, checks.FilesystemParentDirIn{Values: ch.Values})
-		case config.CheckFilesystemNameCase:
-			checkList = append(checkList, checks.NameCase{Style: ch.Style, Target: ch.Target})
-		case config.CheckFilesystemNameMatchesField:
-			checkList = append(checkList, checks.NameMatchesField{Field: ch.Field, Transform: ch.Transform, Target: ch.Target})
-		case config.CheckFilesystemNameAffix:
-			checkList = append(checkList, checks.NameAffix{Prefix: ch.Prefix, Suffix: ch.Suffix, Target: ch.Target})
-		case config.CheckFilesystemPathCharset:
-			checkList = append(checkList, checks.PathCharset{Allow: ch.Allow, Deny: ch.Deny})
-		case config.CheckFilesystemNameRegex:
-			checkList = append(checkList, checks.NameRegex{
-				Re:      regexp.MustCompile(checks.AnchoredPattern(ch.Pattern)),
-				Pattern: ch.Pattern,
-				Target:  ch.Target,
-			})
-		case config.CheckFilesystemNameLength:
-			checkList = append(checkList, checks.NameLength{Min: ch.MinInt, Max: ch.MaxInt, Target: ch.Target})
-		case config.CheckFilesystemPathDepth:
-			checkList = append(checkList, checks.PathDepth{Min: ch.MinInt, Max: ch.MaxInt})
-		case config.CheckFilesystemParentDirMatchesFld:
-			checkList = append(checkList, checks.ParentDirMatchesField{Field: ch.Field})
-		case config.CheckFilesystemReferencedFiles:
-			checkList = append(checkList, checks.ReferencedFilesExist{Fields: ch.Fields})
-		case config.CheckTextRequires:
-			checkList = append(checkList, checks.TextRequires{
-				Re:      regexp.MustCompile(ch.Pattern),
-				Pattern: ch.Pattern,
-				Target:  ch.Target,
-				Select:  compileSelect(ch.Select),
-				All:     ch.Match == "all",
-			})
-		case config.CheckTextForbids:
-			checkList = append(checkList, checks.TextForbids{
-				Re:      regexp.MustCompile(ch.Pattern),
-				Pattern: ch.Pattern,
-				Target:  ch.Target,
-				Select:  compileSelect(ch.Select),
-				Fix:     ch.Fix,
-			})
-		case config.CheckTextDenylist:
-			checkList = append(checkList, checks.TextDenylist{
-				Values: ch.Values,
-				Target: ch.Target,
-				Select: compileSelect(ch.Select),
-			})
+		if ch.Type == config.CheckObject {
+			continue
+		}
+		if chk, ok := checks.Build(ch); ok {
+			checkList = append(checkList, chk)
 		}
 	}
 
@@ -263,26 +197,11 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionCheck {
 	var out []checks.CollectionCheck
 	for _, ch := range c.Checks {
-		switch ch.Type {
-		case config.CheckFilesystemUniqueFilename:
-			out = append(out, checks.UniqueFilename{})
-		case config.CheckFilesystemUniqueField:
-			out = append(out, checks.UniqueField{Field: ch.Field})
-		case config.CheckFilesystemIndexFileRequired:
-			out = append(out, checks.IndexFileRequired{Name: ch.Name})
+		if cc, ok := checks.BuildCollection(ch); ok {
+			out = append(out, cc)
 		}
 	}
 	return out
-}
-
-// compileSelect compiles the matched-lines line-filter regex, or returns nil
-// when no select is configured. The pattern was validated at load time, so a
-// compile failure here is impossible.
-func compileSelect(sel string) *regexp.Regexp {
-	if sel == "" {
-		return nil
-	}
-	return regexp.MustCompile(sel)
 }
 
 // projectFor wraps a loaded config in a project.

@@ -44,7 +44,7 @@ machine-readable descriptors.`,
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
-	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (objects, markdown, filesystem).")
+	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (structuredObject, markdownBodyText, fileSystem, plainText).")
 	return c
 }
 

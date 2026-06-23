@@ -1,3 +1,12 @@
+// Package checks is the core of the check engine: the shared types every
+// check type is built on (Context, Check, CollectionCheck, Violation) plus the
+// registry that check types self-register with.
+//
+// Each check type lives in a per-family subpackage — structuredobject,
+// markdownbodytext, filesystem, plaintext — with one file per check type
+// holding its struct, Run, Descriptor, and an init() that calls Register. The
+// subpackages import this core; this core imports none of them. Callers wire
+// every family in by blank-importing internal/checks/all.
 package checks
 
 import "github.com/abegong/katalyst/internal/frontmatter"
@@ -39,7 +48,10 @@ func RunAll(ctx Context, checkList []Check) []Violation {
 	return out
 }
 
-func lookupLine(lines map[string]int, ptr string) int {
+// LookupLine resolves the 1-based source line for a JSON-pointer path, walking
+// up to the nearest ancestor present in lines. It is the shared line-mapping
+// helper every field-scoped check uses to point a violation at its key.
+func LookupLine(lines map[string]int, ptr string) int {
 	for {
 		if line, ok := lines[ptr]; ok {
 			return line

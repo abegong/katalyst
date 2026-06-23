@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/plaintext"
 	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/spf13/cobra"
@@ -140,15 +141,15 @@ func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
 
 // textFixers builds the fixable text_forbids checks configured for a
 // collection (those with a non-empty fix template).
-func textFixers(c config.Collection) []checks.TextForbids {
-	var out []checks.TextForbids
+func textFixers(c config.Collection) []plaintext.TextForbids {
+	var out []plaintext.TextForbids
 	for _, ch := range c.Checks {
 		if ch.Type == config.CheckTextForbids && ch.Fix != "" {
-			out = append(out, checks.TextForbids{
+			out = append(out, plaintext.TextForbids{
 				Re:      regexp.MustCompile(ch.Pattern),
 				Pattern: ch.Pattern,
 				Target:  ch.Target,
-				Select:  compileSelect(ch.Select),
+				Select:  plaintext.CompileSelect(ch.Select),
 				Fix:     ch.Fix,
 			})
 		}

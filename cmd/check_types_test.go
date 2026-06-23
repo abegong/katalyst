@@ -108,15 +108,15 @@ func TestCheckTypesShow_unknown_exit2(t *testing.T) {
 
 func TestCheckTypesList_familyFiltersList(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "check-types", "list", "--family", "markdown")
+	stdout, _, err := runRoot(t, "check-types", "list", "--family", "markdownBodyText")
 	if err != nil {
-		t.Fatalf("check-types list --family markdown: %v", err)
+		t.Fatalf("check-types list --family markdownBodyText: %v", err)
 	}
-	if !strings.Contains(stdout, "Markdown Check Types") {
-		t.Errorf("expected Markdown Check Types heading, got: %q", stdout)
+	if !strings.Contains(stdout, "Markdown Body Text Check Types") {
+		t.Errorf("expected Markdown Body Text Check Types heading, got: %q", stdout)
 	}
-	if strings.Contains(stdout, "Object Check Types") || strings.Contains(stdout, "Filesystem Check Types") {
-		t.Errorf("expected only the markdown family, got: %q", stdout)
+	if strings.Contains(stdout, "Structured Object Check Types") || strings.Contains(stdout, "File System Check Types") {
+		t.Errorf("expected only the markdown body text family, got: %q", stdout)
 	}
 	if !strings.Contains(stdout, "markdown_single_h1") {
 		t.Errorf("expected a markdown check type, got: %q", stdout)
@@ -140,9 +140,9 @@ func TestCheckTypesList_unknownFamily_exit2(t *testing.T) {
 
 func TestCheckTypesList_familyJSONFiltersToFamily(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "check-types", "list", "--family", "filesystem", "--json")
+	stdout, _, err := runRoot(t, "check-types", "list", "--family", "fileSystem", "--json")
 	if err != nil {
-		t.Fatalf("check-types list --family filesystem --json: %v", err)
+		t.Fatalf("check-types list --family fileSystem --json: %v", err)
 	}
 	var got []struct {
 		CheckType string `json:"check_type"`
@@ -151,12 +151,12 @@ func TestCheckTypesList_familyJSONFiltersToFamily(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(familyCheckTypes("filesystem")) {
-		t.Fatalf("got %d filesystem descriptors, want %d", len(got), len(familyCheckTypes("filesystem")))
+	if len(got) != len(familyCheckTypes("fileSystem")) {
+		t.Fatalf("got %d fileSystem descriptors, want %d", len(got), len(familyCheckTypes("fileSystem")))
 	}
 	for _, d := range got {
-		if d.Family != "filesystem" {
-			t.Errorf("got non-filesystem family %q", d.Family)
+		if d.Family != "fileSystem" {
+			t.Errorf("got non-fileSystem family %q", d.Family)
 		}
 	}
 }
@@ -188,10 +188,10 @@ func TestCheckTypesShow_showsFamilyContextAndSiblings(t *testing.T) {
 		t.Fatalf("check-types show object_field_enum: %v", err)
 	}
 	// Breadcrumb + family intro give the docs-traversal context.
-	if !strings.Contains(stdout, "Object Check Types › Field Enum") {
+	if !strings.Contains(stdout, "Structured Object Check Types › Field Enum") {
 		t.Errorf("expected breadcrumb header, got: %q", stdout)
 	}
-	if !strings.Contains(stdout, "Object check types validate structured frontmatter") {
+	if !strings.Contains(stdout, "Structured-object check types validate structured frontmatter") {
 		t.Errorf("expected family intro, got: %q", stdout)
 	}
 	// Siblings list points at the rest of the family.
