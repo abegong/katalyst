@@ -165,6 +165,6 @@ Here are a few more examples, to help ground these concepts.
 For how these general concepts are instantiated in katalyst specifically, the
 concrete `Document`, `Schema`, `Collection`, `Check`, and `Inspector` types and
 the invariants between them, see the [domain model]({{< relref "domain-model.md" >}}).
-For how they translate to today's code, see the per-package `README.md` files
+For how they translate to today's code, see the per-package `AGENTS.md` files
 under `internal/` (notably `internal/config`, `internal/frontmatter`,
 `internal/checks`, and `internal/inspect`).

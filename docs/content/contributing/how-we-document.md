@@ -38,7 +38,7 @@ The durable home for everything a user needs, organized by
   any *why* a user can observe, whatever subsystem it touches. A short **Why
   Katalyst?** orientation page sits at the top level. The narrower *why* that
   only matters once you are reading a package's code lives with that code (see
-  the Go doc comments / `README.md` home below), not a per-feature explanation
+  the Go doc comments / `AGENTS.md` home below), not a per-feature explanation
   page that will drift.
 - **`contributing/`:** project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
@@ -141,5 +141,5 @@ architecture. Other tools read their own files; keep them thin and pointed at
 How the site is **built, previewed, and published** (the publish/preview/
 validate split, the GitHub Pages "Actions" source invariant) is infra detail,
 so it lives next to the workflow files in
-[`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
+[`.github/workflows/AGENTS.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/AGENTS.md),
 not in this user-facing tree. Read it before touching `deploy-docs.yml`.

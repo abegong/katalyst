@@ -1,7 +1,7 @@
 # Netlify hosts the per-PR docs previews (Deploy Previews) only. Production docs
 # are published separately by GitHub Pages via deploy-docs.yml; Netlify is used
 # only because a single Pages site can't host one URL per PR. The three docs
-# paths (publish / preview / validate) are described in .github/workflows/README.md.
+# paths (publish / preview / validate) are described in .github/workflows/AGENTS.md.
 #
 # Connect the repo via Netlify's GitHub App (New site > import from GitHub).
 # No tokens or GitHub secrets are needed; the App handles auth and posts the
