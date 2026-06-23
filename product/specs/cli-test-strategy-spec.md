@@ -174,9 +174,12 @@ Behavior the fixture can't express, asserted directly:
   collection and names both colliding files (`check_test.go`).
 - **JSON outputs:** `check-types --json`, `inspectors --json`, `inspect --json`
   stay parse-and-assert (unmarshal, count vs registry, snake_case keys,
-  non-empty fields). See Open Question 3.
+  non-empty fields) — no golden JSON.
 - **Query semantics:** `item list` `--filter`/`--grep`/`--sort`/`--skip`/
-  `--limit`, type-mismatch, sort-missing, bad-query (`item_test.go`).
+  `--limit`, type-mismatch, sort-missing, bad-query (`item_test.go`). Only the
+  *plain* `item list` is snapshotted; query-flag results stay property tests so
+  the intent (`--limit 2` → first two by sort key) stays legible in code, not
+  implicit in a fixture.
 
 ### Hybrid tests keep both halves
 
@@ -204,48 +207,12 @@ is fully implied by the fixture, the test goes.
 
 ## Open Questions
 
-1. **Update mechanism: `-update` flag vs `UPDATE_SNAPSHOTS` env var.**
-   **Context.** Golden fixtures need a regeneration path so a deliberate copy
-   change is one command, not a hand-edit of N files. Two stdlib-only options.
-   **Choices & tradeoffs.** A registered `flag.Bool("update", …)` is the
-   canonical Go pattern (`go test ./cmd -run TestThing -update`), discoverable
-   and scoped per run, but adds one package-level flag var. An env var
-   (`UPDATE_SNAPSHOTS=1 go test ./cmd`) needs no flag registration and is
-   trivially settable in a Make target, but is less idiomatic and easy to leave
-   exported in a shell. **Recommendation:** the `-update` flag — it's the
-   convention Go reviewers expect and reads clearly in CI logs. Your call.
-
-2. **Fixture granularity for `item list` query results.**
-   **Context.** `item list` has a plain listing (snapshot candidate) and the
-   `--filter`/`--grep`/`--sort`/`--limit` family (semantics). The query tests
-   currently assert *which ids appear in what order* — which is also exactly
-   what a snapshot pins. **Choices & tradeoffs.** Snapshot each query result and
-   the test becomes "ran the query, output matches" — strong on layout, but the
-   *intent* ("`--limit 2` returns the first two by sort key") is no longer
-   legible in the test, it's implicit in the fixture. Keep them as property
-   tests and layout drift in the query table goes uncaught there (the plain
-   `item list` snapshot still guards the table shape). **Recommendation:**
-   snapshot only the plain `item list`; keep the query-flag tests as property
-   tests asserting ids/order in code, since the semantic is the point. Worth a
-   second look if the query table layout proves fragile.
-
-3. **Golden JSON for `--json` outputs?**
-   **Context.** `check-types --json` / `inspectors --json` / `inspect --json`
-   currently unmarshal and assert shape. A canonicalized golden JSON file would
-   also be reviewable as a diff. **Choices & tradeoffs.** Golden JSON pins the
-   exact wire bytes (key order, formatting) and reads well in review, but
-   couples the test to incidental serialization and re-raises the determinism
-   question (registry order is stable, but timestamps/paths in `inspect --json`
-   are not). Parse-and-assert tolerates formatting and targets the contract
-   (every descriptor present, snake_case keys, no empty fields). The issue
-   explicitly lists JSON under "keep as property tests." **Recommendation:**
-   keep `--json` as property tests; do **not** add golden JSON. Listed so the
-   decision is on the record, not silent.
+_None._
 
 ## Documentation updates
 
 - **`cmd/testdata/AGENTS.md`** — add a `snapshots/` section: the harness, the
-  group layout, the `-update` (or env) workflow, and how to review a fixture
+  group layout, the `-update` workflow, and how to review a fixture
   diff. Fold/replace the current `help/` table.
 - **`cmd/AGENTS.md`** — a "Testing the CLI" note: snapshot for text contracts,
   property test for behavior, hybrid tests keep both; point at the harness and
@@ -256,6 +223,20 @@ is fully implied by the fixture, the test goes.
 - **`cmd/testdata/AGENTS.md` "Adding a fixture"** — extend the steps to cover a
   snapshot fixture (run with `-update`, review the generated file, embed group).
 - User-facing Hugo docs: **none** — this is an internal test-strategy change.
+
+## Rejected alternatives
+
+- **`UPDATE_SNAPSHOTS` env var for regeneration.** Needs no flag registration
+  and drops into a Make target, but is less idiomatic than the Go golden-file
+  `-update` flag, reads worse in CI logs, and is easy to leave exported in a
+  shell. Chose the `-update` `flag.Bool`.
+- **Snapshotting `item list` query results.** Would pin the result table for
+  each `--filter`/`--grep`/`--sort`/`--limit` case, but buries the intent
+  (`--limit 2` → first two by sort key) in a fixture. Kept those as property
+  tests asserting ids/order in code; only the plain listing is snapshotted.
+- **Golden JSON for `--json` outputs.** Pins exact wire bytes and reviews as a
+  diff, but couples tests to incidental serialization and re-raises determinism
+  for `inspect --json` (paths). Kept parse-and-assert against the registry.
 
 ## Test checklist (harness self-coverage)
 
