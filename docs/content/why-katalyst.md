@@ -50,17 +50,14 @@ knowledge base.
 
 Rule layers include:
 
-- **Markdown content**
-  - required sections, naming conventions, templates, and related
-    conventions.
-- **File structure**
-  - naming conventions, preferred and required extensions, and directory
-    structures.
-- **Metadata**
-  - required fields, types, enums, numeric ranges, and full JSON Schema
-    validation of frontmatter.
-- **Object relationships**
-  - links, summaries, tables of contents, and sequential numbering.
+- *Markdown content*: required sections, naming conventions, templates, and
+  related conventions.
+- *File structure*: naming conventions, preferred and required extensions, and
+  directory structures.
+- *Metadata*: required fields, types, enums, numeric ranges, and full JSON
+  Schema validation of frontmatter.
+- *Object relationships*: links, summaries, tables of contents, and sequential
+  numbering.
 
 ### Reshape as needed
 
@@ -68,12 +65,9 @@ As your content evolves, Katalyst gives you tools to navigate change.
 
 Common updates include:
 
-- **Rules**
-  - add or change checks.
-- **Content shape**
-  - change the structure of your content.
-- **Storage**
-  - change your storage layer.
+- *Rules*: add or change checks.
+- *Content shape*: change the structure of your content.
+- *Storage*: change your storage layer.
 
 ## Design principles
 
@@ -100,14 +94,10 @@ rules, find what it needs, and extend them without ceremony:
 
 This means optimizing for:
 
-- **Speed**
-  - fast enough to run on every write.
-- **Discoverability**
-  - an agent can find the schemas and structure on its own.
-- **Readability**
-  - rules and content stay legible to humans and agents alike.
-- **Extensibility**
-  - add new check types as needs grow.
+- *Speed*: fast enough to run on every write.
+- *Discoverability*: an agent can find the schemas and structure on its own.
+- *Readability*: rules and content stay legible to humans and agents alike.
+- *Extensibility*: add new check types as needs grow.
 
 ## What if structure was light?
 

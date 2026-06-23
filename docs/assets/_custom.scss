@@ -1,15 +1,18 @@
-// Visual grouping for H3 sections: keep headings flush, indent first body block.
+// Strategy B: use a consistent content gutter across page prose blocks.
 .markdown.book-article > h3 {
   margin-top: 1.6rem;
   font-weight: 650;
 }
 
-.markdown.book-article > h3 + :is(
+.markdown.book-article > :is(
   p,
   ul,
   ol,
   pre,
   table,
+  hr,
+  details,
+  figure,
   blockquote,
   .highlight,
   .book-hint,
