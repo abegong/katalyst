@@ -1,6 +1,6 @@
 +++
-title = "Unique Field"
-weight = 70
+title = "Unique field"
+weight = 80
 aliases = ["/reference/rules/structured-object/unique-field/"]
 +++
 

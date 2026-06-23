@@ -34,7 +34,7 @@ func init() {
 		CheckType: config.CheckMarkdownNoHeadingLevelJumps,
 		Family:    "markdownBodyText",
 		Slug:      "no-heading-level-jumps",
-		Title:     "No Heading Level Jumps",
+		Title:     "No heading level jumps",
 		Summary:   "Disallow jumps larger than one heading level (for example `H1 -> H3`).",
 		ConfigExample: `collections:
   notes:

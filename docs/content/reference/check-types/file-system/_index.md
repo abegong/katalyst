@@ -1,5 +1,5 @@
 +++
-title = "File System Check Types"
+title = "File system check types"
 weight = 30
 bookCollapseSection = true
 aliases = ["/reference/rules/file-system/"]
@@ -11,16 +11,16 @@ File-system check types validate filename and path conventions for items.
 
 Check types in this family:
 
-- [Extension In]({{< relref "extension-in.md" >}}): Allow only specific file extensions.
-- [Index File Required]({{< relref "index-file-required.md" >}}): Require that every directory containing items has an index file.
-- [Name Affix]({{< relref "name-affix.md" >}}): Require a name to start with a prefix and/or end with a suffix.
-- [Name Case]({{< relref "name-case.md" >}}): Require a name (or path segments) to follow a case style.
-- [Name Length]({{< relref "name-length.md" >}}): Bound the character length of a name.
-- [Name Matches Field]({{< relref "name-matches-field.md" >}}): Require a name to equal a frontmatter field, optionally slugified.
-- [Name Regex]({{< relref "name-regex.md" >}}): Require a name to match a regular expression (anchored).
-- [Parent Directory In]({{< relref "parent-dir-in.md" >}}): Require that the file's parent directory name is in an allowed set.
-- [Parent Directory Matches Field]({{< relref "parent-dir-matches-field.md" >}}): Require the parent directory name to equal a frontmatter field.
-- [Path Charset]({{< relref "path-charset.md" >}}): Constrain the characters allowed in the item's path.
-- [Path Depth]({{< relref "path-depth.md" >}}): Bound directory nesting relative to the collection root.
-- [Referenced Files Exist]({{< relref "referenced-files-exist.md" >}}): Require path-valued frontmatter fields to resolve to real files.
-- [Unique Filename]({{< relref "unique-filename.md" >}}): Require that no two items in the collection share a basename.
+- [Extension in]({{< relref "extension-in.md" >}}): Allow only specific file extensions.
+- [Index file required]({{< relref "index-file-required.md" >}}): Require that every directory containing items has an index file.
+- [Name affix]({{< relref "name-affix.md" >}}): Require a name to start with a prefix and/or end with a suffix.
+- [Name case]({{< relref "name-case.md" >}}): Require a name (or path segments) to follow a case style.
+- [Name length]({{< relref "name-length.md" >}}): Bound the character length of a name.
+- [Name matches field]({{< relref "name-matches-field.md" >}}): Require a name to equal a frontmatter field, optionally slugified.
+- [Name regex]({{< relref "name-regex.md" >}}): Require a name to match a regular expression (anchored).
+- [Parent directory in]({{< relref "parent-dir-in.md" >}}): Require that the file's parent directory name is in an allowed set.
+- [Parent directory matches field]({{< relref "parent-dir-matches-field.md" >}}): Require the parent directory name to equal a frontmatter field.
+- [Path charset]({{< relref "path-charset.md" >}}): Constrain the characters allowed in the item's path.
+- [Path depth]({{< relref "path-depth.md" >}}): Bound directory nesting relative to the collection root.
+- [Referenced files exist]({{< relref "referenced-files-exist.md" >}}): Require path-valued frontmatter fields to resolve to real files.
+- [Unique filename]({{< relref "unique-filename.md" >}}): Require that no two items in the collection share a basename.

@@ -54,7 +54,7 @@ func init() {
 		CheckType: config.CheckObjectNumberRange,
 		Family:    "structuredObject",
 		Slug:      "number-range",
-		Title:     "Number Range",
+		Title:     "Number range",
 		Summary:   "Constrain a numeric field to a minimum and/or maximum value.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key to check."},

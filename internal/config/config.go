@@ -113,6 +113,7 @@ const (
 	CheckObjectFieldEnum               CheckType = "object_field_enum"
 	CheckObjectNumberRange             CheckType = "object_number_range"
 	CheckObjectStringLength            CheckType = "object_string_length"
+	CheckObjectSentenceCase            CheckType = "object_sentence_case"
 	CheckMarkdownTitleMatchesH1        CheckType = "markdown_title_matches_h1"
 	CheckMarkdownRequiresH1            CheckType = "markdown_requires_h1"
 	CheckMarkdownSingleH1              CheckType = "markdown_single_h1"
@@ -1003,6 +1004,11 @@ func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, err
 			return CheckInstance{}, errors.New(`object_string_length requires "min_length" or "max_length"`)
 		}
 		return CheckInstance{Type: checkType, Field: raw.Field, MinLength: raw.MinLength, MaxLength: raw.MaxLength}, nil
+	case CheckObjectSentenceCase:
+		if raw.Field == "" {
+			return CheckInstance{}, errors.New(`object_sentence_case requires "field"`)
+		}
+		return CheckInstance{Type: checkType, Field: raw.Field, Allow: raw.Allow}, nil
 	case CheckMarkdownTitleMatchesH1:
 		if raw.Schema != "" {
 			return CheckInstance{}, errors.New(`markdown_title_matches_h1 does not support "schema"`)

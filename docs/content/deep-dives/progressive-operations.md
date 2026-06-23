@@ -1,5 +1,5 @@
 +++
-title = "Progressive Operations"
+title = "Progressive operations"
 weight = 30
 +++
 

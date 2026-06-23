@@ -58,7 +58,7 @@ func init() {
 		CheckType: config.CheckFilesystemNameCase,
 		Family:    "fileSystem",
 		Slug:      "name-case",
-		Title:     "Name Case",
+		Title:     "Name case",
 		Summary:   "Require a name (or path segments) to follow a case style.",
 		Fields: []checks.Field{
 			{Name: "style", Required: true, Desc: "One of `kebab`, `snake`, `screaming-snake`, `camel`, `pascal`, `point`, `lower`."},

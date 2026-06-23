@@ -29,7 +29,7 @@ func init() {
 		CheckType: config.CheckObjectRequiredField,
 		Family:    "structuredObject",
 		Slug:      "required-field",
-		Title:     "Required Field",
+		Title:     "Required field",
 		Summary:   "Require that a frontmatter field exists.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key that must be present."},

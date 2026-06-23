@@ -1,5 +1,5 @@
 +++
-title = "Extension In"
+title = "Extension in"
 weight = 10
 aliases = ["/reference/rules/file-system/extension-in/"]
 +++

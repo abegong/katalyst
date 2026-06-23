@@ -1,5 +1,5 @@
 +++
-title = "Required Field"
+title = "Required field"
 weight = 50
 aliases = ["/reference/rules/structured-object/required-field/"]
 +++

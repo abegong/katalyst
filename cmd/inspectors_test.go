@@ -55,7 +55,7 @@ func TestInspectorsShow_showsLayerContextAndSiblings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspectors show document_shape: %v", err)
 	}
-	if !strings.Contains(stdout, "Raw-source inspectors › Document Shape") {
+	if !strings.Contains(stdout, "Raw-source inspectors › Document shape") {
 		t.Errorf("expected breadcrumb header, got: %q", stdout)
 	}
 	if !strings.Contains(stdout, "profile a backend store directly") {

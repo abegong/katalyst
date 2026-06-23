@@ -1,5 +1,5 @@
 +++
-title = "Structured Object Check Types"
+title = "Structured object check types"
 weight = 10
 bookCollapseSection = true
 aliases = ["/reference/rules/structured-object/"]
@@ -11,10 +11,11 @@ Structured-object check types validate structured frontmatter fields using schem
 
 Check types in this family:
 
-- [Field Enum]({{< relref "field-enum.md" >}}): Require that a field is one of a fixed set of values.
-- [Field Type]({{< relref "field-type.md" >}}): Require that a frontmatter field has a specific type.
-- [Number Range]({{< relref "number-range.md" >}}): Constrain a numeric field to a minimum and/or maximum value.
-- [Object Validation]({{< relref "object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
-- [Required Field]({{< relref "required-field.md" >}}): Require that a frontmatter field exists.
-- [String Length]({{< relref "string-length.md" >}}): Constrain the minimum and/or maximum length of a string field.
-- [Unique Field]({{< relref "unique-field.md" >}}): Require that no two items share a value for a frontmatter field.
+- [Field enum]({{< relref "field-enum.md" >}}): Require that a field is one of a fixed set of values.
+- [Field type]({{< relref "field-type.md" >}}): Require that a frontmatter field has a specific type.
+- [Number range]({{< relref "number-range.md" >}}): Constrain a numeric field to a minimum and/or maximum value.
+- [Object validation]({{< relref "object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
+- [Required field]({{< relref "required-field.md" >}}): Require that a frontmatter field exists.
+- [Sentence case]({{< relref "sentence-case.md" >}}): Require a string field to read as sentence case, not Title Case.
+- [String length]({{< relref "string-length.md" >}}): Constrain the minimum and/or maximum length of a string field.
+- [Unique field]({{< relref "unique-field.md" >}}): Require that no two items share a value for a frontmatter field.

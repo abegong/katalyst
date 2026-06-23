@@ -40,7 +40,7 @@ func init() {
 		CheckType: config.CheckObjectFieldType,
 		Family:    "structuredObject",
 		Slug:      "field-type",
-		Title:     "Field Type",
+		Title:     "Field type",
 		Summary:   "Require that a frontmatter field has a specific type.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key to check."},

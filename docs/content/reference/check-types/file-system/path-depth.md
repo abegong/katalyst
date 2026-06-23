@@ -1,5 +1,5 @@
 +++
-title = "Path Depth"
+title = "Path depth"
 weight = 110
 aliases = ["/reference/rules/file-system/path-depth/"]
 +++

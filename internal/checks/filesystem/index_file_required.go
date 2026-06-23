@@ -49,7 +49,7 @@ func init() {
 		CheckType: config.CheckFilesystemIndexFileRequired,
 		Family:    "fileSystem",
 		Slug:      "index-file-required",
-		Title:     "Index File Required",
+		Title:     "Index file required",
 		Summary:   "Require that every directory containing items has an index file.",
 		Scope:     "collection",
 		Fields: []checks.Field{

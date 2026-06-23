@@ -1,5 +1,5 @@
 +++
-title = "Markdown Body"
+title = "Markdown body"
 weight = 20
 +++
 

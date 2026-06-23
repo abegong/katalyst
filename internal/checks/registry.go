@@ -76,25 +76,25 @@ func Families() []Family {
 		{
 			ID:    "structuredObject",
 			Slug:  "structured-object",
-			Title: "Structured Object Check Types",
+			Title: "Structured object check types",
 			Intro: "Structured-object check types validate structured frontmatter fields using schema-backed checks.",
 		},
 		{
 			ID:    "markdownBodyText",
 			Slug:  "markdown-body-text",
-			Title: "Markdown Body Text Check Types",
+			Title: "Markdown body text check types",
 			Intro: "Markdown body-text check types validate relationships between frontmatter metadata and markdown body content.",
 		},
 		{
 			ID:    "fileSystem",
 			Slug:  "file-system",
-			Title: "File System Check Types",
+			Title: "File system check types",
 			Intro: "File-system check types validate filename and path conventions for items.",
 		},
 		{
 			ID:    "plainText",
 			Slug:  "plain-text",
-			Title: "Plain Text Check Types",
+			Title: "Plain text check types",
 			Intro: "Plain-text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.",
 		},
 	}

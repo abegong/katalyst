@@ -1,5 +1,5 @@
 +++
-title = "Document Shape"
+title = "Document shape"
 weight = 30
 +++
 

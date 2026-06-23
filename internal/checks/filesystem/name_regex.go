@@ -37,7 +37,7 @@ func init() {
 		CheckType: config.CheckFilesystemNameRegex,
 		Family:    "fileSystem",
 		Slug:      "name-regex",
-		Title:     "Name Regex",
+		Title:     "Name regex",
 		Summary:   "Require a name to match a regular expression (anchored).",
 		Fields: []checks.Field{
 			{Name: "pattern", Required: true, Desc: "Regular expression; matched anchored (`^pattern$`)."},

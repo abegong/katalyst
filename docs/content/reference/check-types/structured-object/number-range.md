@@ -1,5 +1,5 @@
 +++
-title = "Number Range"
+title = "Number range"
 weight = 30
 aliases = ["/reference/rules/structured-object/number-range/"]
 +++

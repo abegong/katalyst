@@ -55,7 +55,7 @@ func init() {
 		CheckType: config.CheckMarkdownTitleMatchesH1,
 		Family:    "markdownBodyText",
 		Slug:      "title-matches-h1",
-		Title:     "Title Matches H1",
+		Title:     "Title matches H1",
 		Summary:   "Require a frontmatter field to match the first H1 heading in the body.",
 		Fields: []checks.Field{
 			{Name: "field", Required: false, Default: "title", Desc: "Frontmatter key compared to the first H1."},

@@ -1,5 +1,5 @@
 +++
-title = "Parent Directory Matches Field"
+title = "Parent directory matches field"
 weight = 90
 aliases = ["/reference/rules/file-system/parent-dir-matches-field/"]
 +++

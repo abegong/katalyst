@@ -142,7 +142,7 @@ func init() {
 		Family:    "markdownBodyText",
 		Slug:      "writing-tells",
 		Severity:  "warning",
-		Title:     "Writing Tells",
+		Title:     "Writing tells",
 		Summary:   "Warn on likely AI-writing tells (em dashes, decorative emoji, overused words, stock phrases) for human review.",
 		ConfigExample: `collections:
   notes:

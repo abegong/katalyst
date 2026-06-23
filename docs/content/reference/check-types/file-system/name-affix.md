@@ -1,5 +1,5 @@
 +++
-title = "Name Affix"
+title = "Name affix"
 weight = 30
 aliases = ["/reference/rules/file-system/name-affix/"]
 +++

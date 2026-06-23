@@ -1,5 +1,5 @@
 +++
-title = "Katalyst Documentation"
+title = "Katalyst documentation"
 weight = 1
 +++
 

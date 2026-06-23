@@ -1,5 +1,5 @@
 +++
-title = "Object Validation"
+title = "Object validation"
 weight = 40
 aliases = ["/reference/rules/structured-object/object/"]
 +++

@@ -75,7 +75,7 @@ func init() {
 		CheckType: config.CheckFilesystemReferencedFiles,
 		Family:    "fileSystem",
 		Slug:      "referenced-files-exist",
-		Title:     "Referenced Files Exist",
+		Title:     "Referenced files exist",
 		Summary:   "Require path-valued frontmatter fields to resolve to real files.",
 		Fields: []checks.Field{
 			{Name: "fields", Required: true, Desc: "Frontmatter keys holding a path (string) or list of paths, resolved relative to the item."},

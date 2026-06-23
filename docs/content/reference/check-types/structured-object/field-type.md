@@ -1,5 +1,5 @@
 +++
-title = "Field Type"
+title = "Field type"
 weight = 20
 aliases = ["/reference/rules/structured-object/field-type/"]
 +++

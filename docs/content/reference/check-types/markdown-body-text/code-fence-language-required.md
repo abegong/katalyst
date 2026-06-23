@@ -1,5 +1,5 @@
 +++
-title = "Code Fence Language Required"
+title = "Code fence language required"
 weight = 10
 aliases = ["/reference/rules/markdown-body-text/code-fence-language-required/"]
 +++

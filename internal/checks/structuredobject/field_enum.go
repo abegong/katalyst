@@ -48,7 +48,7 @@ func init() {
 		CheckType: config.CheckObjectFieldEnum,
 		Family:    "structuredObject",
 		Slug:      "field-enum",
-		Title:     "Field Enum",
+		Title:     "Field enum",
 		Summary:   "Require that a field is one of a fixed set of values.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key to check."},

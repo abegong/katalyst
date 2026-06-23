@@ -39,7 +39,7 @@ func init() {
 		CheckType: config.CheckFilesystemNameAffix,
 		Family:    "fileSystem",
 		Slug:      "name-affix",
-		Title:     "Name Affix",
+		Title:     "Name affix",
 		Summary:   "Require a name to start with a prefix and/or end with a suffix.",
 		Fields: []checks.Field{
 			{Name: "prefix", Required: false, Desc: "Required name prefix (at least one of prefix/suffix)."},
