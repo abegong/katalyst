@@ -69,6 +69,30 @@ func (e *engine) compile(sl checks.SchemaLibrary, name, path string) (checks.Sch
 	return s, nil
 }
 
+// ensureLibrariesAvailable fails the run if any library backing a non-object
+// check in the set is unavailable (e.g. an out-of-process tool's binary is
+// missing). Availability is a hard error so a misconfigured environment fails
+// loudly rather than silently skipping enforcement. The object check's library
+// is checked separately in objectLibrary, since the forced --schema and inline
+// schema: paths reach it without an object entry in the check list.
+func ensureLibrariesAvailable(effective []config.CheckInstance) error {
+	seen := map[string]bool{}
+	for _, ch := range effective {
+		if ch.Type == config.CheckObject {
+			continue
+		}
+		lib, ok := checks.LibraryFor(ch.Type)
+		if !ok || seen[lib.Name()] {
+			continue
+		}
+		seen[lib.Name()] = true
+		if err := lib.Available(); err != nil {
+			return fmt.Errorf("check library %q is unavailable: %w", lib.Name(), err)
+		}
+	}
+	return nil
+}
+
 // objectLibrary returns the JSON Schema library that owns the object check,
 // after confirming it is available. Availability is checked before any schema
 // is compiled so a missing engine fails the run loudly.
@@ -109,6 +133,10 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		effective = make([]config.CheckInstance, 0, len(c.Checks)+len(matched.Checks))
 		effective = append(effective, c.Checks...)
 		effective = append(effective, matched.Checks...)
+	}
+
+	if err := ensureLibrariesAvailable(effective); err != nil {
+		return nil, err
 	}
 
 	checkList := make([]checks.Check, 0, len(effective))
