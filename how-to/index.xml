@@ -5,9 +5,11 @@ and you want a Katalyst schema for it. Rather than guess the conventions,
 schema &lt;strong&gt;by reading the evidence yourself&lt;/strong&gt;. To hand that judgment to an agent
 instead, see &lt;a href="https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/"&gt;Profile an existing wiki with an
 agent&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; is read-only and needs no &lt;code&gt;.katalyst/&lt;/code&gt; project. It reports
-&lt;strong&gt;evidence&lt;/strong&gt; — counts and distributions — never recommendations. Reading the
-evidence and deciding the schema is your call.&lt;/p&gt;</description></item><item><title>Profile an existing wiki with an agent</title><link>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/</guid><description>&lt;h1 id="profile-an-existing-wiki-with-an-agent"&gt;Profile an existing wiki with an agent&lt;a class="anchor" href="#profile-an-existing-wiki-with-an-agent"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;&lt;code&gt;inspect&lt;/code&gt; reports &lt;strong&gt;evidence&lt;/strong&gt; — counts and distributions — never
+recommendations. Reading the evidence and deciding the schema is your call. It
+runs in &lt;strong&gt;two layers&lt;/strong&gt;: point it at a &lt;strong&gt;directory&lt;/strong&gt; to profile a raw store
+(no project needed), or at a configured &lt;strong&gt;collection&lt;/strong&gt; to profile its items.
+The onboarding loop uses both.&lt;/p&gt;</description></item><item><title>Profile an existing wiki with an agent</title><link>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-with-an-agent/</guid><description>&lt;h1 id="profile-an-existing-wiki-with-an-agent"&gt;Profile an existing wiki with an agent&lt;a class="anchor" href="#profile-an-existing-wiki-with-an-agent"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;The &lt;a href="https://abegong.github.io/katalyst/how-to/profile-an-existing-wiki-by-hand/"&gt;by-hand guide&lt;/a&gt; has
 you read inspector evidence and decide the schema. This guide hands that
 judgment to an agent: &lt;code&gt;inspect&lt;/code&gt; supplies the measurements, the agent supplies
