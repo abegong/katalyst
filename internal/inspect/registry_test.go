@@ -6,31 +6,45 @@ import (
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
-// TestRegistryParity is the no-orphan guarantee: every inspector in All() has a
-// Descriptor and vice versa, so an inspector cannot ship undocumented.
+// TestRegistryParity is the no-orphan guarantee: every inspector instance has a
+// Descriptor in its layer and vice versa, so an inspector cannot ship
+// undocumented.
 func TestRegistryParity(t *testing.T) {
-	descriptors := map[string]bool{}
+	byLayer := map[string]map[string]bool{"source": {}, "collection": {}}
 	for _, d := range inspect.Descriptors() {
-		if descriptors[d.Name] {
+		layer := byLayer[d.Layer]
+		if layer == nil {
+			t.Fatalf("descriptor %q has unknown layer %q", d.Name, d.Layer)
+		}
+		if layer[d.Name] {
 			t.Errorf("duplicate descriptor %q", d.Name)
 		}
-		descriptors[d.Name] = true
+		layer[d.Name] = true
 	}
 
-	inspectors := map[string]bool{}
-	for _, ins := range inspect.All() {
-		n := ins.Name()
-		if inspectors[n] {
-			t.Errorf("duplicate inspector %q", n)
-		}
-		inspectors[n] = true
-		if !descriptors[n] {
-			t.Errorf("inspector %q has no Descriptor in registry.go", n)
+	source := map[string]bool{}
+	for _, ins := range inspect.SourceInspectors() {
+		source[ins.Name()] = true
+		if !byLayer["source"][ins.Name()] {
+			t.Errorf("source inspector %q has no source Descriptor", ins.Name())
 		}
 	}
-	for n := range descriptors {
-		if !inspectors[n] {
-			t.Errorf("descriptor %q has no inspector in All()", n)
+	for n := range byLayer["source"] {
+		if !source[n] {
+			t.Errorf("source descriptor %q has no inspector", n)
+		}
+	}
+
+	collection := map[string]bool{}
+	for _, ins := range inspect.CollectionInspectors() {
+		collection[ins.Name()] = true
+		if !byLayer["collection"][ins.Name()] {
+			t.Errorf("collection inspector %q has no collection Descriptor", ins.Name())
+		}
+	}
+	for n := range byLayer["collection"] {
+		if !collection[n] {
+			t.Errorf("collection descriptor %q has no inspector", n)
 		}
 	}
 }
@@ -41,10 +55,13 @@ func TestDescriptorMetadata(t *testing.T) {
 	for _, f := range inspect.Families() {
 		families[f.ID] = true
 	}
-	// Slug must be unique within a family so per-inspector docs pages
-	// (reference/inspectors/<family>/<slug>.md) never collide.
+	// Slug must be unique within a layer so per-inspector docs pages
+	// (reference/inspectors/<layer>/<slug>.md) never collide.
 	slugs := map[string]bool{}
 	for _, d := range inspect.Descriptors() {
+		if d.Layer != "source" && d.Layer != "collection" {
+			t.Errorf("inspector %q has unknown layer %q", d.Name, d.Layer)
+		}
 		if d.Family == "" || !families[d.Family] {
 			t.Errorf("inspector %q has unknown family %q", d.Name, d.Family)
 		}
@@ -54,12 +71,9 @@ func TestDescriptorMetadata(t *testing.T) {
 		if d.Title == "" {
 			t.Errorf("inspector %q has empty title", d.Name)
 		}
-		if d.Slug == "" {
-			t.Errorf("inspector %q has empty slug", d.Name)
-		}
-		key := d.Family + "/" + d.Slug
-		if slugs[key] {
-			t.Errorf("inspector %q has duplicate family/slug %q", d.Name, key)
+		key := d.Layer + "/" + d.Slug
+		if d.Slug == "" || slugs[key] {
+			t.Errorf("inspector %q has empty or duplicate layer/slug %q", d.Name, key)
 		}
 		slugs[key] = true
 	}

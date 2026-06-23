@@ -57,3 +57,31 @@ func markdownBody(docs []mdInput) map[string]any {
 		"sections": toAnyMap(sections),
 	}
 }
+
+// mdHeading is one ATX heading: its level and trimmed text.
+type mdHeading struct {
+	level int
+	text  string
+}
+
+// headings extracts ATX headings ("# ", "## ", …) from a markdown body. It is
+// deliberately local to inspect rather than reaching into internal/checks,
+// whose equivalent helper is unexported.
+func headings(body []byte) []mdHeading {
+	var out []mdHeading
+	for _, line := range strings.Split(string(body), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		level := 0
+		for level < len(trimmed) && trimmed[level] == '#' {
+			level++
+		}
+		if level == 0 || level > 6 || len(trimmed) <= level || trimmed[level] != ' ' {
+			continue
+		}
+		out = append(out, mdHeading{level: level, text: strings.TrimSpace(trimmed[level+1:])})
+	}
+	return out
+}

@@ -2,7 +2,13 @@ package inspect
 
 import (
 	"path"
+	"regexp"
 	"strings"
+)
+
+var (
+	kebabPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	snakePattern = regexp.MustCompile(`^[a-z0-9]+(?:_[a-z0-9]+)*$`)
 )
 
 // fileMetadata reports path-level conventions over a set of references

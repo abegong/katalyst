@@ -2,6 +2,11 @@ package inspect
 
 import "strconv"
 
+// maxValueSet caps how many distinct values objectFields will enumerate for a
+// field. Above it, only the cardinality is reported — a wide-open field is not
+// an enum candidate, so listing every value adds noise.
+const maxValueSet = 12
+
 // objectFields builds a data dictionary over a set of objects (frontmatter
 // maps). Per field it reports presence over n, an observed type histogram,
 // scalar value cardinality, and — when the field is a single-scalar-type enum

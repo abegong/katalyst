@@ -11,7 +11,7 @@ import (
 )
 
 // newInspectorsCmd builds the `inspectors` resource noun: a read-only view of
-// the inspector registry (inspect.Descriptors() / inspect.Families()) — the same
+// the inspector registry (inspect.Descriptors() / inspect.Layers()) — the same
 // catalog cmd/gendocs renders. As a resource noun (see cmd/AGENTS.md) it carries
 // CRUD-shaped sub-verbs (list, show) rather than acting when invoked bare, so it
 // matches the check-types/collection/item/schema nouns. It loads no project, so
@@ -19,11 +19,11 @@ import (
 func newInspectorsCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "inspectors",
-		Short: "Inspect the inspectors the engine can run, grouped by family.",
+		Short: "Inspect the inspectors the engine can run, grouped by layer.",
 		Long: `inspectors is a read-only view of the engine's inspector registry — the same
 catalog cmd/gendocs renders and that the inspect command runs. List every
-inspector grouped by family, or show one inspector's docs-style readout. It
-reads no project, so it runs in any directory.`,
+inspector grouped by layer (raw-source, collection), or show one inspector's
+docs-style readout. It reads no project, so it runs in any directory.`,
 	}
 	c.AddCommand(newInspectorsListCmd(), newInspectorsShowCmd())
 	return c
@@ -31,20 +31,20 @@ reads no project, so it runs in any directory.`,
 
 func newInspectorsListCmd() *cobra.Command {
 	var asJSON bool
-	var family string
+	var layer string
 	c := &cobra.Command{
 		Use:   "list",
-		Short: "List inspectors grouped by family.",
+		Short: "List inspectors grouped by layer.",
 		Long: `list prints the catalog of inspectors from the engine registry,
-grouped by family. Narrow to one family with --family; --json emits
+grouped by layer. Narrow to one layer with --layer; --json emits
 machine-readable descriptors.`,
 		Args: maxArgs(0, "inspectors list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runInspectorsList(cmd, family, asJSON)
+			return runInspectorsList(cmd, layer, asJSON)
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "Emit machine-readable JSON.")
-	c.Flags().StringVar(&family, "family", "", "Limit the list to one family (structural, object, markdown, filesystem).")
+	c.Flags().StringVar(&layer, "layer", "", "Limit the list to one layer (source, collection).")
 	return c
 }
 
@@ -52,9 +52,9 @@ func newInspectorsShowCmd() *cobra.Command {
 	var asJSON bool
 	c := &cobra.Command{
 		Use:   "show <inspector>",
-		Short: "Show one inspector's family context, purpose, and siblings.",
+		Short: "Show one inspector's layer context, purpose, and siblings.",
 		Long: `show prints a detailed, docs-style readout for one inspector: its
-family context, purpose, and the other inspectors in its family. --json emits
+layer context, purpose, and the other inspectors in its layer. --json emits
 the machine-readable descriptor.`,
 		Args: exactArgs(1, "inspectors show <inspector>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,37 +65,37 @@ the machine-readable descriptor.`,
 	return c
 }
 
-func runInspectorsList(cmd *cobra.Command, family string, asJSON bool) error {
+func runInspectorsList(cmd *cobra.Command, layer string, asJSON bool) error {
 	descriptors := inspect.Descriptors()
-	families := inspect.Families()
-	if family != "" {
-		fam, ok := findInspectorFamily(family)
+	layers := inspect.Layers()
+	if layer != "" {
+		l, ok := findInspectorLayer(layer)
 		if !ok {
-			return usageErr(fmt.Sprintf("--family: must be one of %s (got %q)",
-				strings.Join(inspectorFamilyIDs(), ", "), family))
+			return usageErr(fmt.Sprintf("--layer: must be one of %s (got %q)",
+				strings.Join(inspectorLayerIDs(), ", "), layer))
 		}
-		families = []inspect.Family{fam}
-		descriptors = inspectorFamilyDescriptors(fam.ID)
+		layers = []inspect.Layer{l}
+		descriptors = inspectorLayerDescriptors(l.ID)
 	}
 
 	if asJSON {
 		return writeInspectorsJSON(cmd, descriptors)
 	}
 
-	byFamily := map[string][]inspect.Descriptor{}
+	byLayer := map[string][]inspect.Descriptor{}
 	for _, d := range descriptors {
-		byFamily[d.Family] = append(byFamily[d.Family], d)
+		byLayer[d.Layer] = append(byLayer[d.Layer], d)
 	}
 
 	out := cmd.OutOrStdout()
-	for i, fam := range families {
+	for i, l := range layers {
 		if i > 0 {
 			fmt.Fprintln(out)
 		}
-		fmt.Fprintln(out, fam.Title)
+		fmt.Fprintln(out, l.Title)
 		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "INSPECTOR\tPURPOSE")
-		for _, d := range byFamily[fam.ID] {
+		for _, d := range byLayer[l.ID] {
 			fmt.Fprintf(tw, "%s\t%s\n", d.Name, plainSummary(d.Summary))
 		}
 		if err := tw.Flush(); err != nil {
@@ -114,21 +114,18 @@ func runInspectorsDetail(cmd *cobra.Command, name string, asJSON bool) error {
 		return writeInspectorsJSON(cmd, d)
 	}
 
-	fam, _ := findInspectorFamily(d.Family)
+	l, _ := findInspectorLayer(d.Layer)
 	out := cmd.OutOrStdout()
-	// Breadcrumb header, echoing how the docs nest family → inspector page.
-	fmt.Fprintf(out, "%s › %s\n\n", fam.Title, d.Title)
+	// Breadcrumb header, echoing how the docs nest layer → inspector page.
+	fmt.Fprintf(out, "%s › %s\n\n", l.Title, d.Title)
 	fmt.Fprintf(out, "inspector: %s\n", d.Name)
+	fmt.Fprintf(out, "layer:     %s\n", d.Layer)
 	fmt.Fprintf(out, "family:    %s\n", d.Family)
 	fmt.Fprintf(out, "purpose:   %s\n", plainSummary(d.Summary))
-	fmt.Fprintf(out, "\n%s\n", fam.Intro)
+	fmt.Fprintf(out, "\n%s\n", l.Intro)
 
-	// Inspectors take no configuration; they emit evidence over a corpus. Run
-	// one with `katalyst inspect <path> --inspector %s` to see its evidence.
-	fmt.Fprintf(out, "\nInspectors take no configuration. Run this one over a corpus to see its\nevidence:\n  katalyst inspect <path> --inspector %s\n", d.Name)
-
-	if siblings := inspectorFamilySiblings(d); len(siblings) > 0 {
-		fmt.Fprintf(out, "\nother %s inspectors:\n  %s\n", strings.ToLower(fam.Title), strings.Join(siblings, ", "))
+	if siblings := inspectorLayerSiblings(d); len(siblings) > 0 {
+		fmt.Fprintf(out, "\nother %s:\n  %s\n", strings.ToLower(l.Title), strings.Join(siblings, ", "))
 	}
 	return nil
 }
@@ -143,43 +140,43 @@ func findInspectorDescriptor(name string) (inspect.Descriptor, bool) {
 	return inspect.Descriptor{}, false
 }
 
-// findInspectorFamily returns the inspector family with the given id.
-func findInspectorFamily(id string) (inspect.Family, bool) {
-	for _, f := range inspect.Families() {
-		if f.ID == id {
-			return f, true
+// findInspectorLayer returns the inspector layer with the given id.
+func findInspectorLayer(id string) (inspect.Layer, bool) {
+	for _, l := range inspect.Layers() {
+		if l.ID == id {
+			return l, true
 		}
 	}
-	return inspect.Family{}, false
+	return inspect.Layer{}, false
 }
 
-// inspectorFamilyIDs returns the family ids in display order, for error messages.
-func inspectorFamilyIDs() []string {
-	fams := inspect.Families()
-	ids := make([]string, len(fams))
-	for i, f := range fams {
-		ids[i] = f.ID
+// inspectorLayerIDs returns the layer ids in display order, for error messages.
+func inspectorLayerIDs() []string {
+	layers := inspect.Layers()
+	ids := make([]string, len(layers))
+	for i, l := range layers {
+		ids[i] = l.ID
 	}
 	return ids
 }
 
-// inspectorFamilyDescriptors returns the descriptors in one family, in registry order.
-func inspectorFamilyDescriptors(id string) []inspect.Descriptor {
+// inspectorLayerDescriptors returns the descriptors in one layer, in registry order.
+func inspectorLayerDescriptors(id string) []inspect.Descriptor {
 	var out []inspect.Descriptor
 	for _, d := range inspect.Descriptors() {
-		if d.Family == id {
+		if d.Layer == id {
 			out = append(out, d)
 		}
 	}
 	return out
 }
 
-// inspectorFamilySiblings returns the other inspectors in d's family, in
-// registry order.
-func inspectorFamilySiblings(d inspect.Descriptor) []string {
+// inspectorLayerSiblings returns the other inspectors in d's layer, in registry
+// order.
+func inspectorLayerSiblings(d inspect.Descriptor) []string {
 	var out []string
 	for _, o := range inspect.Descriptors() {
-		if o.Family == d.Family && o.Name != d.Name {
+		if o.Layer == d.Layer && o.Name != d.Name {
 			out = append(out, o.Name)
 		}
 	}

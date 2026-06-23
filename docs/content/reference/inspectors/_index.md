@@ -8,35 +8,19 @@ bookCollapseSection = true
 
 # Inspectors reference
 
-Inspectors describe the shape of a markdown corpus and return evidence — counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../commands.md" >}}) command. These pages are generated from the inspector registry, so they always match the shipped engine.
+Inspectors describe the shape of content and return evidence — counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../commands.md" >}}) command. They come in two layers: raw-source inspectors profile a store before configuration, collection inspectors profile a configured collection. These pages are generated from the inspector registry, so they always match the shipped engine.
 
-## Structural
+## Raw-source inspectors
 
-Structural inspectors report corpus-level facts: how files parse and how their frontmatter is shaped.
+Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.
 
-- [Walk & Parse]({{< relref "structural/walk-parse.md" >}}) — Count files and report how many parse and carry frontmatter.
-- [Frontmatter Shape]({{< relref "structural/frontmatter-shape.md" >}}) — Group files by their frontmatter key-set and report observed field types.
+- [File Tree]({{< relref "source/file-tree.md" >}}) — Profile each directory's file types, naming, and depth — opening no files.
+- [File Tree (deep)]({{< relref "source/file-tree-content.md" >}}) — Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
+- [Document Shape]({{< relref "source/document-shape.md" >}}) — Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
 
-## Object
+## Collection inspectors
 
-Object inspectors report the distribution of frontmatter fields — presence, types, values, ranges.
+Collection inspectors profile a configured collection's items, probing them through the same substrate the checks use.
 
-- [Field Frequency]({{< relref "object/field-frequency.md" >}}) — Report, per frontmatter key, how many files contain it.
-- [Field Types]({{< relref "object/field-types.md" >}}) — Report, per key, the histogram of observed value types.
-- [Field Values]({{< relref "object/field-values.md" >}}) — Report, per key, value cardinality and a small value set when it looks like an enum.
-- [Field Numeric Range]({{< relref "object/field-numeric-range.md" >}}) — Report the observed min and max of numeric fields.
-- [Field String Length]({{< relref "object/field-string-length.md" >}}) — Report the observed min and max length of string fields.
-
-## Markdown
-
-Markdown inspectors report body conventions: headings, sections, and code fences.
-
-- [Heading Shape]({{< relref "markdown/heading-shape.md" >}}) — Report single-H1, H1-matches-title, and heading-level-jump rates.
-- [Sections]({{< relref "markdown/sections.md" >}}) — Report recurring section headings and how many files contain each.
-- [Code Fences]({{< relref "markdown/code-fences.md" >}}) — Report how many fenced code blocks open and how many carry a language tag.
-
-## Filesystem
-
-Filesystem inspectors report filename and path conventions across the corpus.
-
-- [Naming]({{< relref "filesystem/naming.md" >}}) — Report filename casing, spaces, extensions, and nesting depth.
+- [Object Fields]({{< relref "collection/object-fields.md" >}}) — A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
+- [Markdown Body]({{< relref "collection/markdown-body.md" >}}) — Body conventions across items: heading shape and recurring sections.

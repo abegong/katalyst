@@ -1,13 +1,38 @@
 package inspect
 
 // This file is the single source of truth for the inspector set. Every
-// inspector returned by All() must have a matching Descriptor here, and vice
-// versa; registry_test.go enforces that parity. A new inspector cannot ship
-// undocumented, mirroring the checks registry (internal/checks/registry.go).
+// inspector returned by SourceInspectors()/CollectionInspectors() must have a
+// matching Descriptor here, and vice versa; registry_test.go enforces that
+// parity per layer. A new inspector cannot ship undocumented, mirroring the
+// checks registry (internal/checks/registry.go).
 
-// Family groups inspectors for display and documentation, mirroring the check
-// families. Order is significant: it fixes section ordering in rendered output
-// and generated docs.
+// Layer groups inspectors by the data they measure: a raw backend store
+// (source) or a configured collection (collection). It is the primary grouping
+// for display and docs. Order is significant.
+type Layer struct {
+	ID    string
+	Title string
+	Intro string
+}
+
+// Layers returns the inspector layers in display order.
+func Layers() []Layer {
+	return []Layer{
+		{
+			ID:    "source",
+			Title: "Raw-source inspectors",
+			Intro: "Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.",
+		},
+		{
+			ID:    "collection",
+			Title: "Collection inspectors",
+			Intro: "Collection inspectors profile a configured collection's items, probing them through the same substrate the checks use.",
+		},
+	}
+}
+
+// Family is a secondary grouping kept for continuity with the check families
+// and for the inspect report's section ordering.
 type Family struct {
 	ID    string
 	Title string
@@ -17,26 +42,10 @@ type Family struct {
 // Families returns the inspector families in display order.
 func Families() []Family {
 	return []Family{
-		{
-			ID:    "structural",
-			Title: "Structural",
-			Intro: "Structural inspectors report corpus-level facts: how files parse and how their frontmatter is shaped.",
-		},
-		{
-			ID:    "object",
-			Title: "Object",
-			Intro: "Object inspectors report the distribution of frontmatter fields — presence, types, values, ranges.",
-		},
-		{
-			ID:    "markdown",
-			Title: "Markdown",
-			Intro: "Markdown inspectors report body conventions: headings, sections, and code fences.",
-		},
-		{
-			ID:    "filesystem",
-			Title: "Filesystem",
-			Intro: "Filesystem inspectors report filename and path conventions across the corpus.",
-		},
+		{ID: "structural", Title: "Structural", Intro: "Structural inspectors report corpus-level facts: how files parse and how their frontmatter is shaped."},
+		{ID: "object", Title: "Object", Intro: "Object inspectors report the distribution of frontmatter fields — presence, types, values."},
+		{ID: "markdown", Title: "Markdown", Intro: "Markdown inspectors report body conventions: headings and sections."},
+		{ID: "filesystem", Title: "Filesystem", Intro: "Filesystem inspectors report filename and path conventions across the corpus."},
 	}
 }
 
@@ -47,10 +56,11 @@ type Descriptor struct {
 	// Name is the inspector's identifier, used by --inspector and as the
 	// "inspector" field in evidence.
 	Name string `json:"name"`
-	// Family groups the inspector; one of Families(). It is also the
-	// subdirectory under reference/inspectors/.
+	// Layer is the data the inspector measures: "source" or "collection".
+	Layer string `json:"layer"`
+	// Family groups the inspector within its layer; one of Families().
 	Family string `json:"family"`
-	// Slug is the page basename under the family directory.
+	// Slug is the page basename under the layer directory.
 	Slug string `json:"slug"`
 	// Title is the human-readable page title.
 	Title string `json:"title"`
@@ -58,110 +68,84 @@ type Descriptor struct {
 	Summary string `json:"summary"`
 }
 
-// Descriptors returns every inspector in display order. The order is authored,
-// not sorted, so generated output is deterministic.
+// Descriptors returns every inspector in display order (source layer first).
+// The order is authored, not sorted, so generated output is deterministic.
 func Descriptors() []Descriptor {
 	return []Descriptor{
 		{
-			Name:    "walk_parse",
-			Family:  "structural",
-			Slug:    "walk-parse",
-			Title:   "Walk & Parse",
-			Summary: "Count files and report how many parse and carry frontmatter.",
-		},
-		{
-			Name:    "frontmatter_shape",
-			Family:  "structural",
-			Slug:    "frontmatter-shape",
-			Title:   "Frontmatter Shape",
-			Summary: "Group files by their frontmatter key-set and report observed field types.",
-		},
-		{
-			Name:    "object_field_frequency",
-			Family:  "object",
-			Slug:    "field-frequency",
-			Title:   "Field Frequency",
-			Summary: "Report, per frontmatter key, how many files contain it.",
-		},
-		{
-			Name:    "object_field_types",
-			Family:  "object",
-			Slug:    "field-types",
-			Title:   "Field Types",
-			Summary: "Report, per key, the histogram of observed value types.",
-		},
-		{
-			Name:    "object_field_values",
-			Family:  "object",
-			Slug:    "field-values",
-			Title:   "Field Values",
-			Summary: "Report, per key, value cardinality and a small value set when it looks like an enum.",
-		},
-		{
-			Name:    "object_field_numeric_range",
-			Family:  "object",
-			Slug:    "field-numeric-range",
-			Title:   "Field Numeric Range",
-			Summary: "Report the observed min and max of numeric fields.",
-		},
-		{
-			Name:    "object_field_string_length",
-			Family:  "object",
-			Slug:    "field-string-length",
-			Title:   "Field String Length",
-			Summary: "Report the observed min and max length of string fields.",
-		},
-		{
-			Name:    "markdown_heading_shape",
-			Family:  "markdown",
-			Slug:    "heading-shape",
-			Title:   "Heading Shape",
-			Summary: "Report single-H1, H1-matches-title, and heading-level-jump rates.",
-		},
-		{
-			Name:    "markdown_sections",
-			Family:  "markdown",
-			Slug:    "sections",
-			Title:   "Sections",
-			Summary: "Report recurring section headings and how many files contain each.",
-		},
-		{
-			Name:    "markdown_code_fences",
-			Family:  "markdown",
-			Slug:    "code-fences",
-			Title:   "Code Fences",
-			Summary: "Report how many fenced code blocks open and how many carry a language tag.",
-		},
-		{
-			Name:    "filesystem_naming",
+			Name:    "file_tree",
+			Layer:   "source",
 			Family:  "filesystem",
-			Slug:    "naming",
-			Title:   "Naming",
-			Summary: "Report filename casing, spaces, extensions, and nesting depth.",
+			Slug:    "file-tree",
+			Title:   "File Tree",
+			Summary: "Profile each directory's file types, naming, and depth — opening no files.",
+		},
+		{
+			Name:    "file_tree_content",
+			Layer:   "source",
+			Family:  "structural",
+			Slug:    "file-tree-content",
+			Title:   "File Tree (deep)",
+			Summary: "Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.",
+		},
+		{
+			Name:    "document_shape",
+			Layer:   "source",
+			Family:  "structural",
+			Slug:    "document-shape",
+			Title:   "Document Shape",
+			Summary: "Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.",
+		},
+		{
+			Name:    "object_fields",
+			Layer:   "collection",
+			Family:  "object",
+			Slug:    "object-fields",
+			Title:   "Object Fields",
+			Summary: "A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.",
+		},
+		{
+			Name:    "markdown_body",
+			Layer:   "collection",
+			Family:  "markdown",
+			Slug:    "markdown-body",
+			Title:   "Markdown Body",
+			Summary: "Body conventions across items: heading shape and recurring sections.",
 		},
 	}
 }
 
-// All returns every inspector instance in display order.
-func All() []Inspector {
-	return []Inspector{
-		WalkParse{},
-		FrontmatterShape{},
-		ObjectFieldFrequency{},
-		ObjectFieldTypes{},
-		ObjectFieldValues{},
-		ObjectFieldNumericRange{},
-		ObjectFieldStringLength{},
-		MarkdownHeadingShape{},
-		MarkdownSections{},
-		MarkdownCodeFences{},
-		FilesystemNaming{},
+// SourceInspectors returns every raw-source inspector instance in display order.
+func SourceInspectors() []SourceInspector {
+	return []SourceInspector{
+		FileTree{},
+		FileTreeContent{},
+		DocumentShape{},
 	}
 }
 
-// ByName returns the inspector with the given name.
-func ByName(name string) (Inspector, bool) {
-	for _, ins := range All() {
+// CollectionInspectors returns every collection inspector instance in display
+// order.
+func CollectionInspectors() []CollectionInspector {
+	return []CollectionInspector{
+		ObjectFields{},
+		MarkdownBody{},
+	}
+}
+
+// SourceByName returns the source inspector with the given name.
+func SourceByName(name string) (SourceInspector, bool) {
+	for _, ins := range SourceInspectors() {
+		if ins.Name() == name {
+			return ins, true
+		}
+	}
+	return nil, false
+}
+
+// CollectionByName returns the collection inspector with the given name.
+func CollectionByName(name string) (CollectionInspector, bool) {
+	for _, ins := range CollectionInspectors() {
 		if ins.Name() == name {
 			return ins, true
 		}
