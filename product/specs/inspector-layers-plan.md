@@ -2,10 +2,12 @@
 
 > Spec: [Inspector layers — raw-source and collection inspectors over the storage seam](./inspector-layers-spec.md)
 >
-> **Status: planning.** Reorganizes `internal/inspect` from 11 `Corpus`-based
-> inspectors into two layers (raw-source, collection) built from three reusable
-> measurement primitives, with a shared profile-class summarizer and the first
-> inspector parameter. Depends on the storage seam from
+> **Status: implementing.** Phases 1–6 implemented; `make all` green and the
+> inspector reference is generated. Graduation (deleting this spec/plan) waits on
+> merge. Reorganizes `internal/inspect` from 11 `Corpus`-based inspectors into
+> two layers (raw-source, collection) built from three reusable measurement
+> primitives, with a shared profile-class summarizer and the first inspector
+> parameter. Depends on the storage seam from
 > [storage-layer-spec.md](./storage-layer-spec.md). Array/nested-object
 > characterization is deferred to
 > [#58](https://github.com/abegong/katalyst/issues/58).

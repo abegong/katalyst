@@ -30,10 +30,13 @@ how each term maps onto today's code is documented in the per-package
 | **Text rule** | A `text_*` check (`text_requires`, `text_forbids`, `text_denylist`) that tests the body as raw text — a regex or a literal denylist — independent of markdown structure. Applies to plain-text items too. |
 | **Span** | The slice of body text a text rule is evaluated against, chosen by its `target`: the whole `body`, each `line`, the `first-line`, or `matched-lines` (lines matching a `select` regex). |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
-| **Inspector** | A read-only operation that measures a corpus and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. |
-| **Evidence** | The structured result of one inspector: counts and distributions with the file count `n` as denominator. Never a recommendation or verdict. |
-| **Corpus** | The set of markdown files under an inspected path, parsed once and shared across inspectors. |
-| **Fingerprint** | The sorted set of a file's frontmatter keys, used by `frontmatter_shape` to group files into candidate collections. |
+| **Inspector** | A read-only operation that measures content and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. Inspectors come in two layers. |
+| **Raw-source layer** | Inspectors that profile a backend store directly, before any collection configuration — addressed by backend-native reference (a path today). The onboarding case: "what's in this store?" |
+| **Collection layer** | Inspectors that profile a configured collection's items, addressed by domain identity (collection + item id) and probing through the same substrate the checks use. |
+| **Measurement primitive** | A reusable engine the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
+| **Evidence** | The structured result of one inspector: counts and distributions with the unit count `n` as denominator. Never a recommendation or verdict. |
+| **Fingerprint** | A file's composite signature — frontmatter keys, body section skeleton, and file type/naming — that `document_shape` clusters into candidate collections. |
+| **Profile class** | A group of near-identical profiles the summarizer collapses together, so output is proportional to the number of distinct profiles, not directories. |
 | **Repo root** | The directory containing the `.katalyst/` config directory; the base for all path resolution. |
 | **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas. |
 | **StorageType** | A known backend kind capable of holding collections and items (`filesystem` today; `sqlite`, `postgresql`, `mongodb` later). |

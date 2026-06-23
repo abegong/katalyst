@@ -1,6 +1,8 @@
 # Inspector layers — raw-source and collection inspectors over the storage seam
 
-> **Status: planning.** Reorganizes inspectors into two layers with **distinct
+> **Status: implementing.** Built across phases 1–6 (`make all` green; the
+> inspector reference is generated). Graduation — deleting this spec and its
+> plan — waits on merge. Reorganizes inspectors into two layers with **distinct
 > data-referencing machinery**, and collapses today's 11 inspectors into **a few
 > reusable measurement primitives** applied across those layers. A
 > **raw-source** layer measures a backend store directly (a filesystem, a file
