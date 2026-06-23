@@ -70,9 +70,27 @@ func (e *engine) compile(path string) (*validator.Schema, error) {
 // resolution precedence (highest first): --schema override, inline
 // "schema:" key, the collection's configured object checks. Non-object
 // checks always come from the collection.
+//
+// When the collection declares variants, the first variant whose `when`
+// predicates the item's metadata satisfies contributes its checks on top of
+// the base set (additively, through the same precedence). An item that matches
+// no variant runs the base only — or, under useExhaustiveVariants, fails with
+// "matches no variant".
 func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.Check, error) {
 	cfg := e.proj.Config()
-	checkList := make([]checks.Check, 0, len(c.Checks))
+
+	matched, routed, err := matchVariant(c, meta)
+	if err != nil {
+		return nil, err
+	}
+	effective := c.Checks
+	if routed {
+		effective = make([]config.CheckInstance, 0, len(c.Checks)+len(matched.Checks))
+		effective = append(effective, c.Checks...)
+		effective = append(effective, matched.Checks...)
+	}
+
+	checkList := make([]checks.Check, 0, len(effective))
 
 	inlineSchema := ""
 	if raw, ok := meta["schema"].(string); ok {
@@ -97,7 +115,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		}
 		checkList = append(checkList, checks.Object{Schema: schema})
 	default:
-		for _, ch := range c.Checks {
+		for _, ch := range effective {
 			if ch.Type != config.CheckObject {
 				continue
 			}
@@ -113,7 +131,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		}
 	}
 
-	for _, ch := range c.Checks {
+	for _, ch := range effective {
 		switch ch.Type {
 		case config.CheckObjectRequiredField:
 			checkList = append(checkList, checks.ObjectRequiredField{Field: ch.Field})
@@ -192,10 +210,52 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		}
 	}
 
-	if len(checkList) == 0 && !c.HasCollectionChecks() {
+	// An item that matched no variant under useExhaustiveVariants fails. The
+	// verdict rides through RunAll like any other check (so `check` and
+	// `item list` report it identically).
+	if !routed && c.UseExhaustiveVariants && len(c.Variants) > 0 {
+		checkList = append(checkList, unroutedCheck{})
+	}
+
+	// A collection with variants is validated to carry some check config, and
+	// an unrouted item under lenient mode legitimately runs nothing — so the
+	// empty-list guard only applies to plain (variant-less) collections.
+	if len(checkList) == 0 && !c.HasCollectionChecks() && len(c.Variants) == 0 {
 		return nil, errors.New("no checks configured for collection")
 	}
 	return checkList, nil
+}
+
+// matchVariant returns the first variant whose `when` predicates the item's
+// metadata all satisfy, and whether any matched. The collection's
+// filterTypeMismatch governs an incomparable predicate (skip vs. error).
+func matchVariant(c config.Collection, meta map[string]any) (config.CollectionVariant, bool, error) {
+	for _, v := range c.Variants {
+		all := true
+		for _, p := range v.Where {
+			ok, err := p.Matches(meta, c.Query.FilterTypeMismatch)
+			if err != nil {
+				return config.CollectionVariant{}, false, err
+			}
+			if !ok {
+				all = false
+				break
+			}
+		}
+		if all {
+			return v, true, nil
+		}
+	}
+	return config.CollectionVariant{}, false, nil
+}
+
+// unroutedCheck reports a single violation for an item that matched no variant
+// when the collection sets useExhaustiveVariants. It implements checks.Check so
+// the verdict flows through RunAll uniformly for `check` and `item list`.
+type unroutedCheck struct{}
+
+func (unroutedCheck) Run(checks.Context) []checks.Violation {
+	return []checks.Violation{{Message: "matches no variant"}}
 }
 
 // collectionChecksFor builds the collection-scoped checks configured for a

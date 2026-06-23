@@ -163,6 +163,165 @@ func TestCheck_noConfig_exit2(t *testing.T) {
 	}
 }
 
+// setupVariantRepo writes a project with three YAML schemas (page requires
+// title; content additionally requires weight; section requires nothing) and a
+// single `pages` collection defined by the given body, then chdirs in.
+func setupVariantRepo(t *testing.T, pagesBody string) string {
+	t.Helper()
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/page.yaml":    "type: object\nrequired: [title]\nproperties:\n  title: {type: string}\n",
+		"schemas/section.yaml": "type: object\n",
+		"schemas/content.yaml": "type: object\nrequired: [weight]\nproperties:\n  weight: {type: integer}\n",
+		"storage/local.yaml":   storageLocal(map[string]string{"pages": pagesBody}),
+	})
+	chdir(t, dir)
+	return dir
+}
+
+const variantPagesConfig = `path: pages
+pattern: "**/*.md"
+schema: page
+variants:
+  - when: "kind=section"
+    schema: section
+  - when: "kind!=section"
+    schema: content
+    checks:
+      - kind: markdown_requires_h1
+`
+
+func TestCheck_variant_routesByMetadata(t *testing.T) {
+	dir := setupVariantRepo(t, variantPagesConfig)
+	// A section page: base title + the section variant. weight and an H1 are
+	// NOT required (they live in the content variant) — this is the exemption.
+	mustWrite(t, filepath.Join(dir, "pages/intro.md"), "---\nkind: section\ntitle: Intro\n---\n")
+	// A content page satisfies base title + content weight + requires_h1.
+	mustWrite(t, filepath.Join(dir, "pages/guide.md"), "---\nkind: page\ntitle: Guide\nweight: 1\n---\n# Guide\n")
+
+	if _, _, err := runRoot(t, "check", "pages/intro"); err != nil {
+		t.Errorf("section page should pass (weight/H1 exempt): %v", err)
+	}
+	if _, _, err := runRoot(t, "check", "pages/guide"); err != nil {
+		t.Errorf("content page should pass: %v", err)
+	}
+
+	// A content page missing weight fails the content variant's schema.
+	mustWrite(t, filepath.Join(dir, "pages/bad.md"), "---\nkind: page\ntitle: Bad\n---\n# Bad\n")
+	_, stderr, err := runRoot(t, "check", "pages/bad")
+	if err == nil {
+		t.Fatalf("content page missing weight should fail")
+	}
+	if !strings.Contains(stderr, "weight") {
+		t.Errorf("expected a weight violation, got: %q", stderr)
+	}
+}
+
+func TestCheck_variant_additiveBaseSchema(t *testing.T) {
+	dir := setupVariantRepo(t, variantPagesConfig)
+	// Missing the base-required title (kind=page routes to content): the base
+	// page schema and the content variant schema both apply.
+	mustWrite(t, filepath.Join(dir, "pages/notitle.md"), "---\nkind: page\nweight: 1\n---\n# X\n")
+	_, stderr, err := runRoot(t, "check", "pages/notitle")
+	if err == nil {
+		t.Fatalf("missing base-required title should fail even on a routed item")
+	}
+	if !strings.Contains(stderr, "title") {
+		t.Errorf("expected a title violation from the base schema, got: %q", stderr)
+	}
+}
+
+func TestCheck_variant_firstMatchWins(t *testing.T) {
+	// Two overlapping variants: a section page matches both, but only the
+	// first (requires_h1, no weight) applies — the second's weight is not
+	// enforced.
+	body := `path: pages
+pattern: "**/*.md"
+schema: page
+variants:
+  - when: "kind=section"
+    checks:
+      - kind: markdown_requires_h1
+  - when: "title"
+    schema: content
+`
+	dir := setupVariantRepo(t, body)
+	// Section page with an H1 but no weight: passes, proving variant 2
+	// (content/weight) did not also apply.
+	mustWrite(t, filepath.Join(dir, "pages/s.md"), "---\nkind: section\ntitle: S\n---\n# S\n")
+	if _, _, err := runRoot(t, "check", "pages/s"); err != nil {
+		t.Errorf("first variant should win (weight not enforced): %v", err)
+	}
+	// Same page without an H1 fails the first variant's requires_h1, proving
+	// variant 1 did apply.
+	mustWrite(t, filepath.Join(dir, "pages/noh1.md"), "---\nkind: section\ntitle: NoH1\n---\nbody\n")
+	if _, _, err := runRoot(t, "check", "pages/noh1"); err == nil {
+		t.Errorf("first variant's requires_h1 should fail a section page without an H1")
+	}
+}
+
+func TestCheck_variant_unrouted_lenientVsExhaustive(t *testing.T) {
+	lenient := `path: pages
+pattern: "**/*.md"
+schema: page
+variants:
+  - when: "kind=section"
+    schema: section
+`
+	dir := setupVariantRepo(t, lenient)
+	// kind=other matches no variant; lenient default → base only (passes).
+	mustWrite(t, filepath.Join(dir, "pages/loose.md"), "---\nkind: other\ntitle: Loose\n---\n")
+	if _, _, err := runRoot(t, "check", "pages/loose"); err != nil {
+		t.Errorf("unrouted item should pass under lenient default: %v", err)
+	}
+
+	// Same config + useExhaustiveVariants: the unrouted item now fails.
+	exhaustive := lenient + "useExhaustiveVariants: true\n"
+	dir = setupVariantRepo(t, exhaustive)
+	mustWrite(t, filepath.Join(dir, "pages/loose.md"), "---\nkind: other\ntitle: Loose\n---\n")
+	_, stderr, err := runRoot(t, "check", "pages/loose")
+	if err == nil {
+		t.Fatalf("unrouted item should fail under useExhaustiveVariants")
+	}
+	if !strings.Contains(stderr, "matches no variant") {
+		t.Errorf("expected 'matches no variant', got: %q", stderr)
+	}
+}
+
+func TestCheck_variant_schemaFlagOverridesBaseAndVariant(t *testing.T) {
+	dir := setupVariantRepo(t, variantPagesConfig)
+	// A content page missing both title and weight would fail base+variant
+	// object schemas, but a loose --schema overrides the whole object tier.
+	// The variant's markdown_requires_h1 still runs, so include an H1.
+	loose := filepath.Join(dir, "schemas/loose.json")
+	mustWrite(t, loose, `{"type":"object"}`)
+	mustWrite(t, filepath.Join(dir, "pages/x.md"), "---\nkind: page\n---\n# X\n")
+	if _, _, err := runRoot(t, "check", "--schema", loose, "pages/x"); err != nil {
+		t.Errorf("--schema should override base and variant object checks: %v", err)
+	}
+}
+
+func TestItemList_variant_unroutedStatusUnderExhaustive(t *testing.T) {
+	body := `path: pages
+pattern: "**/*.md"
+schema: page
+useExhaustiveVariants: true
+variants:
+  - when: "kind=section"
+    schema: section
+`
+	dir := setupVariantRepo(t, body)
+	mustWrite(t, filepath.Join(dir, "pages/loose.md"), "---\nkind: other\ntitle: Loose\n---\n")
+
+	stdout, _, err := runRoot(t, "item", "list", "pages")
+	if err != nil {
+		t.Fatalf("item list: %v", err)
+	}
+	if !strings.Contains(stdout, "loose") || !strings.Contains(stdout, "1 error") {
+		t.Errorf("expected loose to list as '1 error', got: %q", stdout)
+	}
+}
+
 func TestCheck_schemaFlagOverridesForAllItems(t *testing.T) {
 	dir := setupNotesRepo(t, objectNotesConfig)
 	// Config would require title+year (book). A loose --schema overrides
