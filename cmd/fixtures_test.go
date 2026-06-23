@@ -7,7 +7,7 @@ import (
 
 // Reusable test fixtures embedded from cmd/testdata/. See
 // ../AGENTS.md ("Testing > Fixtures") for the inline-vs-fixture policy,
-// and testdata/README.md for what each file is for.
+// and testdata/AGENTS.md for what each file is for.
 
 //go:embed testdata/schemas/book.json
 var bookSchemaFixture string

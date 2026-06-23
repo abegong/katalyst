@@ -5,18 +5,27 @@ weight = 10
 
 # How we document
 
-## Goals
+Like most knowledge bases, Katalyst's documentation must balance two objectives:
 
-- Users and contributors both find what they need in one published tree.
-- One source of truth per topic, no drift between duplicate files.
-- Reference that is correct by construction (generated from code).
-- Docs live close to what they describe.
+- Users, agents, and contributors can easily find what they need.
+- Content is comprehensive, has no internal contradictions, and is always up to date.
 
-## Where each kind of doc lives
+We do this by dividing documentation across four areas, each with a specific purpose.
 
-Katalyst keeps documentation in a few homes.
+- **Published documentation (Hugo):** everything users and agents need to
+  understand and use Katalyst - tutorials, how-to, reference, and deep-dives explaining the reasoning behind them.
+- **Go doc comments:** code-level API and design detail, co-located with the code
+- **`AGENTS.md` files:** conventions, required patterns, and gotchas for writing
+  code in the repo, plus a pointer to each subsystem's architecture deep-dive - a
+  lean root file plus per-package files.
+- **Specs and plans:** `product/` staging for in-flight ideas;
+  each is deleted once its durable content graduates into the homes above.
 
-### 1. `docs/`, the published site (Hugo)
+By clearly delineating when and where to update documentation, this approach lets us minimize duplication and the risk of content drift, while still serving a wide variety of needs. That said, some overlap in content is unavoidable. Some judgement calls about what information belongs where will always be necessary. Making these judgement calls is up to the project maintainers.
+
+## Four types of documentation
+
+### 1. Published documentation (Hugo)
 
 The durable home for everything a user needs, organized by
 [Diátaxis](https://diataxis.fr/) plus a flat `contributing/` area:
@@ -26,41 +35,43 @@ The durable home for everything a user needs, organized by
   generated check-type reference, the glossary, the command surface.
 - **`deep-dives/`:** understanding-oriented "why" (the Diátaxis *explanation*
   quadrant): the vision and scope, the core concepts, the storage layer,
-  progressive operations, and cross-cutting **design rationale**. A short **Why Katalyst?**
-  orientation page sits at the top level. Subsystem-specific rationale belongs
-  with the code (package docs, including `doc.go` when long, or a co-located
-  package `README.md`), not a per-feature explanation page that will drift.
+  progressive operations, and **design rationale at the behavioral altitude** -
+  any *why* a user can observe, whatever subsystem it touches. A short **Why
+  Katalyst?** orientation page sits at the top level. The narrower *why* that
+  only matters once you are reading a package's code lives with that code (see
+  the Go doc comments / `AGENTS.md` home below), not a per-feature explanation
+  page that will drift.
 - **`contributing/`:** project and process records (this file,
   [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
-### 2. `AGENTS.md`, code-writing conventions
+### 2. Go doc comments
 
-Rules for anyone *writing code* in the repo: commands, layout, testing
-style, code style. **What goes here:** naming conventions, required
-patterns, gotchas, and the *why* behind a code constraint. **What doesn't:**
-conceptual explanations of how the system works (→ `docs/deep-dives/`),
-user-facing usage (→ `docs/`), or API-level detail (→ Go doc comments).
+Code-level API and symbol documentation lives in the code as Go doc comments,
+not in the Hugo tree. Keep the design narrative here **minimal** - a short
+orienting comment, with a dedicated `doc.go` only when a package needs a brief
+tour (`internal/inspect/doc.go` is the worked example); it surfaces in `go doc`.
+A package's architecture and design rationale do **not** live here: they go in
+the subsystem's `deep-dives/` page, which the package's `AGENTS.md` points to.
+Use godoc headings (`# Heading`), prose, and short lists; tables and diagrams
+belong in the deep-dive or the reference.
 
-Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where
-a package has rules that don't belong at the root. Examples live in tests,
-not a separate examples file: a `*_test.go` is the canonical, executable
-example.
+### 3. `AGENTS.md` files
 
-### 3. Go doc comments, code-level API docs **and package architecture**
+Conventions for anyone *writing code* in the repo, plus a **pointer** to the
+subsystem's architecture deep-dive. **What goes here:** naming conventions,
+required patterns, gotchas, the *why* behind a code constraint, and a link to
+the package's `deep-dives/` page. **What doesn't:** the architecture narrative
+itself (→ `docs/deep-dives/`), user-facing usage (→ `docs/`), the behavioral
+*why* a user can observe (→ `docs/deep-dives/`), or API-level symbol detail
+(→ Go doc comments).
 
-Package- and symbol-level documentation lives in the code as Go doc
-comments, not in Markdown. This is also the home for a package's
-**architecture and design rationale:** why it is shaped the way it is, the
-load-bearing decisions, and the alternatives rejected. When that narrative
-outgrows a leading file comment, give it a dedicated `doc.go`
-(`internal/inspect/doc.go` is the worked example). Co-locating the *why* with
-the code keeps it in the same diff and out of a separate `explanation/` page
-that drifts; it also surfaces in `go doc`. Use godoc headings (`# Heading`),
-prose, and short lists, not tables; if you reach for a table, it belongs in
-the reference.
+Katalyst keeps a **root `AGENTS.md`** plus co-located per-package files where a
+package has rules of its own or a deep-dive worth pointing at. Keep each file
+concise and to the point. Examples live in tests, not a separate examples file:
+a `*_test.go` is the canonical, executable example.
 
-### 4. `product/`, in-flight specs and plans only
+### 4. Specs and plans
 
 `product/specs/{slug}-spec.md` and `-plan.md` for changes **not yet
 merged**. A spec is deleted when its work lands and its durable content
@@ -91,7 +102,7 @@ type rather than guessed up front.
 
 ## Style
 
-- **Keep `AGENTS.md` lean:** conventions, not walls of text.
+- **Keep `AGENTS.md` concise:** conventions plus a pointer to the architecture deep-dive, not the architecture itself.
 - **Don't repeat root standards** in co-located docs; document only what's
   specific to that location.
 - **Update docs in the same change** that establishes a convention or ships
@@ -117,8 +128,9 @@ in the em-dash rubric draft under `product/`.
 
 ## Tool-specific files
 
-`AGENTS.md` is the source of truth for conventions. Other tools read their
-own files; keep them thin and pointed at `AGENTS.md`.
+`AGENTS.md` is the source of truth for code-writing conventions, and points to
+the architecture deep-dives. Other tools read their own files; keep them thin
+and pointed at `AGENTS.md`.
 
 - **`.cursor/skills/`:** reusable skills (e.g. `add-katalyst-rule`). Skills
   are *actions*, not conventions; conventions stay in `AGENTS.md`.
@@ -129,5 +141,5 @@ own files; keep them thin and pointed at `AGENTS.md`.
 How the site is **built, previewed, and published** (the publish/preview/
 validate split, the GitHub Pages "Actions" source invariant) is infra detail,
 so it lives next to the workflow files in
-[`.github/workflows/README.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/README.md),
+[`.github/workflows/AGENTS.md`](https://github.com/abegong/katalyst/blob/main/.github/workflows/AGENTS.md),
 not in this user-facing tree. Read it before touching `deploy-docs.yml`.

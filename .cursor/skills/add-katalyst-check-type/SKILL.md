@@ -87,7 +87,7 @@ Fixture conventions:
 
 - Reusable fixtures go in `cmd/testdata/...`.
 - Embed via `cmd/fixtures_test.go`.
-- Document fixture purpose in `cmd/testdata/README.md`.
+- Document fixture purpose in `cmd/testdata/AGENTS.md`.
 
 Follow `AGENTS.md` testing rules:
 

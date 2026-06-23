@@ -5,7 +5,7 @@ name: deploy-docs
 # Pages Source is "GitHub Actions", so this workflow IS the deploy: it uploads
 # the built site as a Pages artifact and calls the Pages deploy API. There is
 # no `gh-pages` branch. Do NOT switch to a branch-push action — see the rationale
-# and the three docs paths in .github/workflows/README.md.
+# and the three docs paths in .github/workflows/AGENTS.md.
 
 on:
   push:
