@@ -2,9 +2,8 @@
 
 > Spec: [CLI test strategy](./cli-test-strategy-spec.md)
 >
-> **Status: planning.** Spec is resolved (no open questions). No code yet; this
-> plan sequences the build. Each phase is tests-first and leaves `make all`
-> green.
+> **Status: implementing.** All five phases landed, one commit each; `make all`
+> is green. Spec is resolved (no open questions).
 
 ## Current State
 

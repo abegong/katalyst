@@ -116,3 +116,21 @@ One grammar for every user-facing error:
   `FlagErrorFunc` (`root.go`); nothing to do per command.
 
 New commands inherit the standard by using these helpers and this grammar.
+
+## Testing the CLI
+
+Two test styles, kept apart (full rationale in
+`product/specs/cli-test-strategy-spec.md`):
+
+- **Snapshot the text.** User-facing output contracts — help, `list`/`show`
+  output, the `inspect` report, canonical stderr diagnostics — are pinned as
+  golden fixtures via the `snapshot` harness (`snapshot_test.go`), reviewed as
+  plain text under `testdata/snapshots/`. Generate with `-update`, then review
+  the diff. Output that embeds a temp path is normalized with `normTmp(dir)`.
+- **Property-test the behavior.** Exit codes (`errors.As` on `Code()`),
+  precedence (`--schema`, inline `schema:`, variants), side effects
+  (`add`/`update`/`delete`), `--json` shape, and query semantics
+  (`item list` filters) stay assertions in code.
+- **Hybrid tests keep both halves.** A test that asserts an exit code *and* a
+  message keeps the `Code()` check and moves only the wording to a snapshot. A
+  snapshot existing for a surface never justifies dropping a behavior assertion.

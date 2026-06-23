@@ -20,34 +20,59 @@ to use a fixture vs an inline literal.
 These are deliberately simpler than `internal/validator/testdata/schemas/book.json`,
 which exists to exercise the validator itself.
 
-### `help/`
+### `snapshots/`
 
-Top-level CLI help snapshots used by `root_test.go` and
-`help_snapshot_test.go`.
+Golden fixtures for the CLI's user-facing text contracts, compared by the
+`snapshot` harness in [`../snapshot_test.go`](../snapshot_test.go). The whole
+tree is embedded in one `//go:embed testdata/snapshots`
+([`../fixtures_test.go`](../fixtures_test.go)) so reads survive the per-test
+`chdir`. The split — snapshot the *text*, property-test the *behavior* — is
+specified in `product/specs/cli-test-strategy-spec.md`.
 
-| File | Used by | Purpose |
-|---|---|---|
-| `root-noargs.txt` | `root_test.go` | Exact output of `katalyst` with no args |
-| `inspect-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst inspect --help` |
-| `init-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst init --help` |
-| `check-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst check --help` |
-| `fix-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst fix --help` |
-| `collection-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst collection --help` |
-| `item-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst item --help` |
-| `schema-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst schema --help` |
-| `check-types-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst check-types --help` |
-| `inspectors-help.txt` | `help_snapshot_test.go` | Exact output of `katalyst inspectors --help` |
+Fixtures are grouped one directory per command surface; the name passed to
+`snapshot(t, "<group>/<name>.txt", …)` is the path under `snapshots/`:
+
+| Group | Surface |
+|---|---|
+| `help/` | Root help and every `<cmd> --help` (`root_test.go`, `help_snapshot_test.go`) |
+| `collection/` | `collection list`, `collection get` |
+| `schema/` | `schema list`, `schema show` |
+| `check-types/` | `check-types list`, `list --family`, `show` |
+| `inspectors/` | `inspectors list`, `list --layer`, `show` |
+| `item/` | `item list`, `item get --frontmatter`/`--body` |
+| `inspect/` | The `inspect` source-layer Markdown report (path normalized) |
+| `check/` | Canonical stderr diagnostics — pointer, unmatched, writing-tell (paths normalized) |
+| `selftest/` | Tiny fixture the harness self-tests read; not a command surface |
+
+**Path normalization.** Output that embeds the test's temp dir (the `check`
+diagnostics, the `inspect` report header) is passed through `normTmp(dir)`,
+which rewrites the temp path to `<project>` so the fixture is deterministic.
+Pure-text surfaces need no normalizer.
+
+**Updating.** Fixtures are generated, never hand-written. Regenerate with the
+`-update` flag, then **review the diff as the contract** before committing:
+
+```
+go test ./cmd -run TestThing -update
+```
 
 Project layout (the `.katalyst/` directory, schema files, and collection
-files) is scaffolded inline by the `writeProject` helper in
-[`../helpers_test.go`](../helpers_test.go); collection bodies are small
-enough to live as literals in each test rather than as fixtures. Because
-the shared schema fixtures are JSON, test projects set `schemas: { format:
-json }` in their `.katalyst/config.yaml` (the `schemaFormatJSON` helper).
+bodies) is scaffolded inline by `writeProject` / `storageLocal` in
+[`../helpers_test.go`](../helpers_test.go) rather than as fixtures. Because the
+shared schema fixtures are JSON, test projects set `schemas: { format: json }`
+in their `.katalyst/config.yaml` (the `schemaFormatJSON` helper).
 
 ## Adding a fixture
 
-1. Drop the file under the relevant subfolder (`schemas/`, `help/`, or a
-   new subfolder when needed).
+**A snapshot fixture** (under `snapshots/`): write the test calling
+`snapshot(t, "<group>/<name>.txt", got [, normTmp(dir)])`, run it once with
+`-update` to generate the file, review the generated text, then re-run without
+`-update` to confirm it asserts. No `//go:embed` line is needed — the whole
+`snapshots/` tree is already embedded; just add a row to the group table above
+if you introduce a new surface.
+
+**A reusable input** (e.g. under `schemas/`):
+
+1. Drop the file under the relevant subfolder (or a new one when needed).
 2. Embed it in `../fixtures_test.go` with `//go:embed`.
 3. Add a row to the relevant table above.

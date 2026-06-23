@@ -1,6 +1,11 @@
 # CLI test strategy — hybrid snapshots + property tests
 
-> **Status: planning.** Defines how the `cmd/` test suite splits between
+> **Status: implementing.** All five phases landed (`cmd/snapshot_test.go`
+> harness; `collection`/`schema`/`check-types`/`inspectors`/`item`/`inspect`
+> text contracts and `check` stderr diagnostics migrated to fixtures under
+> `cmd/testdata/snapshots/`; docs updated). `make all` is green. Graduation
+> (deleting this spec, folding the convention into `cmd/AGENTS.md` —
+> already done) waits on merge. Defines how the `cmd/` test suite splits between
 > fixture/snapshot tests for user-facing text contracts and property tests for
 > behavior, and the reusable snapshot harness that makes the snapshot half
 > cheap to write and review. Implements [issue #53](https://github.com/abegong/katalyst/issues/53).
