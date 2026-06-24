@@ -1,0 +1,29 @@
+# Inspection report: <project>
+
+## Structural
+
+### file_tree_content (n=2)
+
+_Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets._
+
+- classes:
+- outliers:
+  - features=[fmkey:status, fmkey:title, parsed, frontmatter] label=books
+
+### document_shape (n=2)
+
+_Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming._
+
+- classes:
+  - class=P1 features=[ext:.md, casing:kebab, fmkey:status, fmkey:title, sec:Review] members=[books/dune.md, books/it.md] size=2
+- outliers:
+
+## Filesystem
+
+### file_tree (n=2)
+
+_Profile each directory's file types, naming, and depth, opening no files._
+
+- classes:
+- outliers:
+  - features=[ext:.md, casing:kebab] label=books

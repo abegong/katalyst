@@ -1,0 +1,6 @@
+name:    books
+path:    notes/books
+pattern: *.md
+schema:  book
+items:   1
+checks:  object

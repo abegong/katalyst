@@ -1,0 +1,11 @@
+Raw-source inspectors › Document shape
+
+inspector: document_shape
+layer:     source
+family:    structural
+purpose:   Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
+
+Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.
+
+other raw-source inspectors:
+  file_tree, file_tree_content

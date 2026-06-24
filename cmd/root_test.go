@@ -13,8 +13,5 @@ func TestRoot_noArgs_printsGroupedHelp(t *testing.T) {
 	if stderr != "" {
 		t.Errorf("expected empty stderr, got:\n%s", stderr)
 	}
-	wantRootHelp := mustHelpFixture(t, "root-noargs.txt")
-	if stdout != wantRootHelp {
-		t.Errorf("root help mismatch.\n--- got ---\n%s\n--- want ---\n%s", stdout, wantRootHelp)
-	}
+	snapshot(t, "help/root.txt", stdout)
 }

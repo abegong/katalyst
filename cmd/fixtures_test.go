@@ -1,9 +1,6 @@
 package cmd_test
 
-import (
-	"embed"
-	"testing"
-)
+import "embed"
 
 // Reusable test fixtures embedded from cmd/testdata/. See
 // ../AGENTS.md ("Testing > Fixtures") for the inline-vs-fixture policy,
@@ -18,14 +15,9 @@ var personSchemaFixture string
 //go:embed testdata/schemas/strict-book.json
 var strictBookSchemaFixture string
 
-//go:embed testdata/help/*.txt
-var helpFixtures embed.FS
-
-func mustHelpFixture(t *testing.T, name string) string {
-	t.Helper()
-	b, err := helpFixtures.ReadFile("testdata/help/" + name)
-	if err != nil {
-		t.Fatalf("read help fixture %q: %v", name, err)
-	}
-	return string(b)
-}
+// snapshotFixtures embeds the whole golden-fixture tree. Reads go through the
+// embed FS (not os.ReadFile) so they survive the per-test chdir into a temp
+// dir; the snapshot harness in snapshot_test.go is the only consumer.
+//
+//go:embed testdata/snapshots
+var snapshotFixtures embed.FS

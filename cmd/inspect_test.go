@@ -26,11 +26,8 @@ func TestInspect_rawPathRunsSourceLayer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspect: %v", err)
 	}
-	for _, want := range []string{"# Inspection report:", "### document_shape", "### file_tree"} {
-		if !strings.Contains(stdout, want) {
-			t.Errorf("source-layer output missing %q\n%s", want, stdout)
-		}
-	}
+	// The report header embeds the inspected path; normTmp makes it stable.
+	snapshot(t, "inspect/source-report.txt", stdout, normTmp(dir))
 	if strings.HasPrefix(strings.TrimSpace(stdout), "[") {
 		t.Errorf("default output looks like JSON, want Markdown")
 	}

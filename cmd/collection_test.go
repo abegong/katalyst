@@ -3,29 +3,23 @@ package cmd_test
 import (
 	"errors"
 	"path/filepath"
-	"strings"
 	"testing"
 )
+
+// The list/get text contracts are pinned as snapshots; the exit-code behavior
+// stays a property test. See product/specs/cli-test-strategy-spec.md.
 
 func TestCollectionList_showsNamePathCountSchema(t *testing.T) {
 	dir := writeConfigDir(t)
 	chdir(t, dir)
-	// One item in the books collection.
+	// One item in the books collection; people stays empty.
 	mustWrite(t, filepath.Join(dir, "notes/books/dune.md"), "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n")
 
 	stdout, _, err := runRoot(t, "collection", "list")
 	if err != nil {
 		t.Fatalf("collection list: %v", err)
 	}
-	if !strings.Contains(stdout, "books") || !strings.Contains(stdout, "people") {
-		t.Errorf("expected both collections listed, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "notes/books") {
-		t.Errorf("expected directory column, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "book") {
-		t.Errorf("expected schema column, got: %q", stdout)
-	}
+	snapshot(t, "collection/list.txt", stdout)
 }
 
 func TestCollectionGet_showsDetail(t *testing.T) {
@@ -37,11 +31,7 @@ func TestCollectionGet_showsDetail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collection get: %v", err)
 	}
-	for _, want := range []string{"books", "notes/books", "*.md", "book", "items:   1"} {
-		if !strings.Contains(stdout, want) {
-			t.Errorf("expected %q in output, got: %q", want, stdout)
-		}
-	}
+	snapshot(t, "collection/get.txt", stdout)
 }
 
 func TestCollectionGet_unknown_exit2(t *testing.T) {

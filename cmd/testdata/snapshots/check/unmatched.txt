@@ -1,0 +1,1 @@
+notes/stray.txt: unmatched file (does not match pattern "*.md")

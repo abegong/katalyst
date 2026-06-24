@@ -1,0 +1,2 @@
+book	.katalyst/schemas/book.json
+person	.katalyst/schemas/person.json

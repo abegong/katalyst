@@ -87,6 +87,11 @@ The project follows TDD. New behavior arrives with a failing test first.
 - **CLI tests drive the real Cobra root.** Build the command with
   `cmd.NewRootCmd()`, capture output via `SetOut` / `SetErr`, and invoke
   via `SetArgs` + `Execute`. Don't shell out to a built binary.
+- **Snapshot CLI text contracts.** Pin user-facing output (help, list/show,
+  diagnostics) with the `cmd` snapshot harness — golden files under
+  `cmd/testdata/snapshots/`, embedded and regenerated with `-update` — and keep
+  exit codes, side effects, and query semantics as property tests. See
+  `cmd/AGENTS.md`.
 
 ### Fixtures (`testdata/`)
 

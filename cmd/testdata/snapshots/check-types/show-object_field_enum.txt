@@ -1,0 +1,26 @@
+Structured object check types › Field enum
+
+kind:    object_field_enum
+family:  structuredObject
+scope:   item
+severity: error
+purpose: Require that a field is one of a fixed set of values.
+
+Structured-object check types validate structured frontmatter fields using schema-backed checks.
+
+configuration keys:
+  FIELD   REQUIRED  DEFAULT  MEANING
+  field   yes       -        Frontmatter key to check.
+  values  yes       -        Allowed values.
+
+example:
+  collections:
+    notes:
+      path: notes
+      checks:
+        - kind: object_field_enum
+          field: status
+          values: [draft, published, archived]
+
+other structured object check types:
+  object_field_type, object_number_range, object_required_field, object_sentence_case, object_string_length, filesystem_unique_field, object

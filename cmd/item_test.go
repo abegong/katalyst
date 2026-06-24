@@ -108,17 +108,13 @@ func TestItemGet_frontmatterAndBodyFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get --frontmatter: %v", err)
 	}
-	if !strings.Contains(fm, "title: Dune") || strings.Contains(fm, "# Dune") {
-		t.Errorf("--frontmatter should print only frontmatter, got: %q", fm)
-	}
+	snapshot(t, "item/get-frontmatter.txt", fm)
 
 	body, _, err := runRoot(t, "item", "get", "--body", "notes/dune")
 	if err != nil {
 		t.Fatalf("get --body: %v", err)
 	}
-	if !strings.Contains(body, "# Dune") || strings.Contains(body, "title:") {
-		t.Errorf("--body should print only body, got: %q", body)
-	}
+	snapshot(t, "item/get-body.txt", body)
 }
 
 func TestItemGet_unknownItem_exit2(t *testing.T) {
@@ -209,12 +205,8 @@ func TestItemList_showsIdsAndStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("item list: %v", err)
 	}
-	if !strings.Contains(stdout, "good") || !strings.Contains(stdout, "ok") {
-		t.Errorf("expected good ok, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "bad") || !strings.Contains(stdout, "error") {
-		t.Errorf("expected bad error status, got: %q", stdout)
-	}
+	// The fixture pins the id + status table (good: ok, bad: missing-year error).
+	snapshot(t, "item/list.txt", stdout)
 }
 
 func TestItemList_wrongDepth_exit2(t *testing.T) {

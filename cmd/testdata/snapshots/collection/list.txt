@@ -1,0 +1,3 @@
+NAME    DIRECTORY     ITEMS  SCHEMA
+books   notes/books   1      book
+people  notes/people  0      person

@@ -52,27 +52,17 @@ func TestCheckTypes_rulesAliasStillWorks(t *testing.T) {
 	}
 }
 
-func TestCheckTypes_splitsRequiredAndOptionalKeys(t *testing.T) {
+// The full catalog's column layout (family headings, the required/optional
+// split, the dash placeholder for no-field checks) is pinned as a snapshot;
+// TestCheckTypes_listsEveryTypeGroupedByFamily keeps the registry-coverage and
+// family-order invariant against the live registry.
+func TestCheckTypesList_textContract(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "check-types", "list")
 	if err != nil {
 		t.Fatalf("check-types list: %v", err)
 	}
-
-	// object_number_range: field required, min/max optional.
-	line := lineContaining(t, stdout, "object_number_range")
-	if !strings.Contains(line, "field") {
-		t.Errorf("expected required field on number_range line: %q", line)
-	}
-	if !strings.Contains(line, "min") || !strings.Contains(line, "max") {
-		t.Errorf("expected optional min/max on number_range line: %q", line)
-	}
-
-	// A no-field check shows a dash placeholder on both sides.
-	line = lineContaining(t, stdout, "markdown_single_h1")
-	if strings.Count(line, "-") < 2 {
-		t.Errorf("expected dashes for no-field check: %q", line)
-	}
+	snapshot(t, "check-types/list.txt", stdout)
 }
 
 func TestCheckTypesShow_showsDetail(t *testing.T) {
@@ -81,17 +71,7 @@ func TestCheckTypesShow_showsDetail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("check-types show object_required_field: %v", err)
 	}
-	for _, want := range []string{
-		"object_required_field",      // check type id
-		"Require that a frontmatter", // purpose
-		"field",                      // key name
-		"yes",                        // required column
-		"checks:",                    // example body
-	} {
-		if !strings.Contains(stdout, want) {
-			t.Errorf("expected %q in detail output, got: %q", want, stdout)
-		}
-	}
+	snapshot(t, "check-types/show-object_required_field.txt", stdout)
 }
 
 func TestCheckTypesShow_unknown_exit2(t *testing.T) {
@@ -112,18 +92,9 @@ func TestCheckTypesList_familyFiltersList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("check-types list --family markdownBodyText: %v", err)
 	}
-	if !strings.Contains(stdout, "Markdown body text check types") {
-		t.Errorf("expected Markdown body text check types heading, got: %q", stdout)
-	}
-	if strings.Contains(stdout, "Structured object check types") || strings.Contains(stdout, "File system check types") {
-		t.Errorf("expected only the markdown body text family, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "markdown_single_h1") {
-		t.Errorf("expected a markdown check type, got: %q", stdout)
-	}
-	if strings.Contains(stdout, "object_required_field") {
-		t.Errorf("did not expect an object check type, got: %q", stdout)
-	}
+	// The fixture pins the filtered output: only the markdown body text family,
+	// no object/filesystem types leak in.
+	snapshot(t, "check-types/list-family-markdown.txt", stdout)
 }
 
 func TestCheckTypesList_unknownFamily_exit2(t *testing.T) {
@@ -187,17 +158,9 @@ func TestCheckTypesShow_showsFamilyContextAndSiblings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("check-types show object_field_enum: %v", err)
 	}
-	// Breadcrumb + family intro give the docs-traversal context.
-	if !strings.Contains(stdout, "Structured object check types › Field enum") {
-		t.Errorf("expected breadcrumb header, got: %q", stdout)
-	}
-	if !strings.Contains(stdout, "Structured-object check types validate structured frontmatter") {
-		t.Errorf("expected family intro, got: %q", stdout)
-	}
-	// Siblings list points at the rest of the family.
-	if !strings.Contains(stdout, "object_required_field") {
-		t.Errorf("expected a sibling check type, got: %q", stdout)
-	}
+	// The fixture pins the breadcrumb header, the family intro, and the sibling
+	// list that give the docs-traversal context.
+	snapshot(t, "check-types/show-object_field_enum.txt", stdout)
 }
 
 func TestCheckTypesShow_noFieldTypeStatesSo(t *testing.T) {
@@ -206,9 +169,8 @@ func TestCheckTypesShow_noFieldTypeStatesSo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("check-types show markdown_single_h1: %v", err)
 	}
-	if !strings.Contains(stdout, "no configuration keys") {
-		t.Errorf("expected no-keys note, got: %q", stdout)
-	}
+	// A no-field check states it has no configuration keys.
+	snapshot(t, "check-types/show-markdown_single_h1.txt", stdout)
 }
 
 // familyCheckTypes returns the registered check types in a family, for test
@@ -294,16 +256,4 @@ func TestCheckTypesShow_jsonObject(t *testing.T) {
 	if len(got.Fields) != 3 {
 		t.Fatalf("got %d fields, want 3", len(got.Fields))
 	}
-}
-
-// lineContaining returns the first line of s that contains sub, failing if none.
-func lineContaining(t *testing.T, s, sub string) string {
-	t.Helper()
-	for _, ln := range strings.Split(s, "\n") {
-		if strings.Contains(ln, sub) {
-			return ln
-		}
-	}
-	t.Fatalf("no line containing %q in:\n%s", sub, s)
-	return ""
 }
