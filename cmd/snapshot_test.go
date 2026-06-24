@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -87,7 +88,25 @@ func writeSnapshot(base, name, got string) error {
 // output that embeds an absolute path (check diagnostics, the inspect report
 // header) snapshots deterministically.
 func normTmp(dir string) func(string) string {
-	return func(s string) string { return strings.ReplaceAll(s, dir, "<project>") }
+	aliases := []string{dir}
+	if realDir, err := filepath.EvalSymlinks(dir); err == nil {
+		aliases = append(aliases, realDir)
+	}
+	for _, alias := range aliases[:] {
+		switch {
+		case strings.HasPrefix(alias, "/var/"):
+			aliases = append(aliases, "/private"+alias)
+		case strings.HasPrefix(alias, "/private/var/"):
+			aliases = append(aliases, strings.TrimPrefix(alias, "/private"))
+		}
+	}
+	sort.Slice(aliases, func(i, j int) bool { return len(aliases[i]) > len(aliases[j]) })
+	return func(s string) string {
+		for _, alias := range aliases {
+			s = strings.ReplaceAll(s, alias, "<project>")
+		}
+		return s
+	}
 }
 
 // --- harness self-coverage ---
@@ -120,6 +139,13 @@ func TestSnapshot_missingFixtureIsError(t *testing.T) {
 
 func TestSnapshot_normTmpRewritesPath(t *testing.T) {
 	got := normTmp("/tmp/abc123")("/tmp/abc123/notes/bad.md:3: /year: error\n")
+	if want := "<project>/notes/bad.md:3: /year: error\n"; got != want {
+		t.Errorf("normTmp = %q, want %q", got, want)
+	}
+}
+
+func TestSnapshot_normTmpRewritesMacOSTmpSymlinkPath(t *testing.T) {
+	got := normTmp("/var/folders/abc123")("/private/var/folders/abc123/notes/bad.md:3: /year: error\n")
 	if want := "<project>/notes/bad.md:3: /year: error\n"; got != want {
 		t.Errorf("normTmp = %q, want %q", got, want)
 	}
