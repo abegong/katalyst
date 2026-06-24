@@ -5,7 +5,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // uniqueFieldArgs is filesystem_unique_field's own config shape.
@@ -39,7 +38,7 @@ func (c UniqueField) RunCollection(ctx checks.CollectionContext) []checks.Violat
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemUniqueField,
+		CheckType: checks.CheckFilesystemUniqueField,
 		Family:    "structuredObject",
 		Slug:      "unique-field",
 		Title:     "Unique field",

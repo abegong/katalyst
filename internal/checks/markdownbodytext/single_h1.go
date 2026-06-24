@@ -2,7 +2,6 @@ package markdownbodytext
 
 import (
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownSingleH1 checks that only one H1 is present.
@@ -27,7 +26,7 @@ func (m MarkdownSingleH1) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckMarkdownSingleH1,
+		CheckType: checks.CheckMarkdownSingleH1,
 		Family:    "markdownBodyText",
 		Slug:      "single-h1",
 		Title:     "Single H1",

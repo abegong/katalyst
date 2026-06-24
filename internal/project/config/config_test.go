@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -135,7 +136,7 @@ func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 	if books.Dir != filepath.Join(wantRoot, "notes/books") {
 		t.Errorf("books.Dir = %q", books.Dir)
 	}
-	if len(books.Checks) != 1 || books.Checks[0].Type != config.CheckObject {
+	if len(books.Checks) != 1 || books.Checks[0].Kind != checks.CheckObject {
 		t.Fatalf("books schema shorthand should map to one object check, got %+v", books.Checks)
 	}
 
@@ -386,7 +387,7 @@ func TestLoad_variantsParsed(t *testing.T) {
 	if len(v0.Where) != 1 {
 		t.Errorf("variant 0 Where = %d predicates, want 1", len(v0.Where))
 	}
-	if len(v0.Checks) != 1 || v0.Checks[0].Type != config.CheckObject || v0.Checks[0].Schema != "section" {
+	if len(v0.Checks) != 1 || v0.Checks[0].Kind != checks.CheckObject || v0.Checks[0].Schema != "section" {
 		t.Errorf("variant 0 Checks = %+v, want one object check on 'section'", v0.Checks)
 	}
 
@@ -395,11 +396,11 @@ func TestLoad_variantsParsed(t *testing.T) {
 	if len(v1.Where) != 2 {
 		t.Errorf("variant 1 Where = %d predicates, want 2", len(v1.Where))
 	}
-	if len(v1.Checks) != 2 || v1.Checks[0].Type != config.CheckObject || v1.Checks[0].Schema != "content" {
+	if len(v1.Checks) != 2 || v1.Checks[0].Kind != checks.CheckObject || v1.Checks[0].Schema != "content" {
 		t.Fatalf("variant 1 Checks = %+v, want object check then requires_h1", v1.Checks)
 	}
-	if v1.Checks[1].Type != config.CheckMarkdownRequiresH1 {
-		t.Errorf("variant 1 second check = %q, want markdown_requires_h1", v1.Checks[1].Type)
+	if v1.Checks[1].Kind != checks.CheckMarkdownRequiresH1 {
+		t.Errorf("variant 1 second check = %q, want markdown_requires_h1", v1.Checks[1].Kind)
 	}
 }
 
@@ -576,17 +577,20 @@ checks:
 	if len(got) != 18 {
 		t.Fatalf("expected 18 checks, got %d", len(got))
 	}
-	if got[0].Type != config.CheckObject || got[0].Schema != "book" {
+	// ConfiguredCheck carries the kind and the parser's opaque validated args;
+	// per-check default/field application is verified behaviorally (cmd tests),
+	// not by reaching into the args here.
+	if got[0].Kind != checks.CheckObject || got[0].Schema != "book" {
 		t.Fatalf("check[0] = %+v, want object schema=book", got[0])
 	}
-	if got[6].Type != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
-		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
+	if got[6].Kind != checks.CheckMarkdownTitleMatchesH1 {
+		t.Fatalf("check[6].Kind = %v, want markdown_title_matches_h1", got[6].Kind)
 	}
-	if got[12].Type != config.CheckFilesystemNameMatchesField || got[12].Field != "slug" || got[12].Transform != "none" {
-		t.Fatalf("check[12] = %+v, want name_matches_field default field slug, transform none", got[12])
+	if got[12].Kind != checks.CheckFilesystemNameMatchesField {
+		t.Fatalf("check[12].Kind = %v, want filesystem_name_matches_field", got[12].Kind)
 	}
-	if got[14].Type != config.CheckFilesystemNameCase || got[14].Style != "kebab" {
-		t.Fatalf("check[14] = %+v, want name_case style kebab", got[14])
+	if got[14].Kind != checks.CheckFilesystemNameCase {
+		t.Fatalf("check[14].Kind = %v, want filesystem_name_case", got[14].Kind)
 	}
 }
 
@@ -705,17 +709,20 @@ checks:
 	if len(got) != 4 {
 		t.Fatalf("expected 4 checks, got %d", len(got))
 	}
-	if got[0].Type != config.CheckTextRequires || got[0].Match != "any" {
-		t.Fatalf("check[0] = %+v, want text_requires default match any", got[0])
+	// Kinds only; the parsers' defaults/fields (match, target, select, values)
+	// are verified behaviorally by the cmd/plaintext tests, not by reaching into
+	// the opaque ConfiguredCheck.Args here.
+	if got[0].Kind != checks.CheckTextRequires {
+		t.Fatalf("check[0].Kind = %v, want text_requires", got[0].Kind)
 	}
-	if got[1].Match != "all" || got[1].Target != "line" {
-		t.Fatalf("check[1] = %+v, want match all target line", got[1])
+	if got[1].Kind != checks.CheckTextRequires {
+		t.Fatalf("check[1].Kind = %v, want text_requires", got[1].Kind)
 	}
-	if got[2].Type != config.CheckTextForbids || got[2].Select != "^-" {
-		t.Fatalf("check[2] = %+v, want text_forbids select ^-", got[2])
+	if got[2].Kind != checks.CheckTextForbids {
+		t.Fatalf("check[2].Kind = %v, want text_forbids", got[2].Kind)
 	}
-	if got[3].Type != config.CheckTextDenylist || len(got[3].Values) != 2 {
-		t.Fatalf("check[3] = %+v, want text_denylist with 2 values", got[3])
+	if got[3].Kind != checks.CheckTextDenylist {
+		t.Fatalf("check[3].Kind = %v, want text_denylist", got[3].Kind)
 	}
 }
 
@@ -1021,7 +1028,7 @@ func TestLoad_parsesWritingTells(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if len(notes.Checks) != 1 || notes.Checks[0].Type != config.CheckMarkdownWritingTells {
+	if len(notes.Checks) != 1 || notes.Checks[0].Kind != checks.CheckMarkdownWritingTells {
 		t.Fatalf("expected one markdown_writing_tells check, got %+v", notes.Checks)
 	}
 }

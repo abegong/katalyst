@@ -7,7 +7,6 @@ package fix
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/plaintext"
@@ -73,18 +72,21 @@ func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
 }
 
 // textFixers builds the fixable text_forbids checks configured for a
-// collection (those with a non-empty fix template).
+// collection (those with a non-empty fix template). Each check is built from its
+// validated config through the registry, so fix reuses the same TextForbids the
+// engine would run.
 func textFixers(c config.Collection) []plaintext.TextForbids {
 	var out []plaintext.TextForbids
-	for _, ch := range c.Checks {
-		if ch.Type == config.CheckTextForbids && ch.Fix != "" {
-			out = append(out, plaintext.TextForbids{
-				Re:      regexp.MustCompile(ch.Pattern),
-				Pattern: ch.Pattern,
-				Target:  ch.Target,
-				Select:  plaintext.CompileSelect(ch.Select),
-				Fix:     ch.Fix,
-			})
+	for _, cc := range c.Checks {
+		if cc.Kind != checks.CheckTextForbids {
+			continue
+		}
+		chk, ok := checks.Build(cc.Kind, cc.Args)
+		if !ok {
+			continue
+		}
+		if tf, ok := chk.(plaintext.TextForbids); ok && tf.Fix != "" {
+			out = append(out, tf)
 		}
 	}
 	return out

@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectFieldType checks that a field has a specific type.
@@ -44,7 +43,7 @@ func (o ObjectFieldType) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectFieldType,
+		CheckType: checks.CheckObjectFieldType,
 		Family:    "structuredObject",
 		Slug:      "field-type",
 		Title:     "Field type",

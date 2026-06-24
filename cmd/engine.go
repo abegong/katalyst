@@ -75,13 +75,13 @@ func (e *engine) compile(sl checks.SchemaLibrary, name, path string) (checks.Sch
 // loudly rather than silently skipping enforcement. The object check's library
 // is checked separately in objectLibrary, since the forced --schema and inline
 // schema: paths reach it without an object entry in the check list.
-func ensureLibrariesAvailable(effective []config.CheckInstance) error {
+func ensureLibrariesAvailable(effective []checks.ConfiguredCheck) error {
 	seen := map[string]bool{}
-	for _, ch := range effective {
-		if ch.Type == config.CheckObject {
+	for _, cc := range effective {
+		if cc.Kind == checks.CheckObject {
 			continue
 		}
-		lib, ok := checks.LibraryFor(ch.Type)
+		lib, ok := checks.LibraryFor(cc.Kind)
 		if !ok || seen[lib.Name()] {
 			continue
 		}
@@ -97,9 +97,9 @@ func ensureLibrariesAvailable(effective []config.CheckInstance) error {
 // after confirming it is available. Availability is checked before any schema
 // is compiled so a missing engine fails the run loudly.
 func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
-	lib, ok := checks.LibraryFor(config.CheckObject)
+	lib, ok := checks.LibraryFor(checks.CheckObject)
 	if !ok {
-		return nil, fmt.Errorf("no library provides the %q check type", config.CheckObject)
+		return nil, fmt.Errorf("no library provides the %q check type", checks.CheckObject)
 	}
 	if err := lib.Available(); err != nil {
 		return nil, fmt.Errorf("check library %q is unavailable: %w", lib.Name(), err)
@@ -130,7 +130,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	}
 	effective := c.Checks
 	if routed {
-		effective = make([]config.CheckInstance, 0, len(c.Checks)+len(matched.Checks))
+		effective = make([]checks.ConfiguredCheck, 0, len(c.Checks)+len(matched.Checks))
 		effective = append(effective, c.Checks...)
 		effective = append(effective, matched.Checks...)
 	}
@@ -148,7 +148,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 
 	// The JSON Schema library owns the object-schema precedence policy
 	// (forced --schema, inline schema:, then collection object checks).
-	refs, err := jsonschema.Resolve(e.forcedPath, inlineSchema, effective, cfg)
+	refs, err := jsonschema.Resolve(e.forcedPath, inlineSchema, effective, cfg.SchemaPath)
 	if err != nil {
 		return nil, err
 	}
@@ -169,15 +169,11 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	// Every non-object, per-item check is built from its registry entry. The
 	// object check is handled above (it needs a compiled schema); collection-
 	// scoped checks have no per-item builder, so Build skips them here.
-	for _, ch := range effective {
-		if ch.Type == config.CheckObject {
+	for _, cc := range effective {
+		if cc.Kind == checks.CheckObject {
 			continue
 		}
-		chk, ok, err := checks.BuildFromConfig(ch)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", ch.Type, err)
-		}
-		if ok {
+		if chk, ok := checks.Build(cc.Kind, cc.Args); ok {
 			checkList = append(checkList, chk)
 		}
 	}
@@ -234,13 +230,9 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 // collection. These run once per collection, after the per-item pass.
 func (e *engine) collectionChecksFor(c config.Collection) ([]checks.CollectionCheck, error) {
 	var out []checks.CollectionCheck
-	for _, ch := range c.Checks {
-		cc, ok, err := checks.BuildCollectionFromConfig(ch)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", ch.Type, err)
-		}
-		if ok {
-			out = append(out, cc)
+	for _, cc := range c.Checks {
+		if col, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
+			out = append(out, col)
 		}
 	}
 	return out, nil

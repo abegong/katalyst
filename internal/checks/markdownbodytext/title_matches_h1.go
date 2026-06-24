@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -61,7 +60,7 @@ func (m MarkdownTitleMatchesH1) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckMarkdownTitleMatchesH1,
+		CheckType: checks.CheckMarkdownTitleMatchesH1,
 		Family:    "markdownBodyText",
 		Slug:      "title-matches-h1",
 		Title:     "Title matches H1",

@@ -7,7 +7,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 type extensionInArgs struct {
@@ -38,7 +37,7 @@ func (f FilesystemExtensionIn) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemExtensionIn,
+		CheckType: checks.CheckFilesystemExtensionIn,
 		Family:    "fileSystem",
 		Slug:      "extension-in",
 		Title:     "Extension in",

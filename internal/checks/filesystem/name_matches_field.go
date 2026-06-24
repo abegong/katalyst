@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // NameMatchesField checks that the target equals a frontmatter field,
@@ -68,7 +67,7 @@ type nameMatchesFieldArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemNameMatchesField,
+		CheckType: checks.CheckFilesystemNameMatchesField,
 		Family:    "fileSystem",
 		Slug:      "name-matches-field",
 		Title:     "Name matches field",

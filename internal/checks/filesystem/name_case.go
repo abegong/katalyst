@@ -5,7 +5,6 @@ import (
 	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // caseStyle pairs a style's anchored pattern with its human label.
@@ -60,7 +59,7 @@ type nameCaseArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemNameCase,
+		CheckType: checks.CheckFilesystemNameCase,
 		Family:    "fileSystem",
 		Slug:      "name-case",
 		Title:     "Name case",

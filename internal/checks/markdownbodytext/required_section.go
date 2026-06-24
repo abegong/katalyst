@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // requiredSectionArgs is markdown_required_section's own config shape.
@@ -38,7 +37,7 @@ func (m MarkdownRequiredSection) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckMarkdownRequiredSection,
+		CheckType: checks.CheckMarkdownRequiredSection,
 		Family:    "markdownBodyText",
 		Slug:      "required-section",
 		Title:     "Required section",

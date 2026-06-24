@@ -5,7 +5,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectFieldEnum checks that a string field is in the allowed set.
@@ -52,7 +51,7 @@ func (o ObjectFieldEnum) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectFieldEnum,
+		CheckType: checks.CheckObjectFieldEnum,
 		Family:    "structuredObject",
 		Slug:      "field-enum",
 		Title:     "Field enum",

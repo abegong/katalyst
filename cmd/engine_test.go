@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // fakeUnavailableLib backs a fake non-object check type with an out-of-process
@@ -21,7 +20,7 @@ func init() {
 	// Registered from init (not a test body) so it never races test ordering
 	// or leaks into a test that has already snapshotted the registry.
 	checks.RegisterLibrary(fakeUnavailableLib{})
-	checks.Register(checks.Descriptor{
+	checks.RegisterDescriptor(checks.Descriptor{
 		CheckType:     "fake_prose_unavailable",
 		Library:       "fake-prose",
 		Family:        "plainText",
@@ -29,13 +28,13 @@ func init() {
 		Title:         "Fake Prose",
 		Summary:       "Test-only out-of-process check type.",
 		ConfigExample: "checks:\n  - kind: fake_prose_unavailable",
-	}, nil, nil)
+	})
 }
 
 // A non-object check whose library is unavailable fails the run with a clear,
 // library-named error before any item is checked.
 func TestEnsureLibrariesAvailable_unavailableFails(t *testing.T) {
-	err := ensureLibrariesAvailable([]config.CheckInstance{{Type: "fake_prose_unavailable"}})
+	err := ensureLibrariesAvailable([]checks.ConfiguredCheck{{Kind: "fake_prose_unavailable"}})
 	if err == nil {
 		t.Fatal("expected an unavailable-library error")
 	}
@@ -47,9 +46,9 @@ func TestEnsureLibrariesAvailable_unavailableFails(t *testing.T) {
 // Native check types name no library, and json-schema is always available, so
 // the gate never misfires on the common case.
 func TestEnsureLibrariesAvailable_nativeAndObjectPass(t *testing.T) {
-	err := ensureLibrariesAvailable([]config.CheckInstance{
-		{Type: config.CheckMarkdownSingleH1},
-		{Type: config.CheckObject},
+	err := ensureLibrariesAvailable([]checks.ConfiguredCheck{
+		{Kind: checks.CheckMarkdownSingleH1},
+		{Kind: checks.CheckObject},
 	})
 	if err != nil {
 		t.Errorf("native and object kinds should pass availability, got %v", err)

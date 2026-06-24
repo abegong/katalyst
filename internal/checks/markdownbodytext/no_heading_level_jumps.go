@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownNoHeadingLevelJumps checks that heading levels increase at most by one.
@@ -31,7 +30,7 @@ func (m MarkdownNoHeadingLevelJumps) Run(ctx checks.Context) []checks.Violation 
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckMarkdownNoHeadingLevelJumps,
+		CheckType: checks.CheckMarkdownNoHeadingLevelJumps,
 		Family:    "markdownBodyText",
 		Slug:      "no-heading-level-jumps",
 		Title:     "No heading level jumps",

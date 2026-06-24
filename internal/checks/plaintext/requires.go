@@ -8,7 +8,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // TextRequires asserts that an unanchored regex appears in the body. With
@@ -59,7 +58,7 @@ type requiresArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckTextRequires,
+		CheckType: checks.CheckTextRequires,
 		Family:    "plainText",
 		Slug:      "requires",
 		Title:     "Requires",

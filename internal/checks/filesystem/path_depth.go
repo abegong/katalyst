@@ -7,7 +7,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // PathDepth bounds directory nesting relative to the collection root. A file
@@ -59,7 +58,7 @@ type pathDepthArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemPathDepth,
+		CheckType: checks.CheckFilesystemPathDepth,
 		Family:    "fileSystem",
 		Slug:      "path-depth",
 		Title:     "Path depth",

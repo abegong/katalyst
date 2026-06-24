@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // NameAffix checks that the target starts with Prefix and/or ends with Suffix.
@@ -43,7 +42,7 @@ type nameAffixArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemNameAffix,
+		CheckType: checks.CheckFilesystemNameAffix,
 		Family:    "fileSystem",
 		Slug:      "name-affix",
 		Title:     "Name affix",

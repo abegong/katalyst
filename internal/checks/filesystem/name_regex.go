@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // NameRegex checks that the target matches an anchored pattern.
@@ -40,7 +39,7 @@ type nameRegexArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemNameRegex,
+		CheckType: checks.CheckFilesystemNameRegex,
 		Family:    "fileSystem",
 		Slug:      "name-regex",
 		Title:     "Name regex",

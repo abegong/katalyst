@@ -7,7 +7,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ReferencedFilesExist checks that path-valued frontmatter fields resolve to
@@ -77,7 +76,7 @@ type referencedFilesArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemReferencedFiles,
+		CheckType: checks.CheckFilesystemReferencedFiles,
 		Family:    "fileSystem",
 		Slug:      "referenced-files-exist",
 		Title:     "Referenced files exist",

@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"gopkg.in/yaml.v3"
 )
@@ -104,86 +104,6 @@ type StorageInstance struct {
 
 // CheckType identifies the reusable check definition attached to a
 // collection. Its string value is the `kind:` selector in YAML.
-type CheckType string
-
-const (
-	CheckObject                        CheckType = "object"
-	CheckObjectRequiredField           CheckType = "object_required_field"
-	CheckObjectFieldType               CheckType = "object_field_type"
-	CheckObjectFieldEnum               CheckType = "object_field_enum"
-	CheckObjectNumberRange             CheckType = "object_number_range"
-	CheckObjectStringLength            CheckType = "object_string_length"
-	CheckObjectSentenceCase            CheckType = "object_sentence_case"
-	CheckMarkdownTitleMatchesH1        CheckType = "markdown_title_matches_h1"
-	CheckMarkdownRequiresH1            CheckType = "markdown_requires_h1"
-	CheckMarkdownSingleH1              CheckType = "markdown_single_h1"
-	CheckMarkdownNoHeadingLevelJumps   CheckType = "markdown_no_heading_level_jumps"
-	CheckMarkdownRequiredSection       CheckType = "markdown_required_section"
-	CheckMarkdownCodeFenceHasLanguage  CheckType = "markdown_code_fence_language_required"
-	CheckMarkdownWritingTells          CheckType = "markdown_writing_tells"
-	CheckFilesystemExtensionIn         CheckType = "filesystem_extension_in"
-	CheckFilesystemParentDirIn         CheckType = "filesystem_parent_dir_in"
-	CheckFilesystemNameCase            CheckType = "filesystem_name_case"
-	CheckFilesystemNameMatchesField    CheckType = "filesystem_name_matches_field"
-	CheckFilesystemNameAffix           CheckType = "filesystem_name_affix"
-	CheckFilesystemPathCharset         CheckType = "filesystem_path_charset"
-	CheckFilesystemNameRegex           CheckType = "filesystem_name_regex"
-	CheckFilesystemNameLength          CheckType = "filesystem_name_length"
-	CheckFilesystemPathDepth           CheckType = "filesystem_path_depth"
-	CheckFilesystemParentDirMatchesFld CheckType = "filesystem_parent_dir_matches_field"
-	CheckFilesystemReferencedFiles     CheckType = "filesystem_referenced_files_exist"
-	CheckFilesystemUniqueFilename      CheckType = "filesystem_unique_filename"
-	CheckFilesystemUniqueField         CheckType = "filesystem_unique_field"
-	CheckFilesystemIndexFileRequired   CheckType = "filesystem_index_file_required"
-	CheckTextRequires                  CheckType = "text_requires"
-	CheckTextForbids                   CheckType = "text_forbids"
-	CheckTextDenylist                  CheckType = "text_denylist"
-	defaultMarkdownTitleField                    = "title"
-	defaultFilesystemSlugField                   = "slug"
-)
-
-// CheckInstance is one configured check attached to a collection (one YAML
-// object inside `checks:`). Type selects the check type; the remaining
-// fields are its arguments.
-type CheckInstance struct {
-	Type CheckType
-	// Node is the raw YAML node for this check's `checks:` entry, retained so a
-	// check type that owns its parsing (checks.RegisterParsed) can decode its own
-	// args. Nil for the synthesized object check. Transitional: it exists so the
-	// per-check parsers can supersede normalizeCheck field by field.
-	Node *yaml.Node
-	// FieldType is the JSON type required by object_field_type (the `type:`
-	// key); it is not the check type itself, which is Type.
-	FieldType string
-	Schema    string
-	Field     string
-	Value     string
-	Values    []string
-	Min       *float64
-	Max       *float64
-	MinLength int
-	MaxLength int
-	Heading   string
-	Style     string
-	Target    string
-	Transform string
-	Prefix    string
-	Suffix    string
-	Allow     []string
-	Deny      []string
-	Pattern   string
-	MinInt    *int
-	MaxInt    *int
-	Fields    []string
-	Name      string
-	// Match is the multi-span quantifier for text_requires ("any" or "all").
-	Match string
-	// Select is the line-filter regex for target "matched-lines" (text rules).
-	Select string
-	// Fix is the optional replacement template for text_forbids.
-	Fix string
-}
-
 // Collection is a named group of items backed by a directory of files.
 type Collection struct {
 	// Name is the public handle (the key in the config `collections:` map).
@@ -199,7 +119,7 @@ type Collection struct {
 	// mirrors the first object check's schema, for display.
 	Schema string
 	// Checks to run against each item.
-	Checks []CheckInstance
+	Checks []checks.ConfiguredCheck
 	// Query holds the resolved `item list` query behavior for this
 	// collection (collection config over project config over defaults).
 	Query QuerySettings
@@ -225,7 +145,7 @@ type CollectionVariant struct {
 	// Where are the discriminator predicates, ANDed together. Non-empty.
 	Where []query.Predicate
 	// Checks run on an item routed to this variant, added to the base.
-	Checks []CheckInstance
+	Checks []checks.ConfiguredCheck
 }
 
 // QuerySettings configures the behavior of `item list` filtering and
@@ -611,7 +531,7 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 		pattern = defaultPattern
 	}
 
-	checks, err := c.buildChecks(fmt.Sprintf("collection %q", name), rc.Schema, rc.Checks)
+	cks, err := c.buildChecks(fmt.Sprintf("collection %q", name), rc.Schema, rc.Checks)
 	if err != nil {
 		return Collection{}, err
 	}
@@ -621,13 +541,13 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 		return Collection{}, err
 	}
 
-	if len(checks) == 0 && len(variants) == 0 {
+	if len(cks) == 0 && len(variants) == 0 {
 		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema, checks, or variants)", name)
 	}
 
 	schemaName := ""
-	for _, ch := range checks {
-		if ch.Type == CheckObject {
+	for _, ch := range cks {
+		if ch.Kind == checks.CheckObject {
 			schemaName = ch.Schema
 			break
 		}
@@ -644,7 +564,7 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 		Dir:                   resolve(instRoot, dirRel),
 		Pattern:               pattern,
 		Schema:                schemaName,
-		Checks:                checks,
+		Checks:                cks,
 		Query:                 qs,
 		Storage:               instName,
 		Variants:              variants,
@@ -655,23 +575,35 @@ func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instNa
 // buildChecks folds an optional schema name into a leading object check and
 // normalizes the remaining raw checks. errCtx prefixes any error (e.g.
 // `collection "books"` or `collection "books": variants[0]`).
-func (c *Config) buildChecks(errCtx, schema string, raws []rawCheck) ([]CheckInstance, error) {
-	checks := make([]CheckInstance, 0, len(raws)+1)
+func (c *Config) buildChecks(errCtx, schema string, raws []rawCheck) ([]checks.ConfiguredCheck, error) {
+	out := make([]checks.ConfiguredCheck, 0, len(raws)+1)
 	if schema != "" {
 		if _, ok := c.Schemas[schema]; !ok {
 			return nil, fmt.Errorf("%s: unknown schema %q", errCtx, schema)
 		}
-		checks = append(checks, CheckInstance{Type: CheckObject, Schema: schema})
+		out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: schema})
 	}
 	for j, raw := range raws {
-		ch, err := normalizeCheck(raw, c.Schemas)
+		kind := checks.CheckType(strings.TrimSpace(raw.Kind))
+		if kind == checks.CheckObject {
+			// An explicit `kind: object` names a schema, validated here because
+			// the loader owns schema resolution; the engine builds it.
+			if raw.Schema == "" {
+				return nil, fmt.Errorf("%s: checks[%d]: object check requires \"schema\"", errCtx, j)
+			}
+			if _, ok := c.Schemas[raw.Schema]; !ok {
+				return nil, fmt.Errorf("%s: checks[%d]: unknown schema %q", errCtx, j, raw.Schema)
+			}
+			out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: raw.Schema})
+			continue
+		}
+		args, err := checks.Parse(kind, raw.node)
 		if err != nil {
 			return nil, fmt.Errorf("%s: checks[%d]: %w", errCtx, j, err)
 		}
-		ch.Node = raw.node
-		checks = append(checks, ch)
+		out = append(out, checks.ConfiguredCheck{Kind: kind, Args: args})
 	}
-	return checks, nil
+	return out, nil
 }
 
 // buildVariants parses and validates a collection's variants: each `when`
@@ -886,336 +818,13 @@ func resolve(root, p string) string {
 	return filepath.Clean(filepath.Join(root, p))
 }
 
-// caseStyleNames and targetNames mirror the values the filesystem checks
-// accept. They are duplicated here (not imported from internal/checks)
-// because checks imports config, importing back would cycle.
-var caseStyleNames = map[string]bool{
-	"kebab": true, "snake": true, "screaming-snake": true,
-	"camel": true, "pascal": true, "point": true, "lower": true,
-}
-
-var targetNames = map[string]bool{
-	"filename": true, "filename-ext": true, "parent-dir": true, "path-segments": true,
-}
-
-func validCaseStyle(s string) bool { return caseStyleNames[s] }
-
-// collectionScopedTypes are check types that run once per collection over all
-// its items, rather than per item.
-var collectionScopedTypes = map[CheckType]bool{
-	CheckFilesystemUniqueFilename:    true,
-	CheckFilesystemUniqueField:       true,
-	CheckFilesystemIndexFileRequired: true,
-}
-
-// CollectionScoped reports whether a check type runs per collection (vs. per
-// item).
-func CollectionScoped(t CheckType) bool { return collectionScopedTypes[t] }
-
 // HasCollectionChecks reports whether the collection configures any
 // collection-scoped check.
 func (c Collection) HasCollectionChecks() bool {
-	for _, ch := range c.Checks {
-		if CollectionScoped(ch.Type) {
+	for _, cc := range c.Checks {
+		if checks.CollectionScoped(cc.Kind) {
 			return true
 		}
 	}
 	return false
-}
-
-// floatToIntPtr truncates a *float64 (the shared yaml min/max) to a *int for
-// integer-bounded checks. Nil in, nil out.
-func floatToIntPtr(f *float64) *int {
-	if f == nil {
-		return nil
-	}
-	n := int(*f)
-	return &n
-}
-
-// validateTarget allows an empty target (defaults to filename) and rejects
-// any non-empty value outside the known set.
-func validateTarget(checkType, target string) error {
-	if target == "" || targetNames[target] {
-		return nil
-	}
-	return fmt.Errorf("%s: unknown target %q", checkType, target)
-}
-
-// textTargetNames are the span selectors a text rule accepts. Empty defaults
-// to "body". These are distinct from the filesystem path targets.
-var textTargetNames = map[string]bool{
-	"body": true, "line": true, "first-line": true, "matched-lines": true,
-}
-
-// validateTextTarget allows an empty target (defaults to body) and rejects any
-// non-empty value outside the text span set.
-func validateTextTarget(checkType, target string) error {
-	if target == "" || textTargetNames[target] {
-		return nil
-	}
-	return fmt.Errorf("%s: unknown target %q", checkType, target)
-}
-
-// validateSelect enforces the matched-lines/select pairing: "select" is
-// required for target "matched-lines" and rejected for any other target. When
-// present it must be a valid regex.
-func validateSelect(checkType, target, sel string) error {
-	if target == "matched-lines" {
-		if sel == "" {
-			return fmt.Errorf(`%s: target "matched-lines" requires "select"`, checkType)
-		}
-		if _, err := regexp.Compile(sel); err != nil {
-			return fmt.Errorf("%s: invalid select %q: %w", checkType, sel, err)
-		}
-		return nil
-	}
-	if sel != "" {
-		return fmt.Errorf(`%s: "select" is only valid with target "matched-lines"`, checkType)
-	}
-	return nil
-}
-
-func normalizeCheck(raw rawCheck, schemas map[string]string) (CheckInstance, error) {
-	checkType := CheckType(strings.TrimSpace(raw.Kind))
-	switch checkType {
-	case CheckObject:
-		if raw.Schema == "" {
-			return CheckInstance{}, errors.New(`object check requires "schema"`)
-		}
-		if _, ok := schemas[raw.Schema]; !ok {
-			return CheckInstance{}, fmt.Errorf("unknown schema %q", raw.Schema)
-		}
-		if raw.Field != "" {
-			return CheckInstance{}, errors.New(`object check does not support "field"`)
-		}
-		return CheckInstance{Type: CheckObject, Schema: raw.Schema}, nil
-	case CheckObjectRequiredField:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_required_field requires "field"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field}, nil
-	case CheckObjectFieldType:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_field_type requires "field"`)
-		}
-		if raw.Type == "" {
-			return CheckInstance{}, errors.New(`object_field_type requires "type"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field, FieldType: raw.Type}, nil
-	case CheckObjectFieldEnum:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_field_enum requires "field"`)
-		}
-		if len(raw.Values) == 0 {
-			return CheckInstance{}, errors.New(`object_field_enum requires "values"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field, Values: raw.Values}, nil
-	case CheckObjectNumberRange:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_number_range requires "field"`)
-		}
-		if raw.Min == nil && raw.Max == nil {
-			return CheckInstance{}, errors.New(`object_number_range requires "min" or "max"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field, Min: raw.Min, Max: raw.Max}, nil
-	case CheckObjectStringLength:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_string_length requires "field"`)
-		}
-		if raw.MinLength == 0 && raw.MaxLength == 0 {
-			return CheckInstance{}, errors.New(`object_string_length requires "min_length" or "max_length"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field, MinLength: raw.MinLength, MaxLength: raw.MaxLength}, nil
-	case CheckObjectSentenceCase:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`object_sentence_case requires "field"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field, Allow: raw.Allow}, nil
-	case CheckMarkdownTitleMatchesH1:
-		if raw.Schema != "" {
-			return CheckInstance{}, errors.New(`markdown_title_matches_h1 does not support "schema"`)
-		}
-		field := raw.Field
-		if field == "" {
-			field = defaultMarkdownTitleField
-		}
-		return CheckInstance{Type: CheckMarkdownTitleMatchesH1, Field: field}, nil
-	case CheckMarkdownRequiresH1:
-		return CheckInstance{Type: checkType}, nil
-	case CheckMarkdownSingleH1:
-		return CheckInstance{Type: checkType}, nil
-	case CheckMarkdownNoHeadingLevelJumps:
-		return CheckInstance{Type: checkType}, nil
-	case CheckMarkdownRequiredSection:
-		if raw.Heading == "" {
-			return CheckInstance{}, errors.New(`markdown_required_section requires "heading"`)
-		}
-		return CheckInstance{Type: checkType, Heading: raw.Heading}, nil
-	case CheckMarkdownCodeFenceHasLanguage:
-		return CheckInstance{Type: checkType}, nil
-	case CheckMarkdownWritingTells:
-		return CheckInstance{Type: checkType}, nil
-	case CheckFilesystemExtensionIn:
-		if len(raw.Values) == 0 {
-			return CheckInstance{}, errors.New(`filesystem_extension_in requires "values"`)
-		}
-		return CheckInstance{Type: checkType, Values: raw.Values}, nil
-	case CheckFilesystemParentDirIn:
-		if len(raw.Values) == 0 {
-			return CheckInstance{}, errors.New(`filesystem_parent_dir_in requires "values"`)
-		}
-		return CheckInstance{Type: checkType, Values: raw.Values}, nil
-	case CheckFilesystemNameCase:
-		if raw.Style == "" {
-			return CheckInstance{}, errors.New(`filesystem_name_case requires "style"`)
-		}
-		if !validCaseStyle(raw.Style) {
-			return CheckInstance{}, fmt.Errorf("filesystem_name_case: unknown style %q", raw.Style)
-		}
-		if err := validateTarget("filesystem_name_case", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Style: raw.Style, Target: raw.Target}, nil
-	case CheckFilesystemNameMatchesField:
-		field := raw.Field
-		if field == "" {
-			field = defaultFilesystemSlugField
-		}
-		transform := raw.Transform
-		if transform == "" {
-			transform = "none"
-		}
-		if transform != "none" && transform != "slugify" {
-			return CheckInstance{}, fmt.Errorf(`filesystem_name_matches_field: "transform" must be none or slugify (got %q)`, raw.Transform)
-		}
-		if err := validateTarget("filesystem_name_matches_field", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Field: field, Transform: transform, Target: raw.Target}, nil
-	case CheckFilesystemNameAffix:
-		if raw.Prefix == "" && raw.Suffix == "" {
-			return CheckInstance{}, errors.New(`filesystem_name_affix requires "prefix" or "suffix"`)
-		}
-		if err := validateTarget("filesystem_name_affix", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Prefix: raw.Prefix, Suffix: raw.Suffix, Target: raw.Target}, nil
-	case CheckFilesystemPathCharset:
-		if len(raw.Allow) > 0 && len(raw.Deny) > 0 {
-			return CheckInstance{}, errors.New(`filesystem_path_charset accepts "allow" or "deny", not both`)
-		}
-		if len(raw.Allow) == 0 && len(raw.Deny) == 0 {
-			return CheckInstance{}, errors.New(`filesystem_path_charset requires "allow" or "deny"`)
-		}
-		return CheckInstance{Type: checkType, Allow: raw.Allow, Deny: raw.Deny}, nil
-	case CheckFilesystemNameRegex:
-		if raw.Pattern == "" {
-			return CheckInstance{}, errors.New(`filesystem_name_regex requires "pattern"`)
-		}
-		if _, err := regexp.Compile("^(?:" + raw.Pattern + ")$"); err != nil {
-			return CheckInstance{}, fmt.Errorf("filesystem_name_regex: invalid pattern %q: %w", raw.Pattern, err)
-		}
-		if err := validateTarget("filesystem_name_regex", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target}, nil
-	case CheckFilesystemNameLength:
-		if raw.Min == nil && raw.Max == nil {
-			return CheckInstance{}, errors.New(`filesystem_name_length requires "min" or "max"`)
-		}
-		if err := validateTarget("filesystem_name_length", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max), Target: raw.Target}, nil
-	case CheckFilesystemPathDepth:
-		if raw.Min == nil && raw.Max == nil {
-			return CheckInstance{}, errors.New(`filesystem_path_depth requires "min" or "max"`)
-		}
-		return CheckInstance{Type: checkType, MinInt: floatToIntPtr(raw.Min), MaxInt: floatToIntPtr(raw.Max)}, nil
-	case CheckFilesystemParentDirMatchesFld:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`filesystem_parent_dir_matches_field requires "field"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field}, nil
-	case CheckFilesystemReferencedFiles:
-		if len(raw.Fields) == 0 {
-			return CheckInstance{}, errors.New(`filesystem_referenced_files_exist requires "fields"`)
-		}
-		return CheckInstance{Type: checkType, Fields: raw.Fields}, nil
-	case CheckFilesystemUniqueFilename:
-		return CheckInstance{Type: checkType}, nil
-	case CheckFilesystemUniqueField:
-		if raw.Field == "" {
-			return CheckInstance{}, errors.New(`filesystem_unique_field requires "field"`)
-		}
-		return CheckInstance{Type: checkType, Field: raw.Field}, nil
-	case CheckFilesystemIndexFileRequired:
-		return CheckInstance{Type: checkType, Name: raw.Name}, nil
-	case CheckTextRequires:
-		if raw.Pattern == "" {
-			return CheckInstance{}, errors.New(`text_requires requires "pattern"`)
-		}
-		if _, err := regexp.Compile(raw.Pattern); err != nil {
-			return CheckInstance{}, fmt.Errorf("text_requires: invalid pattern %q: %w", raw.Pattern, err)
-		}
-		match := raw.Match
-		if match == "" {
-			match = "any"
-		}
-		if match != "any" && match != "all" {
-			return CheckInstance{}, fmt.Errorf(`text_requires: "match" must be any or all (got %q)`, raw.Match)
-		}
-		if raw.Fix != "" {
-			return CheckInstance{}, errors.New(`text_requires does not support "fix"`)
-		}
-		if err := validateTextTarget("text_requires", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		if err := validateSelect("text_requires", raw.Target, raw.Select); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target, Match: match, Select: raw.Select}, nil
-	case CheckTextForbids:
-		if raw.Pattern == "" {
-			return CheckInstance{}, errors.New(`text_forbids requires "pattern"`)
-		}
-		if _, err := regexp.Compile(raw.Pattern); err != nil {
-			return CheckInstance{}, fmt.Errorf("text_forbids: invalid pattern %q: %w", raw.Pattern, err)
-		}
-		if raw.Match != "" {
-			return CheckInstance{}, errors.New(`text_forbids does not support "match"`)
-		}
-		if err := validateTextTarget("text_forbids", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		if err := validateSelect("text_forbids", raw.Target, raw.Select); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Pattern: raw.Pattern, Target: raw.Target, Select: raw.Select, Fix: raw.Fix}, nil
-	case CheckTextDenylist:
-		if len(raw.Values) == 0 {
-			return CheckInstance{}, errors.New(`text_denylist requires "values"`)
-		}
-		if raw.Pattern != "" {
-			return CheckInstance{}, errors.New(`text_denylist does not support "pattern"`)
-		}
-		if raw.Match != "" {
-			return CheckInstance{}, errors.New(`text_denylist does not support "match"`)
-		}
-		if raw.Fix != "" {
-			return CheckInstance{}, errors.New(`text_denylist does not support "fix"`)
-		}
-		if err := validateTextTarget("text_denylist", raw.Target); err != nil {
-			return CheckInstance{}, err
-		}
-		if err := validateSelect("text_denylist", raw.Target, raw.Select); err != nil {
-			return CheckInstance{}, err
-		}
-		return CheckInstance{Type: checkType, Values: raw.Values, Target: raw.Target, Select: raw.Select}, nil
-	case "":
-		return CheckInstance{}, errors.New(`check type is required`)
-	default:
-		return CheckInstance{}, fmt.Errorf("unknown check type %q", raw.Kind)
-	}
 }

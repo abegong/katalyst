@@ -5,7 +5,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectNumberRange checks numeric bounds for a field.
@@ -59,7 +58,7 @@ func (o ObjectNumberRange) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectNumberRange,
+		CheckType: checks.CheckObjectNumberRange,
 		Family:    "structuredObject",
 		Slug:      "number-range",
 		Title:     "Number range",

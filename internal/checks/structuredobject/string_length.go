@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectStringLength checks minimum and/or maximum string length.
@@ -61,7 +60,7 @@ func (o ObjectStringLength) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectStringLength,
+		CheckType: checks.CheckObjectStringLength,
 		Family:    "structuredObject",
 		Slug:      "string-length",
 		Title:     "String length",

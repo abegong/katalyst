@@ -2,8 +2,6 @@ package checks
 
 import (
 	"sort"
-
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // This file holds the CheckLibrary abstraction: the provider behind every check
@@ -86,7 +84,7 @@ func LibraryByName(name string) (CheckLibrary, bool) {
 // type's Descriptor.Library. It returns (nil, false) for an unknown kind or a
 // kind whose Descriptor names no library (every native check type until it is
 // migrated onto a library).
-func LibraryFor(kind config.CheckType) (CheckLibrary, bool) {
+func LibraryFor(kind CheckType) (CheckLibrary, bool) {
 	i, ok := byKind[kind]
 	if !ok {
 		return nil, false

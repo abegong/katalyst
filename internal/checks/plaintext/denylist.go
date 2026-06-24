@@ -8,7 +8,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // TextDenylist forbids any of a list of literal substrings. Matching is
@@ -46,7 +45,7 @@ type denylistArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckTextDenylist,
+		CheckType: checks.CheckTextDenylist,
 		Family:    "plainText",
 		Slug:      "denylist",
 		Title:     "Denylist",

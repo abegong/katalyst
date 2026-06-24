@@ -7,7 +7,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // sentenceCaseArgs is object_sentence_case's own config shape.
@@ -102,7 +101,7 @@ func isAcronym(word string) bool {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectSentenceCase,
+		CheckType: checks.CheckObjectSentenceCase,
 		Family:    "structuredObject",
 		Slug:      "sentence-case",
 		Title:     "Sentence case",

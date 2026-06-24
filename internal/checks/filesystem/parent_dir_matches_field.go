@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ParentDirMatchesField checks that the parent directory name equals a
@@ -50,7 +49,7 @@ type parentDirMatchesArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemParentDirMatchesFld,
+		CheckType: checks.CheckFilesystemParentDirMatchesFld,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-matches-field",
 		Title:     "Parent directory matches field",

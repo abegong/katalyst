@@ -8,7 +8,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // TextForbids asserts that an unanchored regex appears in no selected span.
@@ -80,7 +79,7 @@ type forbidsArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckTextForbids,
+		CheckType: checks.CheckTextForbids,
 		Family:    "plainText",
 		Slug:      "forbids",
 		Title:     "Forbids",

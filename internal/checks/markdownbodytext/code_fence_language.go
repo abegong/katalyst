@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownCodeFenceHasLanguage checks that fenced code blocks specify a language.
@@ -36,7 +35,7 @@ func (m MarkdownCodeFenceHasLanguage) Run(ctx checks.Context) []checks.Violation
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckMarkdownCodeFenceHasLanguage,
+		CheckType: checks.CheckMarkdownCodeFenceHasLanguage,
 		Family:    "markdownBodyText",
 		Slug:      "code-fence-language-required",
 		Title:     "Code fence language required",

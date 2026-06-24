@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // FilesystemParentDirIn checks that parent directory name is in allowed values.
@@ -33,7 +32,7 @@ type parentDirInArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckFilesystemParentDirIn,
+		CheckType: checks.CheckFilesystemParentDirIn,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-in",
 		Title:     "Parent directory in",

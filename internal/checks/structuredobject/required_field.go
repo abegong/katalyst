@@ -5,7 +5,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/argcheck"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // requiredFieldArgs is object_required_field's own config shape.
@@ -32,7 +31,7 @@ func (o ObjectRequiredField) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: config.CheckObjectRequiredField,
+		CheckType: checks.CheckObjectRequiredField,
 		Family:    "structuredObject",
 		Slug:      "required-field",
 		Title:     "Required field",

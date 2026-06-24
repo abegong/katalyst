@@ -94,8 +94,8 @@ func schemaLabel(name string) string {
 
 func checkTypes(c config.Collection) []string {
 	types := make([]string, 0, len(c.Checks))
-	for _, ch := range c.Checks {
-		types = append(types, string(ch.Type))
+	for _, cc := range c.Checks {
+		types = append(types, string(cc.Kind))
 	}
 	return types
 }
