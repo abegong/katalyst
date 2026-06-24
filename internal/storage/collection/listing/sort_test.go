@@ -1,20 +1,20 @@
-package query_test
+package listing_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/storage/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/listing"
 )
 
 // sortIDs parses the sort spec, applies it, and returns the ordered ids.
-func sortIDs(t *testing.T, recs []query.Record, spec, missing string) []string {
+func sortIDs(t *testing.T, recs []listing.Record, spec, missing string) []string {
 	t.Helper()
-	keys, err := query.ParseSort(spec)
+	keys, err := listing.ParseSort(spec)
 	if err != nil {
 		t.Fatalf("ParseSort(%q): %v", spec, err)
 	}
-	out, err := query.Apply(recs, query.Options{Sorts: keys, SortMissing: missing})
+	out, err := listing.Apply(recs, listing.Options{Sorts: keys, SortMissing: missing})
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -22,8 +22,8 @@ func sortIDs(t *testing.T, recs []query.Record, spec, missing string) []string {
 }
 
 func TestSort_defaultIsIDAscending(t *testing.T) {
-	recs := []query.Record{{ID: "c"}, {ID: "a"}, {ID: "b"}}
-	out, err := query.Apply(recs, query.Options{})
+	recs := []listing.Record{{ID: "c"}, {ID: "a"}, {ID: "b"}}
+	out, err := listing.Apply(recs, listing.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestSort_ascendingAndDescending(t *testing.T) {
 }
 
 func TestSort_multiKeyPrecedence(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "a", Meta: map[string]any{"year": 2000, "title": "Z"}},
 		{ID: "b", Meta: map[string]any{"year": 2000, "title": "A"}},
 		{ID: "c", Meta: map[string]any{"year": 1999, "title": "M"}},
@@ -54,7 +54,7 @@ func TestSort_multiKeyPrecedence(t *testing.T) {
 }
 
 func TestSort_byStatus(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "bad", Status: 2},
 		{ID: "ok", Status: 0},
 		{ID: "warn", Status: 1},
@@ -65,7 +65,7 @@ func TestSort_byStatus(t *testing.T) {
 }
 
 func TestSort_missingLast(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "has", Meta: map[string]any{"year": 2000}},
 		{ID: "none", Meta: map[string]any{}},
 	}
@@ -79,7 +79,7 @@ func TestSort_missingLast(t *testing.T) {
 }
 
 func TestSort_missingLowest(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "has", Meta: map[string]any{"year": 2000}},
 		{ID: "none", Meta: map[string]any{}},
 	}
@@ -93,7 +93,7 @@ func TestSort_missingLowest(t *testing.T) {
 }
 
 func TestSort_tieBreakByID(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "c", Meta: map[string]any{"year": 2000}},
 		{ID: "a", Meta: map[string]any{"year": 2000}},
 		{ID: "b", Meta: map[string]any{"year": 2000}},
@@ -106,7 +106,7 @@ func TestSort_tieBreakByID(t *testing.T) {
 
 func TestParseSort_errors(t *testing.T) {
 	for _, spec := range []string{"", "-", " , "} {
-		if _, err := query.ParseSort(spec); err == nil {
+		if _, err := listing.ParseSort(spec); err == nil {
 			t.Errorf("ParseSort(%q) expected error", spec)
 		}
 	}

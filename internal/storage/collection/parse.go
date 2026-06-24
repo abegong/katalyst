@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/storage/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,9 +26,9 @@ type Collection struct {
 	Schema string
 	// Checks to run against each item.
 	Checks []checks.ConfiguredCheck
-	// Query holds the resolved `item list` query behavior for this
+	// ListingDefaults holds the resolved `item list` behavior for this
 	// collection (collection config over project config over defaults).
-	Query QuerySettings
+	ListingDefaults ListingDefaults
 	// Storage is the name of the storage instance that declares this
 	// collection.
 	Storage string
@@ -49,15 +49,15 @@ type Collection struct {
 // check in Checks, mirroring a collection's `schema:`.
 type CollectionVariant struct {
 	// Where are the discriminator predicates, ANDed together. Non-empty.
-	Where []query.Predicate
+	Where []predicate.Predicate
 	// Checks run on an item routed to this variant, added to the base.
 	Checks []checks.ConfiguredCheck
 }
 
-// QuerySettings configures the behavior of `item list` filtering and
-// sorting. Values are resolved at load time; see the `query:` block in
+// ListingDefaults configures the behavior of `item list` filtering and
+// sorting. Values are resolved at load time; see the `listing:` block in
 // .katalyst/config.yaml (project default) and a collection's file (override).
-type QuerySettings struct {
+type ListingDefaults struct {
 	// FilterTypeMismatch decides what happens when a --filter comparison
 	// hits an incompatible type: "skip" (item does not match) or "error".
 	FilterTypeMismatch string
@@ -78,18 +78,19 @@ const (
 // unmarshals it (inline under a storage instance, or one file per collection)
 // and hands it to Build.
 type RawCollection struct {
-	Path                  string       `yaml:"path"`
-	Pattern               string       `yaml:"pattern"`
-	Schema                string       `yaml:"schema"`
-	Checks                []RawCheck   `yaml:"checks"`
-	Query                 *RawQuery    `yaml:"query"`
-	Variants              []RawVariant `yaml:"variants"`
-	UseExhaustiveVariants bool         `yaml:"useExhaustiveVariants"`
+	Path                  string              `yaml:"path"`
+	Pattern               string              `yaml:"pattern"`
+	Schema                string              `yaml:"schema"`
+	Checks                []RawCheck          `yaml:"checks"`
+	Listing               *RawListingDefaults `yaml:"listing"`
+	Query                 *RawListingDefaults `yaml:"query"`
+	Variants              []RawVariant        `yaml:"variants"`
+	UseExhaustiveVariants bool                `yaml:"useExhaustiveVariants"`
 }
 
-// RawQuery mirrors a `query:` block. A nil pointer (or a nil field within)
-// means "unset" so resolution can fall through to the next level.
-type RawQuery struct {
+// RawListingDefaults mirrors a `listing:` block. A nil pointer (or a nil field
+// within) means "unset" so resolution can fall through to the next level.
+type RawListingDefaults struct {
 	FilterTypeMismatch string `yaml:"filterTypeMismatch"`
 	SortMissing        string `yaml:"sortMissing"`
 }
@@ -207,15 +208,15 @@ func (rc *RawCheck) UnmarshalYAML(value *yaml.Node) error {
 
 // BuildInput carries everything Build needs to validate and resolve one
 // collection: its raw definition and name, the owning storage instance's root
-// and name, the project-level query defaults, and a predicate that reports
+// and name, the project-level listing defaults, and a predicate that reports
 // whether a schema name is defined (schema resolution belongs to the loader).
 type BuildInput struct {
-	Name         string
-	Raw          RawCollection
-	InstRoot     string
-	InstName     string
-	ProjectQuery *RawQuery
-	SchemaKnown  func(string) bool
+	Name           string
+	Raw            RawCollection
+	InstRoot       string
+	InstName       string
+	ProjectListing *RawListingDefaults
+	SchemaKnown    func(string) bool
 }
 
 // Build turns one raw collection definition into a validated Collection,
@@ -255,7 +256,11 @@ func Build(in BuildInput) (Collection, error) {
 		}
 	}
 
-	qs, err := resolveQuery(in.Name, in.Raw.Query, in.ProjectQuery)
+	if in.Raw.Query != nil {
+		return Collection{}, fmt.Errorf("collection %q: query is no longer a config block; use listing", in.Name)
+	}
+
+	ld, err := resolveListingDefaults(in.Name, in.Raw.Listing, in.ProjectListing)
 	if err != nil {
 		return Collection{}, err
 	}
@@ -267,7 +272,7 @@ func Build(in BuildInput) (Collection, error) {
 		Pattern:               pattern,
 		Schema:                schemaName,
 		Checks:                cks,
-		Query:                 qs,
+		ListingDefaults:       ld,
 		Storage:               in.InstName,
 		Variants:              variants,
 		UseExhaustiveVariants: in.Raw.UseExhaustiveVariants,
@@ -324,9 +329,9 @@ func buildVariants(name string, raws []RawVariant, schemaKnown func(string) bool
 		if len(rv.When) == 0 {
 			return nil, fmt.Errorf("collection %q: variants[%d]: when requires at least one predicate", name, i)
 		}
-		preds := make([]query.Predicate, 0, len(rv.When))
+		preds := make([]predicate.Predicate, 0, len(rv.When))
 		for k, expr := range rv.When {
-			p, err := query.ParseFilter(expr)
+			p, err := predicate.Parse(expr)
 			if err != nil {
 				return nil, fmt.Errorf("collection %q: variants[%d]: when[%d]: %w", name, i, k, err)
 			}
@@ -341,36 +346,36 @@ func buildVariants(name string, raws []RawVariant, schemaKnown func(string) bool
 	return variants, nil
 }
 
-// resolveQuery merges a collection's query block over the project's over
+// resolveListingDefaults merges a collection's listing block over the project's over
 // the built-in defaults, key by key, then validates each value. An unset
 // key (empty string at a level) falls through to the next.
-func resolveQuery(name string, collQuery, projectQuery *RawQuery) (QuerySettings, error) {
-	q := QuerySettings{
+func resolveListingDefaults(name string, collListing, projectListing *RawListingDefaults) (ListingDefaults, error) {
+	ld := ListingDefaults{
 		FilterTypeMismatch: defaultFilterTypeMismatch,
 		SortMissing:        defaultSortMissing,
 	}
-	for _, raw := range []*RawQuery{projectQuery, collQuery} {
+	for _, raw := range []*RawListingDefaults{projectListing, collListing} {
 		if raw == nil {
 			continue
 		}
 		if raw.FilterTypeMismatch != "" {
-			q.FilterTypeMismatch = raw.FilterTypeMismatch
+			ld.FilterTypeMismatch = raw.FilterTypeMismatch
 		}
 		if raw.SortMissing != "" {
-			q.SortMissing = raw.SortMissing
+			ld.SortMissing = raw.SortMissing
 		}
 	}
-	switch q.FilterTypeMismatch {
+	switch ld.FilterTypeMismatch {
 	case "skip", "error":
 	default:
-		return QuerySettings{}, fmt.Errorf("collection %q: unknown filterTypeMismatch %q (want skip or error)", name, q.FilterTypeMismatch)
+		return ListingDefaults{}, fmt.Errorf("collection %q: unknown filterTypeMismatch %q (want skip or error)", name, ld.FilterTypeMismatch)
 	}
-	switch q.SortMissing {
+	switch ld.SortMissing {
 	case "last", "lowest":
 	default:
-		return QuerySettings{}, fmt.Errorf("collection %q: unknown sortMissing %q (want last or lowest)", name, q.SortMissing)
+		return ListingDefaults{}, fmt.Errorf("collection %q: unknown sortMissing %q (want last or lowest)", name, ld.SortMissing)
 	}
-	return q, nil
+	return ld, nil
 }
 
 // Ext returns the file extension implied by the collection's pattern

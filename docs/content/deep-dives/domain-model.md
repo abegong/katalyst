@@ -106,6 +106,9 @@ Absences worth being explicit about; they shape what katalyst currently is
 - **Relations between items.** A schema constrains one item at a time; no
   cross-item `$ref`, no foreign keys. Planned.
 - **Schema evolution.** No "this field was renamed in v2" migrations. Planned.
-- **Query.** No "find all docs where year > 1980." Planned.
+- **Query.** Katalyst has `item list` filters and sort keys for one collection,
+  implemented as an in-memory listing pipeline. A first-class storage query
+  operation, "find all docs where year > 1980" pushed into the backend, is
+  planned.
 - **Derived state.** `.katalyst/` holds only hand-authored config; nothing is
   generated into it. Every run is stateless.

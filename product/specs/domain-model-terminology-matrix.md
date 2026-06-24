@@ -83,12 +83,12 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 | Measurement primitive | `inspect.ObjectFields` / `MarkdownBody` | — | "measurement primitives" | — | **Measurement primitive** |
 | Profile / Fingerprint / Profile class | `inspect.Profile`, `DocumentShape` | — | — | — | **Fingerprint** / **Profile class** |
 
-## F. Config & query
+## F. Config & listing/predicate
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
 | Config / `.katalyst` | `internal/project` loader (`loader.go`), `project.Config` | `init`, `.katalyst/` | **Config** | "Config" (a project's configuration) | **Config** |
-| Query / filter | `internal/storage/collection/query`, `collection.QuerySettings` | `item list --filter` | "Query" (**out of scope**) | **Query** (an operation) | (in Discriminator row) |
+| Listing / predicate | `internal/storage/collection/listing`, `internal/storage/collection/predicate`, `collection.ListingDefaults` | `item list --filter`, `item list --sort` | Listing filters shipped; first-class Query planned | **Query** (planned operation) | (in Discriminator row) |
 
 ## Conflicts and gaps the matrix exposes
 
@@ -106,10 +106,12 @@ Ordered roughly by how much they hurt. Resolutions are recorded in the
 3. **"engine" is undefined everywhere.** It appears only in CLI help text and
    `cmd/` code ("the engine can run"), yet no doc defines it. **`OPEN`** (spec
    OQ 2): lean toward dropping it from user-facing copy.
-4. **"Query" contradicts itself.** Core concepts lists it as a supported
-   operation; domain model lists it as explicitly *out of scope*; meanwhile
-   `internal/storage/collection/query` and `item list --filter` exist.
-   **`OPEN`** (spec OQ 1): owner investigating; lean toward "partially shipped."
+4. **"Query" contradicted itself.** Core concepts listed it as a supported
+   operation; domain model listed it as explicitly *out of scope*; meanwhile
+   `item list --filter` existed. **Resolved:** today's behavior is listing
+   plus predicates (`internal/storage/collection/listing` and
+   `internal/storage/collection/predicate`); first-class Query is reserved for a
+   future storage operation.
 5. **Glossary gaps for tool-agnostic terms.** *Attribute*, *Operation*, and
    *Aggregate* are core-concepts-only abstractions with no glossary entry.
    **Resolved:** glossary is canonical, so each gains an entry.

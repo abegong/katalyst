@@ -29,7 +29,8 @@ cmd/                  cobra commands (root, init, check, fix, inspect, collectio
 internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + storage instances, which embed their collections), the whole workspace, selectors, item enumeration
 internal/storage      backend-kind registry: StorageType, Known, Granularity, Reference
 internal/storage/collection            the read stack: CollectionDefinition + the thin Item
-internal/storage/collection/query      query/filter predicate grammar (item list --filter, collection variants)
+internal/storage/collection/listing    item list filter/grep/sort/skip/limit pipeline
+internal/storage/collection/predicate  metadata predicate grammar (item list --filter, collection variants)
 internal/storage/collection/document   markdown codec: Parse/Encode (frontmatter + body), with line tracking
 internal/storage/collection/filesystem the filesystem backend: structural read (glob/locate) + atomic persist
 internal/fix          fix transform engine: canonical form + text fixes (decides what to write; no IO)
@@ -67,14 +68,15 @@ interface. The `internal/project` loader (`loader.go`) owns the `.katalyst/`
 instances. Each object type owns the parse of its own config — the storage
 registry validates a declared `type` (`storage.Known`), and a collection parses
 its own block, including variant predicates, in `storage/collection` (which
-imports the sibling `query` grammar intra-subtree). The loader depends on the
-collection layer, not the reverse; the old cross-tree `config → …/query` edge is
-gone (config-distribution spec).
+imports the sibling `predicate` grammar intra-subtree). The loader depends on
+the collection layer, not the reverse; the old cross-tree config edge is gone
+(config-distribution spec).
 
 Per-item check *routing* (collection variants) lives in the check engine
 (`engine.checksFor`), keyed on the item's parsed metadata via
-`query.Predicate.Matches`, never on its path. Keep it that way: discrimination
-by metadata is portable across backends and leaves the storage seam untouched.
+`predicate.Predicate.Matches`, never on its path. Keep it that way:
+discrimination by metadata is portable across backends and leaves the storage
+seam untouched.
 
 ## Testing
 

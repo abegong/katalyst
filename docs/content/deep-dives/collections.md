@@ -108,10 +108,10 @@ same schema" costs one compile.
 
 A collection's `variants:` run extra checks on a subset of items, chosen by the
 item's metadata. The discriminator (`when`) reuses the `item list --filter`
-predicate grammar (`internal/storage/collection/query`), validated at load via `query.ParseFilter`
-so a bad expression fails fast. A variant's `schema:` folds into a leading
-object check exactly like a collection's, so the engine compiles base and
-variant through one path.
+predicate grammar (`internal/storage/collection/predicate`), validated at load
+via `predicate.Parse` so a bad expression fails fast. A variant's `schema:`
+folds into a leading object check exactly like a collection's, so the engine
+compiles base and variant through one path.
 
 The discriminator is metadata, not a glob, on purpose: metadata is the one
 property every item yields on every backend (frontmatter for a file, columns for

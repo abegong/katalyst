@@ -68,7 +68,7 @@ func Run(ex Example) (Result, error) {
 		if resolved, e := filepath.EvalSymlinks(dir); e == nil {
 			s = strings.ReplaceAll(s, resolved, "<project>")
 		}
-		return s
+		return strings.ReplaceAll(s, "/private<project>", "<project>")
 	}
 
 	res := Result{

@@ -1,33 +1,34 @@
-package query_test
+package predicate_test
 
 import (
 	"errors"
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/storage/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/listing"
+	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 )
 
 // filterIDs parses the given filter expressions, applies them, and returns
 // the surviving record ids in order.
-func filterIDs(t *testing.T, recs []query.Record, exprs ...string) []string {
+func filterIDs(t *testing.T, recs []listing.Record, exprs ...string) []string {
 	t.Helper()
-	opts := query.Options{}
+	opts := listing.Options{}
 	for _, e := range exprs {
-		p, err := query.ParseFilter(e)
+		p, err := predicate.Parse(e)
 		if err != nil {
-			t.Fatalf("ParseFilter(%q): %v", e, err)
+			t.Fatalf("Parse(%q): %v", e, err)
 		}
 		opts.Filters = append(opts.Filters, p)
 	}
-	out, err := query.Apply(recs, opts)
+	out, err := listing.Apply(recs, opts)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
 	return ids(out)
 }
 
-func ids(recs []query.Record) []string {
+func ids(recs []listing.Record) []string {
 	out := make([]string, len(recs))
 	for i, r := range recs {
 		out[i] = r.ID
@@ -35,8 +36,8 @@ func ids(recs []query.Record) []string {
 	return out
 }
 
-func books() []query.Record {
-	return []query.Record{
+func books() []listing.Record {
+	return []listing.Record{
 		{ID: "dune", Meta: map[string]any{"year": 1965, "status": "published", "tags": []any{"sci-fi", "classic"}, "title": "Dune"}},
 		{ID: "hobbit", Meta: map[string]any{"year": 1937, "status": "published", "tags": []any{"fantasy"}, "title": "The Hobbit"}},
 		{ID: "wip", Meta: map[string]any{"year": 2025, "status": "draft", "title": "Work in Progress"}},
@@ -105,7 +106,7 @@ func TestFilter_regex(t *testing.T) {
 }
 
 func TestFilter_dotPath(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "a", Meta: map[string]any{"author": map[string]any{"name": "Herbert"}}},
 		{ID: "b", Meta: map[string]any{"author": map[string]any{"name": "Tolkien"}}},
 	}
@@ -121,7 +122,7 @@ func TestFilter_multipleAreANDed(t *testing.T) {
 }
 
 func TestFilter_typeMismatch_skipByDefault(t *testing.T) {
-	recs := []query.Record{
+	recs := []listing.Record{
 		{ID: "ok", Meta: map[string]any{"year": 2000}},
 		{ID: "bad", Meta: map[string]any{"year": "twenty"}},
 	}
@@ -132,13 +133,13 @@ func TestFilter_typeMismatch_skipByDefault(t *testing.T) {
 }
 
 func TestFilter_typeMismatch_errorMode(t *testing.T) {
-	recs := []query.Record{{ID: "bad", Meta: map[string]any{"year": "twenty"}}}
-	p, err := query.ParseFilter("year>=1965")
+	recs := []listing.Record{{ID: "bad", Meta: map[string]any{"year": "twenty"}}}
+	p, err := predicate.Parse("year>=1965")
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = query.Apply(recs, query.Options{Filters: []query.Predicate{p}, TypeMismatch: "error"})
-	var tme *query.TypeMismatchError
+	_, err = listing.Apply(recs, listing.Options{Filters: []predicate.Predicate{p}, TypeMismatch: "error"})
+	var tme *predicate.TypeMismatchError
 	if !errors.As(err, &tme) {
 		t.Fatalf("expected TypeMismatchError, got %v", err)
 	}
@@ -147,7 +148,7 @@ func TestFilter_typeMismatch_errorMode(t *testing.T) {
 func TestFilter_unparseableFrontmatter_matchesAbsent(t *testing.T) {
 	// An item with nil Meta (parse failure) matches !FIELD and fails
 	// positive predicates.
-	recs := []query.Record{{ID: "broken", Meta: nil}}
+	recs := []listing.Record{{ID: "broken", Meta: nil}}
 	if got := filterIDs(t, recs, "!title"); strings.Join(got, ",") != "broken" {
 		t.Errorf("absent on nil meta = %v, want [broken]", got)
 	}
@@ -161,9 +162,9 @@ func TestPredicate_Matches(t *testing.T) {
 
 	mustMatch := func(expr string, want bool) {
 		t.Helper()
-		p, err := query.ParseFilter(expr)
+		p, err := predicate.Parse(expr)
 		if err != nil {
-			t.Fatalf("ParseFilter(%q): %v", expr, err)
+			t.Fatalf("Parse(%q): %v", expr, err)
 		}
 		got, err := p.Matches(meta, "skip")
 		if err != nil {
@@ -182,7 +183,7 @@ func TestPredicate_Matches(t *testing.T) {
 
 	// typeMismatch threads through to match: "error" surfaces the error,
 	// "skip" reports a non-match.
-	p, err := query.ParseFilter("year>=1965")
+	p, err := predicate.Parse("year>=1965")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,10 +196,10 @@ func TestPredicate_Matches(t *testing.T) {
 	}
 }
 
-func TestParseFilter_errors(t *testing.T) {
+func TestParse_errors(t *testing.T) {
 	for _, expr := range []string{"", "=value", "title=~("} {
-		if _, err := query.ParseFilter(expr); err == nil {
-			t.Errorf("ParseFilter(%q) expected error", expr)
+		if _, err := predicate.Parse(expr); err == nil {
+			t.Errorf("Parse(%q) expected error", expr)
 		}
 	}
 }

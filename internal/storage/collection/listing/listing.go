@@ -1,4 +1,4 @@
-// Package query runs the `item list` filter/grep/sort/skip/limit pipeline
+// Package listing runs the `item list` filter/grep/sort/skip/limit pipeline
 // over in-memory records. It is deliberately decoupled from the project,
 // config, and frontmatter packages: callers assemble a []Record and the
 // engine answers with the surviving, ordered subset.
@@ -7,15 +7,15 @@
 // filter and grep (both ANDed predicates) narrow the set, then sort, skip,
 // and limit shape it, in that order.
 //
-// The Predicate type is reused beyond item list: collection-variant
-// discriminators (cmd/engine.go) parse a `when` expression with ParseFilter and
-// evaluate it per item with Predicate.Matches, so one predicate grammar serves
-// both filtering and per-item check routing.
-package query
+// Predicate parsing lives in the sibling predicate package because collection
+// variants reuse the same metadata grammar without depending on item listing.
+package listing
 
 import (
 	"regexp"
 	"sort"
+
+	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 )
 
 // Region selects which bytes of a record --grep searches.
@@ -39,10 +39,10 @@ type Record struct {
 	Frontmatter []byte
 }
 
-// Options is the assembled query. The zero value is a valid no-op (every
-// record passes, default id-ascending order, no cap).
+// Options is the assembled listing operation. The zero value is a valid no-op
+// (every record passes, default id-ascending order, no cap).
 type Options struct {
-	Filters      []Predicate
+	Filters      []predicate.Predicate
 	Greps        []*regexp.Regexp
 	GrepIn       Region
 	Sorts        []SortKey
@@ -95,7 +95,7 @@ func Apply(recs []Record, opts Options) ([]Record, error) {
 // (logical AND across both).
 func matchAll(r Record, opts Options) (bool, error) {
 	for _, p := range opts.Filters {
-		ok, err := p.match(r.Meta, opts.TypeMismatch)
+		ok, err := p.Matches(r.Meta, opts.TypeMismatch)
 		if err != nil {
 			return false, err
 		}
