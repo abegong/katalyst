@@ -87,13 +87,13 @@ func TestDescriptorLibrary(t *testing.T) {
 	}
 }
 
-// dispatchedKinds parses ../config/config.go and returns the set of check
+// dispatchedKinds parses ../project/config/config.go and returns the set of check
 // kind string values that appear as case labels in normalizeCheck's switch.
 func dispatchedKinds(t *testing.T) map[string]bool {
 	t.Helper()
 
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "../config/config.go", nil, 0)
+	file, err := parser.ParseFile(fset, "../project/config/config.go", nil, 0)
 	if err != nil {
 		t.Fatalf("parse config.go: %v", err)
 	}

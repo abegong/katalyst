@@ -1,7 +1,5 @@
 package storage
 
-import "github.com/abegong/katalyst/internal/config"
-
 // StorageType is a known backend kind capable of holding collections and items.
 type StorageType string
 
@@ -36,31 +34,6 @@ const (
 
 // Reference is a backend-native locator: a file path today, a table name or
 // object key later. Kept opaque so non-filesystem backends are not forced into
-// path semantics.
+// path semantics. The CollectionDefinition contract that produces and consumes
+// it lives in internal/storage/collection.
 type Reference string
-
-// CollectionDefinition is the two-way mapping between one storage backend and
-// the collection/item domain model. The forward direction discovers structure
-// (Collections, Items, Unmatched); the reverse direction reconstructs a backend
-// locator from an item identity (Reference). Both directions are mandatory.
-type CollectionDefinition interface {
-	// Granularity reports how this backend's units attach to the model.
-	Granularity() Granularity
-
-	// Collections returns the collections this definition maps. One definition
-	// may yield more than one collection.
-	Collections() []config.Collection
-
-	// Items lists the items in a collection (forward discovery).
-	Items(config.Collection) ([]Item, error)
-
-	// Unmatched lists backend references inside a collection's scope that do
-	// not map to any item. Surfacing them is deliberate: silent skips hide
-	// configuration drift.
-	Unmatched(config.Collection) ([]Reference, error)
-
-	// Reference reconstructs the backend locator for an item identity (reverse
-	// resolution). It is what `item add notes/dune` uses to decide which file
-	// to create.
-	Reference(c config.Collection, id string) (Reference, error)
-}

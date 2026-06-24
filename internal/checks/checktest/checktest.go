@@ -6,16 +6,16 @@ package checktest
 import (
 	"testing"
 
-	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // Ptr returns a pointer to v, for the *float64 bounds checks take.
 func Ptr(v float64) *float64 { return &v }
 
 // MustParseDoc parses src into a frontmatter document or fails the test.
-func MustParseDoc(t *testing.T, src string) *frontmatter.Document {
+func MustParseDoc(t *testing.T, src string) *document.Document {
 	t.Helper()
-	doc, err := frontmatter.Parse([]byte(src))
+	doc, err := document.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}

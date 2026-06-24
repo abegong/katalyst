@@ -5,7 +5,7 @@ weight = 42
 
 # Collections
 
-The `internal/config` package is the orchestration hub: it loads a project's
+The `internal/project/config` package is the orchestration hub: it loads a project's
 `.katalyst/` directory, resolves named schemas and collections, and decides
 which schema applies to a given item. The `check` lifecycle is driven from here.
 This page is the model and the *why*; for the key-by-key surface see the
@@ -105,7 +105,7 @@ same schema" costs one compile.
 
 A collection's `variants:` run extra checks on a subset of items, chosen by the
 item's metadata. The discriminator (`when`) reuses the `item list --filter`
-predicate grammar (`internal/query`), validated at load via `query.ParseFilter`
+predicate grammar (`internal/storage/collection/query`), validated at load via `query.ParseFilter`
 so a bad expression fails fast. A variant's `schema:` folds into a leading
 object check exactly like a collection's, so the engine compiles base and
 variant through one path.
@@ -188,4 +188,4 @@ The data flow per item, end to end:
   collections, and the instance model.
 - The [domain model]({{< relref "domain-model.md" >}}) for the cross-subsystem
   entity map and invariants.
-- `go doc ./internal/config` for the code-level contract.
+- `go doc ./internal/project/config` for the code-level contract.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownNoHeadingLevelJumps checks that heading levels increase at most by one.

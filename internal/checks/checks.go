@@ -9,7 +9,7 @@
 // every family in by blank-importing internal/checks/all.
 package checks
 
-import "github.com/abegong/katalyst/internal/frontmatter"
+import "github.com/abegong/katalyst/internal/storage/collection/document"
 
 // Context carries all data a check may need.
 type Context struct {
@@ -19,7 +19,7 @@ type Context struct {
 	// depth) are resolved relative to it. Empty falls back to FilePath's
 	// own directory.
 	CollectionRoot string
-	Doc            *frontmatter.Document
+	Doc            *document.Document
 	Meta           map[string]any
 }
 

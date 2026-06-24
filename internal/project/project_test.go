@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // setup writes a two-collection repo and returns a loaded Project.

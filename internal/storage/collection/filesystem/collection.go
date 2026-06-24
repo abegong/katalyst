@@ -1,4 +1,8 @@
-package storage
+// Package filesystem is the filesystem backend's CollectionDefinition: it maps a
+// directory tree onto collections of markdown files (one file is one item, its
+// id the filename stem) and persists item writes. The content decode/encode is
+// the document codec's; this package owns the structural read and the on-disk IO.
+package filesystem
 
 import (
 	"fmt"
@@ -7,38 +11,39 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage"
+	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// FilesystemCollectionDefinition maps a directory tree onto collections of
-// markdown files: one file is one item, its id is the filename stem. It is the
-// CollectionDefinition for StorageType filesystem.
+// Definition maps a directory tree onto collections of markdown files: one file
+// is one item, its id is the filename stem. It is the CollectionDefinition for
+// StorageType filesystem.
 //
 // The per-collection methods operate on the absolute Dir already resolved on
 // each config.Collection, so root is unused today; it is retained because a
 // filesystem instance is identified by its root and Phase 2's BuildInstance
 // resolves collection directories against it.
-type FilesystemCollectionDefinition struct {
+type Definition struct {
 	root        string
 	collections []config.Collection
 }
 
-// NewFilesystem builds a filesystem definition for the given collections,
-// rooted at root.
-func NewFilesystem(root string, collections []config.Collection) *FilesystemCollectionDefinition {
-	return &FilesystemCollectionDefinition{root: root, collections: collections}
+// New builds a filesystem definition for the given collections, rooted at root.
+func New(root string, collections []config.Collection) *Definition {
+	return &Definition{root: root, collections: collections}
 }
 
 // Granularity is FileIsItem for the markdown filesystem.
-func (f *FilesystemCollectionDefinition) Granularity() Granularity { return FileIsItem }
+func (f *Definition) Granularity() storage.Granularity { return storage.FileIsItem }
 
 // Collections returns the collections this definition maps.
-func (f *FilesystemCollectionDefinition) Collections() []config.Collection { return f.collections }
+func (f *Definition) Collections() []config.Collection { return f.collections }
 
 // Items lists the items in a collection: files under its directory that match
 // its pattern, sorted by id. A missing directory yields no items.
-func (f *FilesystemCollectionDefinition) Items(c config.Collection) ([]Item, error) {
+func (f *Definition) Items(c config.Collection) ([]collection.Item, error) {
 	if info, err := os.Stat(c.Dir); err != nil || !info.IsDir() {
 		return nil, nil
 	}
@@ -47,10 +52,10 @@ func (f *FilesystemCollectionDefinition) Items(c config.Collection) ([]Item, err
 		return nil, fmt.Errorf("collection %q: %w", c.Name, err)
 	}
 	sort.Strings(matches)
-	items := make([]Item, 0, len(matches))
+	items := make([]collection.Item, 0, len(matches))
 	for _, rel := range matches {
 		id := rel[:len(rel)-len(c.Ext())]
-		items = append(items, Item{
+		items = append(items, collection.Item{
 			Collection: c,
 			ID:         filepath.ToSlash(id),
 			Path:       filepath.Join(c.Dir, rel),
@@ -61,12 +66,12 @@ func (f *FilesystemCollectionDefinition) Items(c config.Collection) ([]Item, err
 
 // Unmatched lists files inside a collection's directory that do NOT match its
 // pattern, as references relative to Dir. A missing directory yields nothing.
-func (f *FilesystemCollectionDefinition) Unmatched(c config.Collection) ([]Reference, error) {
+func (f *Definition) Unmatched(c config.Collection) ([]storage.Reference, error) {
 	info, err := os.Stat(c.Dir)
 	if err != nil || !info.IsDir() {
 		return nil, nil
 	}
-	var out []Reference
+	var out []storage.Reference
 	walkErr := filepath.WalkDir(c.Dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -81,7 +86,7 @@ func (f *FilesystemCollectionDefinition) Unmatched(c config.Collection) ([]Refer
 		rel = filepath.ToSlash(rel)
 		ok, _ := doublestar.Match(c.Pattern, rel)
 		if !ok {
-			out = append(out, Reference(rel))
+			out = append(out, storage.Reference(rel))
 		}
 		return nil
 	})
@@ -95,6 +100,6 @@ func (f *FilesystemCollectionDefinition) Unmatched(c config.Collection) ([]Refer
 // Reference reconstructs the absolute file path for an item id within a
 // collection (reverse resolution: notes/dune → <dir>/dune.md). Filesystem
 // reconstruction cannot fail, but the interface allows backends that can.
-func (f *FilesystemCollectionDefinition) Reference(c config.Collection, id string) (Reference, error) {
-	return Reference(filepath.Join(c.Dir, filepath.FromSlash(id)+c.Ext())), nil
+func (f *Definition) Reference(c config.Collection, id string) (storage.Reference, error) {
+	return storage.Reference(filepath.Join(c.Dir, filepath.FromSlash(id)+c.Ext())), nil
 }

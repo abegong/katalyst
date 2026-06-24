@@ -3,7 +3,7 @@ package jsonschema
 import (
 	"fmt"
 
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // SchemaRef is a resolved object schema: its display name (used as the

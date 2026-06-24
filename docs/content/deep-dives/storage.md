@@ -37,7 +37,7 @@ and *how does its content map to the model*, so it was split:
 In config, a StorageInstance declares the collections it maps, the instance
 file *is* where the CollectionDefinition lives (see
 [Configuration]({{< relref "../reference/configuration.md" >}})). In code, the
-seam is `internal/storage.CollectionDefinition`; `internal/project` consumes it
+seam is `internal/storage/collection.CollectionDefinition`; `internal/project` consumes it
 rather than implementing the filesystem mapping inline.
 
 ## Lineage: GX legacy DataConnectors

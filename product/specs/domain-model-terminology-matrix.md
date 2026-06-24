@@ -7,7 +7,7 @@ concept wears different names (synonyms to reconcile), where the name already
 agrees (leave alone), and where a source has no term at all (a gap to fill or a
 concept to drop).
 
-This is a snapshot taken 2026-06-23, not a generated artifact. Regenerate by
+This is a snapshot taken 2026-06-24, not a generated artifact. Regenerate by
 hand when the code or docs move.
 
 ## Sources
@@ -27,9 +27,10 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
+| Project | `internal/project`, `project.Project` (with `config` nested; `collection` under `storage`) | "whole project", `init` | "the whole project" | **Project** | **Project** |
 | Data interface / backend | `storage.StorageType`, `config.StorageInstance` | `.katalyst/storage/` | — | **Data interface** | **StorageType** / **StorageInstance** |
-| Collection | `config.Collection`, `storage.CollectionDefinition` | `collection` | **Collection** | **Collection** | **Collection** |
-| Item | `storage.Item`, `project` resolution | `item`, `<collection>/<item>` | **Item** | **Item** | **Item** |
+| Collection | `config.Collection`, `storage/collection.CollectionDefinition` | `collection` | **Collection** | **Collection** | **Collection** |
+| Item | `storage/collection.Item` | `item`, `<collection>/<item>` | **Item** | **Item** | **Item** |
 | Attribute / field | `checks.Field`, `inspect.ObjectFields` | "frontmatter keys", `key=value` | "field" (prose) | **Attribute** | — |
 | Operation | — (the commands) | the verbs (check/fix/get/list/…) | "operation" (prose) | **Operation** (Read/List/Query/Aggregate/…) | — |
 | Granularity | `storage.Granularity` | — | — | — | **Granularity** |
@@ -38,13 +39,12 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
-| Document | `frontmatter.Document` | "Print an **item** (frontmatter + body)" | **Markdown document** | (folded into "item") | **Document** |
-| Frontmatter | `internal/frontmatter`, `frontmatter.Kind` | "frontmatter keys" | **frontmatter** | — | **Frontmatter** |
+| Document | `storage/collection/document.Document` | "Print an **item** (frontmatter + body)" | **Markdown document** | (folded into "item") | **Document** |
+| Frontmatter | `internal/storage/collection/document`, `document.Kind` | "frontmatter keys" | **frontmatter** | — | **Frontmatter** |
 | Metadata | `Document.Meta` | — | **Meta** | "document metadata" | **Metadata** |
 | Body | `Document.Body` | "body" | **Body** | — | **Body** |
 | Selector | `project.Selector` | `[selector ...]` | **Selector** | — | **Selector** |
 | Coordinates / reference | `storage.Reference` | — | **coordinates** | — | — |
-| Project | `internal/project`, `project.Project` | "whole project", `init` | "the whole project" | — | (in Selector row only) |
 | Repo root | `config.Config.Root` | — | **repo root** | — | **Repo root** |
 
 ## C. Schema & resolution
@@ -87,8 +87,8 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
-| Config / `.katalyst` | `config.Config` | `init`, `.katalyst/` | **Config** | — | ".katalyst/" (in notes) |
-| Query / filter | `internal/query`, `config.QuerySettings` | `item list --filter` | "Query" (**out of scope**) | **Query** (an operation) | (in Discriminator row) |
+| Config / `.katalyst` | `internal/project/config`, `config.Config` | `init`, `.katalyst/` | **Config** | "Config" (a project's configuration) | **Config** |
+| Query / filter | `internal/storage/collection/query`, `config.QuerySettings` | `item list --filter` | "Query" (**out of scope**) | **Query** (an operation) | (in Discriminator row) |
 
 ## Conflicts and gaps the matrix exposes
 
@@ -97,7 +97,7 @@ Ordered roughly by how much they hurt. Resolutions are recorded in the
 
 1. **`item` vs `document`.** The single biggest collision. Core concepts and the
    CLI say *item*; domain model, glossary, and code say *document*
-   (`frontmatter.Document`). **Resolved:** *item* is primary and general;
+   (`storage/collection/document.Document`). **Resolved:** *item* is primary and general;
    *document* is the markdown file-form specialization, used only where parsing,
    the body/frontmatter structure, or the raw file is the subject.
 2. **"Data interface" vs "Storage\*".** Core concepts coined *data interface*;
@@ -108,8 +108,8 @@ Ordered roughly by how much they hurt. Resolutions are recorded in the
    OQ 2): lean toward dropping it from user-facing copy.
 4. **"Query" contradicts itself.** Core concepts lists it as a supported
    operation; domain model lists it as explicitly *out of scope*; meanwhile
-   `internal/query` and `item list --filter` exist. **`OPEN`** (spec OQ 1): owner
-   investigating; lean toward "partially shipped."
+   `internal/storage/collection/query` and `item list --filter` exist.
+   **`OPEN`** (spec OQ 1): owner investigating; lean toward "partially shipped."
 5. **Glossary gaps for tool-agnostic terms.** *Attribute*, *Operation*, and
    *Aggregate* are core-concepts-only abstractions with no glossary entry.
    **Resolved:** glossary is canonical, so each gains an entry.

@@ -1,16 +1,16 @@
-package frontmatter_test
+package fix_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/fix"
 )
 
 func TestFormat_sortsTopLevelKeys(t *testing.T) {
 	src := "---\nzebra: 1\napple: 2\nmiddle: 3\n---\nbody\n"
 
-	got, err := frontmatter.Format([]byte(src))
+	got, err := fix.Canonical([]byte(src))
 	if err != nil {
 		t.Fatalf("Format: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestFormat_preservesBodyVerbatim(t *testing.T) {
 	bodyAsSeen := "# Heading\n\n```code\nbecause: yaml\n```\n\nMore body.\n"
 	src := "---\nb: 2\na: 1\n---\n" + bodyAsSeen
 
-	got, err := frontmatter.Format([]byte(src))
+	got, err := fix.Canonical([]byte(src))
 	if err != nil {
 		t.Fatalf("Format: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestFormat_ensuresSingleTrailingNewline(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := frontmatter.Format([]byte(tc.src))
+			got, err := fix.Canonical([]byte(tc.src))
 			if err != nil {
 				t.Fatalf("Format: %v", err)
 			}
@@ -67,7 +67,7 @@ func TestFormat_ensuresSingleTrailingNewline(t *testing.T) {
 
 func TestFormat_noFrontmatter_isNoop(t *testing.T) {
 	src := "# Just a heading\n\nNo frontmatter here.\n"
-	got, err := frontmatter.Format([]byte(src))
+	got, err := fix.Canonical([]byte(src))
 	if err != nil {
 		t.Fatalf("Format: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestFormat_noFrontmatter_isNoop(t *testing.T) {
 
 func TestFormat_emptyFrontmatter_normalizes(t *testing.T) {
 	src := "---\n---\nbody\n"
-	got, err := frontmatter.Format([]byte(src))
+	got, err := fix.Canonical([]byte(src))
 	if err != nil {
 		t.Fatalf("Format: %v", err)
 	}

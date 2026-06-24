@@ -3,7 +3,7 @@ package checks
 import (
 	"sort"
 
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // This file holds the check-type registry: the types describing a check type

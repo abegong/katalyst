@@ -1,4 +1,4 @@
-// Package project sits on top of internal/config and provides the v0
+// Package project sits on top of internal/project/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
 // reverse id→path resolution. The path↔item-identity mapping itself lives
 // behind the internal/storage seam; this package selects the right
@@ -11,8 +11,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/abegong/katalyst/internal/config"
-	"github.com/abegong/katalyst/internal/storage"
+	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection"
+	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to
@@ -27,15 +28,15 @@ func New(cfg *config.Config) *Project { return &Project{cfg: cfg} }
 // Config returns the underlying configuration.
 func (p *Project) Config() *config.Config { return p.cfg }
 
-// Item is one resolved item. It is the storage layer's Item, re-exported so
+// Item is one resolved item. It is the collection layer's Item, re-exported so
 // callers (and the cmd layer) keep using project.Item unchanged.
-type Item = storage.Item
+type Item = collection.Item
 
 // def builds the filesystem CollectionDefinition for this project's config.
 // Today there is a single filesystem backend rooted at the repo root; Phase 2
 // routes per storage instance.
-func (p *Project) def() *storage.FilesystemCollectionDefinition {
-	return storage.NewFilesystem(p.cfg.Root, p.cfg.Collections)
+func (p *Project) def() *filesystem.Definition {
+	return filesystem.New(p.cfg.Root, p.cfg.Collections)
 }
 
 // Collections returns all collections in name order.
@@ -51,7 +52,7 @@ func (p *Project) Collection(name string) (config.Collection, bool) {
 // filesystem definition's Reference; the mapping itself lives in the storage
 // seam.
 func ItemPath(c config.Collection, id string) string {
-	ref, _ := storage.NewFilesystem("", nil).Reference(c, id)
+	ref, _ := filesystem.New("", nil).Reference(c, id)
 	return string(ref)
 }
 

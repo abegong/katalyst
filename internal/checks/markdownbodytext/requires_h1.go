@@ -2,7 +2,7 @@ package markdownbodytext
 
 import (
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownRequiresH1 checks that the body has at least one H1.

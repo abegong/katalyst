@@ -18,6 +18,11 @@ instantiation, see the [domain model]({{< relref "domain-model.md" >}}).
 
 ## The concepts
 
+- **Project** is the whole workspace katalyst operates over: a configured root
+  that binds one or more storage backends into named collections. Its
+  configuration is the **Config** (katalyst's is the `.katalyst/` directory);
+  the collections, items, checks, and inspectors below all live within a
+  project. It is the scope an empty selector addresses.
 - **Storage** is a backend that holds data: a filesystem, a SQLite database, a
   Postgres instance, an S3 bucket. Katalyst's realization is the
   [storage layer]({{< relref "storage.md" >}}).

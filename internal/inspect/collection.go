@@ -3,24 +3,24 @@ package inspect
 import (
 	"os"
 
-	"github.com/abegong/katalyst/internal/config"
-	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/storage"
+	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection"
+	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // CollectionView is the collection layer's addressing surface: a resolved
 // collection and its items, parsed once. Items are addressed by domain identity
 // (their Item.ID), and the bytes are reached through the project's
 // CollectionDefinition, collection inspectors never see a raw path. Parsing
-// here is a thin local adapter over frontmatter.Parse; it deliberately does not
+// here is a thin local adapter over document.Parse; it deliberately does not
 // reach into internal/checks.
 type CollectionView struct {
 	collection config.Collection
-	items      []storage.Item
+	items      []collection.Item
 	// docs is aligned with items; an entry is nil when the item could not be
 	// read or parsed, so a broken item contributes nothing rather than panicking.
-	docs []*frontmatter.Document
+	docs []*document.Document
 }
 
 // NewCollectionView resolves a collection's items via the project and parses
@@ -30,13 +30,13 @@ func NewCollectionView(proj *project.Project, c config.Collection) (CollectionVi
 	if err != nil {
 		return CollectionView{}, err
 	}
-	docs := make([]*frontmatter.Document, len(items))
+	docs := make([]*document.Document, len(items))
 	for i, it := range items {
 		src, err := os.ReadFile(it.Path)
 		if err != nil {
 			continue
 		}
-		if doc, err := frontmatter.Parse(src); err == nil {
+		if doc, err := document.Parse(src); err == nil {
 			docs[i] = doc
 		}
 	}

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 func TestCollectionView_objectFieldsAndMarkdownBody(t *testing.T) {

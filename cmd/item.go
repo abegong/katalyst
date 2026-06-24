@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"text/tabwriter"
 
-	"github.com/abegong/katalyst/internal/config"
-	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection/document"
+	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -259,7 +259,7 @@ func newItemGetCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			switch {
 			case frontmatterOnly:
-				doc, err := frontmatter.Parse(mustRead(item.Path))
+				doc, err := document.Parse(mustRead(item.Path))
 				if err != nil {
 					return err
 				}
@@ -270,7 +270,7 @@ func newItemGetCmd() *cobra.Command {
 				_, err = out.Write(b)
 				return err
 			case bodyOnly:
-				doc, err := frontmatter.Parse(mustRead(item.Path))
+				doc, err := document.Parse(mustRead(item.Path))
 				if err != nil {
 					return err
 				}
@@ -483,4 +483,15 @@ func statusLabel(n int) string {
 func mustRead(path string) []byte {
 	b, _ := os.ReadFile(path)
 	return b
+}
+
+// filepathDir returns the directory of path, defaulting to "." when path has
+// no separator.
+func filepathDir(path string) string {
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == '/' || path[i] == '\\' {
+			return path[:i]
+		}
+	}
+	return "."
 }

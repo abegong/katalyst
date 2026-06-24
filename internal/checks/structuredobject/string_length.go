@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectStringLength checks minimum and/or maximum string length.

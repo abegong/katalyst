@@ -5,7 +5,7 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	_ "github.com/abegong/katalyst/internal/checks/all" // populate the registry
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // fakeSchema is a compiled schema that returns a fixed violation list.

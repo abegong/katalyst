@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ReferencedFilesExist checks that path-valued frontmatter fields resolve to
