@@ -110,6 +110,15 @@ Then point it at a directory to profile its structure:
 katalyst inspect ./my-knowledge-base
 ```
 
+### Skills for agents
+
+Katalyst ships a family of [skills](https://abegong.github.io/katalyst/) that
+teach a Claude/Cowork agent to drive the CLI — cataloging content, defining
+collections and schemas, and deploying enforcement. Each is attached to a GitHub
+Release as a `.skill` you install through your client's "Save skill" flow; no
+clone required. Maintainers package them from source with `make skills` (writing
+`bin/*.skill`); `make skill SKILL=<name>` packages one.
+
 ## No, really, you should try it out
 
 - [Build the CLI and run your first checks](https://abegong.github.io/katalyst/getting-started/).

@@ -1,11 +1,19 @@
 name: release
 
-# Builds cross-platform binaries and publishes a GitHub Release whenever a
-# v* tag is pushed (e.g. `git tag v0.1.0 && git push origin v0.1.0`).
+# Builds cross-platform binaries and the product skills (.skill) and publishes a
+# GitHub Release whenever a v* tag is pushed (e.g. `git tag v0.1.0 && git push
+# origin v0.1.0`). Can also be dry-run from the Actions tab via workflow_dispatch
+# to build the artifacts without publishing.
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build the artifacts without publishing a Release"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -25,6 +33,11 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          # workflow_dispatch dry-run builds a snapshot and skips publishing;
+          # a v* tag push cuts the real Release.
+          args: >-
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run)
+            && 'release --clean --snapshot --skip=publish'
+            || 'release --clean' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

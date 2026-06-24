@@ -1,7 +1,10 @@
 # Plan — skill distribution
 
-> **Status: planning.** Implements
-> [`skill-distribution-spec.md`](skill-distribution-spec.md). No phases started.
+> **Status: implementing.** Implements
+> [`skill-distribution-spec.md`](skill-distribution-spec.md). Phases 1–5 landed
+> (scaffold + all seven shipping skills authored, packaging, bootstrap, release
+> wiring, local symlink); Phase 6 folded into Phase 1 (see Deviations); Phase 7
+> (cut a tag, graduate docs) is the remaining owner action.
 
 Branch: `claude/charming-clarke-s2nx1d` (rebased onto `main` after the repo
 moved to `github.com/abegong/katalyst` and a GoReleaser release pipeline
@@ -163,19 +166,25 @@ the binary matrix, the tag trigger, and the token permission are all done.
 
 Mirrors the spec's test checklist; these assertions prove the change.
 
-- [ ] `make skills` produces one `{name}.skill` per **shippable** directory
+- [x] `make skills` produces one `{name}.skill` per **shippable** directory
       under `skills/`, each unzipping with `SKILL.md` at the archive root, and
-      emits no artifact for `status: placeholder` skills.
-- [ ] `make skill SKILL=<name>` packages a single skill.
-- [ ] `make clean` removes the `.skill` artifacts.
-- [ ] The local-dev target symlinks each `skills/{name}/` into `.claude/skills/`;
-      the symlinks are git-ignored.
+      emits no artifact for `status: placeholder` skills. *(Verified: 7 skills
+      packaged, both `katalyst-migrate-*` placeholders excluded; covered by
+      `internal/skillpack` tests.)*
+- [x] `make skill SKILL=<name>` packages a single skill. *(Verified, including
+      the missing-`SKILL` guard.)*
+- [x] `make clean` removes the `.skill` artifacts. *(They live in `bin/`, which
+      `clean` already `rm -rf`s.)*
+- [x] The local-dev target symlinks each `skills/{name}/` into `.claude/skills/`;
+      the symlinks are git-ignored. *(`make skills-link`; placeholders skipped.)*
 - [ ] On a tag, the release workflow uploads the cross-platform binaries and
-      every `.skill` as assets on that Release.
+      every `.skill` as assets on that Release. *(Wired in `.goreleaser.yaml` +
+      `release.yml`; needs a real tag or `workflow_dispatch` dry-run to confirm —
+      owner action, Phase 7.)*
 - [ ] A `.skill` downloaded from a Release installs via "Save skill" with no
       repo clone, and its bootstrap fetches the matching CLI binary from the
-      latest Release (with `go install` fallback).
-- [ ] `make all` (vet + test + build) still green; per-PR CI unchanged.
+      latest Release (with `go install` fallback). *(Manual, Phase 7.)*
+- [x] `make all` (vet + test + build) still green; per-PR CI unchanged.
 
 ## Deviations
 
@@ -201,3 +210,26 @@ the merge base this spec was first written against:
   and reframed as the setup that installs day-to-day enforcement, not a named
   lifecycle stage. Phase 7 graduation should fold rationale into
   `welcome.md`/deep-dives accordingly.
+
+Recorded during implementation (Phases 1–5):
+
+- **Phase 6 folded into Phase 1.** Rather than leave `katalyst-overview`,
+  `katalyst-catalog`, `katalyst-identify-collections`, and
+  `katalyst-define-schemas` as empty front-matter stubs (which `make skills`
+  would package as empty `.skill`s), all seven shipping skills were authored with
+  real content up front. The two reshape skills remain true placeholders.
+- **Packaging is a Go tool, not shell.** `internal/skillpack` (logic, with an
+  external-package test scaffolding a temp skills tree) plus a thin
+  `cmd/skillpack` wrapper, run by `make skills` — mirrors the `cmd/gendocs`
+  precedent and gives placeholder-skipping robust YAML front-matter parsing and
+  real test coverage, which a shell `zip` loop would not.
+- **`.skill` artifacts output to `bin/`.** Already git-ignored and already removed
+  by `make clean`, so no new ignore entry or clean rule was needed; GoReleaser's
+  `release.extra_files` globs `./bin/*.skill`.
+- **Bootstrap written now (Phase 3), not deferred.** `skills/bootstrap.sh` is the
+  single source; `cmd/skillpack` copies it into each `.skill` at the archive root.
+- **Local symlink targets `.claude/skills/` only.** `make skills-link` (via
+  `scripts/link-product-skills.sh`, which skips placeholders). Codex mirroring is
+  deferred — easy to add later by pointing the script at `.codex/skills/` too.
+- **Dry-run trigger added.** `release.yml` gained a `workflow_dispatch` with a
+  `dry_run` input that runs GoReleaser `--snapshot --skip=publish`.

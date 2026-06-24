@@ -1,4 +1,4 @@
-.PHONY: all build test vet fmt tidy run clean docs-deps docs-serve docs-build docs-gen docs-gen-check
+.PHONY: all build test vet fmt tidy run clean skills skill skills-link docs-deps docs-serve docs-build docs-gen docs-gen-check
 
 BINARY := katalyst
 DOCS_DIR := docs
@@ -33,6 +33,25 @@ run:
 
 clean:
 	rm -rf bin
+
+# Package the product skills under skills/ into bin/*.skill: one zip per
+# shippable skill with SKILL.md at the archive root and the shared bootstrap
+# bundled in. Skills marked `status: placeholder` are skipped. The .skill
+# artifacts land in bin/, so `make clean` removes them. The release workflow
+# runs this same target (see .goreleaser.yml) so local and CI packaging match.
+skills:
+	go run ./cmd/skillpack
+
+# Package a single skill: make skill SKILL=katalyst-deploy
+skill:
+	@test -n "$(SKILL)" || { echo "usage: make skill SKILL=<name>" >&2; exit 2; }
+	go run ./cmd/skillpack -skill $(SKILL)
+
+# Symlink each skills/{name}/ into .claude/skills/ so they auto-load in a
+# working copy. .gitignore already excludes all of .claude/, so the symlinks
+# stay uncommitted.
+skills-link:
+	./scripts/link-product-skills.sh
 
 # Docs are their own Hugo module under $(DOCS_DIR)/ (separate go.mod), so
 # the application module's `go mod tidy` never strips the theme. Hugo
