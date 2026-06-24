@@ -35,13 +35,15 @@
 | 2 | Convert check families | `structuredobject`, `markdownbodytext`, `filesystem`, `plaintext`, `jsonschema` own their parse+build; drop each `normalizeCheck` case |
 | 3 | Remove the legacy path | delete `normalizeCheck`, `CheckInstance`, `CheckType` consts, the legacy `Builder` union arg, the parity test |
 | 4 | Storage types | validate the declared `type` via the `storage` registry (`storage.Known`); drop config's duplicate allowlist |
-| 5 | Collections & schemas | distribute collection/variant/schema parsing; move `Collection` and `StorageInstance` to `storage`/`storage/collection`; dissolve `config → query` |
+| 5 | Collections | move `Collection`/`CollectionVariant`/`QuerySettings` + their parse to `storage/collection`; dissolve `config → query` (flip the edge to `config → collection`) |
 | 6 | Collapse loader + docs | fold the `config` remnant into the `project` loader, delete the `config` package; docs/AGENTS/skill sweep |
 
 Type relocation folds into the phase that distributes that object's parsing
-(`Collection` in 5, with `StorageInstance` riding along because it embeds
-`[]Collection`), not a separate mechanical pre-step — moving a type with its
-parser touches it once instead of twice. The check work
+(`Collection` in 5), not a separate mechanical pre-step — moving a type with its
+parser touches it once instead of twice. `StorageInstance` is the exception: it
+embeds `[]Collection` and `collection` imports `storage`, so it can live neither
+in the `storage` root nor in `config`; as an assembly type it lands in the
+`project` loader in Phase 6. The check work
 splits across phases 1–3 because it is the largest and the registry already
 exists, so it both proves the pattern and earns the most decoupling first.
 
@@ -134,31 +136,46 @@ allowlist.
    to `storage.Filesystem` and validates via `storage.Known`. `config` may import
    the `storage` root because it is a config-free leaf.
 
-**Deferred to Phase 5:** moving the `StorageInstance` type into `storage` and
-distributing its instance parsing. `StorageInstance` embeds `[]Collection`, so it
-cannot relocate before `Collection` does (it would create a `storage → config`
-cycle). The two type relocations land together in Phase 5, after `Collection`
-moves to `storage/collection`.
+**Deferred to Phase 5:** moving the `StorageInstance` type. It embeds
+`[]Collection`, and `collection` imports `storage` for `Granularity`/`Reference`,
+so `StorageInstance` cannot live in the `storage` root (`storage → collection →
+storage` cycles) nor in `config` once `Collection` moves. It is an assembly type:
+it lands in the `project` loader in Phase 6, alongside the rest of the loader.
 
-### Phase 5 — Collections and schemas own their config
+### Phase 5 — Collections own their config (DONE)
 
 **Goal:** the collection parses its own block (including variant `when`
-predicates and query settings) and schemas resolve themselves; the central
-`config → query` edge dissolves.
+predicates and query settings); the central `config → query` edge dissolves.
 
-1. **File:** `internal/storage/collection/collection.go`. Move the `Collection`,
-   `CollectionVariant`, and `QuerySettings` types here and add the collection's
-   own parse (block → `Collection`, holding raw check nodes), using the sibling
-   `storage/collection/query` for `when` predicates — so the dependency is
-   intra-`collection`, not cross-tree.
-2. **File:** `internal/checks/jsonschema/` (or a `schema` owner). Move schema
-   discovery/resolution (`loadSchemas`/`scanKindDir`) to the schema handling.
-3. **File:** `internal/project/config/config.go`. Delete `buildCollection`,
-   `buildVariants`, `resolveQuery`, `loadSchemas`, and the `query` import — the
-   interleaving is gone.
-4. **File:** `internal/storage/collection/collection_test.go`,
-   `.../query`/dogfood. Verify collection + variant parsing and that `katalyst
-   check` over `docs/` is unchanged.
+1. **File:** `internal/storage/collection/parse.go` (new). The `Collection`,
+   `CollectionVariant`, and `QuerySettings` types live here, with the collection's
+   own build (`Build(BuildInput)`: raw block → `Collection`, holding raw check
+   nodes), using the sibling `storage/collection/query` for `when` predicates — so
+   the `when`/query dependency is intra-`collection`, not cross-tree. The raw YAML
+   mirrors (`RawCollection`/`RawVariant`/`RawWhen`/`RawCheck`/`RawQuery`) move here
+   too, exported so the loader can unmarshal a storage instance's collections.
+   Schema validation is injected as a `SchemaKnown func(string) bool`, so the
+   collection never reaches into the loader's name→path map.
+2. **File:** `internal/storage/collection/collection.go`. `Item` and
+   `CollectionDefinition` now name the local `Collection`, dropping the
+   `collection → config` import: the edge flips to `config → collection`.
+3. **File:** `internal/project/config/config.go`. `buildCollection`/`buildChecks`/
+   `buildVariants`/`resolveQuery` and the raw collection mirrors are gone;
+   `buildInstance` calls `collection.Build`. `config` re-exports `Collection`/
+   `CollectionVariant`/`QuerySettings` as aliases so its ~14 call sites are
+   untouched, and drops its direct `query` import.
+4. **Tests:** `internal/project/config/config_test.go` still exercises collection
+   + variant + query parsing through `config.Load` (the loader delegates), and the
+   dogfood `katalyst check` over `docs/` is unchanged. (A focused
+   `collection`-package parse test can follow; `Build` is covered end-to-end
+   today.)
+
+**Schema discovery stays in the loader.** The plan floated moving
+`loadSchemas`/`scanKindDir` to a schema owner. Schema *resolution* is already
+config-free (`jsonschema.Resolve` takes a `schemaPath` func); what remains is
+directory *discovery*, which is a project-filesystem-layout concern that belongs
+with the loader, not an "object owns its config" win. It folds into the `project`
+loader in Phase 6 rather than moving twice.
 
 ### Phase 6 — Collapse the loader and sweep docs
 
@@ -192,7 +209,8 @@ predicates and query settings) and schemas resolve themselves; the central
 | `internal/project/config/config.go` | source of everything being distributed; deleted by Phase 6 |
 | `internal/project/config/config_test.go` | golden error strings; the parity guard through phases 1–3 |
 | `internal/storage/storage.go` | the backend-kind registry (`Known`); Phase 5 also homes `StorageInstance` |
-| `internal/storage/collection/collection.go` | new home for `Collection`/`Variant`/`QuerySettings` + parsing |
+| `internal/storage/collection/parse.go` (new) | home for `Collection`/`Variant`/`QuerySettings` + their parse (`Build`) |
+| `internal/storage/collection/collection.go` | `Item`/`CollectionDefinition` now name the local `Collection` (edge flipped) |
 | `internal/project/loader.go` (new) | the thin loader/DataContext |
 | `.cursor/skills/add-katalyst-check-type/SKILL.md` | shortened; the proof check |
 

@@ -23,9 +23,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/storage"
-	"github.com/abegong/katalyst/internal/storage/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,10 +46,6 @@ const (
 	discoveryConvention = "convention"
 	discoveryExplicit   = "explicit"
 )
-
-// defaultPattern is the glob applied to a collection's directory when the
-// collection does not set its own `pattern`.
-const defaultPattern = "*.md"
 
 // ErrNotFound is returned when no .katalyst/ directory is present in the
 // starting directory or any of its ancestors.
@@ -92,85 +87,24 @@ type StorageInstance struct {
 	Collections []Collection
 }
 
-// CheckType identifies the reusable check definition attached to a
-// collection. Its string value is the `kind:` selector in YAML.
-// Collection is a named group of items backed by a directory of files.
-type Collection struct {
-	// Name is the public handle (the key in the config `collections:` map).
-	Name string
-	// Path is the directory, relative to Root, as written in the config.
-	Path string
-	// Dir is the absolute directory (Root + Path).
-	Dir string
-	// Pattern is the filename glob for items (default "*.md").
-	Pattern string
-	// Schema is the object-schema name associated with the collection, or
-	// "" when the collection is configured with explicit checks only. It
-	// mirrors the first object check's schema, for display.
-	Schema string
-	// Checks to run against each item.
-	Checks []checks.ConfiguredCheck
-	// Query holds the resolved `item list` query behavior for this
-	// collection (collection config over project config over defaults).
-	Query QuerySettings
-	// Storage is the name of the storage instance that declares this
-	// collection.
-	Storage string
-	// Variants are discriminated check groups: an item runs the first
-	// variant (in order) whose Where predicates it all satisfies, in
-	// addition to the base Checks. Empty for a collection without variants.
-	Variants []CollectionVariant
-	// UseExhaustiveVariants makes an item that matches no variant a check
-	// failure ("matches no variant") instead of running the base checks
-	// alone. Default false.
-	UseExhaustiveVariants bool
-}
-
-// CollectionVariant is one discriminated check group inside a collection. An
-// item whose metadata satisfies every predicate in Where, the first such
-// variant in declaration order, runs Checks on top of the collection's base
-// checks. A variant's `schema:` shorthand is folded into a leading object
-// check in Checks, mirroring a collection's `schema:`.
-type CollectionVariant struct {
-	// Where are the discriminator predicates, ANDed together. Non-empty.
-	Where []query.Predicate
-	// Checks run on an item routed to this variant, added to the base.
-	Checks []checks.ConfiguredCheck
-}
-
-// QuerySettings configures the behavior of `item list` filtering and
-// sorting. Values are resolved at load time; see the `query:` block in
-// .katalyst/config.yaml (project default) and a collection's file (override).
-type QuerySettings struct {
-	// FilterTypeMismatch decides what happens when a --filter comparison
-	// hits an incompatible type: "skip" (item does not match) or "error".
-	FilterTypeMismatch string
-	// SortMissing decides where items lacking the sort key land: "last"
-	// (end, both directions) or "lowest" (below any present value).
-	SortMissing string
-}
-
-// Built-in query defaults, used when neither the collection nor the
-// project config sets a value.
-const (
-	defaultFilterTypeMismatch = "skip"
-	defaultSortMissing        = "last"
+// Collection, CollectionVariant, and QuerySettings live in
+// internal/storage/collection (a collection is a storage concept); config
+// re-exports them under their historical names so callers that load config keep
+// referring to config.Collection. The loader assembles these types but no longer
+// defines them.
+type (
+	Collection        = collection.Collection
+	CollectionVariant = collection.CollectionVariant
+	QuerySettings     = collection.QuerySettings
 )
 
 // rawConfig mirrors .katalyst/config.yaml. Both blocks are optional; an
 // absent file (or an absent block) means convention discovery with the
 // default YAML format.
 type rawConfig struct {
-	Schemas rawSchemaKind  `yaml:"schemas"`
-	Storage rawStorageKind `yaml:"storage"`
-	Query   *rawQuery      `yaml:"query"`
-}
-
-// rawQuery mirrors a `query:` block. A nil pointer (or a nil field within)
-// means "unset" so resolution can fall through to the next level.
-type rawQuery struct {
-	FilterTypeMismatch string `yaml:"filterTypeMismatch"`
-	SortMissing        string `yaml:"sortMissing"`
+	Schemas rawSchemaKind        `yaml:"schemas"`
+	Storage rawStorageKind       `yaml:"storage"`
+	Query   *collection.RawQuery `yaml:"query"`
 }
 
 // rawSchemaKind configures how schemas are discovered. Defs is consulted
@@ -190,110 +124,12 @@ type rawStorageKind struct {
 }
 
 // rawStorageInstance mirrors one storage instance: its backend type, its root,
-// and the collections it declares (name → definition).
+// and the collections it declares (name → definition). The collection mirror
+// lives with the Collection type in internal/storage/collection.
 type rawStorageInstance struct {
-	Type        string                   `yaml:"type"`
-	Root        string                   `yaml:"root"`
-	Collections map[string]rawCollection `yaml:"collections"`
-}
-
-type rawCollection struct {
-	Path                  string       `yaml:"path"`
-	Pattern               string       `yaml:"pattern"`
-	Schema                string       `yaml:"schema"`
-	Checks                []rawCheck   `yaml:"checks"`
-	Query                 *rawQuery    `yaml:"query"`
-	Variants              []rawVariant `yaml:"variants"`
-	UseExhaustiveVariants bool         `yaml:"useExhaustiveVariants"`
-}
-
-// rawVariant mirrors one entry of a collection's `variants:` list: a `when`
-// discriminator plus the schema/checks to add for matching items.
-type rawVariant struct {
-	When   rawWhen    `yaml:"when"`
-	Schema string     `yaml:"schema"`
-	Checks []rawCheck `yaml:"checks"`
-}
-
-// rawWhen is a variant discriminator: a list of `item list --filter` predicate
-// strings. It accepts three YAML shapes that all desugar to that list:
-//
-//	when: "kind=section"             # one predicate
-//	when: ["kind=section", "w>1"]    # a list of predicates
-//	when: { where: [ ... ] }         # the explicit block form
-type rawWhen []string
-
-// UnmarshalYAML accepts the scalar, sequence, and {where: [...]} forms.
-func (w *rawWhen) UnmarshalYAML(value *yaml.Node) error {
-	switch value.Kind {
-	case yaml.ScalarNode:
-		var s string
-		if err := value.Decode(&s); err != nil {
-			return err
-		}
-		*w = rawWhen{s}
-	case yaml.SequenceNode:
-		var ss []string
-		if err := value.Decode(&ss); err != nil {
-			return err
-		}
-		*w = rawWhen(ss)
-	case yaml.MappingNode:
-		var block struct {
-			Where []string `yaml:"where"`
-		}
-		if err := value.Decode(&block); err != nil {
-			return err
-		}
-		*w = rawWhen(block.Where)
-	default:
-		return fmt.Errorf("invalid when: expected a string, a list, or {where: [...]}")
-	}
-	return nil
-}
-
-type rawCheck struct {
-	Kind      string   `yaml:"kind"`
-	Schema    string   `yaml:"schema"`
-	Field     string   `yaml:"field"`
-	Type      string   `yaml:"type"`
-	Value     string   `yaml:"value"`
-	Values    []string `yaml:"values"`
-	Min       *float64 `yaml:"min"`
-	Max       *float64 `yaml:"max"`
-	MinLength int      `yaml:"min_length"`
-	MaxLength int      `yaml:"max_length"`
-	Heading   string   `yaml:"heading"`
-	Style     string   `yaml:"style"`
-	Target    string   `yaml:"target"`
-	Transform string   `yaml:"transform"`
-	Prefix    string   `yaml:"prefix"`
-	Suffix    string   `yaml:"suffix"`
-	Allow     []string `yaml:"allow"`
-	Deny      []string `yaml:"deny"`
-	Pattern   string   `yaml:"pattern"`
-	Fields    []string `yaml:"fields"`
-	Name      string   `yaml:"name"`
-	Match     string   `yaml:"match"`
-	Select    string   `yaml:"select"`
-	Fix       string   `yaml:"fix"`
-
-	// node is the raw YAML node for this entry, retained so a distributed check
-	// parser can decode its own args. Captured in UnmarshalYAML.
-	node *yaml.Node
-}
-
-// UnmarshalYAML decodes the entry's fields and stashes the raw node, so the
-// node can travel to a check type's own parser (checks.RegisterParsed).
-func (rc *rawCheck) UnmarshalYAML(value *yaml.Node) error {
-	type plain rawCheck
-	var p plain
-	if err := value.Decode(&p); err != nil {
-		return err
-	}
-	*rc = rawCheck(p)
-	rc.node = value
-	return nil
+	Type        string                              `yaml:"type"`
+	Root        string                              `yaml:"root"`
+	Collections map[string]collection.RawCollection `yaml:"collections"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -379,7 +215,7 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 // by name) from either the storage directory (convention: one file per
 // instance) or an explicit defs map in config.yaml. Collection names are
 // validated unique across every instance.
-func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
+func (c *Config) loadStorage(k rawStorageKind, projectQuery *collection.RawQuery) error {
 	discovery, err := normDiscovery(k.Discovery)
 	if err != nil {
 		return fmt.Errorf("storage: %w", err)
@@ -449,7 +285,7 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 // under .katalyst/storage/<name>/. A name declared in both places is an error.
 // The instance name comes from the source (filename stem or map key), never the
 // body.
-func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *rawQuery) (StorageInstance, error) {
+func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *collection.RawQuery) (StorageInstance, error) {
 	typ := ri.Type
 	if typ == "" {
 		typ = string(storage.Filesystem)
@@ -465,7 +301,7 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 	instRoot := resolve(c.Root, rootRel)
 
 	// Start with the inline collections, then fold in any per-collection files.
-	raws := make(map[string]rawCollection, len(ri.Collections))
+	raws := make(map[string]collection.RawCollection, len(ri.Collections))
 	for cn, rc := range ri.Collections {
 		raws[cn] = rc
 	}
@@ -482,7 +318,7 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 		if err != nil {
 			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
 		}
-		var rc rawCollection
+		var rc collection.RawCollection
 		if err := yaml.Unmarshal(src, &rc); err != nil {
 			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
 		}
@@ -497,7 +333,14 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 
 	cols := make([]Collection, 0, len(colNames))
 	for _, cn := range colNames {
-		col, err := c.buildCollection(cn, raws[cn], instRoot, name, projectQuery)
+		col, err := collection.Build(collection.BuildInput{
+			Name:         cn,
+			Raw:          raws[cn],
+			InstRoot:     instRoot,
+			InstName:     name,
+			ProjectQuery: projectQuery,
+			SchemaKnown:  c.schemaKnown,
+		})
 		if err != nil {
 			return StorageInstance{}, err
 		}
@@ -506,156 +349,12 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 	return StorageInstance{Name: name, Type: typ, Root: instRoot, Collections: cols}, nil
 }
 
-// buildCollection turns one raw collection definition into a validated
-// Collection, resolving its directory against the owning instance's root. The
-// name comes from the source (map key), never the file body.
-func (c *Config) buildCollection(name string, rc rawCollection, instRoot, instName string, projectQuery *rawQuery) (Collection, error) {
-	dirRel := rc.Path
-	if dirRel == "" {
-		// A collection without an explicit path defaults to a directory
-		// named after the collection itself.
-		dirRel = name
-	}
-	pattern := rc.Pattern
-	if pattern == "" {
-		pattern = defaultPattern
-	}
-
-	cks, err := c.buildChecks(fmt.Sprintf("collection %q", name), rc.Schema, rc.Checks)
-	if err != nil {
-		return Collection{}, err
-	}
-
-	variants, err := c.buildVariants(name, rc.Variants)
-	if err != nil {
-		return Collection{}, err
-	}
-
-	if len(cks) == 0 && len(variants) == 0 {
-		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema, checks, or variants)", name)
-	}
-
-	schemaName := ""
-	for _, ch := range cks {
-		if ch.Kind == checks.CheckObject {
-			schemaName = ch.Schema
-			break
-		}
-	}
-
-	qs, err := resolveQuery(name, rc.Query, projectQuery)
-	if err != nil {
-		return Collection{}, err
-	}
-
-	return Collection{
-		Name:                  name,
-		Path:                  dirRel,
-		Dir:                   resolve(instRoot, dirRel),
-		Pattern:               pattern,
-		Schema:                schemaName,
-		Checks:                cks,
-		Query:                 qs,
-		Storage:               instName,
-		Variants:              variants,
-		UseExhaustiveVariants: rc.UseExhaustiveVariants,
-	}, nil
-}
-
-// buildChecks folds an optional schema name into a leading object check and
-// normalizes the remaining raw checks. errCtx prefixes any error (e.g.
-// `collection "books"` or `collection "books": variants[0]`).
-func (c *Config) buildChecks(errCtx, schema string, raws []rawCheck) ([]checks.ConfiguredCheck, error) {
-	out := make([]checks.ConfiguredCheck, 0, len(raws)+1)
-	if schema != "" {
-		if _, ok := c.Schemas[schema]; !ok {
-			return nil, fmt.Errorf("%s: unknown schema %q", errCtx, schema)
-		}
-		out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: schema})
-	}
-	for j, raw := range raws {
-		kind := checks.CheckType(strings.TrimSpace(raw.Kind))
-		if kind == checks.CheckObject {
-			// An explicit `kind: object` names a schema, validated here because
-			// the loader owns schema resolution; the engine builds it.
-			if raw.Schema == "" {
-				return nil, fmt.Errorf("%s: checks[%d]: object check requires \"schema\"", errCtx, j)
-			}
-			if _, ok := c.Schemas[raw.Schema]; !ok {
-				return nil, fmt.Errorf("%s: checks[%d]: unknown schema %q", errCtx, j, raw.Schema)
-			}
-			out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: raw.Schema})
-			continue
-		}
-		args, err := checks.Parse(kind, raw.node)
-		if err != nil {
-			return nil, fmt.Errorf("%s: checks[%d]: %w", errCtx, j, err)
-		}
-		out = append(out, checks.ConfiguredCheck{Kind: kind, Args: args})
-	}
-	return out, nil
-}
-
-// buildVariants parses and validates a collection's variants: each `when`
-// becomes a non-empty list of predicates, and each variant's schema/checks are
-// built like the collection's own (the schema folds into a leading object
-// check). A variant may add no checks (an exemption).
-func (c *Config) buildVariants(name string, raws []rawVariant) ([]CollectionVariant, error) {
-	if len(raws) == 0 {
-		return nil, nil
-	}
-	variants := make([]CollectionVariant, 0, len(raws))
-	for i, rv := range raws {
-		if len(rv.When) == 0 {
-			return nil, fmt.Errorf("collection %q: variants[%d]: when requires at least one predicate", name, i)
-		}
-		preds := make([]query.Predicate, 0, len(rv.When))
-		for k, expr := range rv.When {
-			p, err := query.ParseFilter(expr)
-			if err != nil {
-				return nil, fmt.Errorf("collection %q: variants[%d]: when[%d]: %w", name, i, k, err)
-			}
-			preds = append(preds, p)
-		}
-		vchecks, err := c.buildChecks(fmt.Sprintf("collection %q: variants[%d]", name, i), rv.Schema, rv.Checks)
-		if err != nil {
-			return nil, err
-		}
-		variants = append(variants, CollectionVariant{Where: preds, Checks: vchecks})
-	}
-	return variants, nil
-}
-
-// resolveQuery merges a collection's query block over the project's over
-// the built-in defaults, key by key, then validates each value. An unset
-// key (empty string at a level) falls through to the next.
-func resolveQuery(name string, collQuery, projectQuery *rawQuery) (QuerySettings, error) {
-	q := QuerySettings{
-		FilterTypeMismatch: defaultFilterTypeMismatch,
-		SortMissing:        defaultSortMissing,
-	}
-	for _, raw := range []*rawQuery{projectQuery, collQuery} {
-		if raw == nil {
-			continue
-		}
-		if raw.FilterTypeMismatch != "" {
-			q.FilterTypeMismatch = raw.FilterTypeMismatch
-		}
-		if raw.SortMissing != "" {
-			q.SortMissing = raw.SortMissing
-		}
-	}
-	switch q.FilterTypeMismatch {
-	case "skip", "error":
-	default:
-		return QuerySettings{}, fmt.Errorf("collection %q: unknown filterTypeMismatch %q (want skip or error)", name, q.FilterTypeMismatch)
-	}
-	switch q.SortMissing {
-	case "last", "lowest":
-	default:
-		return QuerySettings{}, fmt.Errorf("collection %q: unknown sortMissing %q (want last or lowest)", name, q.SortMissing)
-	}
-	return q, nil
+// schemaKnown reports whether a schema name is defined. The collection builder
+// validates schema references through this predicate so it never needs the
+// loader's name→path map directly.
+func (c *Config) schemaKnown(name string) bool {
+	_, ok := c.Schemas[name]
+	return ok
 }
 
 // normDiscovery validates and defaults a kind's discovery mode.
@@ -759,17 +458,6 @@ func (c *Config) CollectionNames() []string {
 	return names
 }
 
-// Ext returns the file extension implied by the collection's pattern
-// (e.g. "*.md" → ".md"). Used for reverse id→path resolution. Falls back
-// to ".md" when the pattern has no extension.
-func (c Collection) Ext() string {
-	ext := filepath.Ext(c.Pattern)
-	if ext == "" {
-		return ".md"
-	}
-	return ext
-}
-
 // find walks from start upward until it locates a directory containing a
 // .katalyst/ subdirectory. The returned root is the absolute,
 // symlink-resolved directory.
@@ -806,15 +494,4 @@ func resolve(root, p string) string {
 		return filepath.Clean(p)
 	}
 	return filepath.Clean(filepath.Join(root, p))
-}
-
-// HasCollectionChecks reports whether the collection configures any
-// collection-scoped check.
-func (c Collection) HasCollectionChecks() bool {
-	for _, cc := range c.Checks {
-		if checks.CollectionScoped(cc.Kind) {
-			return true
-		}
-	}
-	return false
 }

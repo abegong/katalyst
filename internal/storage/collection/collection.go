@@ -6,7 +6,6 @@
 package collection
 
 import (
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage"
 )
 
@@ -15,7 +14,7 @@ import (
 // parsing is the document codec's; Item only addresses. internal/project
 // re-exports it as a type alias.
 type Item struct {
-	Collection config.Collection
+	Collection Collection
 	// ID is the collection-relative identifier, the filename stem for the
 	// flat filesystem case, a richer set of coordinates for layouts that grow.
 	ID string
@@ -34,18 +33,18 @@ type CollectionDefinition interface {
 
 	// Collections returns the collections this definition maps. One definition
 	// may yield more than one collection.
-	Collections() []config.Collection
+	Collections() []Collection
 
 	// Items lists the items in a collection (forward discovery).
-	Items(config.Collection) ([]Item, error)
+	Items(Collection) ([]Item, error)
 
 	// Unmatched lists backend references inside a collection's scope that do
 	// not map to any item. Surfacing them is deliberate: silent skips hide
 	// configuration drift.
-	Unmatched(config.Collection) ([]storage.Reference, error)
+	Unmatched(Collection) ([]storage.Reference, error)
 
 	// Reference reconstructs the backend locator for an item identity (reverse
 	// resolution). It is what `item add notes/dune` uses to decide which file
 	// to create.
-	Reference(c config.Collection, id string) (storage.Reference, error)
+	Reference(c Collection, id string) (storage.Reference, error)
 }
