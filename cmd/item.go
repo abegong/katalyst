@@ -16,7 +16,7 @@ import (
 func newItemCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "item",
-		Short: "List, inspect, and mutate items within collections.",
+		Short: "List, inspect, and mutate items within collections",
 	}
 	c.AddCommand(
 		newItemListCmd(),
@@ -49,10 +49,10 @@ func newItemListCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "list <collection>",
-		Short: "List items in a collection with their check status.",
+		Short: "List items in a collection with their check status",
 		Long: `List items in a collection with their check status.
 
-Narrow, search, and order the result (MongoDB find-inspired):
+Filter, search, sort, and page the result:
   --filter 'year>=1965'   field predicate (= != > >= < <= =~; comma RHS = in;
                           bare field = exists, !field = absent). Repeatable, ANDed.
   --grep TODO             regexp search; --grep-in all|body|frontmatter; -i.
@@ -240,7 +240,7 @@ func newItemGetCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "get <collection>/<item>",
-		Short: "Print an item (frontmatter and body by default).",
+		Short: "Print an item (frontmatter and body by default)",
 		Args:  exactArgs(1, "item get <collection>/<item>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if frontmatterOnly && bodyOnly {
@@ -298,7 +298,7 @@ func newItemAddCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "add <collection>/<item> [key=value ...]",
-		Short: "Create a new item with the given frontmatter and an empty body.",
+		Short: "Create a new item with the given frontmatter and an empty body",
 		Long: `add writes a new item file with YAML frontmatter and an empty body.
 
 Assignments are YAML-decoded, so numbers/booleans/arrays are supported:
@@ -367,7 +367,7 @@ func newItemUpdateCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "update <collection>/<item> key=value [key=value...]",
-		Short: "Set/merge frontmatter keys into an existing item; body untouched.",
+		Short: "Set/merge frontmatter keys into an existing item; body untouched",
 		Long: `update merges top-level frontmatter keys into an existing item.
 
 Values are YAML-decoded, so numbers/booleans/arrays are supported:
@@ -439,7 +439,7 @@ bypass). Key removal (--unset) is out of scope for v0.`,
 func newItemDeleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete <collection>/<item> [<collection>/<item> ...]",
-		Short: "Delete one or more items.",
+		Short: "Delete one or more items",
 		Args:  minArgs(1, "item delete <collection>/<item> ..."),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()

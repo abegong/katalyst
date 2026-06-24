@@ -18,6 +18,9 @@ func runRoot(t *testing.T, args ...string) (stdout, stderr string, err error) {
 	var outBuf, errBuf bytes.Buffer
 	root.SetOut(&outBuf)
 	root.SetErr(&errBuf)
+	if args == nil {
+		args = []string{}
+	}
 	root.SetArgs(args)
 	err = root.Execute()
 	return outBuf.String(), errBuf.String(), err

@@ -4,11 +4,11 @@ Usage:
   katalyst item [command]
 
 Available Commands:
-  list        List items in a collection with their check status.
-  get         Print an item (frontmatter and body by default).
-  add         Create a new item with the given frontmatter and an empty body.
-  update      Set/merge frontmatter keys into an existing item; body untouched.
-  delete      Delete one or more items.
+  list        List items in a collection with their check status
+  get         Print an item (frontmatter and body by default)
+  add         Create a new item with the given frontmatter and an empty body
+  update      Set/merge frontmatter keys into an existing item; body untouched
+  delete      Delete one or more items
 
 Flags:
   -h, --help   help for item

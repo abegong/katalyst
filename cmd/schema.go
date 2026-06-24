@@ -15,16 +15,17 @@ import (
 func newSchemaCmd() *cobra.Command {
 	s := &cobra.Command{
 		Use:   "schema",
-		Short: "Inspect schemas defined under .katalyst/schemas/.",
+		Short: "Inspect schemas defined under .katalyst/schemas/",
 	}
-	s.AddCommand(newSchemaListCmd(), newSchemaShowCmd())
+	s.AddCommand(newSchemaListCmd(), newSchemaGetCmd())
 	return s
 }
 
 func newSchemaListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List schemas registered in the config.",
+		Short: "List schemas registered in the config",
+		Args:  maxArgs(0, "schema list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -46,15 +47,12 @@ func newSchemaListCmd() *cobra.Command {
 	}
 }
 
-// TODO: align the read verb with the other resource nouns, collection/item
-// use `get`, schema uses `show`. Per the command-grammar work, pick one word
-// for "read one" (likely `get`) and converge. See
-// cmd/organization.md.
-func newSchemaShowCmd() *cobra.Command {
+func newSchemaGetCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "show <name>",
-		Short: "Show one schema's path and contents.",
-		Args:  exactArgs(1, "schema show <name>"),
+		Use:     "get <name>",
+		Aliases: []string{"show"},
+		Short:   "Show one schema's path and contents",
+		Args:    exactArgs(1, "schema get <name>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			cfg, err := loadConfigFromCWD()

@@ -18,8 +18,10 @@ katalyst check notes              # one collection
 katalyst fix notes/dune schemas   # mixed depth, many targets
 ```
 
-`check` and `fix` are the blessed verbs. `init` is a lone **project verb**:
-a lifecycle operation on the project itself, with no noun and no selector.
+`check` and `fix` are the selector-taking blessed verbs. `init` and `inspect`
+are verbs too: `init` is a lifecycle operation on the project itself, while
+`inspect` takes one path or configured collection name and infers the layer to
+inspect from that argument.
 
 **Resource nouns** operate *on* one kind of resource. The noun names the
 resource type; a CRUD-shaped sub-verb does the work, at a fixed selector
@@ -28,11 +30,13 @@ depth:
 ```bash
 katalyst collection list          # the set
 katalyst item get notes/dune      # one item, depth 2
+katalyst schema get book          # one schema
 katalyst check-types show object_required_field
 ```
 
-`check-types`, `collection`, `item`, and `schema` are resource nouns. A noun
-invoked bare (`katalyst item`) prints help, it is never itself an action.
+`check-types`, `collection`, `item`, `schema`, and `inspectors` are resource
+nouns. A noun invoked bare (`katalyst item`) prints help, it is never itself an
+action.
 
 ## The placement rule
 

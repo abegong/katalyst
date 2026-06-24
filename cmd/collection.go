@@ -10,7 +10,7 @@ import (
 func newCollectionCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "collection",
-		Short: "Inspect collections declared by storage instances under .katalyst/storage/.",
+		Short: "Inspect collections declared by storage instances under .katalyst/storage/",
 	}
 	c.AddCommand(newCollectionListCmd(), newCollectionGetCmd())
 	return c
@@ -19,8 +19,8 @@ func newCollectionCmd() *cobra.Command {
 func newCollectionListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List collections: name, directory, item count, schema.",
-		Args:  cobra.NoArgs,
+		Short: "List collections: name, directory, item count, schema",
+		Args:  maxArgs(0, "collection list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -48,7 +48,7 @@ func newCollectionListCmd() *cobra.Command {
 func newCollectionGetCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "get <collection>",
-		Short: "Show one collection's detail.",
+		Short: "Show one collection's detail",
 		Args:  exactArgs(1, "collection get <collection>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfigFromCWD()

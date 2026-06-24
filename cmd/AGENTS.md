@@ -34,7 +34,7 @@ The rule, concretely:
 - No cross-cutting verb under a noun: `check` stays a blessed verb, never
   `item check`.
 - A resource noun is built with no `RunE`, so invoking it bare prints help
-  rather than running a default action. See `rules.go` / `collection.go` for
+  rather than running a default action. See `schema.go` / `collection.go` for
   the pattern: a parent command that only `AddCommand`s its sub-verbs.
 
 When you change the no-args help surface (a new command, a renamed group, a
@@ -64,13 +64,16 @@ task-oriented.
   runs them in a new project, not alphabetically.
 - **Order resources by setup priority.** In root help, list `Resources` by what
   a project must configure first, then what follows.
-- **No trailing periods in help descriptions.** `Short` strings and root help
-  lines end without `.`.
+- **No trailing periods in command help descriptions.** Command `Short`
+  strings and root help lines end without `.`. Flag descriptions may be fuller
+  explanatory phrases when a flag needs it; keep them short and mechanical.
 
 Patterns to reuse:
 
 - **Verb command (`Short`):** `<Imperative verb> <target> [and <outcome>]`
 - **Resource noun (`Short`):** `Commands to <verb> and <verb> <resource> …`
+- **Resource read-one verb:** use `get` for collection/item/schema reads. Older
+  aliases may exist for compatibility, but help and docs name `get`.
 - **Root `Long`:** one-sentence "what Katalyst is" + one-sentence "what you do
   with it", then stable project links.
 
@@ -151,8 +154,10 @@ Keep the mechanical parts of this guide enforced close to the command tree:
 
 - `cmd/cli_style_test.go` asserts that every top-level command is grouped as a
   verb or resource, that root help order stays deliberate, that resource nouns
-  have no default action, that every resource noun has a `list` subcommand, and
-  that top-level help snapshots exist.
+  have no default action, that every resource noun has a `list` subcommand,
+  that visible command `Short` strings follow punctuation rules, that runnable
+  commands declare arg validation, that zero-arg commands emit Katalyst usage
+  errors, and that top-level help snapshots exist.
 - `cmd/help_snapshot_test.go` pins each top-level help surface.
 - Readout snapshots under `cmd/testdata/snapshots/` pin human-facing `list`,
   `show`, summary `get`, and diagnostic text.

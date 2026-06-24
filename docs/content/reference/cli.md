@@ -21,9 +21,12 @@ shared exit codes, and the filter-predicate grammar that the configuration
 The command tree is two grammars, shown as the **Verbs** and **Resources**
 groups in `katalyst --help`:
 
-- **Verbs** (`inspect`, `init`, `check`, `fix`) operate over content and take
+- **Selector-taking verbs** (`check`, `fix`) operate over content and take
   **selectors**: nothing (the whole project), `<collection>`, or
-  `<collection>/<item>`.
+  `<collection>/<item>`. They may accept more than one selector.
+- **Other verbs** (`inspect`, `init`) do not use selectors: `inspect` takes one
+  path or configured collection name and infers the inspector layer from that
+  argument; `init` prepares a project directory.
 - **Resource nouns** (`collection`, `item`, `schema`, `check-types`,
   `inspectors`) carry CRUD-style sub-verbs (`list`, `get`, ...).
 
@@ -35,7 +38,7 @@ Read-oriented resource commands use one terminal layout for scanability:
 - counted section headers for list surfaces,
 - bullet entries with indented detail lines.
 
-This applies to human-facing read output such as `list`, `show`, and summary
+This applies to human-facing read output such as `list`, detail `show`, and summary
 `get` output. It does not apply to machine-oriented contracts such as `check`
 diagnostics, `fix --check` path lists, or `--json` output.
 

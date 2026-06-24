@@ -23,7 +23,7 @@ func newInspectCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "inspect <path-or-collection>",
-		Short: "Profile a directory of markdown files and report its shape.",
+		Short: "Profile a directory of markdown files and report its shape",
 		Long: `inspect runs inspectors over a target and reports the shape of what it
 finds as evidence: counts and distributions, never recommendations.
 

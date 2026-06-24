@@ -19,7 +19,7 @@ func newCheckTypesCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:     "check-types",
 		Aliases: []string{"rules"},
-		Short:   "Inspect the check types katalyst can enforce, grouped by family.",
+		Short:   "Inspect the check types katalyst can enforce, grouped by family",
 		Long: `check-types is a read-only view of katalyst's check registry, the same
 catalog cmd/gendocs renders. List every check type grouped by family, or show one
 check type's docs-style readout. It reads no project, so it runs in any directory.`,
@@ -33,7 +33,7 @@ func newCheckTypesListCmd() *cobra.Command {
 	var family string
 	c := &cobra.Command{
 		Use:   "list",
-		Short: "List check types grouped by family.",
+		Short: "List check types grouped by family",
 		Long: `list prints the catalog of check types from the check registry,
 grouped by family. Narrow to one family with --family; --json emits
 machine-readable descriptors.`,
@@ -51,7 +51,7 @@ func newCheckTypesShowCmd() *cobra.Command {
 	var asJSON bool
 	c := &cobra.Command{
 		Use:   "show <check-type>",
-		Short: "Show one check type's keys, example, and siblings.",
+		Short: "Show one check type's keys, example, and siblings",
 		Long: `show prints a detailed, docs-style readout for one check type: its
 family context, purpose, configuration keys, example, and the other
 check types in its family. --json emits the machine-readable descriptor.`,
