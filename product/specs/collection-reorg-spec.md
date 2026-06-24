@@ -6,6 +6,10 @@
 > rejected a collection home — both overturned below). Pairs with
 > `config-distribution-spec.md` (Spec 2), which removes the one dependency
 > compromise this spec deliberately tolerates.
+>
+> **Follow-up:** `codec-layer-spec.md` supersedes this spec's decision to keep
+> the markdown/frontmatter codec under `storage/collection/document`; the codec
+> now lives under `internal/codec/markdownbodytext`.
 
 ## Overview
 

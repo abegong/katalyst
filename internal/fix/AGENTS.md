@@ -12,7 +12,8 @@ missing values, lives in the
 ## Conventions
 
 - No file IO. `fix` returns bytes; the caller persists through the backend.
-- Serialization belongs to the `document` codec (`Parse`/`Encode`); `fix` is
-  policy (canonical ordering, text fixes), not byte plumbing.
+- Serialization belongs to the `internal/codec/markdownbodytext` codec
+  (`Parse`/`Encode`); `fix` is policy (canonical ordering, text fixes), not
+  byte plumbing.
 - A text fix re-checks its own work and fails rather than emit a still-broken
   result.

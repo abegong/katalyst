@@ -21,5 +21,7 @@ local code conventions.
 - Family packages (`structuredobject/`, `markdownbodytext/`, `filesystem/`,
   `plaintext/`) import the core `checks` package, never the reverse. Callers
   wire every family in by blank-importing `internal/checks/all`.
+- Check contexts hold content shapes owned by codecs. Markdown body checks use
+  `internal/codec/markdownbodytext.Document`, not storage-layer types.
 - `kind` ids are the wire contract: never change an existing id, even when a
   check's family changes.

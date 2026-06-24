@@ -8,7 +8,7 @@ weight = 60
 How Katalyst parses a markdown file's frontmatter, the in-memory document that
 produces, and why [`fix`]({{< relref "../reference/cli.md" >}}) rewrites
 that frontmatter the opinionated way it does. The codec (parse and encode) lives
-in `internal/storage/collection/document`; the `fix` transform that drives the
+in `internal/codec/markdownbodytext`; the `fix` transform that drives the
 canonical form, and the backend write that persists it, live in `internal/fix`
 and `internal/storage/collection/filesystem` respectively.
 
@@ -35,7 +35,7 @@ The unit of work is a file on disk with two optional regions:
 A document *may* have no frontmatter, in which case `check` reports it as an
 error (the file claimed no metadata, so we couldn't check anything).
 
-When parsed, a markdown document becomes a `document.Document`:
+When parsed, a markdown document becomes a `markdownbodytext.Document`:
 
 | Field            | Meaning |
 |------------------|---------|

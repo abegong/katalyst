@@ -39,8 +39,8 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
-| Document | `storage/collection/document.Document` | "Print an **item** (frontmatter + body)" | **Markdown document** | (folded into "item") | **Document** |
-| Frontmatter | `internal/storage/collection/document`, `document.Kind` | "frontmatter keys" | **frontmatter** | — | **Frontmatter** |
+| Document | `codec/markdownbodytext.Document` | "Print an **item** (frontmatter + body)" | **Markdown document** | (folded into "item") | **Document** |
+| Frontmatter | `internal/codec/markdownbodytext`, `markdownbodytext.Kind` | "frontmatter keys" | **frontmatter** | — | **Frontmatter** |
 | Metadata | `Document.Meta` | — | **Meta** | "document metadata" | **Metadata** |
 | Body | `Document.Body` | "body" | **Body** | — | **Body** |
 | Selector | `project.Selector` | `[selector ...]` | **Selector** | — | **Selector** |
@@ -97,7 +97,7 @@ Ordered roughly by how much they hurt. Resolutions are recorded in the
 
 1. **`item` vs `document`.** The single biggest collision. Core concepts and the
    CLI say *item*; domain model, glossary, and code say *document*
-   (`storage/collection/document.Document`). **Resolved:** *item* is primary and general;
+   (`codec/markdownbodytext.Document`). **Resolved:** *item* is primary and general;
    *document* is the markdown file-form specialization, used only where parsing,
    the body/frontmatter structure, or the raw file is the subject.
 2. **"Data interface" vs "Storage\*".** Core concepts coined *data interface*;

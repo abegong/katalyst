@@ -5,8 +5,8 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
 	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -262,7 +262,7 @@ func newItemGetCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			switch {
 			case frontmatterOnly:
-				doc, err := document.Parse(mustRead(item.Path))
+				doc, err := markdownbodytext.Parse(mustRead(item.Path))
 				if err != nil {
 					return err
 				}
@@ -273,7 +273,7 @@ func newItemGetCmd() *cobra.Command {
 				_, err = out.Write(b)
 				return err
 			case bodyOnly:
-				doc, err := document.Parse(mustRead(item.Path))
+				doc, err := markdownbodytext.Parse(mustRead(item.Path))
 				if err != nil {
 					return err
 				}

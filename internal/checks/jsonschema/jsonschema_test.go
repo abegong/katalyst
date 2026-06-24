@@ -7,7 +7,7 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/jsonschema"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 )
 
 //go:embed testdata/schemas/book.json
@@ -113,7 +113,7 @@ func TestCheck_additionalProperty(t *testing.T) {
 // Check resolves a violation's source line through the document's line map,
 // the behavior the object check type relies on.
 func TestCheck_reportsLineForSchemaViolation(t *testing.T) {
-	doc, err := document.Parse([]byte("---\ntitle: Dune\nyear: nope\n---\n# Dune\n"))
+	doc, err := markdownbodytext.Parse([]byte("---\ntitle: Dune\nyear: nope\n---\n# Dune\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}

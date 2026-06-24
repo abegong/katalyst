@@ -1,7 +1,8 @@
 // Package filesystem is the filesystem backend's CollectionDefinition: it maps a
 // directory tree onto collections of markdown files (one file is one item, its
 // id the filename stem) and persists item writes. The content decode/encode is
-// the document codec's; this package owns the structural read and the on-disk IO.
+// the markdown body text codec's; this package owns the structural read and the
+// on-disk IO.
 package filesystem
 
 import (
