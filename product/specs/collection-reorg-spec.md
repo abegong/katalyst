@@ -13,9 +13,10 @@ The collection concept is the most scattered thing in the tree: its declaration,
 its backend read, its content parsing, and its query grammar live in four
 different packages, and the one module whose name maps to no concept —
 `frontmatter/` — holds a piece of it. This spec consolidates the collection
-**read path** into a single home under `storage/`, and extracts the `fix`
-operation into its own engine package. It moves packages only; it does not change
-how config is parsed (that is Spec 2).
+**read path** into a single home under `storage/`, and splits `fix` into a
+backend-agnostic transform engine plus a backend-owned persist step that mirrors
+the read. It is relocation plus one behavior-preserving refactor; it does not
+change how config is parsed (that is Spec 2).
 
 ## Value
 
@@ -75,12 +76,14 @@ internal/
     collection/
       collection.go       CollectionDefinition interface, Item          (moved up from storage/)
       query/              filter/sort grammar                           (moved DOWN from project/collection/)
-      document/           Parse, Document, Kind  — the markdown codec    (read half of frontmatter/)
+      document/           Parse + Encode, Document, Kind  — the markdown codec (decode/encode)
       filesystem/
-        collection.go     FilesystemCollectionDefinition (glob/locate; reads bytes, calls document.Parse)
-      sql/                (future) SQLCollectionDefinition + row→item
+        collection.go     FilesystemCollectionDefinition: read (glob/locate, document.Parse)
+                          AND persist (atomic temp-rename write) — both halves of FS item IO
+      sql/                (future) SQLCollectionDefinition: SELECT→item, UPDATE←item
   fix/
-    fix.go                Format (canonical writer) + fixOne/applyTextFixes/textFixers   (engine)
+    fix.go                the transform engine: canonical-form + text fixes — decides WHAT to write
+                          (backend-agnostic; no file IO)
   project/
     config/               unchanged here (Spec 2 owns it)
     project.go, selector.go
@@ -122,15 +125,37 @@ The broadly-shared consumers of the codec (`checks`, `inspect`, `cmd/item`) move
 from `frontmatter.Parse`/`frontmatter.Document` to
 `collection/document.Parse`/`.Document`. This is a wide but mechanical rename.
 
-### `fix` becomes an engine
+### `fix` splits: transform (agnostic) vs persist (backend)
 
-Move `Format` and the orchestration now in `cmd/fix.go` into `internal/fix`;
-`cmd/fix.go` becomes a thin cobra shell. Rationale: `Format` has a single
-consumer, the canonical form *is* the definition of `fix`, and this gives `fix`
-the same shape as `check`/`inspect` (top-level engine + thin `cmd/`). `fix`
-imports `checks`/`plaintext` (its text-fix re-verification already does) and
-`collection/document` (for `Parse`/`Kind`); no cycle, since none of those import
-`fix`.
+`fix` mirrors the read path. Reading is *fetch bytes (backend) → decode
+(`document`) → `Document`*; writing is its dual: *compute desired content (`fix`)
+→ encode (`document`) → persist (backend)*. So `fix` splits along the same seam
+the read path already has:
+
+- **`internal/fix` — the transform engine, backend-agnostic.** It decides *what*
+  the corrected content should be: the canonical-form policy (sorted keys, block
+  style, single trailing newline) and the `text_forbids` body fixes, including the
+  re-verification that a fix actually resolved its violation. It operates on
+  content, not files — **no file IO.** This is the top-level operation engine,
+  parallel to `check`/`inspect`, with `cmd/fix.go` a thin shell over it.
+- **The persist step lives with the backend read**, in
+  `storage/collection/filesystem`: the atomic temp-rename `os.Rename` write moves
+  out of `cmd/fix.go` and sits beside the FS read, because *how* you write is
+  backend-specific. **SQL test:** the FS backend persists with a temp-rename; a
+  SQL backend would persist the same corrected value with an `UPDATE`. The
+  transform that produced the value is identical for both — that is why it is
+  `fix`'s, and the write is the backend's.
+- **The serialize mechanism is the codec's.** Turning a `Document` back into bytes
+  is the encode dual of `document.Parse`, so it belongs in `collection/document`
+  (as `Encode`), which `fix` composes — keeping `fix` pure policy, not byte
+  plumbing.
+
+`cmd/fix.go` orchestrates the three: read each item (backend) → transform (`fix`)
+→ if changed, persist (backend). `fix` imports `checks`/`plaintext` (text-fix
+re-verification) and `collection/document` (decode/encode); none import `fix`, so
+no cycle. Whether the backend write becomes a formal `CollectionDefinition`
+method or stays a package function in `filesystem` is a plan-level detail —
+leaning a function now, formalized onto the interface when a second backend lands.
 
 ### Dependency analysis
 
@@ -160,19 +185,23 @@ does nothing to deepen it.
   centralized config (e.g. don't add new central typed config to smooth the move).
 - **Check and inspector internal logic.** Only their import paths to the codec
   change.
-- **Behavior.** `make all` must stay green throughout; this is a pure relocation.
+- **Behavior.** `make all` must stay green throughout, and `fix`'s output and
+  on-disk results stay byte-identical. The one structural change beyond relocation
+  is splitting `fix`'s transform from its persist; both are behavior-preserving.
 
 ## Open Questions
 
-1. **`Reference` and `Granularity` — `storage/` root or `collection/`?** They are
-   part of the `CollectionDefinition` contract but also backend-native
-   vocabulary. Recommendation: keep them in `storage/` root (they describe the
-   backend kind; `Granularity`'s own comment calls it "a property of the
-   StorageType"), and let `collection/` import `storage/` for them. Low stakes.
-2. **Does the atomic temp-rename write belong in `fix`, or in the backend?**
-   Writing a file is arguably a storage-backend operation, not fix logic — a
-   candidate to push into `storage/collection/filesystem` as a "write item" later.
-   Out of scope to decide now; flagged so `fix` does not ossify around file IO.
+_None._ Both prior questions are resolved:
+
+1. **`Reference` and `Granularity` stay in `storage/` root** for now — they
+   describe the backend kind (`Granularity`'s own comment calls it "a property of
+   the StorageType"), and `collection/` imports `storage/` for them. Revisit only
+   if a second backend makes the split awkward.
+2. **The write splits** (see "`fix` splits" above): the backend-agnostic
+   transform is `internal/fix`; the persist (atomic temp-rename today, `UPDATE`
+   for SQL) lives with the backend read in `storage/collection/filesystem`. The
+   only residual detail — backend write as a `CollectionDefinition` method vs a
+   package function — is plan-level, leaning function now.
 
 ## Documentation updates
 
