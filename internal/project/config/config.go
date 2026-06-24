@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"gopkg.in/yaml.v3"
 )
@@ -50,18 +51,6 @@ const (
 // defaultPattern is the glob applied to a collection's directory when the
 // collection does not set its own `pattern`.
 const defaultPattern = "*.md"
-
-// storageTypeFilesystem is the only backend kind with an implementation today.
-const storageTypeFilesystem = "filesystem"
-
-// knownStorageTypes is the parse-time allowlist of backend kinds. The
-// implementations live in internal/storage; config validates the declared
-// `type` here so a typo fails at load rather than at command time. This set
-// grows alongside the internal/storage registry when a backend is added (config
-// cannot import storage, which depends on config).
-var knownStorageTypes = map[string]bool{
-	storageTypeFilesystem: true,
-}
 
 // ErrNotFound is returned when no .katalyst/ directory is present in the
 // starting directory or any of its ancestors.
@@ -93,7 +82,8 @@ type StorageInstance struct {
 	// Name is the public handle (filename stem under .katalyst/storage/, or
 	// the key in the inline `storage.defs` map).
 	Name string
-	// Type is the backend kind, validated against knownStorageTypes.
+	// Type is the backend kind, validated against the storage registry
+	// (storage.Known).
 	Type string
 	// Root is the absolute, resolved instance root. Relative roots in the
 	// source resolve against the repo Root.
@@ -462,9 +452,9 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *rawQuery) error {
 func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *rawQuery) (StorageInstance, error) {
 	typ := ri.Type
 	if typ == "" {
-		typ = storageTypeFilesystem
+		typ = string(storage.Filesystem)
 	}
-	if !knownStorageTypes[typ] {
+	if !storage.Known(storage.StorageType(typ)) {
 		return StorageInstance{}, fmt.Errorf("storage %q: unknown type %q", name, ri.Type)
 	}
 

@@ -34,13 +34,14 @@
 | 1 | Parse/build infra | registry parse+build registration, `argcheck` helpers, unified raw-node→check dispatch with legacy fallback, loader carries raw check nodes |
 | 2 | Convert check families | `structuredobject`, `markdownbodytext`, `filesystem`, `plaintext`, `jsonschema` own their parse+build; drop each `normalizeCheck` case |
 | 3 | Remove the legacy path | delete `normalizeCheck`, `CheckInstance`, `CheckType` consts, the legacy `Builder` union arg, the parity test |
-| 4 | Storage types | distribute `StorageInstance` config; move the `StorageInstance` type to `storage` |
-| 5 | Collections & schemas | distribute collection/variant/schema parsing; move `Collection` to `storage/collection`; dissolve `config → query` |
+| 4 | Storage types | validate the declared `type` via the `storage` registry (`storage.Known`); drop config's duplicate allowlist |
+| 5 | Collections & schemas | distribute collection/variant/schema parsing; move `Collection` and `StorageInstance` to `storage`/`storage/collection`; dissolve `config → query` |
 | 6 | Collapse loader + docs | fold the `config` remnant into the `project` loader, delete the `config` package; docs/AGENTS/skill sweep |
 
 Type relocation folds into the phase that distributes that object's parsing
-(`StorageInstance` in 4, `Collection` in 5), not a separate mechanical pre-step —
-moving a type with its parser touches it once instead of twice. The check work
+(`Collection` in 5, with `StorageInstance` riding along because it embeds
+`[]Collection`), not a separate mechanical pre-step — moving a type with its
+parser touches it once instead of twice. The check work
 splits across phases 1–3 because it is the largest and the registry already
 exists, so it both proves the pattern and earns the most decoupling first.
 
@@ -121,18 +122,23 @@ imports `config`, so the loader can parse checks through the registry.
 
 ### Phase 4 — Storage types own their config
 
-**Goal:** `StorageType` config is parsed/validated by the storage layer, not
-`config`.
+**Goal:** the storage layer owns the enumeration of valid backend kinds;
+`config` validates the declared `type` against it rather than a duplicate
+allowlist.
 
-1. **File:** `internal/storage/storage.go`. Move the `StorageInstance` type here
-   and add per-type instance parsing/validation (filesystem today), registered
-   on the existing `StorageType` registry (`knownStorageTypes` becomes the
-   registry's own enumeration).
-2. **File:** `internal/project/config/config.go`. Delete `buildInstance` and
-   `knownStorageTypes`; the loader dispatches storage blocks to the storage
-   registry.
-3. **File:** `internal/storage/storage_test.go`. Cover instance parsing + its
-   validation errors.
+1. **File:** `internal/storage/storage.go`. Already the single source of truth
+   for backend kinds: `StorageType`, the `Filesystem` constant, the `registered`
+   set, and `Known`. No change needed this phase.
+2. **File:** `internal/project/config/config.go`. Delete the duplicate
+   `knownStorageTypes`/`storageTypeFilesystem`; `buildInstance` defaults the type
+   to `storage.Filesystem` and validates via `storage.Known`. `config` may import
+   the `storage` root because it is a config-free leaf.
+
+**Deferred to Phase 5:** moving the `StorageInstance` type into `storage` and
+distributing its instance parsing. `StorageInstance` embeds `[]Collection`, so it
+cannot relocate before `Collection` does (it would create a `storage → config`
+cycle). The two type relocations land together in Phase 5, after `Collection`
+moves to `storage/collection`.
 
 ### Phase 5 — Collections and schemas own their config
 
@@ -185,7 +191,7 @@ predicates and query settings) and schemas resolve themselves; the central
 | `cmd/engine.go` | build site; routes through `BuildFromConfig` |
 | `internal/project/config/config.go` | source of everything being distributed; deleted by Phase 6 |
 | `internal/project/config/config_test.go` | golden error strings; the parity guard through phases 1–3 |
-| `internal/storage/storage.go` | new home for `StorageInstance` + instance parsing |
+| `internal/storage/storage.go` | the backend-kind registry (`Known`); Phase 5 also homes `StorageInstance` |
 | `internal/storage/collection/collection.go` | new home for `Collection`/`Variant`/`QuerySettings` + parsing |
 | `internal/project/loader.go` (new) | the thin loader/DataContext |
 | `.cursor/skills/add-katalyst-check-type/SKILL.md` | shortened; the proof check |
