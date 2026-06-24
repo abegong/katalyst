@@ -38,7 +38,12 @@ instead of a tolerated cross-tree edge.
   parsed result is `config.CheckInstance` — a **union of every check's fields**
   (`Field`, `Schema`, `Values`, `Min`, `Max`, `MinLength`, `Style`, `Target`,
   `Transform`, `Prefix`, `Suffix`, …), most nil for any given check. `CheckType`
-  constants re-enumerate the registry's kinds.
+  constants re-enumerate the registry's kinds. The blast radius is wide: **every
+  check family package imports `config` solely to read its fields off this
+  union** — `filesystem`, `structuredobject`, `markdownbodytext`, `plaintext`,
+  and `jsonschema` all appear in `config`'s importer list for no reason but
+  `CheckInstance`. Distributing args removes `config` from ~7 packages at once,
+  which is why checks-first (below) is where most of the coupling lives.
 - **Storage.** `knownStorageTypes` allowlists backend kinds; `buildInstance`
   validates and constructs `StorageInstance`.
 - **Collections.** `buildCollection`/`buildVariants`/`resolveQuery` parse and
@@ -102,17 +107,27 @@ which decodes into its own type.
 
 ### The dependency design (and how it pays off Spec 1)
 
-Distributing config raises one real hazard: **collections contain checks, and
-collection-scoped checks reference collections** — so naively giving each its own
-package risks a `collection ↔ checks` cycle that the single `config` package
-currently avoids by holding both.
+Distributing config *seems* to risk a `collection ↔ checks` cycle: collections
+contain checks, and collection-scoped checks reference collections. Implementing
+Spec 1 showed the codebase **already avoids this, and the resolution is just to
+preserve the existing boundary.** Two facts from the code:
 
-Resolution: **the loader is the assembler.** It parses checks (via the checks
-registry) and collections (via the collection parser) *independently*, then wires
-the parsed checks into the parsed collections. The collection parser does not
-import the checks registry; the loader does the wiring. The only residual edge is
-runtime `checks → collection` for the `CollectionCheck` target type — one
-direction, no cycle.
+- `config.Collection.Checks` is `[]CheckInstance` — a collection holds its checks
+  as **config data, never built `Check` values**.
+- Building is lazy, at the top layer: `cmd/engine.go:176` calls `checks.Build(ch)`
+  (and `:234` `BuildCollection`) at run time, not at load time.
+
+So nothing holds a `Collection`-that-contains-`Check`-values; the `Collection`→
+`Check` relationship is data, and the *engine* is the assembler. The distributed
+version keeps exactly that shape: a `Collection` carries its checks as **raw
+check config** (the deferred `yaml.Node`s), and the registry builds them lazily
+at the engine boundary. `checks → collection` (for the `CollectionCheck` target
+type) stays one-directional; `collection` never imports `checks`. No cycle.
+
+**The anti-pattern to avoid** is eager building: if the loader built
+`[]checks.Check` onto `Collection`, and `Collection` lives in `storage/collection`,
+you would get `storage/collection → checks → storage/collection`. Lazy building
+is therefore load-bearing, not incidental — the spec commits to it.
 
 This is also exactly what **removes Spec 1's interleaving**. The variant `when`
 predicate grammar (`query`) is used only while parsing a collection's variant
@@ -136,6 +151,10 @@ The migration is incremental and stays green throughout, because the loader can
 dispatch already-migrated kinds to their owners while the rest run the legacy
 path:
 
+0. **Relocate the types** — a mechanical, Spec-1-style pre-step: move the
+   `Collection` type to `storage/collection` and `StorageInstance` to `storage`
+   (storage root is already config-free post-Spec-1), leaving the parsing behind
+   in `config` for now. This sets the homes before redistributing parse logic.
 1. **Checks first** — the registry already exists; convert `Builder` to own its
    parse, one family at a time (`structuredobject`, `markdownbodytext`,
    `filesystem`, `plaintext`), deleting `normalizeCheck` cases and `CheckInstance`
@@ -147,21 +166,33 @@ path:
    that dissolves `config → query`.
 4. **Collapse** what remains of `config` into the thin loader; rename/rehome it.
 
+## Resolved by implementing Spec 1
+
+These two were open before Spec 1 landed; the hands-on move settled them.
+
+- **Where the types and loader live.** The concept *types* redistribute to their
+  concept packages; the *loader* is the assembler on top. No `config` package
+  survives.
+
+  | Today (central `config`) | Distributed home |
+  |---|---|
+  | `CheckInstance` + `normalizeCheck` | per-check arg structs, in each check family |
+  | `Collection` | `storage/collection` (the readers already consume it) |
+  | `StorageInstance` | `storage` (backend config; root is config-free post-Spec-1) |
+  | `.katalyst/` discovery + YAML + assembly | `project` — the DataContext/loader |
+
+- **No shared "model" package is needed.** The earlier worry — a neutral
+  `Check`-interface package to break `collection ↔ checks` — is moot given the
+  lazy-build boundary above: `Collection` holds raw check config, not `Check`
+  values, so `collection` never imports `checks`. Keep the assembler in the
+  engine; add no shared-interface package.
+
 ## Open Questions
 
-1. **Where does the thin loader live, and what is it called?** It is project-level
-   (it assembles the whole `.katalyst/` workspace), so `project/` or a much-slimmer
-   `project/config` (loader only, no typed config). Leaning `project/` as the
-   assembler, with no `config` package left. Decide during phase 4.
-2. **How much shared "model" survives?** Collections need an item/identity vocabulary
-   and a `Check` interface to hold their wired checks. If the loader-as-assembler
-   pattern isn't enough to keep `collection ⊥ checks`, a minimal neutral package
-   (a `Check` interface only) may be needed. Prefer the assembler; treat a shared
-   interface package as the fallback.
-3. **Validation-message consistency.** Central `normalizeCheck` gives uniform
+1. **Validation-message consistency.** Central `normalizeCheck` gives uniform
    error phrasing; per-object parsers must not drift in tone. A tiny shared helper
    set (required-field, enum-of) keeps them consistent without recentralizing.
-4. **Does the on-disk schema (`.katalyst/schemas/page.json`-style validation of
+2. **Does the on-disk schema (`.katalyst/schemas/page.json`-style validation of
    the config files themselves) change?** No intent to; confirm the dogfood
    `pages` collection still validates after the loader is rehomed.
 
