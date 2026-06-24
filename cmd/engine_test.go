@@ -43,8 +43,8 @@ func TestEnsureLibrariesAvailable_unavailableFails(t *testing.T) {
 	}
 }
 
-// Native check types name no library, and json-schema is always available, so
-// the gate never misfires on the common case.
+// Native check libraries and json-schema are always available, so the gate never
+// misfires on the common case.
 func TestEnsureLibrariesAvailable_nativeAndObjectPass(t *testing.T) {
 	err := ensureLibrariesAvailable([]checks.ConfiguredCheck{
 		{Kind: checks.CheckMarkdownSingleH1},

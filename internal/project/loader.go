@@ -88,10 +88,10 @@ type StorageInstance struct {
 }
 
 // Collection, CollectionVariant, and QuerySettings live in
-// internal/storage/collection (a collection is a storage concept); config
-// re-exports them under their historical names so callers that load config keep
-// referring to config.Collection. The loader assembles these types but no longer
-// defines them.
+// internal/storage/collection (a collection is a storage concept); project
+// re-exports them under their historical names so callers that load project
+// config keep referring to project.Collection. The loader assembles these types
+// but no longer defines them.
 type (
 	Collection        = collection.Collection
 	CollectionVariant = collection.CollectionVariant

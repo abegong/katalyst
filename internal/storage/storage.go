@@ -13,9 +13,9 @@ var registered = map[StorageType]bool{
 	Filesystem: true,
 }
 
-// Known reports whether a StorageType has an implementation. Config carries the
-// type as a plain string and leaves this validation to the storage layer, so
-// that config never has to import storage.
+// Known reports whether a StorageType has an implementation. The project loader
+// carries the type as a plain string and leaves this validation to the storage
+// layer, so the storage registry remains the source of truth for backend kinds.
 func Known(t StorageType) bool { return registered[t] }
 
 // Granularity is the level at which a backend's matched units attach to the
