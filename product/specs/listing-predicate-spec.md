@@ -77,6 +77,12 @@ terminology-matrix.md` says "Query" contradicts itself: core concepts list it as
 a supported operation, the domain model lists it as out of scope, and
 `internal/storage/collection/query` exists anyway.
 
+GitHub issue #76 tracks the same contradiction. It asks whether today's
+single-collection `item list --filter`/`--sort` behavior is "query," or whether
+it is a listing convenience distinct from a future query operation. This spec
+chooses the second answer: the shipped behavior is listing and predicates; Query
+remains the name for a future operation that asks storage for matching items.
+
 ## Design
 
 Replace `query` with two packages:
@@ -232,6 +238,11 @@ User-facing CLI flags keep their names. `item list --filter` remains
 The `listing:` config key replaces `query:`. Docs should describe this as an
 intentional config rename, not a synonym.
 
+This resolves #76 by making the shipped subset explicit without calling it
+Query. Katalyst currently has single-collection listing filters and sort keys.
+It does not have a dedicated query verb, cross-collection query, storage-pushed
+query planning, joins, or aggregation.
+
 ## Open Questions
 
 _None._
@@ -256,10 +267,12 @@ Resolved:
   `listing:` and document the config migration.
 - `docs/content/deep-dives/collections.md`: update variants to say they use the
   metadata predicate grammar, not the query package.
-- `docs/content/deep-dives/domain-model.md`: resolve or update the "Query" out-
-  of-scope note so it does not conflict with listing predicates.
-- `docs/content/deep-dives/core-concepts.md`: reserve **Query** for the future
-  storage operation, or mark it as planned.
+- `docs/content/deep-dives/domain-model.md`: replace the current "Query" out-of-
+  scope note with a precise distinction: listing filters are shipped; a
+  first-class Query operation is planned.
+- `docs/content/deep-dives/core-concepts.md`: mark **Query** as a planned
+  operation, not a currently shipped one.
+- GitHub issue #76: close once the docs and code use the new terminology.
 - `product/specs/domain-model-terminology-matrix.md`: update the Query/filter
   row after the rename lands.
 

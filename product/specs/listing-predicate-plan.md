@@ -23,6 +23,12 @@ Config uses `query:` at both project and collection scope. The block only
 configures listing defaults: `filterTypeMismatch` for `item list --filter` and
 `sortMissing` for `item list --sort`.
 
+GitHub issue #76 tracks the wider terminology contradiction. `core-concepts.md`
+names Query as a supported operation, `domain-model.md` says Query is out of
+scope, and code uses `query` for listing filters and variant predicates. This
+plan resolves that issue by naming today's shipped behavior `listing` and
+`predicate`, then reserving Query for a future storage operation.
+
 ## Sequencing
 
 | Phase | Focus | Scope |
@@ -31,7 +37,7 @@ configures listing defaults: `filterTypeMismatch` for `item list --filter` and
 | 2 | Split predicate and listing packages | Move filter grammar to `predicate`; move listing pipeline and sort logic to `listing` |
 | 3 | Rename config defaults | Rename `QuerySettings`/`RawQuery`/`Collection.Query` to `ListingDefaults`/`RawListingDefaults`/`Collection.ListingDefaults`; switch YAML to `listing:` |
 | 4 | Update callers and docs | Update CLI, engine, package docs, deep dives, and reference config |
-| 5 | Verify and remove leftovers | Prove old imports are gone and run the test suite |
+| 5 | Verify and close terminology loop | Prove old imports are gone, run the test suite, and confirm #76 acceptance is met |
 
 The package split lands before the config rename so call sites can move from
 `query` to `predicate`/`listing` independently of YAML behavior.
@@ -217,16 +223,25 @@ Goal: Update callers and docs to the new names.
 
    **File:** `docs/content/deep-dives/domain-model.md`
 
-   Update the "Query" out-of-scope note so it does not conflict with listing
-   predicates.
+   Replace the "Query" out-of-scope note with the explicit split: listing
+   filters and sort keys are shipped for one collection; first-class Query is
+   planned.
 
    **File:** `docs/content/deep-dives/core-concepts.md`
 
-   Reserve **Query** for the future storage operation, or mark it planned.
+   Mark **Query** as planned rather than shipped. Keep listing filters out of the
+   operation list unless they are named as part of Listing.
 
    **File:** `product/specs/domain-model-terminology-matrix.md`
 
    Update the Query/filter row for the new package names.
+
+7. Update the issue-resolution trail.
+
+   **File:** `product/specs/listing-predicate-spec.md`
+
+   Keep the explicit #76 reference that says this work resolves the contradiction
+   by separating listing/predicate from future Query.
 
 ### Phase 5
 
@@ -251,6 +266,14 @@ Goal: Verify the rename is complete and behavior stayed stable.
 
    Regenerate snapshots only for user-facing text changes caused by
    `query:` to `listing:` diagnostics or docs-driven help text.
+
+4. Verify #76 acceptance.
+
+   **File:** docs and codebase
+
+   Confirm `core-concepts.md`, `domain-model.md`, the config reference, and code
+   package names agree: shipped behavior is listing/predicates; Query is planned.
+   Close #76 after this lands.
 
 ## Key Files
 
@@ -281,6 +304,7 @@ Goal: Verify the rename is complete and behavior stayed stable.
 | `docs/content/deep-dives/domain-model.md` | Query/listing vocabulary |
 | `docs/content/deep-dives/core-concepts.md` | Query operation vocabulary |
 | `product/specs/domain-model-terminology-matrix.md` | Naming matrix |
+| GitHub issue #76 | Terminology contradiction this plan resolves |
 
 ## Architecture Decisions
 
@@ -291,7 +315,7 @@ Goal: Verify the rename is complete and behavior stayed stable.
 | Config key | Rename `query:` to `listing:` | The config block controls listing defaults, not a general query. A targeted error for `query:` keeps the contract explicit. |
 | Resolved config type | `ListingDefaults` | The struct holds default policy for listing edge cases. It is not the listing operation itself. |
 | CLI flags | Keep `--filter`, `--sort`, `--on-type-mismatch`, `--sort-missing` | The CLI terms are already precise for users. The internal package names change to clarify ownership. |
-| Query term | Reserve for a future storage operation | A future query should mean asking storage for matching items directly, not filtering an in-memory list. |
+| Query term | Reserve for a future storage operation | A future query should mean asking storage for matching items directly, not filtering an in-memory list. This resolves #76 by naming today's behavior listing/predicate. |
 
 ## Documentation Updates
 
@@ -304,8 +328,9 @@ Documentation ships in Phase 4.
   `listing` and document the migration error.
 - `docs/content/deep-dives/collections.md`: describe variants as using metadata
   predicates.
-- `docs/content/deep-dives/domain-model.md`: update the query out-of-scope note.
-- `docs/content/deep-dives/core-concepts.md`: reserve or mark Query as planned.
+- `docs/content/deep-dives/domain-model.md`: distinguish shipped listing filters
+  from planned Query.
+- `docs/content/deep-dives/core-concepts.md`: mark Query as planned.
 - `product/specs/domain-model-terminology-matrix.md`: update the Query/filter
   row.
 
