@@ -6,7 +6,7 @@ import (
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/project/config"
-	"github.com/abegong/katalyst/internal/storage"
+	"github.com/abegong/katalyst/internal/storage/collection"
 )
 
 // CollectionView is the collection layer's addressing surface: a resolved
@@ -17,7 +17,7 @@ import (
 // reach into internal/checks.
 type CollectionView struct {
 	collection config.Collection
-	items      []storage.Item
+	items      []collection.Item
 	// docs is aligned with items; an entry is nil when the item could not be
 	// read or parsed, so a broken item contributes nothing rather than panicking.
 	docs []*frontmatter.Document
