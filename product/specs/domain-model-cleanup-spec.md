@@ -141,8 +141,11 @@ what keeps them sharing one vocabulary.
 - **Storage, not data interface.** *Data interface* is deprecated. The backend
   vocabulary is *StorageType* / *StorageInstance* (per `storage-layer-spec.md`),
   used even at the general level; core-concepts drops "data interface."
-- **Source, not raw-source** for the inspector layer, matching code and CLI
-  (`inspect.SourceView`, the `source/` reference directory). Rename the docs.
+- **"raw-source" stays the prose term**, with `Source*` as the short code
+  identifier. (This reverses an earlier "source wins" lean: "raw-source" is the
+  dominant, clearer prose term and is baked into the `registry.go`-generated
+  reference text, so flipping it would churn code and regenerate docs for no
+  user benefit. The docs just need to use it consistently.)
 - **Item primary, document specialized**; **attribute general, field
   specialized**, per the rule above.
 
@@ -190,13 +193,11 @@ terminology-align the new pages.
   operations-thesis sentence relocated from core-concepts' Implications as its
   lead, since the page already demonstrates the claim tier by tier.
 - **`docs/content/deep-dives/domain-model.md`** — **kept** as the katalyst hub
-  #73 built. No structural change; terminology-align it (item/document,
-  source/raw-source) and sharpen its one-line statement of how it differs from
+  #73 built. No structural change; terminology-align it (item/document, raw-source consistency) and sharpen its one-line statement of how it differs from
   core-concepts.
 - **`docs/content/deep-dives/collections.md`, `inspectors.md`** — new in #73 and
   the homes for the former domain-model detail (resolver table, `check`
-  lifecycle, invariants, inspector layers). Apply the source/raw-source and
-  item/document decisions here.
+  lifecycle, invariants, inspector layers). Apply the item/document decisions here; keep "raw-source" consistent.
 - **`docs/content/deep-dives/storage.md`** — confirm wording now that "data
   interface" is deprecated in favor of the storage vocabulary.
 - **Deep-dive titles** — rename to match the key terms, not "How X work":
@@ -217,11 +218,9 @@ terminology-align the new pages.
   `deep-dives/_index.md`. Rationale: keep the *why* next to the `cmd/` code it
   explains, per `how-we-document.md`; a standalone file (rather than inlining ~95
   lines into `cmd/AGENTS.md`, already 118 lines) keeps the conventions file lean.
-- **Generated check-types/inspectors reference** — regenerate with `make
-  docs-gen` if any family or layer label changes (e.g. raw-source → source);
-  never hand-edit.
-- **`cmd/` help text** — apply the source/raw-source rename so help strings match
-  the glossary.
+- **Generated check-types/inspectors reference** — run `make docs-gen` only to
+  confirm **no drift**; the cleanup changes no registry labels, so the generated
+  pages must stay byte-identical. Never hand-edit.
 
 ## Rejected alternatives
 
