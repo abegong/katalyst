@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
@@ -75,12 +74,12 @@ func newCollectionGetCmd() *cobra.Command {
 			}
 
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "name:    %s\n", c.Name)
-			fmt.Fprintf(out, "path:    %s\n", c.Path)
-			fmt.Fprintf(out, "pattern: %s\n", c.Pattern)
-			fmt.Fprintf(out, "schema:  %s\n", schemaLabel(c.Schema))
-			fmt.Fprintf(out, "items:   %d\n", len(items))
-			fmt.Fprintf(out, "checks:  %s\n", strings.Join(checkTypes(c), ", "))
+			printSectionHeader(out, "Collection "+c.Name)
+			fmt.Fprintf(out, "- path: %s\n", c.Path)
+			fmt.Fprintf(out, "- pattern: %s\n", c.Pattern)
+			fmt.Fprintf(out, "- schema: %s\n", schemaLabel(c.Schema))
+			fmt.Fprintf(out, "- items: %d\n", len(items))
+			fmt.Fprintf(out, "- checks: %s\n", joinOrDash(checkTypes(c)))
 			return nil
 		},
 	}
