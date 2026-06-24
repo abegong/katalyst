@@ -1,8 +1,8 @@
 package checks
 
 // CheckType is the `kind:` identifier selecting a check type. It lives here, in
-// the package that owns the check registry, so check types and their parsers no
-// longer depend on internal/project/config for their identity.
+// the package that owns the check registry, so check types and their parsers do
+// not depend on the project loader for their identity.
 type CheckType string
 
 const (

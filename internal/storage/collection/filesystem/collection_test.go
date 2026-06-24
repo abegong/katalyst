@@ -5,17 +5,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage"
+	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
 )
 
 // scaffoldNotes writes a small notes/ directory and returns a Collection
 // pointing at it. Collection fields are all exported, so a test can build one
-// directly without going through config.Load.
+// directly without going through project.Load.
 //
 //	notes/ (pattern *.md): dune.md, messiah.md, stray.txt (unmatched)
-func scaffoldNotes(t *testing.T) config.Collection {
+func scaffoldNotes(t *testing.T) collection.Collection {
 	t.Helper()
 	dir := t.TempDir()
 	write := func(rel, content string) {
@@ -30,7 +30,7 @@ func scaffoldNotes(t *testing.T) config.Collection {
 	write("notes/dune.md", "# Dune\n")
 	write("notes/messiah.md", "# Messiah\n")
 	write("notes/stray.txt", "not markdown\n")
-	return config.Collection{
+	return collection.Collection{
 		Name:    "notes",
 		Path:    "notes",
 		Dir:     filepath.Join(dir, "notes"),
@@ -40,7 +40,7 @@ func scaffoldNotes(t *testing.T) config.Collection {
 
 func TestFilesystem_Items_sortedStems(t *testing.T) {
 	c := scaffoldNotes(t)
-	def := filesystem.New(filepath.Dir(c.Dir), []config.Collection{c})
+	def := filesystem.New(filepath.Dir(c.Dir), []collection.Collection{c})
 	items, err := def.Items(c)
 	if err != nil {
 		t.Fatalf("Items: %v", err)
@@ -54,8 +54,8 @@ func TestFilesystem_Items_sortedStems(t *testing.T) {
 }
 
 func TestFilesystem_Items_missingDirIsEmpty(t *testing.T) {
-	c := config.Collection{Name: "ghost", Dir: filepath.Join(t.TempDir(), "nope"), Pattern: "*.md"}
-	def := filesystem.New("", []config.Collection{c})
+	c := collection.Collection{Name: "ghost", Dir: filepath.Join(t.TempDir(), "nope"), Pattern: "*.md"}
+	def := filesystem.New("", []collection.Collection{c})
 	items, err := def.Items(c)
 	if err != nil {
 		t.Fatalf("Items: %v", err)
@@ -67,7 +67,7 @@ func TestFilesystem_Items_missingDirIsEmpty(t *testing.T) {
 
 func TestFilesystem_Unmatched_reportsNonMatching(t *testing.T) {
 	c := scaffoldNotes(t)
-	def := filesystem.New("", []config.Collection{c})
+	def := filesystem.New("", []collection.Collection{c})
 	un, err := def.Unmatched(c)
 	if err != nil {
 		t.Fatalf("Unmatched: %v", err)
@@ -79,7 +79,7 @@ func TestFilesystem_Unmatched_reportsNonMatching(t *testing.T) {
 
 func TestFilesystem_Reference_reverseResolution(t *testing.T) {
 	c := scaffoldNotes(t)
-	def := filesystem.New("", []config.Collection{c})
+	def := filesystem.New("", []collection.Collection{c})
 	ref, err := def.Reference(c, "dune")
 	if err != nil {
 		t.Fatalf("Reference: %v", err)
@@ -97,7 +97,7 @@ func TestFilesystem_Granularity_fileIsItem(t *testing.T) {
 
 func TestFilesystem_Collections_returnsBound(t *testing.T) {
 	c := scaffoldNotes(t)
-	cols := filesystem.New("", []config.Collection{c}).Collections()
+	cols := filesystem.New("", []collection.Collection{c}).Collections()
 	if len(cols) != 1 || cols[0].Name != "notes" {
 		t.Fatalf("expected [notes], got %+v", cols)
 	}

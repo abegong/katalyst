@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
 	"gopkg.in/yaml.v3"
 )
@@ -27,7 +27,7 @@ func parseItem(path string) (*document.Document, error) {
 // using the engine's schema-resolution precedence (--schema, inline
 // "schema:" key, then the collection's object checks). It returns a
 // multi-line error describing every violation, or nil when valid.
-func validateItemWrite(e *engine, c config.Collection, path string, src []byte) error {
+func validateItemWrite(e *engine, c project.Collection, path string, src []byte) error {
 	doc, err := document.Parse(src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)

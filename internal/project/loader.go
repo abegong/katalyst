@@ -1,5 +1,5 @@
-// Package config loads a project's configuration from its .katalyst/
-// directory and answers two questions:
+// loader.go holds the project loader: it reads a project's .katalyst/ directory
+// and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
 //  2. Which storage instances exist, what collections does each declare, and
@@ -13,7 +13,7 @@
 // instance embeds the collections it maps. The file format (yaml, json, or
 // both) is set per kind in config.yaml. See
 // docs/content/reference/configuration.md.
-package config
+package project
 
 import (
 	"errors"

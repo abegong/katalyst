@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
 )
 
@@ -85,14 +85,14 @@ func newSchemaShowCmd() *cobra.Command {
 // loadConfigFromCWD finds the config relative to the current working
 // directory, converting "not found" into a usage error so the CLI exits
 // with code 2.
-func loadConfigFromCWD() (*config.Config, error) {
+func loadConfigFromCWD() (*project.Config, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := config.Load(wd)
+	cfg, err := project.Load(wd)
 	if err != nil {
-		if errors.Is(err, config.ErrNotFound) {
+		if errors.Is(err, project.ErrNotFound) {
 			return nil, usageErr("no .katalyst/ found in this directory or any ancestor (run `katalyst init`)")
 		}
 		return nil, err

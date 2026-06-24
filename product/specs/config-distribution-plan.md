@@ -177,25 +177,34 @@ directory *discovery*, which is a project-filesystem-layout concern that belongs
 with the loader, not an "object owns its config" win. It folds into the `project`
 loader in Phase 6 rather than moving twice.
 
-### Phase 6 — Collapse the loader and sweep docs
+### Phase 6 — Collapse the loader and sweep docs (DONE)
 
 **Goal:** no `config` package; `project` is the assembler; docs match.
 
-1. **File:** `internal/project/loader.go` (new, or fold into `project.go`).
-   The remaining `.katalyst/` discovery + YAML read + assembly moves here; the
-   `internal/project/config` package is deleted. Update all importers.
-2. **File:** `AGENTS.md` (root). Rewrite the layout tree (`config` gone; loader
-   in `project`) and the dependency prose; the `config → query` caveat is
-   removed.
-3. **File:** `.cursor/skills/add-katalyst-check-type/SKILL.md`. Rewrite: adding a
-   check is one file (args + parse + build + Descriptor + runtime), no
-   `normalizeCheck` step. Its getting shorter is the proof the change worked.
-4. **File:** `docs/content/deep-dives/` (`collections.md` + a config-architecture
-   note). Document object-owns-its-config and the GX-fluent precedent.
-5. **File:** `product/specs/domain-model-terminology-matrix.md`. Update the
-   Config row; "centralized typed config" is no longer accurate.
-6. Run `make all` + `make docs-gen-check` (must stay byte-identical — no
-   `Descriptor` labels change).
+1. **Files:** `internal/project/loader.go` + `register.go` + `loader_test.go`
+   (moved from the deleted `internal/project/config` package, repackaged
+   `project`). The `.katalyst/` discovery + YAML read + assembly + schema
+   discovery + `StorageInstance` now live in `project`; `project` re-exports
+   `Collection`/`CollectionVariant`/`QuerySettings` as aliases so its callers are
+   untouched. All importers updated: `cmd/*`, `internal/inspect`, and `internal/
+   fix` use `project.Load`/`project.Config`/`project.Collection`; the storage
+   subtree (`filesystem`, `fix`) names `collection.Collection` directly so it
+   never imports `project` (which would cycle).
+2. **File:** `AGENTS.md` (root) + `internal/storage/collection/AGENTS.md`.
+   Rewrote the layout tree (`config` gone; loader in `project`) and the
+   dependency prose; the `config → query` caveat is removed; the collection
+   AGENTS notes the flipped edge and the injected `SchemaKnown`.
+3. **File:** `.cursor/skills/add-katalyst-check-type/SKILL.md`. Rewritten: adding
+   a check is a kind constant plus one family file (args + parse + build +
+   Descriptor + registration), no central-config step. Its getting shorter is the
+   proof the change worked.
+4. **Files:** `docs/content/deep-dives/collections.md` +
+   `docs/content/reference/glossary.md`. Updated to "the project loader" and the
+   object-owns-its-config model.
+5. **File:** `product/specs/domain-model-terminology-matrix.md`. Updated the
+   Config and Query rows (now `project` loader / `collection.QuerySettings`).
+6. Ran `make all` + `make docs-gen-check` — green, generated reference
+   byte-identical (no `Descriptor` labels changed).
 
 ## Key Files
 

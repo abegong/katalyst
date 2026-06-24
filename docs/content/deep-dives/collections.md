@@ -5,9 +5,12 @@ weight = 42
 
 # Collections
 
-The `internal/project/config` package is the orchestration hub: it loads a project's
-`.katalyst/` directory, resolves named schemas and collections, and decides
-which schema applies to a given item. The `check` lifecycle is driven from here.
+The `internal/project` loader (`loader.go`) is the orchestration hub: it loads a
+project's `.katalyst/` directory, resolves named schemas, and assembles storage
+instances and their collections (each object type parses its own config — the
+storage registry validates a declared `type`, and a collection parses its own
+block in `storage/collection`). It decides which schema applies to a given item,
+and the `check` lifecycle is driven from here.
 This page is the model and the *why*; for the key-by-key surface see the
 [configuration reference]({{< relref "../reference/configuration.md" >}}).
 
@@ -188,4 +191,4 @@ The data flow per item, end to end:
   collections, and the instance model.
 - The [domain model]({{< relref "domain-model.md" >}}) for the cross-subsystem
   entity map and invariants.
-- `go doc ./internal/project/config` for the code-level contract.
+- `go doc ./internal/project` for the code-level contract.

@@ -5,8 +5,8 @@
 //
 //   - StorageType: a known backend kind (filesystem today; sqlite, postgresql,
 //     mongodb later). The registry here is the extension point.
-//   - StorageInstance (in internal/project/config): one configured store of a type plus
-//     how to reach it, embedding the collections it maps.
+//   - StorageInstance (assembled by the internal/project loader): one configured
+//     store of a type plus how to reach it, embedding the collections it maps.
 //   - CollectionDefinition: the two-way mapping from a store's contents to
 //     collections and items. FilesystemCollectionDefinition is the first.
 //

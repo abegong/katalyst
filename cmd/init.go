@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
 )
 
@@ -62,13 +62,13 @@ func newInitCmd() *cobra.Command {
 
 			// Refuse to touch an existing project. Checking the .katalyst/
 			// dir up front keeps init all-or-nothing.
-			katalystDir := filepath.Join(target, config.Dir)
+			katalystDir := filepath.Join(target, project.Dir)
 			if _, err := os.Stat(katalystDir); err == nil {
 				return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", katalystDir))
 			}
 
 			for _, sub := range []string{"schemas", "storage"} {
-				rel := filepath.Join(config.Dir, sub)
+				rel := filepath.Join(project.Dir, sub)
 				if err := os.MkdirAll(filepath.Join(target, rel), 0o755); err != nil {
 					return err
 				}
@@ -77,13 +77,13 @@ func newInitCmd() *cobra.Command {
 
 			// Write the default storage instance explicitly; katalyst never
 			// synthesizes one at runtime.
-			storageRel := filepath.Join(config.Dir, "storage", "local.yaml")
+			storageRel := filepath.Join(project.Dir, "storage", "local.yaml")
 			if err := os.WriteFile(filepath.Join(target, storageRel), []byte(scaffoldLocalStorage), 0o644); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", storageRel)
 
-			cfgRel := filepath.Join(config.Dir, "config.yaml")
+			cfgRel := filepath.Join(project.Dir, "config.yaml")
 			if err := os.WriteFile(filepath.Join(target, cfgRel), []byte(scaffoldConfig), 0o644); err != nil {
 				return err
 			}

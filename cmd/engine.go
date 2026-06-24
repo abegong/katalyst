@@ -10,7 +10,6 @@ import (
 	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
 	"github.com/abegong/katalyst/internal/checks/jsonschema"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // libPathKey identifies a compiled schema in the engine cache: a (library,
@@ -121,7 +120,7 @@ func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
 // the base set (additively, through the same precedence). An item that matches
 // no variant runs the base only, or, under useExhaustiveVariants, fails with
 // "matches no variant".
-func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.Check, error) {
+func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.Check, error) {
 	cfg := e.proj.Config()
 
 	matched, routed, err := matchVariant(c, meta)
@@ -197,13 +196,13 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 // matchVariant returns the first variant whose `when` predicates the item's
 // metadata all satisfy, and whether any matched. The collection's
 // filterTypeMismatch governs an incomparable predicate (skip vs. error).
-func matchVariant(c config.Collection, meta map[string]any) (config.CollectionVariant, bool, error) {
+func matchVariant(c project.Collection, meta map[string]any) (project.CollectionVariant, bool, error) {
 	for _, v := range c.Variants {
 		all := true
 		for _, p := range v.Where {
 			ok, err := p.Matches(meta, c.Query.FilterTypeMismatch)
 			if err != nil {
-				return config.CollectionVariant{}, false, err
+				return project.CollectionVariant{}, false, err
 			}
 			if !ok {
 				all = false
@@ -214,7 +213,7 @@ func matchVariant(c config.Collection, meta map[string]any) (config.CollectionVa
 			return v, true, nil
 		}
 	}
-	return config.CollectionVariant{}, false, nil
+	return project.CollectionVariant{}, false, nil
 }
 
 // unroutedCheck reports a single violation for an item that matched no variant
@@ -228,7 +227,7 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 
 // collectionChecksFor builds the collection-scoped checks configured for a
 // collection. These run once per collection, after the per-item pass.
-func (e *engine) collectionChecksFor(c config.Collection) ([]checks.CollectionCheck, error) {
+func (e *engine) collectionChecksFor(c project.Collection) ([]checks.CollectionCheck, error) {
 	var out []checks.CollectionCheck
 	for _, cc := range c.Checks {
 		if col, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
@@ -239,7 +238,7 @@ func (e *engine) collectionChecksFor(c config.Collection) ([]checks.CollectionCh
 }
 
 // projectFor wraps a loaded config in a project.
-func projectFor(cfg *config.Config) *project.Project { return project.New(cfg) }
+func projectFor(cfg *project.Config) *project.Project { return project.New(cfg) }
 
 // resolveSelectors maps a *project.UsageError to a cmd usage error (exit
 // 2) and passes other errors through unchanged.

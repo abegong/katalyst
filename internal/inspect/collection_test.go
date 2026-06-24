@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 func TestCollectionView_objectFieldsAndMarkdownBody(t *testing.T) {
@@ -23,7 +22,7 @@ collections:
 	writeFile(t, dir, "notes/messiah.md", "---\ntitle: Messiah\nrating: 4\n---\n# Messiah\n\n## Review\n")
 	writeFile(t, dir, "notes/draft.md", "---\ntitle: Draft\n---\n# Draft\n")
 
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}

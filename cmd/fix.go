@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/abegong/katalyst/internal/fix"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -68,7 +68,7 @@ printed and the command exits with status 1. Use this in CI.`,
 // content with the backend-agnostic fix engine and, unless check is set,
 // persists it through the filesystem backend (an atomic replace). The split is
 // deliberate: deciding what to write is fix's, writing it is the backend's.
-func fixOne(path string, c config.Collection, check bool) (changed bool, err error) {
+func fixOne(path string, c project.Collection, check bool) (changed bool, err error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return false, err

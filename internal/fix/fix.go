@@ -10,14 +10,14 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/plaintext"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // Apply returns the canonical, fixed form of src for collection c: it applies
 // the collection's opted-in text_forbids body fixes, then rewrites the
 // frontmatter into canonical form. The result equals src when nothing changes.
-func Apply(src []byte, c config.Collection) ([]byte, error) {
+func Apply(src []byte, c collection.Collection) ([]byte, error) {
 	fixed, err := applyTextFixes(src, c)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func Canonical(src []byte) ([]byte, error) {
 // fixes, then re-checks its own work: if a fix leaves the rule still violated
 // (a bad template), it fails rather than producing a still-broken result. Files
 // in collections with no text fixes are returned untouched.
-func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
+func applyTextFixes(src []byte, c collection.Collection) ([]byte, error) {
 	fixers := textFixers(c)
 	if len(fixers) == 0 {
 		return src, nil
@@ -75,7 +75,7 @@ func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
 // collection (those with a non-empty fix template). Each check is built from its
 // validated config through the registry, so fix reuses the same TextForbids the
 // engine would run.
-func textFixers(c config.Collection) []plaintext.TextForbids {
+func textFixers(c collection.Collection) []plaintext.TextForbids {
 	var out []plaintext.TextForbids
 	for _, cc := range c.Checks {
 		if cc.Kind != checks.CheckTextForbids {
