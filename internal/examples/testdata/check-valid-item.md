@@ -2,17 +2,17 @@ The `notes` collection binds the `book` schema, which requires `title` and an in
 
 ## Input
 
-`.katalyst/schemas/book.yaml`
+`notes/dune.md`
 
-```yaml
-type: object
-required: [title, year]
-properties:
-  title: { type: string }
-  year:  { type: integer }
+```markdown
+---
+title: Dune
+year: 1965
+---
+# Dune
 ```
 
-`.katalyst/storage/local.yaml`
+`.katalyst/storage/my_directory.yaml`
 
 ```yaml
 type: filesystem
@@ -23,14 +23,14 @@ collections:
     schema: book
 ```
 
-`notes/dune.md`
+`.katalyst/schemas/book.yaml`
 
-```markdown
----
-title: Dune
-year: 1965
----
-# Dune
+```yaml
+type: object
+required: [title, year]
+properties:
+  title: { type: string }
+  year:  { type: integer }
 ```
 
 ## Command

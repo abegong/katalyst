@@ -1,2 +1,2 @@
-<project>/notes/dune.md:3: /year: got string, want integer
+<project>/notes/dune.md:3: /year: field "year" must be type "integer"
 exit status 1

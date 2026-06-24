@@ -2,29 +2,6 @@ The `books` collection binds the `book` schema (`title` plus an integer `year`).
 
 ### Input
 
-`.katalyst/schemas/book.yaml`
-
-```yaml
-$schema: https://json-schema.org/draft/2020-12/schema
-title: book
-type: object
-required: [title, year]
-properties:
-  title: { type: string, minLength: 1 }
-  year:  { type: integer, minimum: 0 }
-```
-
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  books:
-    path: notes/books
-    schema: book
-```
-
 `notes/books/dune.md`
 
 ```markdown
@@ -42,6 +19,29 @@ year: 1965
 title: Foundation
 ---
 # Foundation
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: notes/books
+    schema: book
+```
+
+`.katalyst/schemas/book.yaml`
+
+```yaml
+$schema: https://json-schema.org/draft/2020-12/schema
+title: book
+type: object
+required: [title, year]
+properties:
+  title: { type: string, minLength: 1 }
+  year:  { type: integer, minimum: 0 }
 ```
 
 ### Command

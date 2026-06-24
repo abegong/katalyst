@@ -2,7 +2,17 @@ The `text_forbids` check forbids a trailing period on the first line; its `fix` 
 
 ### Input
 
-`.katalyst/storage/local.yaml`
+`notes/doc.md`
+
+```markdown
+---
+t: 1
+---
+# Title.
+keep this.
+```
+
+`.katalyst/storage/my_directory.yaml`
 
 ```yaml
 type: filesystem
@@ -15,16 +25,6 @@ collections:
         target: first-line
         pattern: '\.(\s*)$'
         fix: '$1'
-```
-
-`notes/doc.md`
-
-```markdown
----
-t: 1
----
-# Title.
-keep this.
 ```
 
 ### Command

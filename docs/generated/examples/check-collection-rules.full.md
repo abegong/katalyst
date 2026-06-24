@@ -2,22 +2,6 @@ The `posts` collection attaches three checks: an H1 must exist, the frontmatter 
 
 ### Input
 
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  posts:
-    path: content/posts
-    checks:
-      - kind: markdown_requires_h1
-      - kind: markdown_title_matches_h1
-        field: title
-      - kind: filesystem_name_case
-        style: kebab
-```
-
 `content/posts/hello-world.md`
 
 ```markdown
@@ -34,6 +18,22 @@ title: Hello world
 title: Bad title
 ---
 # A different heading
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  posts:
+    path: content/posts
+    checks:
+      - kind: markdown_requires_h1
+      - kind: markdown_title_matches_h1
+        field: title
+      - kind: filesystem_name_case
+        style: kebab
 ```
 
 ### Command

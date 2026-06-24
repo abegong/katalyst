@@ -2,18 +2,6 @@
 
 ## Input
 
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-```
-
 `notes/tidy.md`
 
 ```markdown
@@ -31,6 +19,18 @@ title: Messy
 author: Ada
 ---
 # Messy
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
 ```
 
 ## Command

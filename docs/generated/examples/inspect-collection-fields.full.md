@@ -2,28 +2,6 @@ Once a collection is configured, `inspect <name>` runs the collection inspectors
 
 ### Input
 
-`.katalyst/schemas/book.yaml`
-
-```yaml
-type: object
-required: [title, author, status]
-properties:
-  title:  { type: string }
-  author: { type: string }
-  status: { enum: [read, reading, to-read] }
-```
-
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  books:
-    path: wiki
-    schema: book
-```
-
 `wiki/dune.md`
 
 ```markdown
@@ -85,6 +63,28 @@ title: Dune Messiah
 status: read
 ---
 # Dune Messiah
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  books:
+    path: wiki
+    schema: book
+```
+
+`.katalyst/schemas/book.yaml`
+
+```yaml
+type: object
+required: [title, author, status]
+properties:
+  title:  { type: string }
+  author: { type: string }
+  status: { enum: [read, reading, to-read] }
 ```
 
 ### Command

@@ -2,18 +2,6 @@ With no target, `check` validates every collection. One item is missing its H1, 
 
 ## Input
 
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-```
-
 `notes/intro.md`
 
 ```markdown
@@ -30,6 +18,18 @@ title: Intro
 title: Draft
 ---
 No heading here.
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
 ```
 
 ## Command

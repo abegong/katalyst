@@ -61,6 +61,20 @@ collections:
     schema: book
 `
 
+// notesFieldTypeStorage declares the `notes` collection with an inline
+// object_field_type check instead of a schema, so the type-error example needs
+// no separate schema file and matches the field-type reference page it sits on.
+const notesFieldTypeStorage = `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: object_field_type
+        field: year
+        type: integer
+`
+
 // wikiBookSchema requires title+author+status with a status enum; the
 // collection-layer inspect example binds it so the project loads.
 const wikiBookSchema = `type: object
@@ -141,13 +155,15 @@ var wikiCorpus = []File{
 	{Path: "wiki/Dune Messiah.md", Content: "---\ntitle: Dune Messiah\nstatus: read\n---\n# Dune Messiah\n"},
 }
 
-// withWikiProject prepends the .katalyst project files to the wiki corpus.
+// withWikiProject appends the .katalyst project files to the wiki corpus so the
+// data files lead and the storage config (then the schema) trail in the
+// rendered input.
 func withWikiProject() []File {
-	out := []File{
-		{Path: ".katalyst/schemas/book.yaml", Content: wikiBookSchema},
-		{Path: ".katalyst/storage/local.yaml", Content: wikiStorage},
-	}
-	return append(out, wikiCorpus...)
+	out := append([]File{}, wikiCorpus...)
+	return append(out,
+		File{Path: ".katalyst/storage/my_directory.yaml", Content: wikiStorage},
+		File{Path: ".katalyst/schemas/book.yaml", Content: wikiBookSchema},
+	)
 }
 
 // All returns the worked-example registry, in catalog order.
@@ -160,9 +176,9 @@ func All() []Example {
 			Doc:     "The `notes` collection binds the `book` schema, which requires `title` and an integer `year`. This item satisfies both, so `check` exits 0 and prints OK.",
 			Weight:  10,
 			Files: []File{
-				{Path: ".katalyst/schemas/book.yaml", Content: bookSchema},
-				{Path: ".katalyst/storage/local.yaml", Content: notesStorage},
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: notesStorage},
+				{Path: ".katalyst/schemas/book.yaml", Content: bookSchema},
 			},
 			Args: []string{"check", "notes/dune"},
 		},
@@ -170,12 +186,11 @@ func All() []Example {
 			ID:      "check-type-error",
 			Title:   "Report a type error with a pointer",
 			Summary: "A field of the wrong type fails with a JSON-pointer diagnostic and exit 1.",
-			Doc:     "Here `year` is a string, not an integer. `check` fails the item, points at the offending field with a JSON pointer (`/year`) and a `path:line` prefix, and exits 1.",
+			Doc:     "Here `year` is a string, not an integer. An inline `object_field_type` check fails the item, points at the offending field with a JSON pointer (`/year`) and a `path:line` prefix, and exits 1.",
 			Weight:  20,
 			Files: []File{
-				{Path: ".katalyst/schemas/book.yaml", Content: bookSchema},
-				{Path: ".katalyst/storage/local.yaml", Content: notesStorage},
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\nyear: \"not a number\"\n---\n# Dune\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: notesFieldTypeStorage},
 			},
 			Args: []string{"check", "notes/dune"},
 		},
@@ -186,8 +201,8 @@ func All() []Example {
 			Doc:     "The `markdown_title_matches_h1` check ties a frontmatter field to the document's first H1. When they disagree, `check` reports the mismatch and exits 1.",
 			Weight:  30,
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_title_matches_h1\n        field: title\n"},
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\n---\n# Children of Dune\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_title_matches_h1\n        field: title\n"},
 			},
 			Args: []string{"check", "notes/dune"},
 		},
@@ -199,8 +214,8 @@ func All() []Example {
 			Weight:      40,
 			ResultFiles: []string{"notes/doc.md"},
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n"},
 				{Path: "notes/doc.md", Content: "---\nzebra: 1\napple: 2\n---\n# Body\nverbatim\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n"},
 			},
 			Args: []string{"fix", "notes/doc"},
 		},
@@ -212,8 +227,8 @@ func All() []Example {
 			Weight:      50,
 			ResultFiles: []string{"notes/doc.md"},
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: text_forbids\n        target: first-line\n        pattern: '\\.(\\s*)$'\n        fix: '$1'\n"},
 				{Path: "notes/doc.md", Content: "---\nt: 1\n---\n# Title.\nkeep this.\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: text_forbids\n        target: first-line\n        pattern: '\\.(\\s*)$'\n        fix: '$1'\n"},
 			},
 			Args: []string{"fix", "notes/doc"},
 		},
@@ -242,10 +257,10 @@ func All() []Example {
 			Doc:     "The `books` collection binds the `book` schema (`title` plus an integer `year`). `dune.md` satisfies the schema and reports OK; `foundation.md` omits `year`, so `check` reports the missing required property and exits 1.",
 			Weight:  80,
 			Files: []File{
-				{Path: ".katalyst/schemas/book.yaml", Content: bookConstrainedSchema},
-				{Path: ".katalyst/storage/local.yaml", Content: booksAtNotesStorage},
 				{Path: "notes/books/dune.md", Content: "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"},
 				{Path: "notes/books/foundation.md", Content: "---\ntitle: Foundation\n---\n# Foundation\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: booksAtNotesStorage},
+				{Path: ".katalyst/schemas/book.yaml", Content: bookConstrainedSchema},
 			},
 			Args: []string{"check", "books"},
 		},
@@ -256,9 +271,9 @@ func All() []Example {
 			Doc:     "The `posts` collection attaches three checks: an H1 must exist, the frontmatter `title` must match that H1, and the filename must be kebab-case. `hello-world.md` satisfies all three; `Bad_Title.md` violates the casing rule and the title/H1 match, so `check` reports both and exits 1.",
 			Weight:  90,
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: postsRulesStorage},
 				{Path: "content/posts/hello-world.md", Content: "---\ntitle: Hello world\n---\n# Hello world\n"},
 				{Path: "content/posts/Bad_Title.md", Content: "---\ntitle: Bad title\n---\n# A different heading\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: postsRulesStorage},
 			},
 			Args: []string{"check", "posts"},
 		},
@@ -269,9 +284,9 @@ func All() []Example {
 			Doc:     "With no target, `check` validates every collection. One item is missing its H1, so the run reports the violation and exits 1; the `exit status 1` line is what fails the CI step.",
 			Weight:  100,
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: ciStorage},
 				{Path: "notes/intro.md", Content: "---\ntitle: Intro\n---\n# Intro\n"},
 				{Path: "notes/draft.md", Content: "---\ntitle: Draft\n---\nNo heading here.\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: ciStorage},
 			},
 			Args: []string{"check"},
 		},
@@ -282,9 +297,9 @@ func All() []Example {
 			Doc:     "`fix --check` is the read-only formatting gate: it lists items whose frontmatter is not canonical and exits 1, without modifying any file. Here `messy.md` has unsorted keys, so it is reported; `tidy.md` is already canonical and passes.",
 			Weight:  110,
 			Files: []File{
-				{Path: ".katalyst/storage/local.yaml", Content: ciStorage},
 				{Path: "notes/tidy.md", Content: "---\ntitle: Tidy\n---\n# Tidy\n"},
 				{Path: "notes/messy.md", Content: "---\ntitle: Messy\nauthor: Ada\n---\n# Messy\n"},
+				{Path: ".katalyst/storage/my_directory.yaml", Content: ciStorage},
 			},
 			Args: []string{"fix", "--check"},
 		},

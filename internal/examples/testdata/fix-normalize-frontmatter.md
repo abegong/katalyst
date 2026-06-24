@@ -2,18 +2,6 @@
 
 ## Input
 
-`.katalyst/storage/local.yaml`
-
-```yaml
-type: filesystem
-root: .
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-```
-
 `notes/doc.md`
 
 ```markdown
@@ -23,6 +11,18 @@ apple: 2
 ---
 # Body
 verbatim
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
 ```
 
 ## Command

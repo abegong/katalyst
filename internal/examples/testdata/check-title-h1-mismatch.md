@@ -2,7 +2,16 @@ The `markdown_title_matches_h1` check ties a frontmatter field to the document's
 
 ## Input
 
-`.katalyst/storage/local.yaml`
+`notes/dune.md`
+
+```markdown
+---
+title: Dune
+---
+# Children of Dune
+```
+
+`.katalyst/storage/my_directory.yaml`
 
 ```yaml
 type: filesystem
@@ -13,15 +22,6 @@ collections:
     checks:
       - kind: markdown_title_matches_h1
         field: title
-```
-
-`notes/dune.md`
-
-```markdown
----
-title: Dune
----
-# Children of Dune
 ```
 
 ## Command
