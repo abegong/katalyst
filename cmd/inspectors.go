@@ -113,15 +113,22 @@ func runInspectorsDetail(cmd *cobra.Command, name string, asJSON bool) error {
 	l, _ := findInspectorLayer(d.Layer)
 	out := cmd.OutOrStdout()
 	// Breadcrumb header, echoing how the docs nest layer → inspector page.
-	fmt.Fprintf(out, "%s › %s\n\n", l.Title, d.Title)
-	fmt.Fprintf(out, "inspector: %s\n", d.Name)
-	fmt.Fprintf(out, "layer:     %s\n", d.Layer)
-	fmt.Fprintf(out, "family:    %s\n", d.Family)
-	fmt.Fprintf(out, "purpose:   %s\n", plainSummary(d.Summary))
-	fmt.Fprintf(out, "\n%s\n", l.Intro)
+	printSectionHeader(out, fmt.Sprintf("%s › %s", l.Title, d.Title))
+	fmt.Fprintf(out, "- inspector: %s\n", d.Name)
+	fmt.Fprintf(out, "- layer: %s\n", d.Layer)
+	fmt.Fprintf(out, "- family: %s\n", d.Family)
+	fmt.Fprintf(out, "- purpose: %s\n", plainSummary(d.Summary))
+
+	fmt.Fprintln(out)
+	printSectionHeader(out, "Layer context")
+	fmt.Fprintln(out, l.Intro)
 
 	if siblings := inspectorLayerSiblings(d); len(siblings) > 0 {
-		fmt.Fprintf(out, "\nother %s:\n  %s\n", strings.ToLower(l.Title), strings.Join(siblings, ", "))
+		fmt.Fprintln(out)
+		printListSectionHeader(out, "Other "+strings.ToLower(l.Title), len(siblings))
+		for _, s := range siblings {
+			fmt.Fprintf(out, "- %s\n", s)
+		}
 	}
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/spf13/cobra"
@@ -54,7 +53,7 @@ func newCheckTypesShowCmd() *cobra.Command {
 		Use:   "show <check-type>",
 		Short: "Show one check type's keys, example, and siblings.",
 		Long: `show prints a detailed, docs-style readout for one check type: its
-family context, purpose, full configuration-key table, example, and the other
+family context, purpose, configuration keys, example, and the other
 check types in its family. --json emits the machine-readable descriptor.`,
 		Args: exactArgs(1, "check-types show <check-type>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -117,26 +116,28 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 	fam, _ := findFamily(d.Family)
 	out := cmd.OutOrStdout()
 	// Breadcrumb header, echoing how the docs nest family → check-type page.
-	fmt.Fprintf(out, "%s › %s\n\n", fam.Title, d.Title)
-	fmt.Fprintf(out, "kind:    %s\n", d.CheckType)
-	fmt.Fprintf(out, "family:  %s\n", d.Family)
+	printSectionHeader(out, fmt.Sprintf("%s › %s", fam.Title, d.Title))
+	fmt.Fprintf(out, "- kind: %s\n", d.CheckType)
+	fmt.Fprintf(out, "- family: %s\n", d.Family)
 	scope := d.Scope
 	if scope == "" {
 		scope = "item"
 	}
-	fmt.Fprintf(out, "scope:   %s\n", scope)
+	fmt.Fprintf(out, "- scope: %s\n", scope)
 	sev := d.Severity
 	if sev == "" {
 		sev = "error"
 	}
-	fmt.Fprintf(out, "severity: %s\n", sev)
-	fmt.Fprintf(out, "purpose: %s\n", plainSummary(d.Summary))
-	fmt.Fprintf(out, "\n%s\n", fam.Intro)
+	fmt.Fprintf(out, "- severity: %s\n", sev)
+	fmt.Fprintf(out, "- purpose: %s\n", plainSummary(d.Summary))
 
+	fmt.Fprintln(out)
+	printSectionHeader(out, "Family context")
+	fmt.Fprintln(out, fam.Intro)
+
+	fmt.Fprintln(out)
 	if len(d.Fields) > 0 {
-		fmt.Fprint(out, "\nconfiguration keys:\n")
-		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "  FIELD\tREQUIRED\tDEFAULT\tMEANING")
+		printListSectionHeader(out, "Configuration keys", len(d.Fields))
 		for _, f := range d.Fields {
 			req := "no"
 			if f.Required {
@@ -146,19 +147,26 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 			if def == "" {
 				def = "-"
 			}
-			fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\n", f.Name, req, def, plainSummary(f.Desc))
-		}
-		if err := tw.Flush(); err != nil {
-			return err
+			fmt.Fprintf(out, "- %s\n", f.Name)
+			fmt.Fprintf(out, "  required: %s\n", req)
+			fmt.Fprintf(out, "  default: %s\n", def)
+			fmt.Fprintf(out, "  meaning: %s\n", plainSummary(f.Desc))
 		}
 	} else {
-		fmt.Fprint(out, "\nThis check type takes no configuration keys.\n")
+		printListSectionHeader(out, "Configuration keys", 0)
+		fmt.Fprintln(out, "- none")
 	}
 
-	fmt.Fprintf(out, "\nexample:\n%s\n", indentLines(d.ConfigExample, "  "))
+	fmt.Fprintln(out)
+	printSectionHeader(out, "Example")
+	fmt.Fprintln(out, indentLines(d.ConfigExample, "  "))
 
 	if siblings := familySiblings(d); len(siblings) > 0 {
-		fmt.Fprintf(out, "\nother %s:\n  %s\n", strings.ToLower(fam.Title), strings.Join(siblings, ", "))
+		fmt.Fprintln(out)
+		printListSectionHeader(out, "Other "+strings.ToLower(fam.Title), len(siblings))
+		for _, s := range siblings {
+			fmt.Fprintf(out, "- %s\n", s)
+		}
 	}
 	return nil
 }
