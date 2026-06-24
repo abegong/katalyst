@@ -84,7 +84,16 @@ collections:
   books:
     table: books
     id: slug
-    body: body
+    attributes:
+      title: title
+      status: status
+      author:
+        columns:
+          first: author_first
+          last: author_last
+    content:
+      kind: markdown
+      column: body
     checks:
       - kind: object_required_field
         field: title
@@ -101,7 +110,8 @@ Collections are declared inside their storage instance, under `collections:`.
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `table` | for `sqlite` | - | SQLite table backing the collection. |
 | `id` | for `sqlite` | - | SQLite column that provides item identity. |
-| `body` | no | - | Optional SQLite column that provides item body text. |
+| `attributes` | no | all scalar columns except `id` and `content.column` | SQLite column captures exposed as item attributes. |
+| `content` | no | - | Optional SQLite content mapping, with `kind: text` or `kind: markdown` and `column: <name>`. |
 | `schema` | no | - | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | - | List of checks (see below). |
 | `listing` | no | - | `item list` listing defaults for this collection (see [`listing`](#listing)). |
@@ -111,8 +121,23 @@ non-empty `checks` list, or both. Files in the directory that do not match
 `pattern` are reported as errors.
 
 SQLite collections do not support filesystem check types. Configure
-structured-object checks, text checks, or markdown body-text checks when a
-`body` column is present.
+structured-object checks against captured attributes. Text and markdown
+body-text checks require a compatible `content` mapping.
+
+`attributes` accepts shorthand single-column captures and structured
+multi-column captures:
+
+```yaml
+attributes:
+  title: title
+  author:
+    columns:
+      first: author_first
+      last: author_last
+```
+
+The structured form above exposes `author.first` and `author.last` as fields
+inside the `author` attribute object.
 
 ### Per-collection files
 

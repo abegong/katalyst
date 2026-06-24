@@ -55,7 +55,7 @@ func newItemListCmd() *cobra.Command {
 Filter, search, sort, and page the result:
   --filter 'year>=1965'   field predicate (= != > >= < <= =~; comma RHS = in;
                           bare field = exists, !field = absent). Repeatable, ANDed.
-  --grep TODO             regexp search; --grep-in all|body|frontmatter; -i.
+  --grep TODO             regexp search; --grep-in all|body|attributes; -i.
   --sort -year,title      sort keys (id, status, or a field); leading - is desc.
   --skip N / --limit N    pagination, applied after sort.`,
 		Args: exactArgs(1, "item list <collection>"),
@@ -120,7 +120,7 @@ Filter, search, sort, and page the result:
 
 	c.Flags().StringArrayVar(&filters, "filter", nil, "Keep items matching a field predicate (repeatable, ANDed)")
 	c.Flags().StringArrayVar(&greps, "grep", nil, "Keep items whose text matches a regexp (repeatable, ANDed)")
-	c.Flags().StringVar(&grepIn, "grep-in", "all", "Region --grep searches: all, body, or frontmatter")
+	c.Flags().StringVar(&grepIn, "grep-in", "all", "Region --grep searches: all, body, or attributes")
 	c.Flags().BoolVarP(&ignoreCase, "ignore-case", "i", false, "Make --grep patterns case-insensitive")
 	c.Flags().StringArrayVar(&sorts, "sort", nil, "Sort by key(s); leading - is descending (e.g. -year,title)")
 	c.Flags().IntVar(&skip, "skip", 0, "Drop the first N results (after sorting)")
@@ -170,10 +170,10 @@ func buildListingOptions(col project.Collection, f listingFlags) (listing.Option
 		opts.GrepIn = listing.RegionAll
 	case "body":
 		opts.GrepIn = listing.RegionBody
-	case "frontmatter":
+	case "attributes", "frontmatter":
 		opts.GrepIn = listing.RegionFrontmatter
 	default:
-		return listing.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or frontmatter (got %q)", f.grepIn))
+		return listing.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or attributes (got %q)", f.grepIn))
 	}
 
 	for _, spec := range f.sorts {
@@ -240,15 +240,21 @@ func itemRecord(e *engine, col project.Collection, item project.Item) (listing.R
 }
 
 func newItemGetCmd() *cobra.Command {
-	var frontmatterOnly, bodyOnly bool
+	var attributesOnly, frontmatterOnly, bodyOnly bool
 
 	c := &cobra.Command{
 		Use:   "get <collection>/<item>",
-		Short: "Print an item (frontmatter and body by default)",
+		Short: "Print an item (attributes and content by default)",
 		Args:  exactArgs(1, "item get <collection>/<item>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if frontmatterOnly && bodyOnly {
-				return usageErr("--frontmatter and --body are mutually exclusive")
+			selected := 0
+			for _, v := range []bool{attributesOnly, frontmatterOnly, bodyOnly} {
+				if v {
+					selected++
+				}
+			}
+			if selected > 1 {
+				return usageErr("--attributes, --frontmatter, and --body are mutually exclusive")
 			}
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -270,7 +276,7 @@ func newItemGetCmd() *cobra.Command {
 
 			out := cmd.OutOrStdout()
 			switch {
-			case frontmatterOnly:
+			case attributesOnly || frontmatterOnly:
 				b, err := yaml.Marshal(content.Doc.Meta)
 				if err != nil {
 					return err
@@ -287,8 +293,9 @@ func newItemGetCmd() *cobra.Command {
 		},
 	}
 
-	c.Flags().BoolVar(&frontmatterOnly, "frontmatter", false, "Print only the parsed frontmatter")
-	c.Flags().BoolVar(&bodyOnly, "body", false, "Print only the body")
+	c.Flags().BoolVar(&attributesOnly, "attributes", false, "Print only the item attributes")
+	c.Flags().BoolVar(&frontmatterOnly, "frontmatter", false, "Print only the parsed frontmatter (compatibility alias for --attributes)")
+	c.Flags().BoolVar(&bodyOnly, "body", false, "Print only the content body")
 	return c
 }
 

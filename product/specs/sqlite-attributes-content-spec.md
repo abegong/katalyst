@@ -37,15 +37,18 @@ their terms through frontmatter and body.
 
 ## Current State
 
-The draft SQLite PR adds a working storage backend but exposes several
-Markdown-shaped assumptions:
+The draft SQLite PR now has a working storage backend plus an initial
+attribute/content mapping surface, but several Markdown-shaped assumptions
+remain:
 
-- `internal/storage/collection.Collection` and `RawCollection` currently carry
-  SQLite-specific `Table`, `IDColumn`, and `BodyColumn` fields. `BodyColumn`
-  appears in config as `body:`.
-- `internal/storage/collection/sqlite.Definition` reads a row, treats every
-  selected non-ID/non-body column as metadata, and synthesizes a
-  `markdownbodytext.Document` for the rest of Katalyst to consume.
+- `internal/storage/collection.Collection` and `RawCollection` carry
+  SQLite-specific `Table`, `IDColumn`, `Attributes`, `ContentKind`, and
+  `ContentColumn` fields. The old `body:` key is still accepted as a deprecated
+  compatibility alias for Markdown content.
+- `internal/storage/collection/sqlite.Definition` reads a row, applies
+  configured attribute captures, optionally maps one column to content, and
+  still synthesizes a `markdownbodytext.Document` for the rest of Katalyst to
+  consume.
 - `internal/project.ItemContent` currently returns raw bytes plus
   `*markdownbodytext.Document`, so project reads expose the Markdown content
   shape directly.

@@ -1,6 +1,6 @@
 // Package sqlite maps one SQLite table to one Katalyst collection: each row is
-// one item, the configured id column is the item id, scalar columns are
-// metadata, and an optional body column supplies body text.
+// one item, the configured id column is the item id, and configured column
+// captures become item attributes.
 package sqlite
 
 import (
@@ -131,13 +131,13 @@ func (d *Definition) Add(c collection.Collection, id string, meta map[string]any
 	}
 	idCol := c.IDColumn
 
-	values := map[string]any{idCol: id}
-	for k, v := range meta {
-		values[k] = v
+	values, err := configuredValues(c, meta, false)
+	if err != nil {
+		return err
 	}
 	values[idCol] = id
-	if c.BodyColumn != "" {
-		values[c.BodyColumn] = string(body)
+	if c.ContentColumn != "" {
+		values[c.ContentColumn] = string(body)
 	}
 	names, args, err := orderedValues(values, cols, true)
 	if err != nil {
@@ -168,14 +168,13 @@ func (d *Definition) Update(c collection.Collection, id string, meta map[string]
 	}
 	idCol := c.IDColumn
 
-	values := map[string]any{}
-	for k, v := range meta {
-		if k != idCol {
-			values[k] = v
-		}
+	values, err := configuredValues(c, meta, true)
+	if err != nil {
+		return err
 	}
-	if body != nil && c.BodyColumn != "" {
-		values[c.BodyColumn] = string(body)
+	delete(values, idCol)
+	if body != nil && c.ContentColumn != "" {
+		values[c.ContentColumn] = string(body)
 	}
 	names, args, err := orderedValues(values, cols, false)
 	if err != nil {
@@ -250,20 +249,8 @@ func (d *Definition) read(db *sql.DB, c collection.Collection, id string) ([]byt
 		return nil, nil, fmt.Errorf("collection %q: id %q matched more than one row", c.Name, id)
 	}
 
-	meta := map[string]any{}
-	var body []byte
-	for i, col := range cols {
-		v := normalize(vals[i])
-		if col == c.BodyColumn {
-			if v != nil {
-				body = []byte(fmt.Sprint(v))
-			}
-			continue
-		}
-		if v != nil {
-			meta[col] = v
-		}
-	}
+	row := rowMap(cols, vals)
+	meta, body := rowContent(c, row)
 	raw, frontmatter, err := rawDocument(meta, body)
 	if err != nil {
 		return nil, nil, err
@@ -307,8 +294,8 @@ func (d *Definition) columns(db *sql.DB, c collection.Collection) (map[string]bo
 	if !out[c.IDColumn] {
 		return nil, fmt.Errorf("collection %q: id column %q does not exist", c.Name, c.IDColumn)
 	}
-	if c.BodyColumn != "" && !out[c.BodyColumn] {
-		return nil, fmt.Errorf("collection %q: body column %q does not exist", c.Name, c.BodyColumn)
+	if err := validateConfiguredColumns(c, out); err != nil {
+		return nil, err
 	}
 	return out, rows.Err()
 }
@@ -345,6 +332,100 @@ func orderedValues(values map[string]any, columns map[string]bool, requireAny bo
 		args[i] = values[name]
 	}
 	return names, args, nil
+}
+
+func rowMap(cols []string, vals []any) map[string]any {
+	out := make(map[string]any, len(cols))
+	for i, col := range cols {
+		out[col] = normalize(vals[i])
+	}
+	return out
+}
+
+func rowContent(c collection.Collection, row map[string]any) (map[string]any, []byte) {
+	meta := map[string]any{}
+	if len(c.Attributes) == 0 {
+		for col, v := range row {
+			if col == c.IDColumn || col == c.ContentColumn || v == nil {
+				continue
+			}
+			meta[col] = v
+		}
+	} else {
+		for attr, capture := range c.Attributes {
+			if capture.Column != "" {
+				if v := row[capture.Column]; v != nil {
+					meta[attr] = v
+				}
+				continue
+			}
+			obj := map[string]any{}
+			for field, col := range capture.Columns {
+				if v := row[col]; v != nil {
+					obj[field] = v
+				}
+			}
+			if len(obj) > 0 {
+				meta[attr] = obj
+			}
+		}
+	}
+
+	var body []byte
+	if c.ContentColumn != "" {
+		if v := row[c.ContentColumn]; v != nil {
+			body = []byte(fmt.Sprint(v))
+		}
+	}
+	return meta, body
+}
+
+func configuredValues(c collection.Collection, meta map[string]any, skipStructured bool) (map[string]any, error) {
+	if len(c.Attributes) == 0 {
+		values := map[string]any{}
+		for k, v := range meta {
+			values[k] = v
+		}
+		return values, nil
+	}
+	values := map[string]any{}
+	for attr, v := range meta {
+		capture, ok := c.Attributes[attr]
+		if !ok {
+			return nil, fmt.Errorf("collection %q: unknown attribute %q", c.Name, attr)
+		}
+		if capture.Column == "" {
+			if skipStructured {
+				continue
+			}
+			return nil, fmt.Errorf("collection %q: attribute %q is structured and is not writable through item add/update yet", c.Name, attr)
+		}
+		values[capture.Column] = v
+	}
+	return values, nil
+}
+
+func validateConfiguredColumns(c collection.Collection, columns map[string]bool) error {
+	if !columns[c.IDColumn] {
+		return fmt.Errorf("collection %q: id column %q does not exist", c.Name, c.IDColumn)
+	}
+	if c.ContentColumn != "" && !columns[c.ContentColumn] {
+		return fmt.Errorf("collection %q: content column %q does not exist", c.Name, c.ContentColumn)
+	}
+	for attr, capture := range c.Attributes {
+		if capture.Column != "" {
+			if !columns[capture.Column] {
+				return fmt.Errorf("collection %q: attribute %q column %q does not exist", c.Name, attr, capture.Column)
+			}
+			continue
+		}
+		for field, col := range capture.Columns {
+			if !columns[col] {
+				return fmt.Errorf("collection %q: attribute %q field %q column %q does not exist", c.Name, attr, field, col)
+			}
+		}
+	}
+	return nil
 }
 
 func quoteIdent(s string) (string, error) {

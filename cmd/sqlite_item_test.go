@@ -20,7 +20,17 @@ collections:
   notes:
     table: notes
     id: slug
-    body: body
+    attributes:
+      title: title
+      year: year
+      status: status
+      author:
+        columns:
+          first: author_first
+          last: author_last
+    content:
+      kind: markdown
+      column: body
     checks:
       - kind: object_required_field
         field: title
@@ -33,12 +43,12 @@ collections:
 		t.Fatalf("open sqlite: %v", err)
 	}
 	defer db.Close()
-	if _, err := db.Exec(`CREATE TABLE notes (slug TEXT PRIMARY KEY, title TEXT, year INTEGER, status TEXT, body TEXT)`); err != nil {
+	if _, err := db.Exec(`CREATE TABLE notes (slug TEXT PRIMARY KEY, title TEXT, year INTEGER, status TEXT, author_first TEXT, author_last TEXT, body TEXT)`); err != nil {
 		t.Fatalf("create table: %v", err)
 	}
-	if _, err := db.Exec(`INSERT INTO notes (slug, title, year, status, body) VALUES
-		('dune', 'Dune', 1965, 'published', '# Dune'),
-		('bad', NULL, 2025, 'draft', '# Bad')`); err != nil {
+	if _, err := db.Exec(`INSERT INTO notes (slug, title, year, status, author_first, author_last, body) VALUES
+		('dune', 'Dune', 1965, 'published', 'Frank', 'Herbert', '# Dune'),
+		('bad', NULL, 2025, 'draft', NULL, NULL, '# Bad')`); err != nil {
 		t.Fatalf("seed rows: %v", err)
 	}
 	chdir(t, dir)
@@ -48,12 +58,12 @@ collections:
 func TestSQLiteItemGetListCheckAndInspect(t *testing.T) {
 	setupSQLiteRepo(t)
 
-	got, _, err := runRoot(t, "item", "get", "--frontmatter", "notes/dune")
+	got, _, err := runRoot(t, "item", "get", "--attributes", "notes/dune")
 	if err != nil {
 		t.Fatalf("sqlite item get: %v", err)
 	}
-	if !strings.Contains(got, "title: Dune") || !strings.Contains(got, "year: 1965") {
-		t.Fatalf("frontmatter did not include row metadata:\n%s", got)
+	if !strings.Contains(got, "title: Dune") || !strings.Contains(got, "year: 1965") || !strings.Contains(got, "first: Frank") {
+		t.Fatalf("attributes did not include captured row values:\n%s", got)
 	}
 
 	body, _, err := runRoot(t, "item", "get", "--body", "notes/dune")

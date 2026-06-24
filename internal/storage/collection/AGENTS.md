@@ -7,8 +7,8 @@ type (plus `CollectionVariant`/`ListingDefaults`) and parses a collection's
 config block (`Build`), since a collection is a storage concept; per-backend
 implementations live in subpackages (`filesystem`, `sqlite`);
 `internal/codec/markdownbodytext` is the markdown body text codec the readers
-decode and encode with; `predicate` is the metadata predicate grammar; `listing`
-is the in-memory `item list` pipeline.
+decode and encode with; `predicate` is the attribute/object predicate grammar;
+`listing` is the in-memory `item list` pipeline.
 
 Architecture and rationale — why a collection owns the read, why items are thin,
 and how a backend attaches — live in the
@@ -33,5 +33,6 @@ and how a backend attaches — live in the
   persists them (`filesystem.Write`). Backend-specific IO stays in the backend
   subpackage.
 - SQLite maps one configured table to one collection, with one row per item.
-  The table/id/body-column mapping is storage-owned, not a codec abstraction;
-  only extract a codec if row decoding becomes reusable outside SQLite storage.
+  The table/id/attribute capture mapping is storage-owned, not a codec
+  abstraction; only extract a codec if row decoding becomes reusable outside
+  SQLite storage.

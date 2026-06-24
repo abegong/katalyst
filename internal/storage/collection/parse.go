@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Collection is a named group of items backed by a directory of files.
+// Collection is a named group of items backed by one storage backend.
 type Collection struct {
 	// Name is the public handle (the key in the config `collections:` map).
 	Name string
@@ -24,8 +24,12 @@ type Collection struct {
 	Table string
 	// IDColumn is the SQLite column that provides item identity.
 	IDColumn string
-	// BodyColumn is the optional SQLite column that provides item body text.
-	BodyColumn string
+	// Attributes maps item attribute names to SQLite column captures.
+	Attributes map[string]AttributeCapture
+	// ContentKind is the optional content shape mapped from a SQLite column.
+	ContentKind string
+	// ContentColumn is the optional SQLite column that provides content bytes.
+	ContentColumn string
 	// Pattern is the filename glob for items (default "*.md").
 	Pattern string
 	// Schema is the object-schema name associated with the collection, or
@@ -74,6 +78,51 @@ type ListingDefaults struct {
 	SortMissing string
 }
 
+// AttributeCapture describes how one item attribute is captured from a SQLite
+// row. A simple attribute comes from one column; a structured attribute comes
+// from a set of columns and becomes an object with one field per entry.
+type AttributeCapture struct {
+	Column  string
+	Columns map[string]string
+}
+
+// UnmarshalYAML accepts both shorthand and explicit attribute capture forms:
+//
+//	title: title
+//	title: {column: title}
+//	author: {columns: {first: author_first, last: author_last}}
+func (a *AttributeCapture) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.ScalarNode:
+		var s string
+		if err := value.Decode(&s); err != nil {
+			return err
+		}
+		a.Column = s
+		return nil
+	case yaml.MappingNode:
+		var raw struct {
+			Column  string            `yaml:"column"`
+			Columns map[string]string `yaml:"columns"`
+		}
+		if err := value.Decode(&raw); err != nil {
+			return err
+		}
+		a.Column = raw.Column
+		a.Columns = raw.Columns
+		return nil
+	default:
+		return fmt.Errorf("invalid attribute capture: expected a column string or mapping")
+	}
+}
+
+// ContentConfig describes an optional content shape captured from one SQLite
+// column. `body:` is still accepted as a deprecated compatibility alias.
+type ContentConfig struct {
+	Kind   string `yaml:"kind"`
+	Column string `yaml:"column"`
+}
+
 // Built-in defaults, used when neither the collection nor the project config
 // sets a value.
 const (
@@ -86,17 +135,19 @@ const (
 // unmarshals it (inline under a storage instance, or one file per collection)
 // and hands it to Build.
 type RawCollection struct {
-	Path                  string              `yaml:"path"`
-	Pattern               string              `yaml:"pattern"`
-	Table                 string              `yaml:"table"`
-	ID                    string              `yaml:"id"`
-	Body                  string              `yaml:"body"`
-	Schema                string              `yaml:"schema"`
-	Checks                []RawCheck          `yaml:"checks"`
-	Listing               *RawListingDefaults `yaml:"listing"`
-	Query                 *RawListingDefaults `yaml:"query"`
-	Variants              []RawVariant        `yaml:"variants"`
-	UseExhaustiveVariants bool                `yaml:"useExhaustiveVariants"`
+	Path                  string                      `yaml:"path"`
+	Pattern               string                      `yaml:"pattern"`
+	Table                 string                      `yaml:"table"`
+	ID                    string                      `yaml:"id"`
+	Attributes            map[string]AttributeCapture `yaml:"attributes"`
+	Content               ContentConfig               `yaml:"content"`
+	Body                  string                      `yaml:"body"`
+	Schema                string                      `yaml:"schema"`
+	Checks                []RawCheck                  `yaml:"checks"`
+	Listing               *RawListingDefaults         `yaml:"listing"`
+	Query                 *RawListingDefaults         `yaml:"query"`
+	Variants              []RawVariant                `yaml:"variants"`
+	UseExhaustiveVariants bool                        `yaml:"useExhaustiveVariants"`
 }
 
 // RawListingDefaults mirrors a `listing:` block. A nil pointer (or a nil field
@@ -271,6 +322,9 @@ func Build(in BuildInput) (Collection, error) {
 		if in.Raw.ID == "" {
 			return Collection{}, fmt.Errorf("collection %q: sqlite collection requires \"id\"", in.Name)
 		}
+		if err := validateAttributeCaptures(in.Name, in.Raw.Attributes); err != nil {
+			return Collection{}, err
+		}
 		if err := rejectUnsupportedSQLiteChecks(in.Name, cks, variants); err != nil {
 			return Collection{}, err
 		}
@@ -288,6 +342,11 @@ func Build(in BuildInput) (Collection, error) {
 		return Collection{}, fmt.Errorf("collection %q: query is no longer a config block; use listing", in.Name)
 	}
 
+	contentKind, contentColumn, err := resolveContentConfig(in.Name, in.Raw.Content, in.Raw.Body)
+	if err != nil {
+		return Collection{}, err
+	}
+
 	ld, err := resolveListingDefaults(in.Name, in.Raw.Listing, in.ProjectListing)
 	if err != nil {
 		return Collection{}, err
@@ -300,7 +359,9 @@ func Build(in BuildInput) (Collection, error) {
 		StorageType:           storageType,
 		Table:                 in.Raw.Table,
 		IDColumn:              in.Raw.ID,
-		BodyColumn:            in.Raw.Body,
+		Attributes:            in.Raw.Attributes,
+		ContentKind:           contentKind,
+		ContentColumn:         contentColumn,
 		Pattern:               pattern,
 		Schema:                schemaName,
 		Checks:                cks,
@@ -309,6 +370,54 @@ func Build(in BuildInput) (Collection, error) {
 		Variants:              variants,
 		UseExhaustiveVariants: in.Raw.UseExhaustiveVariants,
 	}, nil
+}
+
+func validateAttributeCaptures(name string, attrs map[string]AttributeCapture) error {
+	for attr, capture := range attrs {
+		if strings.TrimSpace(attr) == "" {
+			return fmt.Errorf("collection %q: attributes contains an empty name", name)
+		}
+		hasColumn := capture.Column != ""
+		hasColumns := len(capture.Columns) > 0
+		if hasColumn == hasColumns {
+			return fmt.Errorf("collection %q: attribute %q must set exactly one of column or columns", name, attr)
+		}
+		if hasColumn {
+			continue
+		}
+		for field, col := range capture.Columns {
+			if strings.TrimSpace(field) == "" {
+				return fmt.Errorf("collection %q: attribute %q contains an empty field name", name, attr)
+			}
+			if strings.TrimSpace(col) == "" {
+				return fmt.Errorf("collection %q: attribute %q field %q has an empty column", name, attr, field)
+			}
+		}
+	}
+	return nil
+}
+
+func resolveContentConfig(name string, content ContentConfig, bodyAlias string) (string, string, error) {
+	if bodyAlias != "" && content.Column != "" {
+		return "", "", fmt.Errorf("collection %q: use content.column or body, not both", name)
+	}
+	if bodyAlias != "" {
+		return "markdown", bodyAlias, nil
+	}
+	if content.Kind == "" && content.Column == "" {
+		return "", "", nil
+	}
+	if content.Column == "" {
+		return "", "", fmt.Errorf("collection %q: content requires column", name)
+	}
+	kind := content.Kind
+	if kind == "" {
+		kind = "text"
+	}
+	if kind != "text" && kind != "markdown" {
+		return "", "", fmt.Errorf("collection %q: content kind must be text or markdown (got %q)", name, kind)
+	}
+	return kind, content.Column, nil
 }
 
 func rejectUnsupportedSQLiteChecks(name string, base []checks.ConfiguredCheck, variants []CollectionVariant) error {

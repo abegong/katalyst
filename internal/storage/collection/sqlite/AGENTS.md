@@ -1,8 +1,9 @@
 # internal/storage/collection/sqlite
 
 SQLite storage backend. One configured table is one Katalyst collection; each
-row is one item; the configured `id` column is item identity; scalar columns are
-metadata; an optional `body` column supplies body text.
+row is one item; the configured `id` column is item identity; configured column
+captures become item attributes; optional `content` maps one column into text or
+markdown content.
 
 ## Conventions
 
@@ -12,5 +13,7 @@ metadata; an optional `body` column supplies body text.
   Values always use query parameters.
 - Filesystem checks are rejected at load time for SQLite collections. Do not
   make check families backend-aware to compensate.
+- Prefer `attributes` and `content` terminology in new SQLite work. `body:` is a
+  compatibility alias, not the model.
 - `fix` is not part of the first SQLite cut. `item add`, `item update`, and
   `item delete` own the write-path coverage for now.
