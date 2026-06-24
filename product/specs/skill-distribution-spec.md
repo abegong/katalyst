@@ -68,9 +68,12 @@ repo access is required.
   .` for a single host-platform binary; `README.md` documents install via `go
   install github.com/abegong/katalyst@latest` or `make build` from source.
 - **How-to guides are separate, human docs.** `docs/content/how-to/` holds task
-  recipes for human readers. Skills are independent of them (see Design): an
+  recipes for human readers, covering much the same task taxonomy the skills do
+  (`add-a-schema`, `configure-rules`, `profile-an-existing-wiki-*`,
+  `validate-in-ci`). Skills are **self-contained at runtime** (see Design): an
   agent gets everything it needs from the installed skill plus the CLI, with no
-  dependency on the docs site.
+  dependency on the docs site being reachable. Relating the two editorially is a
+  separate question, resolved in Design.
 - **Skill symlinks have a precedent.** `scripts/setup-claude-code.sh` and
   `scripts/setup-codex-skills.sh` (both via `sync_skill_links_from_cursor` in
   `scripts/agent-link-utils.sh`) symlink each `.cursor/skills/*` into
@@ -203,14 +206,40 @@ a **new top-level `skills/` directory**, deliberately separate from
 tree is shipped product. Naming them apart keeps the two audiences from colliding
 in one folder.
 
-### Independent of the how-to guides
+### Relationship to the how-to guides
 
-Skills are **self-contained**; they do not reference the how-to guides under
-`docs/content/how-to/`. This diverges from treating the two as one procedural
-source, on purpose: an agent must function without reaching the docs site at
-runtime, and the two audiences (an agent driving the CLI vs. a human reading
-recipes) diverge in what they need. The how-to guides and the skills may cover
-the same tasks, but neither is generated from or depends on the other.
+Skills and the how-to guides under `docs/content/how-to/` are **parallel
+coverage of one task taxonomy for two audiences** — an agent driving the CLI and
+a human reading recipes — not one source generated from the other and not
+strangers. The mapping is already close to one-to-one:
+
+| How-to guide | Matching skill |
+|---|---|
+| `profile-an-existing-wiki-by-hand` / `…-with-an-agent` | **katalyst-catalog** |
+| `add-a-schema` | **katalyst-define-schemas** |
+| `configure-rules` | **katalyst-define-schemas** (its checks) |
+| `validate-in-ci` | **katalyst-deploy** cluster |
+
+The relationship has three parts:
+
+- **Shared taxonomy and vocabulary.** Both organize around the lifecycle stages
+  and use the glossary's terms, so a task is never named one way for humans and
+  another for agents. Kept consistent by review — a change to a task's CLI
+  surface updates both the guide and the skill in the same PR — **not** by
+  generating one from the other.
+- **Bidirectional cross-links at the human-facing edges.** Each how-to guide with
+  a matching skill points to it ("prefer to have an agent do this? install
+  `katalyst-<x>`," with the download link); each skill's *human-facing* front
+  matter points back to the guide for the manual path. Discovery flows both ways.
+- **Runtime self-containment is preserved.** The cross-link is editorial metadata,
+  not a runtime dependency: a skill's executable `SKILL.md` body still carries
+  everything the agent needs, so it functions with the docs site unreachable. The
+  back-link is for a human reading the skill, never a fetch the agent performs.
+
+This is the deliberate middle ground between two extremes the spec rejects:
+generating skills from the guides (couples agent behavior to human docs and to a
+reachable docs site) and treating them as unrelated (drift, and a worse
+experience for a user who meets one and not the other).
 
 ### Channel 1 (now): `.skill` on GitHub Releases
 
@@ -304,6 +333,10 @@ Land with the work, not after (see `docs/contributing/how-we-document.md`):
   as setup, Channel 1 before Channel 2) into a distribution page at **done**.
   `vision.md` and `core-concepts.md` already frame the skills/tools split; this
   page explains how skills are shipped.
+- **`docs/content/how-to/`** — add the cross-links: each guide with a matching
+  skill (`add-a-schema`, `configure-rules`, `profile-an-existing-wiki-*`,
+  `validate-in-ci`) gains a pointer to its skill and the download. The back-links
+  live in each skill's front matter, authored with the skill.
 - **`docs/reference/glossary.md`** — add *skill*, *`.skill`*, *bootstrap*, and
   *channel* as defined here.
 - **`README.md`** — point the install section at the skills download alongside
@@ -325,7 +358,9 @@ Land with the work, not after (see `docs/contributing/how-we-document.md`):
   separate PRs with no shared review — exactly the drift this design prevents.
 - **Generate skills from the how-to guides (one procedural source).** Couples
   agent behavior to human docs and to the docs site being reachable at runtime;
-  the two audiences diverge. Skills stay self-contained instead.
+  the two audiences diverge. Skills stay self-contained at runtime instead —
+  related to the guides by a shared taxonomy and cross-links, not generation (see
+  [Relationship to the how-to guides](#relationship-to-the-how-to-guides)).
 - **Ship only marketplace plugins, skip the `.skill` download.** Defers all
   distribution behind unsettled plugin infrastructure and ownership. The `.skill`
   download works today against plain GitHub Releases and the client's existing
