@@ -7,6 +7,9 @@ project_name: katalyst
 before:
   hooks:
     - go mod tidy
+    # Package the product skills into bin/*.skill so they can be attached to the
+    # Release below. Same target maintainers run locally, so packaging matches.
+    - make skills
 
 builds:
   - id: katalyst
@@ -48,3 +51,8 @@ changelog:
 release:
   draft: false
   prerelease: auto
+  # Attach the packaged skills (built by the `make skills` before-hook) to the
+  # Release, beside the binary archives and checksums. Placeholders never
+  # produce a .skill, so they are excluded automatically.
+  extra_files:
+    - glob: ./bin/*.skill

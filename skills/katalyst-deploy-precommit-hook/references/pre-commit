@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# katalyst pre-commit hook: fail the commit if content has check violations or
+# non-canonical frontmatter. Installed by the katalyst-deploy-precommit-hook
+# skill. Bypass in an emergency with `git commit --no-verify`.
+set -euo pipefail
+
+if ! command -v katalyst >/dev/null 2>&1; then
+  echo "katalyst not found on PATH; cannot run pre-commit checks." >&2
+  echo "Install it (see the katalyst-deploy skill's bootstrap) and retry." >&2
+  exit 2
+fi
+
+# Schema and structural checks over the project.
+katalyst check
+
+# Frontmatter must be canonical; --check writes nothing and exits 1 if not.
+katalyst fix --check
