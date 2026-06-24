@@ -30,13 +30,16 @@ func newSchemaListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			names := cfg.SchemaNames()
 			out := cmd.OutOrStdout()
-			for _, name := range cfg.SchemaNames() {
+			printListSectionHeader(out, "Schemas", len(names))
+			for _, name := range names {
 				rel, _ := filepath.Rel(cfg.Root, cfg.SchemaPath(name))
 				if rel == "" {
 					rel = cfg.SchemaPath(name)
 				}
-				fmt.Fprintf(out, "%s\t%s\n", name, rel)
+				fmt.Fprintf(out, "- %s\n", name)
+				fmt.Fprintf(out, "  path: %s\n", rel)
 			}
 			return nil
 		},
@@ -50,7 +53,7 @@ func newSchemaListCmd() *cobra.Command {
 func newSchemaShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show <name>",
-		Short: "Print the contents of a registered schema (pretty-printed JSON).",
+		Short: "Show one schema's path and contents.",
 		Args:  exactArgs(1, "schema show <name>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
@@ -62,21 +65,38 @@ func newSchemaShowCmd() *cobra.Command {
 			if path == "" {
 				return usageErr(fmt.Sprintf("unknown schema %q (try `katalyst schema list`)", name))
 			}
+			rel, _ := filepath.Rel(cfg.Root, path)
+			if rel == "" {
+				rel = path
+			}
+
 			src, err := os.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("read %s: %w", path, err)
 			}
+
+			out := cmd.OutOrStdout()
+			printSectionHeader(out, "Schema "+name)
+			fmt.Fprintf(out, "- path: %s\n", rel)
 
 			var pretty bytes.Buffer
 			if err := json.Indent(&pretty, src, "", "  "); err != nil {
 				// Fall back to the raw bytes if it isn't valid JSON;
 				// `schema list` callers still benefit from seeing what's
 				// actually in the file.
-				cmd.OutOrStdout().Write(src)
+				fmt.Fprintln(out)
+				printSectionHeader(out, "Content (raw)")
+				out.Write(src)
+				if len(src) == 0 || src[len(src)-1] != '\n' {
+					fmt.Fprintln(out)
+				}
 				return nil
 			}
-			cmd.OutOrStdout().Write(pretty.Bytes())
-			fmt.Fprintln(cmd.OutOrStdout())
+
+			fmt.Fprintln(out)
+			printSectionHeader(out, "Content (JSON)")
+			out.Write(pretty.Bytes())
+			fmt.Fprintln(out)
 			return nil
 		},
 	}

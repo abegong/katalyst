@@ -52,8 +52,8 @@ func TestCheckTypes_rulesAliasStillWorks(t *testing.T) {
 	}
 }
 
-// The full catalog's column layout (family headings, the required/optional
-// split, the dash placeholder for no-field checks) is pinned as a snapshot;
+// The full catalog's bulleted layout (family headings, required/optional split,
+// dash placeholders for no-field checks) is pinned as a snapshot;
 // TestCheckTypes_listsEveryTypeGroupedByFamily keeps the registry-coverage and
 // family-order invariant against the live registry.
 func TestCheckTypesList_textContract(t *testing.T) {

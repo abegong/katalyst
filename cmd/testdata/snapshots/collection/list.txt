@@ -1,3 +1,10 @@
-NAME    DIRECTORY     ITEMS  SCHEMA
-books   notes/books   1      book
-people  notes/people  0      person
+Collections (2)
+---------------
+- books
+  directory: notes/books
+  items: 1
+  schema: book
+- people
+  directory: notes/people
+  items: 0
+  schema: person

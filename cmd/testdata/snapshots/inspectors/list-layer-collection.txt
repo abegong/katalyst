@@ -1,4 +1,6 @@
-Collection inspectors
-INSPECTOR      PURPOSE
-object_fields  A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
-markdown_body  Body conventions across items: heading shape and recurring sections.
+Collection inspectors (2)
+-------------------------
+- object_fields
+  A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
+- markdown_body
+  Body conventions across items: heading shape and recurring sections.

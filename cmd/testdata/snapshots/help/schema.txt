@@ -5,7 +5,7 @@ Usage:
 
 Available Commands:
   list        List schemas registered in the config.
-  show        Print the contents of a registered schema (pretty-printed JSON).
+  show        Show one schema's path and contents.
 
 Flags:
   -h, --help   help for schema

@@ -1,2 +1,6 @@
-book	.katalyst/schemas/book.json
-person	.katalyst/schemas/person.json
+Schemas (2)
+-----------
+- book
+  path: .katalyst/schemas/book.json
+- person
+  path: .katalyst/schemas/person.json

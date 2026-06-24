@@ -1,18 +1,24 @@
 Structured object check types › Required field
+------------------------------------------------
+- kind: object_required_field
+- family: structuredObject
+- scope: item
+- severity: error
+- purpose: Require that a frontmatter field exists.
 
-kind:    object_required_field
-family:  structuredObject
-scope:   item
-severity: error
-purpose: Require that a frontmatter field exists.
-
+Family context
+--------------
 Structured-object check types validate structured frontmatter fields using schema-backed checks.
 
-configuration keys:
-  FIELD  REQUIRED  DEFAULT  MEANING
-  field  yes       -        Frontmatter key that must be present.
+Configuration keys (1)
+----------------------
+- field
+  required: yes
+  default: -
+  meaning: Frontmatter key that must be present.
 
-example:
+Example
+-------
   collections:
     notes:
       path: notes
@@ -20,5 +26,12 @@ example:
         - kind: object_required_field
           field: year
 
-other structured object check types:
-  object_field_enum, object_field_type, object_number_range, object_sentence_case, object_string_length, filesystem_unique_field, object
+Other structured object check types (7)
+---------------------------------------
+- object_field_enum
+- object_field_type
+- object_number_range
+- object_sentence_case
+- object_string_length
+- filesystem_unique_field
+- object

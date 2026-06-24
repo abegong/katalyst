@@ -1,3 +1,9 @@
+Schema book
+-----------
+- path: .katalyst/schemas/book.json
+
+Content (JSON)
+--------------
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "book",
