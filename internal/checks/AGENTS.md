@@ -25,3 +25,10 @@ local code conventions.
   `internal/codec/markdownbodytext.Document`, not storage-layer types.
 - `kind` ids are the wire contract: never change an existing id, even when a
   check's family changes.
+- Check-family tests may import the parent `internal/checks` package to verify
+  API conformance and descriptors. Use `internal/checks/checktest` for shared
+  document or context fixtures instead of importing lower-level packages solely
+  to assemble test inputs.
+- Treat sibling package imports in tests as suspicious unless the test is
+  intentionally exercising registry or integration behavior. Prefer moving the
+  fixture helper to the owning test-support package before moving the test.

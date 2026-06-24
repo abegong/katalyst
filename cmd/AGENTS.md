@@ -180,3 +180,7 @@ Two test styles, kept apart:
 - **Hybrid tests keep both halves.** A test that asserts an exit code *and* a
   message keeps the `Code()` check and moves only the wording to a snapshot. A
   snapshot existing for a surface never justifies dropping a behavior assertion.
+- Same-package engine tests may import `internal/checks` when they exercise the
+  engine's registry/library boundary (`checks.ConfiguredCheck`, library
+  availability, object-vs-non-object handling). External CLI tests should stay
+  black-box and assert through command output instead of importing registries.

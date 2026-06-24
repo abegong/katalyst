@@ -16,3 +16,7 @@ of truth. This file keeps only the local code conventions.
 - Inspectors **measure only**: counts and distributions, with the unit count
   `n` as denominator. Threshold-picking and structure-proposing belong to the
   caller, never here.
+- Collection-view tests are project-backed because `NewCollectionView` resolves
+  collection items through `internal/project`. Use `internal/project/projecttest`
+  for `.katalyst` fixture setup so that import stays explicit integration setup
+  rather than ad hoc YAML construction.

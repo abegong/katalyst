@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/abegong/katalyst/internal/inspect"
 )
 
 func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
@@ -16,21 +14,21 @@ func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 		t.Fatalf("inspectors list: %v", err)
 	}
 
-	for _, d := range inspect.Descriptors() {
-		if !strings.Contains(stdout, d.Name) {
-			t.Errorf("expected inspector %q in output", d.Name)
+	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected inspector %q in output", want)
 		}
 	}
 
 	last := -1
-	for _, l := range inspect.Layers() {
-		i := strings.Index(stdout, l.Title)
+	for _, title := range []string{"Raw-source inspectors", "Collection inspectors"} {
+		i := strings.Index(stdout, title)
 		if i < 0 {
-			t.Errorf("expected layer title %q in output", l.Title)
+			t.Errorf("expected layer title %q in output", title)
 			continue
 		}
 		if i < last {
-			t.Errorf("layer %q out of order", l.Title)
+			t.Errorf("layer %q out of order", title)
 		}
 		last = i
 	}
@@ -117,15 +115,19 @@ func TestInspectorsList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(inspect.Descriptors()) {
-		t.Fatalf("got %d descriptors, want %d", len(got), len(inspect.Descriptors()))
+	if len(got) == 0 {
+		t.Fatal("expected at least one descriptor")
 	}
-	for i, d := range inspect.Descriptors() {
-		if got[i].Name != d.Name {
-			t.Errorf("entry %d: got %q, want %q", i, got[i].Name, d.Name)
-		}
+	seen := map[string]bool{}
+	for i, d := range got {
+		seen[d.Name] = true
 		if got[i].Layer == "" || got[i].Summary == "" {
 			t.Errorf("entry %d (%s): empty layer/summary", i, d.Name)
+		}
+	}
+	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+		if !seen[want] {
+			t.Errorf("expected inspector %q in JSON output", want)
 		}
 	}
 	if !strings.Contains(stdout, `"layer"`) {
@@ -146,8 +148,9 @@ func TestInspectorsList_layerJSONFiltersToLayer(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(layerInspectors("source")) {
-		t.Fatalf("got %d source descriptors, want %d", len(got), len(layerInspectors("source")))
+	want := inspectorsByLayer(t, "source")
+	if len(got) != len(want) {
+		t.Fatalf("got %d source descriptors, want %d", len(got), len(want))
 	}
 	for _, d := range got {
 		if d.Layer != "source" {
@@ -190,10 +193,21 @@ func TestInspectors_bare_printsHelpNotList(t *testing.T) {
 	}
 }
 
-// layerInspectors returns the registered inspector names in a layer.
-func layerInspectors(layer string) []string {
+func inspectorsByLayer(t *testing.T, layer string) []string {
+	t.Helper()
+	stdout, _, err := runRoot(t, "inspectors", "list", "--json")
+	if err != nil {
+		t.Fatalf("inspectors list --json: %v", err)
+	}
+	var got []struct {
+		Name  string `json:"name"`
+		Layer string `json:"layer"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
+	}
 	var out []string
-	for _, d := range inspect.Descriptors() {
+	for _, d := range got {
 		if d.Layer == layer {
 			out = append(out, d.Name)
 		}

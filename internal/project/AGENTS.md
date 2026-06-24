@@ -23,5 +23,11 @@ local code conventions.
   `internal/storage/collection`, never the reverse.
 - Public lookup/listing results are sorted for deterministic CLI output and
   tests. Preserve that property when adding new loaded concepts.
-- Tests use external package style and temp directories. Add realistic
-  `.katalyst/` layouts inline unless the fixture is reused by multiple tests.
+- Loader tests should focus on project configuration behavior: discovery,
+  defaults, validation, collection shaping, and check spec parsing.
+- It is fine for loader tests to verify end-to-end registry wiring at the check
+  spec boundary. Concrete check implementation behavior belongs in the owning
+  check-family tests.
+- Use `internal/project/projecttest` for temporary `.katalyst` fixture setup.
+  Do not duplicate project scaffolding helpers in individual packages when a
+  test only needs fixture construction.

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/inspect"
-	"github.com/abegong/katalyst/internal/storage"
 )
 
 func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
@@ -19,10 +18,10 @@ func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
 	}
 
 	ft := inspect.FileTree{}
-	if !ft.AppliesTo(storage.Filesystem) {
+	if !ft.AppliesTo("filesystem") {
 		t.Error("file_tree should apply to filesystem")
 	}
-	if ft.AppliesTo(storage.StorageType("sqlite")) {
+	if ft.AppliesTo("sqlite") {
 		t.Error("file_tree should not apply to a non-filesystem type")
 	}
 

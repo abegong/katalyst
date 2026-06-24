@@ -6,18 +6,16 @@ import (
 
 	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/projecttest"
 )
 
 func TestCollectionView_objectFieldsAndMarkdownBody(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
-root: .
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-`)
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
 	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\nrating: 5\n---\n# Dune\n\n## Review\n")
 	writeFile(t, dir, "notes/messiah.md", "---\ntitle: Messiah\nrating: 4\n---\n# Messiah\n\n## Review\n")
 	writeFile(t, dir, "notes/draft.md", "---\ntitle: Draft\n---\n# Draft\n")

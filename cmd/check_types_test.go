@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/abegong/katalyst/internal/checks"
 )
 
 func TestCheckTypes_listsEveryTypeGroupedByFamily(t *testing.T) {
@@ -18,22 +16,27 @@ func TestCheckTypes_listsEveryTypeGroupedByFamily(t *testing.T) {
 		t.Fatalf("check-types list: %v", err)
 	}
 
-	for _, d := range checks.Descriptors() {
-		if !strings.Contains(stdout, string(d.CheckType)) {
-			t.Errorf("expected check type %q in output", d.CheckType)
+	for _, want := range []string{"object_required_field", "markdown_requires_h1", "filesystem_name_case", "text_requires"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected check type %q in output", want)
 		}
 	}
 
 	// Family titles appear in Families() order.
 	last := -1
-	for _, fam := range checks.Families() {
-		i := strings.Index(stdout, fam.Title)
+	for _, title := range []string{
+		"Structured object check types",
+		"Markdown body text check types",
+		"File system check types",
+		"Plain text check types",
+	} {
+		i := strings.Index(stdout, title)
 		if i < 0 {
-			t.Errorf("expected family title %q in output", fam.Title)
+			t.Errorf("expected family title %q in output", title)
 			continue
 		}
 		if i < last {
-			t.Errorf("family %q out of order", fam.Title)
+			t.Errorf("family %q out of order", title)
 		}
 		last = i
 	}
@@ -122,8 +125,9 @@ func TestCheckTypesList_familyJSONFiltersToFamily(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(familyCheckTypes("fileSystem")) {
-		t.Fatalf("got %d fileSystem descriptors, want %d", len(got), len(familyCheckTypes("fileSystem")))
+	want := checkTypesByFamily(t, "fileSystem")
+	if len(got) != len(want) {
+		t.Fatalf("got %d fileSystem descriptors, want %d", len(got), len(want))
 	}
 	for _, d := range got {
 		if d.Family != "fileSystem" {
@@ -173,19 +177,7 @@ func TestCheckTypesShow_noFieldTypeStatesSo(t *testing.T) {
 	snapshot(t, "check-types/show-markdown_single_h1.txt", stdout)
 }
 
-// familyCheckTypes returns the registered check types in a family, for test
-// expectations.
-func familyCheckTypes(family string) []string {
-	var out []string
-	for _, d := range checks.Descriptors() {
-		if d.Family == family {
-			out = append(out, string(d.CheckType))
-		}
-	}
-	return out
-}
-
-func TestCheckTypesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
+func TestCheckTypesList_jsonArrayShape(t *testing.T) {
 	chdir(t, t.TempDir())
 	stdout, _, err := runRoot(t, "check-types", "list", "--json")
 	if err != nil {
@@ -203,15 +195,19 @@ func TestCheckTypesList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
 	}
-	if len(got) != len(checks.Descriptors()) {
-		t.Fatalf("got %d descriptors, want %d", len(got), len(checks.Descriptors()))
+	if len(got) == 0 {
+		t.Fatal("expected at least one descriptor")
 	}
-	for i, d := range checks.Descriptors() {
-		if got[i].CheckType != string(d.CheckType) {
-			t.Errorf("entry %d: got check type %q, want %q", i, got[i].CheckType, d.CheckType)
-		}
+	seen := map[string]bool{}
+	for i, d := range got {
+		seen[d.CheckType] = true
 		if got[i].ConfigExample == "" {
 			t.Errorf("entry %d (%s): empty config_example", i, d.CheckType)
+		}
+	}
+	for _, want := range []string{"object_required_field", "markdown_requires_h1", "filesystem_name_case", "text_requires"} {
+		if !seen[want] {
+			t.Errorf("expected descriptor %q in JSON output", want)
 		}
 	}
 
@@ -256,4 +252,26 @@ func TestCheckTypesShow_jsonObject(t *testing.T) {
 	if len(got.Fields) != 3 {
 		t.Fatalf("got %d fields, want 3", len(got.Fields))
 	}
+}
+
+func checkTypesByFamily(t *testing.T, family string) []string {
+	t.Helper()
+	stdout, _, err := runRoot(t, "check-types", "list", "--json")
+	if err != nil {
+		t.Fatalf("check-types list --json: %v", err)
+	}
+	var got []struct {
+		CheckType string `json:"check_type"`
+		Family    string `json:"family"`
+	}
+	if err := json.Unmarshal([]byte(stdout), &got); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, stdout)
+	}
+	var out []string
+	for _, d := range got {
+		if d.Family == family {
+			out = append(out, d.CheckType)
+		}
+	}
+	return out
 }

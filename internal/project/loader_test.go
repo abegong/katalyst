@@ -8,87 +8,26 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/checks/filesystem"
-	"github.com/abegong/katalyst/internal/checks/markdownbodytext"
-	"github.com/abegong/katalyst/internal/checks/plaintext"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/projecttest"
 )
 
-// writeProject scaffolds a .katalyst/ tree: keys are paths relative to
-// the .katalyst/ directory (e.g. "schemas/book.yaml", "config.yaml"),
-// values are file contents. It always creates the .katalyst/ dir so the
-// project is discoverable even when files is empty.
-func writeProject(t *testing.T, dir string, files map[string]string) {
+func assertConfiguredCheckBuilds(t *testing.T, c checks.ConfiguredCheck) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Join(dir, ".katalyst"), 0o755); err != nil {
-		t.Fatalf("mkdir .katalyst: %v", err)
+	if c.Kind == checks.CheckObject {
+		return
 	}
-	for rel, content := range files {
-		p := filepath.Join(dir, ".katalyst", rel)
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-			t.Fatalf("mkdir %s: %v", filepath.Dir(p), err)
-		}
-		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
-			t.Fatalf("write %s: %v", rel, err)
-		}
+	if _, ok := checks.Build(c.Kind, c.Args); !ok {
+		t.Fatalf("%s did not build from parsed config", c.Kind)
 	}
-}
-
-// localStorage builds a .katalyst/storage/local.yaml body: a filesystem
-// instance rooted at the project, declaring the given collections verbatim.
-// Each value is the collection's YAML body, indented under its name.
-func localStorage(collections map[string]string) string {
-	var b strings.Builder
-	b.WriteString("type: filesystem\nroot: .\ncollections:\n")
-	// Deterministic order keeps the fixture stable.
-	names := make([]string, 0, len(collections))
-	for n := range collections {
-		names = append(names, n)
-	}
-	for i := 0; i < len(names); i++ {
-		for j := i + 1; j < len(names); j++ {
-			if names[j] < names[i] {
-				names[i], names[j] = names[j], names[i]
-			}
-		}
-	}
-	for _, n := range names {
-		b.WriteString("  " + n + ":\n")
-		for _, line := range strings.Split(strings.TrimRight(collections[n], "\n"), "\n") {
-			if line == "" {
-				b.WriteString("\n")
-				continue
-			}
-			b.WriteString("    " + line + "\n")
-		}
-	}
-	return b.String()
-}
-
-// minimalSchema is a placeholder schema body; the config layer records a
-// schema's path but never compiles it, so the contents only need to be a
-// valid file.
-const minimalSchema = "type: object\n"
-
-// realPath returns dir with symlinks resolved. macOS's $TMPDIR is
-// /var/folders/... which is a symlink to /private/var/folders/...;
-// Load canonicalizes via EvalSymlinks, so tests must compare against
-// the resolved form.
-func realPath(t *testing.T, dir string) string {
-	t.Helper()
-	r, err := filepath.EvalSymlinks(dir)
-	if err != nil {
-		return dir
-	}
-	return r
 }
 
 func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":   minimalSchema,
-		"schemas/person.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":   projecttest.MinimalSchema,
+		"schemas/person.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{
 			"books":  "path: notes/books\nschema: book\n",
 			"people": "path: notes/people\npattern: \"*.markdown\"\nschema: person\n",
 		}),
@@ -99,7 +38,7 @@ func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	wantRoot := realPath(t, dir)
+	wantRoot := projecttest.RealPath(t, dir)
 	if cfg.Root != wantRoot {
 		t.Errorf("Root = %q, want %q", cfg.Root, wantRoot)
 	}
@@ -154,9 +93,9 @@ func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 
 func TestLoad_defaultsPathToCollectionName(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -171,8 +110,8 @@ func TestLoad_defaultsPathToCollectionName(t *testing.T) {
 func TestLoad_instanceRoot_resolvesCollectionDirs(t *testing.T) {
 	// A non-default instance root is the base for its collections' Dir.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 		"storage/vault.yaml": "type: filesystem\nroot: content\ncollections:\n" +
 			"  notes:\n    path: notes\n    schema: book\n",
 	})
@@ -181,7 +120,7 @@ func TestLoad_instanceRoot_resolvesCollectionDirs(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if want := filepath.Join(realPath(t, dir), "content/notes"); notes.Dir != want {
+	if want := filepath.Join(projecttest.RealPath(t, dir), "content/notes"); notes.Dir != want {
 		t.Errorf("notes.Dir = %q, want %q (resolved against instance root)", notes.Dir, want)
 	}
 }
@@ -190,8 +129,8 @@ func TestLoad_perCollectionFiles_inInstanceDir(t *testing.T) {
 	// A collection may live in its own file under storage/<instance>/, the
 	// escape hatch for instances that outgrow an inline block.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":         minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":         projecttest.MinimalSchema,
 		"storage/local.yaml":        "type: filesystem\nroot: .\ncollections: {}\n",
 		"storage/local/books.yaml":  "path: notes/books\nschema: book\n",
 		"storage/local/people.yaml": "path: notes/people\nschema: book\n",
@@ -211,9 +150,9 @@ func TestLoad_perCollectionFiles_inInstanceDir(t *testing.T) {
 
 func TestLoad_perCollectionFiles_coexistWithInline(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":        minimalSchema,
-		"storage/local.yaml":       localStorage(map[string]string{"books": "path: notes/books\nschema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":        projecttest.MinimalSchema,
+		"storage/local.yaml":       projecttest.LocalStorage(map[string]string{"books": "path: notes/books\nschema: book\n"}),
 		"storage/local/notes.yaml": "path: notes\nschema: book\n",
 	})
 	cfg, err := project.Load(dir)
@@ -227,9 +166,9 @@ func TestLoad_perCollectionFiles_coexistWithInline(t *testing.T) {
 
 func TestLoad_perCollectionFiles_rejectInlineCollision(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":        minimalSchema,
-		"storage/local.yaml":       localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":        projecttest.MinimalSchema,
+		"storage/local.yaml":       projecttest.LocalStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
 		"storage/local/notes.yaml": "path: other\nschema: book\n",
 	})
 	_, err := project.Load(dir)
@@ -240,7 +179,7 @@ func TestLoad_perCollectionFiles_rejectInlineCollision(t *testing.T) {
 
 func TestLoad_ascendsToFindProject(t *testing.T) {
 	repo := t.TempDir()
-	writeProject(t, repo, nil)
+	projecttest.WriteProject(t, repo, nil)
 	deep := filepath.Join(repo, "a", "b", "c")
 	if err := os.MkdirAll(deep, 0o755); err != nil {
 		t.Fatal(err)
@@ -250,7 +189,7 @@ func TestLoad_ascendsToFindProject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	wantRoot := realPath(t, repo)
+	wantRoot := projecttest.RealPath(t, repo)
 	if cfg.Root != wantRoot {
 		t.Errorf("Root = %q, want %q", cfg.Root, wantRoot)
 	}
@@ -260,8 +199,8 @@ func TestLoad_noStorage_isEmptyButValid(t *testing.T) {
 	// A project with schemas but no storage instances loads with zero
 	// collections. There is no implicit instance synthesized.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -279,9 +218,9 @@ func TestLoad_noConfigFile_usesConventionDefaults(t *testing.T) {
 	// A project with a .katalyst/ dir but no config.yaml loads via the
 	// default convention + yaml discovery.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -302,7 +241,7 @@ func TestLoad_notFound(t *testing.T) {
 
 func TestLoad_rejectsUnknownStorageType(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"storage/db.yaml": "type: sqlite\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n",
 	})
 	_, err := project.Load(dir)
@@ -313,7 +252,7 @@ func TestLoad_rejectsUnknownStorageType(t *testing.T) {
 
 func TestLoad_rejectsDuplicateCollectionAcrossInstances(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"storage/a.yaml": "type: filesystem\ncollections:\n  notes:\n    path: a\n    checks:\n      - kind: markdown_requires_h1\n",
 		"storage/b.yaml": "type: filesystem\ncollections:\n  notes:\n    path: b\n    checks:\n      - kind: markdown_requires_h1\n",
 	})
@@ -325,9 +264,9 @@ func TestLoad_rejectsDuplicateCollectionAcrossInstances(t *testing.T) {
 
 func TestLoad_rejectsUnknownSchemaInCollection(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nschema: nonexistent\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\nschema: nonexistent\n"}),
 	})
 	_, err := project.Load(dir)
 	if err == nil {
@@ -340,8 +279,8 @@ func TestLoad_rejectsUnknownSchemaInCollection(t *testing.T) {
 
 func TestLoad_rejectsCollectionWithNoChecks(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\n"}),
 	})
 	_, err := project.Load(dir)
 	if err == nil {
@@ -363,11 +302,11 @@ func TestLoad_variantsParsed(t *testing.T) {
 		"    schema: content\n" +
 		"    checks:\n" +
 		"      - kind: markdown_requires_h1\n"
-	writeProject(t, dir, map[string]string{
-		"schemas/page.yaml":    minimalSchema,
-		"schemas/section.yaml": minimalSchema,
-		"schemas/content.yaml": minimalSchema,
-		"storage/local.yaml":   localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/page.yaml":    projecttest.MinimalSchema,
+		"schemas/section.yaml": projecttest.MinimalSchema,
+		"schemas/content.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml":   projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 
 	cfg, err := project.Load(dir)
@@ -418,9 +357,9 @@ func TestLoad_whenShorthandDesugars(t *testing.T) {
 		"  - when: [\"a=1\", \"b=2\"]\n" +
 		"    checks:\n" +
 		"      - kind: markdown_requires_h1\n"
-	writeProject(t, dir, map[string]string{
-		"schemas/page.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/page.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -446,8 +385,8 @@ func TestLoad_variantOnlyCollectionIsValid(t *testing.T) {
 		"  - when: \"kind=section\"\n" +
 		"    checks:\n" +
 		"      - kind: markdown_requires_h1\n"
-	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 	if _, err := project.Load(dir); err != nil {
 		t.Fatalf("variant-only collection should load: %v", err)
@@ -459,9 +398,9 @@ func TestLoad_rejectsInvalidVariantPredicate(t *testing.T) {
 	body := "path: pages\nschema: page\n" +
 		"variants:\n" +
 		"  - when: \"=nofield\"\n"
-	writeProject(t, dir, map[string]string{
-		"schemas/page.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/page.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "variants[0]") {
@@ -475,9 +414,9 @@ func TestLoad_rejectsUnknownVariantSchema(t *testing.T) {
 		"variants:\n" +
 		"  - when: \"kind=section\"\n" +
 		"    schema: nonexistent\n"
-	writeProject(t, dir, map[string]string{
-		"schemas/page.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/page.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "nonexistent") {
@@ -495,9 +434,9 @@ func TestLoad_rejectsEmptyWhen(t *testing.T) {
 		"  - when: []\n" +
 		"    checks:\n" +
 		"      - kind: markdown_requires_h1\n"
-	writeProject(t, dir, map[string]string{
-		"schemas/page.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/page.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"pages": body}),
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "at least one predicate") {
@@ -507,9 +446,9 @@ func TestLoad_rejectsEmptyWhen(t *testing.T) {
 
 func TestLoad_useExhaustiveVariantsDefaultsFalse(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -526,9 +465,9 @@ func TestLoad_useExhaustiveVariantsDefaultsFalse(t *testing.T) {
 
 func TestLoad_parsesChecks(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: object
     schema: book
@@ -586,43 +525,22 @@ checks:
 	if got[6].Kind != checks.CheckMarkdownTitleMatchesH1 {
 		t.Fatalf("check[6].Kind = %v, want markdown_title_matches_h1", got[6].Kind)
 	}
-	titleCheck, ok := checks.Build(got[6].Kind, got[6].Args)
-	if !ok {
-		t.Fatalf("check[6] did not build")
-	}
-	titleMatches, ok := titleCheck.(markdownbodytext.MarkdownTitleMatchesH1)
-	if !ok || titleMatches.Field != "title" {
-		t.Fatalf("check[6] = %#v, want markdown default field title", titleCheck)
-	}
 	if got[12].Kind != checks.CheckFilesystemNameMatchesField {
 		t.Fatalf("check[12].Kind = %v, want filesystem_name_matches_field", got[12].Kind)
-	}
-	nameCheck, ok := checks.Build(got[12].Kind, got[12].Args)
-	if !ok {
-		t.Fatalf("check[12] did not build")
-	}
-	nameMatches, ok := nameCheck.(filesystem.NameMatchesField)
-	if !ok || nameMatches.Field != "slug" || nameMatches.Transform != "none" {
-		t.Fatalf("check[12] = %#v, want name_matches_field default field slug, transform none", nameCheck)
 	}
 	if got[14].Kind != checks.CheckFilesystemNameCase {
 		t.Fatalf("check[14].Kind = %v, want filesystem_name_case", got[14].Kind)
 	}
-	caseCheck, ok := checks.Build(got[14].Kind, got[14].Args)
-	if !ok {
-		t.Fatalf("check[14] did not build")
-	}
-	nameCase, ok := caseCheck.(filesystem.NameCase)
-	if !ok || nameCase.Style != "kebab" {
-		t.Fatalf("check[14] = %#v, want name_case style kebab", caseCheck)
+	for _, c := range got {
+		assertConfiguredCheckBuilds(t, c)
 	}
 }
 
 func TestLoad_rejectsUnknownCheckType(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: not-real
 `}),
@@ -638,8 +556,8 @@ checks:
 
 func TestLoad_rejectsUnknownCheckKey(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: markdown_requires_h1
     typo: true
@@ -656,9 +574,9 @@ checks:
 
 func TestLoad_rejectsMalformedCheckPayload(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: object
 `}),
@@ -674,9 +592,9 @@ checks:
 
 func TestLoad_rejectsObjectCheckField(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: object
     schema: book
@@ -728,8 +646,8 @@ func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			dir := t.TempDir()
-			writeProject(t, dir, map[string]string{
-				"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
+			projecttest.WriteProject(t, dir, map[string]string{
+				"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
 			})
 			_, err := project.Load(dir)
 			if err == nil {
@@ -744,8 +662,8 @@ func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
 
 func TestLoad_parsesTextChecks(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `path: notes
 checks:
   - kind: text_requires
     pattern: Sources
@@ -774,46 +692,17 @@ checks:
 	if got[0].Kind != checks.CheckTextRequires {
 		t.Fatalf("check[0].Kind = %v, want text_requires", got[0].Kind)
 	}
-	requires0, ok := checks.Build(got[0].Kind, got[0].Args)
-	if !ok {
-		t.Fatalf("check[0] did not build")
-	}
-	textRequires0, ok := requires0.(plaintext.TextRequires)
-	if !ok || textRequires0.All {
-		t.Fatalf("check[0] = %#v, want text_requires default match any", requires0)
-	}
 	if got[1].Kind != checks.CheckTextRequires {
 		t.Fatalf("check[1].Kind = %v, want text_requires", got[1].Kind)
-	}
-	requires1, ok := checks.Build(got[1].Kind, got[1].Args)
-	if !ok {
-		t.Fatalf("check[1] did not build")
-	}
-	textRequires1, ok := requires1.(plaintext.TextRequires)
-	if !ok || !textRequires1.All || textRequires1.Target != "line" {
-		t.Fatalf("check[1] = %#v, want match all target line", requires1)
 	}
 	if got[2].Kind != checks.CheckTextForbids {
 		t.Fatalf("check[2].Kind = %v, want text_forbids", got[2].Kind)
 	}
-	forbids, ok := checks.Build(got[2].Kind, got[2].Args)
-	if !ok {
-		t.Fatalf("check[2] did not build")
-	}
-	textForbids, ok := forbids.(plaintext.TextForbids)
-	if !ok || textForbids.Select == nil {
-		t.Fatalf("check[2] = %#v, want text_forbids select ^-", forbids)
-	}
 	if got[3].Kind != checks.CheckTextDenylist {
 		t.Fatalf("check[3].Kind = %v, want text_denylist", got[3].Kind)
 	}
-	denylist, ok := checks.Build(got[3].Kind, got[3].Args)
-	if !ok {
-		t.Fatalf("check[3] did not build")
-	}
-	textDenylist, ok := denylist.(plaintext.TextDenylist)
-	if !ok || len(textDenylist.Values) != 2 {
-		t.Fatalf("check[3] = %#v, want text_denylist with 2 values", denylist)
+	for _, c := range got {
+		assertConfiguredCheckBuilds(t, c)
 	}
 }
 
@@ -856,8 +745,8 @@ func TestLoad_rejectsInvalidTextCheckConfig(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			dir := t.TempDir()
-			writeProject(t, dir, map[string]string{
-				"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
+			projecttest.WriteProject(t, dir, map[string]string{
+				"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
 			})
 			_, err := project.Load(dir)
 			if err == nil {
@@ -874,8 +763,8 @@ func TestLoad_explicitDiscovery_readsDefs(t *testing.T) {
 	// In explicit mode, the storage directory scan is ignored and the inline
 	// defs map in config.yaml is authoritative.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"my-schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"my-schemas/book.yaml": projecttest.MinimalSchema,
 		"config.yaml": `schemas:
   discovery: explicit
   defs:
@@ -892,7 +781,7 @@ storage:
           schema: book
 `,
 		// Stray files in the convention dirs must be ignored.
-		"schemas/ignored.yaml":      minimalSchema,
+		"schemas/ignored.yaml":      projecttest.MinimalSchema,
 		"storage/ignored-inst.yaml": "type: filesystem\ncollections: {}\n",
 	})
 	cfg, err := project.Load(dir)
@@ -907,7 +796,7 @@ storage:
 			t.Errorf("explicit discovery must ignore the storage/ dir scan, saw instance %q", inst.Name)
 		}
 	}
-	wantRoot := realPath(t, dir)
+	wantRoot := projecttest.RealPath(t, dir)
 	if got, want := cfg.SchemaPath("book"), filepath.Join(wantRoot, ".katalyst/my-schemas/book.yaml"); got != want {
 		t.Errorf("SchemaPath(book) = %q, want %q", got, want)
 	}
@@ -918,7 +807,7 @@ storage:
 
 func TestLoad_explicitDiscovery_requiresDefs(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"config.yaml": "storage:\n  discovery: explicit\n",
 	})
 	_, err := project.Load(dir)
@@ -929,24 +818,24 @@ func TestLoad_explicitDiscovery_requiresDefs(t *testing.T) {
 
 func TestLoad_formatJSON_scansJSONFiles(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"schemas/book.json":  `{"type":"object"}`,
 		"config.yaml":        "schemas:\n  format: json\n",
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if got, want := cfg.SchemaPath("book"), filepath.Join(realPath(t, dir), ".katalyst/schemas/book.json"); got != want {
+	if got, want := cfg.SchemaPath("book"), filepath.Join(projecttest.RealPath(t, dir), ".katalyst/schemas/book.json"); got != want {
 		t.Errorf("SchemaPath(book) = %q, want %q", got, want)
 	}
 }
 
 func TestLoad_formatBoth_rejectsNameCollision(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 		"schemas/book.json": `{"type":"object"}`,
 		"config.yaml":       "schemas:\n  format: both\n",
 	})
@@ -959,7 +848,7 @@ func TestLoad_formatBoth_rejectsNameCollision(t *testing.T) {
 func TestLoad_perKindIndependence(t *testing.T) {
 	// Schemas explicit + json; storage convention + yaml.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"schemas/book.json": `{"type":"object"}`,
 		"config.yaml": `schemas:
   discovery: explicit
@@ -967,7 +856,7 @@ func TestLoad_perKindIndependence(t *testing.T) {
   defs:
     book: ./.katalyst/schemas/book.json
 `,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -983,7 +872,7 @@ func TestLoad_perKindIndependence(t *testing.T) {
 
 func TestLoad_rejectsBadDiscovery(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
+	projecttest.WriteProject(t, dir, map[string]string{
 		"config.yaml": "schemas:\n  discovery: bogus\n",
 	})
 	_, err := project.Load(dir)
@@ -994,9 +883,9 @@ func TestLoad_rejectsBadDiscovery(t *testing.T) {
 
 func TestLoad_listingDefaults_whenUnset(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -1013,13 +902,13 @@ func TestLoad_listingDefaults_whenUnset(t *testing.T) {
 
 func TestLoad_listing_projectDefaultApplies(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 		"config.yaml": `listing:
   filterTypeMismatch: error
   sortMissing: lowest
 `,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -1038,12 +927,12 @@ func TestLoad_listing_collectionOverridesPerKey(t *testing.T) {
 	// The collection sets only filterTypeMismatch; sortMissing must fall
 	// through to the project default, not back to the built-in.
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 		"config.yaml": `listing:
   sortMissing: lowest
 `,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `schema: book
 listing:
   filterTypeMismatch: error
 `}),
@@ -1063,9 +952,9 @@ listing:
 
 func TestLoad_listing_rejectsUnknownValue(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `schema: book
 listing:
   filterTypeMismatch: bogus
 `}),
@@ -1078,12 +967,12 @@ listing:
 
 func TestLoad_rejectsProjectQueryConfigBlock(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
 		"config.yaml": `query:
   sortMissing: lowest
 `,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "query is no longer a config block; use listing") {
@@ -1093,9 +982,9 @@ func TestLoad_rejectsProjectQueryConfigBlock(t *testing.T) {
 
 func TestLoad_rejectsCollectionQueryConfigBlock(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml": minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml": projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": `schema: book
 query:
   sortMissing: lowest
 `}),
@@ -1108,9 +997,9 @@ query:
 
 func TestCollection_unknownReturnsFalse(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/book.yaml":  minimalSchema,
-		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/book.yaml":  projecttest.MinimalSchema,
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "schema: book\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -1123,10 +1012,10 @@ func TestCollection_unknownReturnsFalse(t *testing.T) {
 
 func TestSchemaNames_returnsSortedNames(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"schemas/zebra.yaml":  minimalSchema,
-		"schemas/apple.yaml":  minimalSchema,
-		"schemas/middle.yaml": minimalSchema,
+	projecttest.WriteProject(t, dir, map[string]string{
+		"schemas/zebra.yaml":  projecttest.MinimalSchema,
+		"schemas/apple.yaml":  projecttest.MinimalSchema,
+		"schemas/middle.yaml": projecttest.MinimalSchema,
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {
@@ -1141,8 +1030,8 @@ func TestSchemaNames_returnsSortedNames(t *testing.T) {
 
 func TestLoad_parsesWritingTells(t *testing.T) {
 	dir := t.TempDir()
-	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
 	})
 	cfg, err := project.Load(dir)
 	if err != nil {

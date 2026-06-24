@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 	"testing"
 
 	"github.com/abegong/katalyst/cmd"
+	"github.com/abegong/katalyst/internal/project/projecttest"
 )
 
 // runRoot builds a fresh command tree, runs it with args, and captures
@@ -63,9 +62,7 @@ const schemaFormatJSON = "schemas:\n  format: json\n"
 // "config.yaml"); values are file contents.
 func writeProject(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
-	for rel, content := range files {
-		mustWrite(t, filepath.Join(dir, ".katalyst", rel), content)
-	}
+	projecttest.WriteProject(t, dir, files)
 }
 
 // storageLocal builds a .katalyst/storage/local.yaml body: a filesystem
@@ -74,24 +71,7 @@ func writeProject(t *testing.T, dir string, files map[string]string) {
 // live inside their storage instance, so tests scaffold them this way instead
 // of one file per collection.
 func storageLocal(collections map[string]string) string {
-	var b strings.Builder
-	b.WriteString("type: filesystem\nroot: .\ncollections:\n")
-	names := make([]string, 0, len(collections))
-	for n := range collections {
-		names = append(names, n)
-	}
-	sort.Strings(names)
-	for _, n := range names {
-		b.WriteString("  " + n + ":\n")
-		for _, line := range strings.Split(strings.TrimRight(collections[n], "\n"), "\n") {
-			if line == "" {
-				b.WriteString("\n")
-				continue
-			}
-			b.WriteString("    " + line + "\n")
-		}
-	}
-	return b.String()
+	return projecttest.LocalStorage(collections)
 }
 
 // writeConfigDir writes the two-schema book-and-person project (book and

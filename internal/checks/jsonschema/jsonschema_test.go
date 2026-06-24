@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/checktest"
 	"github.com/abegong/katalyst/internal/checks/jsonschema"
-	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 )
 
 //go:embed testdata/schemas/book.json
@@ -24,7 +24,7 @@ func mustCompile(t *testing.T, src string) checks.Schema {
 
 func check(t *testing.T, s checks.Schema, meta map[string]any) []checks.Violation {
 	t.Helper()
-	return s.Check(checks.Context{Meta: meta})
+	return s.Check(checktest.Context(meta))
 }
 
 func TestLibrary_identity(t *testing.T) {
@@ -113,16 +113,9 @@ func TestCheck_additionalProperty(t *testing.T) {
 // Check resolves a violation's source line through the document's line map,
 // the behavior the object check type relies on.
 func TestCheck_reportsLineForSchemaViolation(t *testing.T) {
-	doc, err := markdownbodytext.Parse([]byte("---\ntitle: Dune\nyear: nope\n---\n# Dune\n"))
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
-	}
 	s := mustCompile(t, `{"type":"object","properties":{"year":{"type":"integer"}},"required":["year"]}`)
-	v := s.Check(checks.Context{
-		FilePath: "notes/dune.md",
-		Doc:      doc,
-		Meta:     map[string]any{"title": "Dune", "year": "nope"},
-	})
+	ctx := checktest.ContextWithDoc(t, "notes/dune.md", "---\ntitle: Dune\nyear: nope\n---\n# Dune\n", map[string]any{"title": "Dune", "year": "nope"})
+	v := s.Check(ctx)
 	if len(v) != 1 {
 		t.Fatalf("expected 1 violation, got %d: %+v", len(v), v)
 	}
@@ -137,7 +130,7 @@ func TestCheck_reportsLineForSchemaViolation(t *testing.T) {
 // TestObject_delegatesToSchema covers the object check type wrapper.
 func TestObject_delegatesToSchema(t *testing.T) {
 	s := mustCompile(t, `{"type":"object","required":["year"]}`)
-	v := jsonschema.Object{Schema: s}.Run(checks.Context{Meta: map[string]any{"title": "Dune"}})
+	v := jsonschema.Object{Schema: s}.Run(checktest.Context(map[string]any{"title": "Dune"}))
 	if !mentions(v, "year") {
 		t.Errorf("expected object check to report missing year, got: %+v", v)
 	}
