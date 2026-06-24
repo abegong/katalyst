@@ -6,7 +6,7 @@ Conventions specific to the CLI layer. Root standards live in the repo
 ## Command placement
 
 The command surface is two grammars, kept apart (the full rationale is in
-[docs/deep-dives/command-organization.md](../docs/content/deep-dives/command-organization.md)).
+[organization.md](./organization.md)).
 When adding a top-level command, decide which family it joins:
 
 - **Blessed verb:** `katalyst <verb> [selector ...]`, a cross-cutting

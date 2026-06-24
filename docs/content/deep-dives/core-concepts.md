@@ -1,170 +1,54 @@
 +++
 title = "Core concepts"
-weight = 20
+weight = 30
 +++
 
 # Core concepts
 
-> **Status: work in progress.** This is a deliberately abstract sketch,
-> captured as concepts are introduced. It is not about `katalyst`
-> specifically, katalyst is one instantiation among many. Expect breaking
-> revisions until the concepts settle.
+> **Status: work in progress.** A deliberately abstract sketch. These concepts
+> are not about `katalyst` specifically; katalyst is one instantiation among
+> many. Expect revisions until they settle.
 
-## Goal
+The vocabulary katalyst reasons in, general enough to describe a Postgres table,
+a directory of markdown files, and a MongoDB collection the same way, so the
+abstractions built on top bridge them too. Each term's canonical definition
+lives in the [glossary]({{< relref "../reference/glossary.md" >}}); this page
+introduces the concepts and how they fit. For the katalyst-specific
+instantiation, see the [domain model]({{< relref "domain-model.md" >}}).
 
-We tend to think about data in one of two modes:
+## The concepts
 
-- **Structured:** tables with column definitions, schemas, types,
-  queries. Databases, warehouses, document stores.
-- **Unstructured:** files, blobs, free-form text. Filesystems, object
-  stores, "data lakes."
+- **Storage** is a backend that holds data: a filesystem, a SQLite database, a
+  Postgres instance, an S3 bucket. Katalyst's realization is the
+  [storage layer]({{< relref "storage.md" >}}).
+- **Collection** is a group of items sharing structure: a directory of similar
+  files, a relational table, a Mongo collection. See
+  [collections]({{< relref "collections.md" >}}).
+- **Item** is one unit of data in a collection: a markdown file, a table row, a
+  Mongo document.
+- **Attribute** is a named characteristic of an item: a column, a frontmatter
+  key, a response field, even its name or path. A key in a structured object
+  specifically is a **field**.
+- **Operation** is something storage lets you do with its data: read, list,
+  query, aggregate, write. Which operations a backend supports is the subject of
+  [progressive operations]({{< relref "progressive-operations.md" >}}).
+- **Check** asserts a condition on an item or its attributes and reports a
+  violation when it fails. See [checks]({{< relref "checks.md" >}}).
+- **Inspector** is the descriptive dual of a check: it measures a distribution
+  and returns evidence, never a verdict. See
+  [inspectors]({{< relref "inspectors.md" >}}).
 
-Tools, vocabulary, and mental models usually pick a side. A SQL DBA
-and a markdown-vault note-taker have almost no shared language for
-their work, even though the operations they want to perform:
-*describe the shape of this data, find data that matches, change it
-safely, check that constraints hold*, are essentially the same.
+## The same vocabulary across backends
 
-This document collects concepts that **bridge structured and
-unstructured data**: terms general enough to describe a Postgres
-table, a directory of markdown files, and a MongoDB collection with
-the same vocabulary, so that abstractions built on top can bridge
-them too.
+| System               | Storage       | Collection      | Item       | Attribute        |
+|----------------------|---------------|-----------------|------------|------------------|
+| Postgres             | The database  | A table         | A row      | A column         |
+| MongoDB              | The database  | A collection    | A document | A field          |
+| A directory of CSVs  | The directory | A CSV file      | A row      | A column         |
+| A REST API           | The API       | A resource type | A resource | A response field |
+| An S3 bucket of JSON | The bucket    | A key prefix    | An object  | A JSON key       |
 
-## Concepts and Examples
-
-### Data interface
-
-A **data interface** is a formal protocol for accessing and interacting with data.
-
-Examples:
-
-- A filesystem (files on a disk).
-- A SQLite database.
-- A filesystem *and* a SQLite database in combination, a data
-  interface can be heterogeneous.
-- A structured backend such as DuckDB, MongoDB, or Postgres.
-- An interface in front of any of those (read-only views, query APIs,
-  federated readers all count; *storing* data is not a requirement,
-  only *defining and exposing* it).
-
-### Item
-
-An **item** is a unit of data that you can interact with via a data interface.
-
-Examples:
-
-- A markdown file in a filesystem.
-- A row in a relational database table.
-- A document in a MongoDB collection.
-
-### Collection
-
-A **collection** is a group of items within a data interface sharing similar structure, attributes, provenance, etc.
-
-Examples:
-
-- Similarly formatted files within a directory.
-- A table in a relational DB.
-- A collection in MongoDB.
-
-
-### Attribute
-
-An **attribute** is a named characteristic or field of items within a collection.
-
-Examples:
-
-- A column definition (name + type) in a relational database table.
-- A field within a MongoDB document.
-- A key inside a markdown file's frontmatter.
-- A document metadata, including things like its
-  name, path, or how it's stored.
-
-### Operation
-
-An **operation** is something a data interface lets you do with its
-data: read, write, query, transform, traverse. Every operation has a
-defined **scope** (single item, single collection, across collections)
-and a set of **structural requirements** the data interface must
-satisfy for the operation to be available.
-
-Examples:
-
-- **Read** an item by identifier.
-- **List** the items in a collection.
-- **Write**, **delete**, **create**, the obvious mutations.
-- **Search** items by raw content (substring or semantic similarity).
-- **Query** items by structured attribute values.
-- **Diff**
-- **Aggregate** across items in a collection, the descriptive operation
-  inspectors provide.
-
-### Check
-
-A **check** asserts a condition on items or their attributes. A **check type**
-is a reusable definition of such a condition; a **check instance** is one check
-type configured for a collection.
-
-A check type is either implemented directly by the tool or **delegated to an
-external check library** that performs the check, a schema validator, a policy
-engine, a prose linter. The delegated engine compiles a definition (a schema)
-and runs items against it; the tool maps its findings back into checks. In
-katalyst this provider is a `CheckLibrary` (JSON Schema is the first); see the
-[domain model]({{< relref "domain-model.md" >}}).
-
-Examples:
-
-- Type validation, an attribute must be a certain type.
-- A foreign key constraint, an attribute must reference an item in another collection.
-- Uniqueness, no two items in the collection share a value for this attribute.
-- API-level validation, an attribute must satisfy a business rule (e.g. a valid email domain).
-
-### Inspector
-
-An **inspector** is the descriptive dual of a check, and the operation that
-realizes **Aggregate** above. Where a check asserts a condition and returns
-violations, an inspector *measures* a condition and returns **evidence**, counts
-and distributions, never a verdict. A check asks "is `status` one of {read,
-reading}?"; the matching inspector asks "what is the distribution of `status`?"
-and answers `{read: 80, reading: 12}`.
-
-Inspectors come in two layers, by what they measure and how they reach it:
-
-- **Raw-source** inspectors profile a backend store directly, before any
-  collection is configured, the onboarding case ("what's in this directory?").
-- **Collection** inspectors profile a configured collection's items, addressed
-  by item identity and probed through the same substrate the checks use.
-
-Reading the evidence and deciding what to do with it, that a field present in
-94% of items should become `required`, is judgment that stays with the reader (a
-human or an agent), never the inspector.
-
-## Examples
-
-Here are a few more examples, to help ground these concepts.
-
-| System                  | Data interface         | Collection                  | Item                | Attribute                 |
-|-------------------------|------------------------|-----------------------------|---------------------|---------------------------|
-| Postgres                | The database           | A table                     | A row               | A column                  |
-| MongoDB                 | The database           | A collection                | A document          | A field                   |
-| A directory of CSVs     | The directory          | A CSV file                  | A row               | A column                  |
-| A REST API              | The API                | A resource type             | A resource          | A response field          |
-| An S3 bucket of JSON    | The bucket             | A key prefix                | An object           | A JSON key                |
-
-
-## Implications
-
-- The difference between "structured" and "unstructured" data largely comes down to *which operations are supported*.
-- Structured data supports a wide range of operations; unstructured data is limited to a narrow set.
-- Normalized relational databases sit at the strong end of "structured"--they have long been proven to support a general and powerful set of operations: joins across collections, filters on any column, aggregations, etc.
-- SQL engines enforce a variety of upfront checks: columns, typed fields, NOT NULL, uniqueness, foreign keys.
-- These checks are required in order to guarantee that the system can provide its catalog of operations.
-- In other words, schemas and structuredness are a means to an end. They're about enforcing checks in order to provide a catalog of operations.
-
-For how these general concepts are instantiated in katalyst specifically, the
-concrete `Document`, `Schema`, `Collection`, `Check`, and `Inspector` types and
-the invariants between them, see the [domain model]({{< relref "domain-model.md" >}}).
-For how they translate to today's code, see the per-package `AGENTS.md` files
-under `internal/` (notably `internal/config`, `internal/frontmatter`,
-`internal/checks`, and `internal/inspect`).
+An operation defined once in this vocabulary, check an attribute, aggregate over
+a collection, applies to every backend that supports it. Which operations a
+backend supports, and the structural commitments each demands, is the
+[progressive operations]({{< relref "progressive-operations.md" >}}) story.

@@ -1,8 +1,3 @@
-+++
-title = "How the core commands are organized"
-weight = 50
-+++
-
 # How the core commands are organized
 
 The `katalyst` CLI carries two command grammars on purpose, and keeps them
@@ -14,7 +9,7 @@ what its selector means, and, when you add a command, where it goes.
 A top-level command is exactly one of two kinds.
 
 **Blessed verbs** operate *over* content. The verb names a cross-cutting
-operation; a [selector]({{< relref "../reference/cli.md" >}}) picks the
+operation; a [selector](../docs/content/reference/cli.md) picks the
 targets at any depth, and several may be passed at once:
 
 ```bash

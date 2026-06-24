@@ -246,6 +246,6 @@ variant), even when `--schema` is used.
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
 - [Storage layer]({{< relref "../deep-dives/storage.md" >}}), the storage
   instance / collection-definition model and its lineage.
-- [How collections work]({{< relref "../deep-dives/collections.md" >}}), the
+- [Collections]({{< relref "../deep-dives/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.
