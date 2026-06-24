@@ -30,6 +30,8 @@ go.work.sum
 # Build output
 /bin/
 /katalyst
+# GoReleaser output (local `goreleaser release --snapshot` runs)
+/dist/
 # Hugo build artifacts (docs site lives under docs/, so match at any depth)
 public/
 **/resources/_gen/
