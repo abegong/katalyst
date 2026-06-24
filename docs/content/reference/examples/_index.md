@@ -17,3 +17,7 @@ Each example pairs a small input corpus with a `katalyst` command and shows the 
 - [Rewrite only the matched text]({{< relref "fix-text-forbids.md" >}}): A text_forbids fix template rewrites the violation and nothing else.
 - [Cluster a raw directory by shape]({{< relref "inspect-source-shape.md" >}}): The raw-source document_shape inspector groups files into candidate collections.
 - [Profile a collection's fields]({{< relref "inspect-collection-fields.md" >}}): The collection-layer object_fields inspector is a data dictionary over frontmatter.
+- [Check items against a bound schema]({{< relref "check-schema-missing-field.md" >}}): A collection bound to the book schema passes a complete item and fails one missing a required field.
+- [Check a collection's attached rules]({{< relref "check-collection-rules.md" >}}): A collection with markdown and filesystem checks passes a conforming item and flags a mis-named, mismatched one.
+- [Gate CI on validation]({{< relref "ci-check-fails.md" >}}): A whole-project check exits 1 when any item has a violation, the signal CI gates on.
+- [Gate CI on canonical frontmatter]({{< relref "ci-fix-check.md" >}}): fix --check writes nothing and exits 1 when frontmatter is not canonical.

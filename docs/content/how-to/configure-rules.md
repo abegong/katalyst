@@ -59,7 +59,11 @@ katalyst check posts
 
 Each item prints `OK` or a `path:line: /pointer: message` violation. Files
 in `content/posts` that do not match the pattern are reported as errors, so
-nothing is silently skipped.
+nothing is silently skipped. With a conforming `hello-world.md` beside a
+mis-named `Bad_Title.md` whose title and H1 disagree, the run reports each
+failing check and exits 1:
+
+{{< katalyst-example "check-collection-rules" >}}
 
 ## Lint the body as text
 

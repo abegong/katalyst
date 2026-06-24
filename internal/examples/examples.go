@@ -75,6 +75,56 @@ collections:
     schema: book
 `
 
+// postsRulesStorage is the `posts` collection from the configure-rules how-to:
+// the three structural/markdown/filesystem checks that guide attaches.
+const postsRulesStorage = `type: filesystem
+root: .
+collections:
+  posts:
+    path: content/posts
+    checks:
+      - kind: markdown_requires_h1
+      - kind: markdown_title_matches_h1
+        field: title
+      - kind: filesystem_name_case
+        style: kebab
+`
+
+// bookConstrainedSchema is the YAML form of the add-a-schema how-to's book
+// schema: a JSON Schema (draft 2020-12) written in YAML, which the default
+// schema discovery picks up with no extra config. It mirrors the page's
+// required keys, types, and ranges.
+const bookConstrainedSchema = `$schema: https://json-schema.org/draft/2020-12/schema
+title: book
+type: object
+required: [title, year]
+properties:
+  title: { type: string, minLength: 1 }
+  year:  { type: integer, minimum: 0 }
+`
+
+// booksAtNotesStorage binds the `book` schema to a `books` collection at
+// notes/books, matching the add-a-schema how-to.
+const booksAtNotesStorage = `type: filesystem
+root: .
+collections:
+  books:
+    path: notes/books
+    schema: book
+`
+
+// ciStorage is the small project the validate-in-ci how-to gates: a `notes`
+// collection that only requires an H1, so the failing item fails on structure
+// alone and the canonical-frontmatter gate is easy to read.
+const ciStorage = `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`
+
 // wikiCorpus is the shared book corpus the two inspect examples profile: four
 // kebab-named books with title/author/status and a Review section (one cluster),
 // plus a single spaced, author-less outlier.
@@ -179,6 +229,59 @@ func All() []Example {
 			Weight:  70,
 			Files:   withWikiProject(),
 			Args:    []string{"inspect", "books", "--inspector", "object_fields", "-v"},
+		},
+		{
+			ID:      "check-schema-missing-field",
+			Title:   "Check items against a bound schema",
+			Summary: "A collection bound to the book schema passes a complete item and fails one missing a required field.",
+			Doc:     "The `books` collection binds the `book` schema (`title` plus an integer `year`). `dune.md` satisfies the schema and reports OK; `foundation.md` omits `year`, so `check` reports the missing required property and exits 1.",
+			Weight:  80,
+			Files: []File{
+				{Path: ".katalyst/schemas/book.yaml", Content: bookConstrainedSchema},
+				{Path: ".katalyst/storage/local.yaml", Content: booksAtNotesStorage},
+				{Path: "notes/books/dune.md", Content: "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"},
+				{Path: "notes/books/foundation.md", Content: "---\ntitle: Foundation\n---\n# Foundation\n"},
+			},
+			Args: []string{"check", "books"},
+		},
+		{
+			ID:      "check-collection-rules",
+			Title:   "Check a collection's attached rules",
+			Summary: "A collection with markdown and filesystem checks passes a conforming item and flags a mis-named, mismatched one.",
+			Doc:     "The `posts` collection attaches three checks: an H1 must exist, the frontmatter `title` must match that H1, and the filename must be kebab-case. `hello-world.md` satisfies all three; `Bad_Title.md` violates the casing rule and the title/H1 match, so `check` reports both and exits 1.",
+			Weight:  90,
+			Files: []File{
+				{Path: ".katalyst/storage/local.yaml", Content: postsRulesStorage},
+				{Path: "content/posts/hello-world.md", Content: "---\ntitle: Hello world\n---\n# Hello world\n"},
+				{Path: "content/posts/Bad_Title.md", Content: "---\ntitle: Bad title\n---\n# A different heading\n"},
+			},
+			Args: []string{"check", "posts"},
+		},
+		{
+			ID:      "ci-check-fails",
+			Title:   "Gate CI on validation",
+			Summary: "A whole-project check exits 1 when any item has a violation, the signal CI gates on.",
+			Doc:     "With no target, `check` validates every collection. One item is missing its H1, so the run reports the violation and exits 1; the `exit status 1` line is what fails the CI step.",
+			Weight:  100,
+			Files: []File{
+				{Path: ".katalyst/storage/local.yaml", Content: ciStorage},
+				{Path: "notes/intro.md", Content: "---\ntitle: Intro\n---\n# Intro\n"},
+				{Path: "notes/draft.md", Content: "---\ntitle: Draft\n---\nNo heading here.\n"},
+			},
+			Args: []string{"check"},
+		},
+		{
+			ID:      "ci-fix-check",
+			Title:   "Gate CI on canonical frontmatter",
+			Summary: "fix --check writes nothing and exits 1 when frontmatter is not canonical.",
+			Doc:     "`fix --check` is the read-only formatting gate: it lists items whose frontmatter is not canonical and exits 1, without modifying any file. Here `messy.md` has unsorted keys, so it is reported; `tidy.md` is already canonical and passes.",
+			Weight:  110,
+			Files: []File{
+				{Path: ".katalyst/storage/local.yaml", Content: ciStorage},
+				{Path: "notes/tidy.md", Content: "---\ntitle: Tidy\n---\n# Tidy\n"},
+				{Path: "notes/messy.md", Content: "---\ntitle: Messy\nauthor: Ada\n---\n# Messy\n"},
+			},
+			Args: []string{"fix", "--check"},
 		},
 	}
 }

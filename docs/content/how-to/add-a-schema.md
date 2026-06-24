@@ -12,24 +12,26 @@ collection.
 ## 1. Write the schema file
 
 Put a JSON Schema (draft 2020-12) under `.katalyst/schemas/`. Its **name** is
-the filename stem: `book.json` registers a schema named `book`, with no
-separate registration step:
+the filename stem: `book.yaml` registers a schema named `book`, with no
+separate registration step. Schemas are written in YAML by default, the same
+draft 2020-12 vocabulary as JSON:
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "book",
-  "type": "object",
-  "required": ["title", "year"],
-  "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "year":  { "type": "integer", "minimum": 0 }
-  }
-}
+```yaml
+# .katalyst/schemas/book.yaml
+$schema: https://json-schema.org/draft/2020-12/schema
+title: book
+type: object
+required: [title, year]
+properties:
+  title: { type: string, minLength: 1 }
+  year:  { type: integer, minimum: 0 }
 ```
 
 The name, not the path, is the stable handle the rest of the config uses, so
-the file is free to move as long as its stem stays the same.
+the file is free to move as long as its stem stays the same. To keep schemas
+as literal `.json` files instead, set `schemas.format` to `json` (or `both`)
+in `.katalyst/config.yaml`; otherwise the directory scan only picks up
+`.yaml`/`.yml`.
 
 ## 2. Bind it to a collection
 
@@ -57,6 +59,12 @@ checks:
     schema: book
   - kind: markdown_title_matches_h1
 ```
+
+With the schema bound, `katalyst check books` validates each item's
+frontmatter against it. A complete item reports OK; one missing a required key
+fails with a pointer to the offending object and a non-zero exit:
+
+{{< katalyst-example "check-schema-missing-field" >}}
 
 ## 3. Override per file or per run
 

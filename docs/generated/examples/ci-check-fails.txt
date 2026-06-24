@@ -1,0 +1,3 @@
+<project>/notes/intro.md: OK
+<project>/notes/draft.md: /: missing H1 heading in markdown body
+exit status 1

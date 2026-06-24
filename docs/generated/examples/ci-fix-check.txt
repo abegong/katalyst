@@ -1,0 +1,2 @@
+<project>/notes/messy.md
+exit status 1
