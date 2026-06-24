@@ -153,7 +153,7 @@ func inspectorsIndex(layers []inspect.Layer, byLayer map[string][]inspect.Descri
 	fmt.Fprint(&b, "[`inspect`]({{< relref \"../cli.md\" >}}) command. They come in two layers: ")
 	fmt.Fprint(&b, "raw-source inspectors profile a store before configuration, collection ")
 	fmt.Fprint(&b, "inspectors profile a configured collection. These pages are generated from the ")
-	fmt.Fprint(&b, "inspector registry, so they always match the shipped engine.\n")
+	fmt.Fprint(&b, "inspector registry, so they always match the shipped binary.\n")
 	for _, layer := range layers {
 		ds := byLayer[layer.ID]
 		if len(ds) == 0 {
@@ -201,7 +201,7 @@ func sectionIndex(families []checks.Family, byFamily map[string][]checks.Descrip
 	fmt.Fprintln(&b, generatedNote)
 	fmt.Fprint(&b, "\n# Check types reference\n\n")
 	fmt.Fprint(&b, "The check types `katalyst` runs against each item, grouped by family. ")
-	fmt.Fprint(&b, "These pages are generated from the checks registry, so they always match the shipped engine.\n")
+	fmt.Fprint(&b, "These pages are generated from the checks registry, so they always match the shipped binary.\n")
 	for _, fam := range families {
 		fmt.Fprintf(&b, "\n## %s\n\n%s\n\n", fam.Title, fam.Intro)
 		for _, d := range byFamily[fam.ID] {
