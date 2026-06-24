@@ -8,7 +8,7 @@ bookCollapseSection = true
 
 # Inspectors reference
 
-Inspectors describe the shape of content and return evidence: counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../cli.md" >}}) command. They come in two layers: raw-source inspectors profile a store before configuration, collection inspectors profile a configured collection. These pages are generated from the inspector registry, so they always match the shipped engine.
+Inspectors describe the shape of content and return evidence: counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../cli.md" >}}) command. They come in two layers: raw-source inspectors profile a store before configuration, collection inspectors profile a configured collection. These pages are generated from the inspector registry, so they always match the shipped binary.
 
 ## Raw-source inspectors
 

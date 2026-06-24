@@ -9,7 +9,7 @@ aliases = ["/reference/rules/"]
 
 # Check types reference
 
-The check types `katalyst` runs against each item, grouped by family. These pages are generated from the checks registry, so they always match the shipped engine.
+The check types `katalyst` runs against each item, grouped by family. These pages are generated from the checks registry, so they always match the shipped binary.
 
 ## Structured object check types
 

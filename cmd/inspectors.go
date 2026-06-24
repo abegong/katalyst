@@ -19,8 +19,8 @@ import (
 func newInspectorsCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "inspectors",
-		Short: "Inspect the inspectors the engine can run, grouped by layer.",
-		Long: `inspectors is a read-only view of the engine's inspector registry, the same
+		Short: "Inspect the inspectors katalyst can run, grouped by layer.",
+		Long: `inspectors is a read-only view of katalyst's inspector registry, the same
 catalog cmd/gendocs renders and that the inspect command runs. List every
 inspector grouped by layer (raw-source, collection), or show one inspector's
 docs-style readout. It reads no project, so it runs in any directory.`,
@@ -35,7 +35,7 @@ func newInspectorsListCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "list",
 		Short: "List inspectors grouped by layer.",
-		Long: `list prints the catalog of inspectors from the engine registry,
+		Long: `list prints the catalog of inspectors from the inspector registry,
 grouped by layer. Narrow to one layer with --layer; --json emits
 machine-readable descriptors.`,
 		Args: maxArgs(0, "inspectors list"),

@@ -23,7 +23,7 @@ how each term maps onto today's code is documented in the per-package
 | **Collection** | A named entry in `collections:`: a directory, a filename `pattern`, and the checks its items must pass. |
 | **Item** | One file in a collection that matches its pattern. Its id is the filename stem. |
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |
-| **Check type** | The reusable definition of a constraint: one entry in the engine's check registry (`object_required_field`, `markdown_single_h1`, ...), selected by its `kind:` id. `katalyst check-types list` lists them. |
+| **Check type** | The reusable definition of a constraint: one entry in katalyst's check registry (`object_required_field`, `markdown_single_h1`, ...), selected by its `kind:` id. `katalyst check-types list` lists them. |
 | **Check instance** | One configured check attached to a collection: a check type plus its arguments (one YAML object under `checks:`). It runs against each item (object, markdown, or filesystem family). |
 | **Check** | Shorthand for a check instance when context is unambiguous. |
 | **Collection-scoped check** | A check type that runs once per collection over all its items (e.g. `filesystem_unique_filename`), rather than per item. It re-scans the full collection even under a single-item selector. |
@@ -36,7 +36,7 @@ how each term maps onto today's code is documented in the per-package
 | **Inspector** | A read-only operation that measures content and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. Inspectors come in two layers. |
 | **Raw-source layer** | Inspectors that profile a backend store directly, before any collection configuration, addressed by backend-native reference (a path today). The onboarding case: "what's in this store?" |
 | **Collection layer** | Inspectors that profile a configured collection's items, addressed by domain identity (collection + item id) and probing through the same substrate the checks use. |
-| **Measurement primitive** | A reusable engine the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
+| **Measurement primitive** | A reusable building block the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
 | **Evidence** | The structured result of one inspector: counts and distributions with the unit count `n` as denominator. Never a recommendation or verdict. |
 | **Fingerprint** | A file's composite signature (frontmatter keys, body section skeleton, and file type/naming) that `document_shape` clusters into candidate collections. |
 | **Profile class** | A group of near-identical profiles the summarizer collapses together, so output is proportional to the number of distinct profiles, not directories. |
