@@ -1,4 +1,4 @@
-// Package project sits on top of internal/config and provides the v0
+// Package project sits on top of internal/project/config and provides the v0
 // collection/item domain layer: selector parsing, item enumeration, and
 // reverse id→path resolution. The path↔item-identity mapping itself lives
 // behind the internal/storage seam; this package selects the right
