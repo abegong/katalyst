@@ -1,7 +1,14 @@
-# cmd conventions
+# CLI style guide
 
-Conventions specific to the CLI layer. Root standards live in the repo
-[`AGENTS.md`](../AGENTS.md); don't repeat them here.
+This is the canonical style guide for the `katalyst` CLI. It defines the
+command grammar, copy rules, terminal readouts, error voice, exit semantics,
+and testing expectations for every user-facing command. Root standards live in
+the repo [`AGENTS.md`](../AGENTS.md); don't repeat them here.
+
+The public CLI reference in [`docs/content/reference/cli.md`](../docs/content/reference/cli.md)
+stays intentionally thin and user-facing. When implementation and product
+copy disagree, update this guide first, then update command help, snapshots,
+and reference docs to match.
 
 ## Command placement
 
@@ -19,7 +26,7 @@ When adding a top-level command, decide which family it joins:
   not a flag, to keep the onboarding case (`inspect ./wiki`) flag-free.
 - **Resource noun:** `katalyst <noun> <verb> <selector>`, a group whose
   CRUD-shaped sub-verbs act on one resource at a fixed depth (`collection`,
-  `item`, `schema`, `rules`).
+  `item`, `schema`, `check-types`, `inspectors`).
 
 The rule, concretely:
 
@@ -31,9 +38,10 @@ The rule, concretely:
   the pattern: a parent command that only `AddCommand`s its sub-verbs.
 
 When you change the no-args help surface (a new command, a renamed group, a
-changed `Short`), update the golden string in `root_test.go`. Register a new
-command in its help group in `root.go` (`addGrouped`), not a bare
-`AddCommand`, an ungrouped command falls to "Additional Commands".
+changed `Short`), update the golden snapshot under
+`cmd/testdata/snapshots/help/`. Register a new command in its help group in
+`root.go` (`addGrouped`), not a bare `AddCommand`, an ungrouped command falls
+to "Additional Commands".
 
 ## Help text copy
 
@@ -87,6 +95,8 @@ Human-readable read commands use one terminal layout so output is easy to scan.
 - Preserve machine-oriented output contracts as-is: `check` diagnostics
   (`path:line: /pointer: message`), `fix --check` path lists, JSON output, and
   raw content surfaces such as `item get --frontmatter` / `item get --body`.
+- For `--json`, keep the structure stable and assert shape in code. JSON is not
+  snapshot text.
 - Any user-facing wording or layout change must update the matching snapshot
   under `cmd/testdata/snapshots/`.
 
@@ -134,6 +144,25 @@ One grammar for every user-facing error:
   `FlagErrorFunc` (`root.go`); nothing to do per command.
 
 New commands inherit the standard by using these helpers and this grammar.
+
+## Mechanical enforcement
+
+Keep the mechanical parts of this guide enforced close to the command tree:
+
+- `cmd/cli_style_test.go` asserts that every top-level command is grouped as a
+  verb or resource, that root help order stays deliberate, that resource nouns
+  have no default action, that every resource noun has a `list` subcommand, and
+  that top-level help snapshots exist.
+- `cmd/help_snapshot_test.go` pins each top-level help surface.
+- Readout snapshots under `cmd/testdata/snapshots/` pin human-facing `list`,
+  `show`, summary `get`, and diagnostic text.
+- Dogfooded Katalyst checks may enforce repository-wide text and fixture
+  hygiene, but Cobra-tree rules belong in Go tests.
+
+Prefer adding one focused assertion to `cmd/cli_style_test.go` when a rule can
+be read from the command tree. Prefer snapshots when the rule is a text
+contract. Avoid duplicating the same guarantee in both places unless one test
+checks behavior and the other pins wording.
 
 ## Testing the CLI
 
