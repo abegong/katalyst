@@ -31,7 +31,18 @@ func TestSchemaList_noConfig(t *testing.T) {
 	}
 }
 
-func TestSchemaShow_printsSchemaContents(t *testing.T) {
+func TestSchemaGet_printsSchemaContents(t *testing.T) {
+	dir := writeConfigDir(t)
+	chdir(t, dir)
+
+	stdout, _, err := runRoot(t, "schema", "get", "book")
+	if err != nil {
+		t.Fatalf("schema get: %v", err)
+	}
+	snapshot(t, "schema/get-book.txt", stdout)
+}
+
+func TestSchemaShow_aliasStillWorks(t *testing.T) {
 	dir := writeConfigDir(t)
 	chdir(t, dir)
 
@@ -39,14 +50,14 @@ func TestSchemaShow_printsSchemaContents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("schema show: %v", err)
 	}
-	snapshot(t, "schema/show-book.txt", stdout)
+	snapshot(t, "schema/get-book.txt", stdout)
 }
 
-func TestSchemaShow_unknownName(t *testing.T) {
+func TestSchemaGet_unknownName(t *testing.T) {
 	dir := writeConfigDir(t)
 	chdir(t, dir)
 
-	_, _, err := runRoot(t, "schema", "show", "nonexistent")
+	_, _, err := runRoot(t, "schema", "get", "nonexistent")
 	if err == nil {
 		t.Fatalf("expected error for unknown schema")
 	}

@@ -93,4 +93,4 @@ or [Collections]({{< relref "../deep-dives/collections.md" >}}) for why.
 ## See also
 
 - [Object validation reference]({{< relref "../reference/check-types/structured-object/object.md" >}})
-- [Inspect schemas]: `katalyst schema list` and `katalyst schema show <name>`.
+- [Inspect schemas]: `katalyst schema list` and `katalyst schema get <name>`.

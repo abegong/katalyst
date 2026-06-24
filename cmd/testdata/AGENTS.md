@@ -36,7 +36,7 @@ Fixtures are grouped one directory per command surface; the name passed to
 |---|---|
 | `help/` | Root help and every `<cmd> --help` (`root_test.go`, `help_snapshot_test.go`) |
 | `collection/` | `collection list`, `collection get` |
-| `schema/` | `schema list`, `schema show` |
+| `schema/` | `schema list`, `schema get` |
 | `check-types/` | `check-types list`, `list --family`, `show` |
 | `inspectors/` | `inspectors list`, `list --layer`, `show` |
 | `item/` | `item list`, `item get --frontmatter`/`--body` |

@@ -4,8 +4,8 @@ Usage:
   katalyst schema [command]
 
 Available Commands:
-  list        List schemas registered in the config.
-  show        Show one schema's path and contents.
+  list        List schemas registered in the config
+  get         Show one schema's path and contents
 
 Flags:
   -h, --help   help for schema

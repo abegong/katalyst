@@ -88,6 +88,66 @@ func TestCLIStyle_topLevelShortHelpShape(t *testing.T) {
 	}
 }
 
+func TestCLIStyle_visibleShortHelpHasNoTrailingPeriods(t *testing.T) {
+	root := cmd.NewRootCmd()
+	for _, command := range visibleCommands(root) {
+		if command.Short == "" {
+			t.Errorf("%s: Short help must be set", command.CommandPath())
+			continue
+		}
+		if strings.HasSuffix(command.Short, ".") {
+			t.Errorf("%s: Short help must not end with a period", command.CommandPath())
+		}
+	}
+}
+
+func TestCLIStyle_runnableCommandsDeclareArgValidation(t *testing.T) {
+	root := cmd.NewRootCmd()
+	for _, command := range visibleCommands(root) {
+		if command.Run == nil && command.RunE == nil {
+			continue
+		}
+		if command.Args == nil {
+			t.Errorf("%s: runnable command must declare Args, even when it accepts no args", command.CommandPath())
+		}
+	}
+}
+
+func TestCLIStyle_noArgCommandsUseStandardArityError(t *testing.T) {
+	root := cmd.NewRootCmd()
+	tests := []struct {
+		path  []string
+		usage string
+	}{
+		{path: []string{"init"}, usage: "init"},
+		{path: []string{"collection", "list"}, usage: "collection list"},
+		{path: []string{"schema", "list"}, usage: "schema list"},
+		{path: []string{"check-types", "list"}, usage: "check-types list"},
+		{path: []string{"inspectors", "list"}, usage: "inspectors list"},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(strings.Join(tc.path, " "), func(t *testing.T) {
+			command := findCommand(t, root, tc.path...)
+			if command.Args == nil {
+				t.Fatalf("%s: Args is nil", command.CommandPath())
+			}
+			err := command.Args(command, []string{"unexpected"})
+			if got := exitCode(err); got != 2 {
+				t.Fatalf("%s: exit code = %d, want 2 (err: %v)", command.CommandPath(), got, err)
+			}
+			msg := err.Error()
+			if !strings.Contains(msg, "too many arguments") {
+				t.Errorf("%s: expected too many arguments message, got %q", command.CommandPath(), msg)
+			}
+			if !strings.Contains(msg, "usage: katalyst "+tc.usage) {
+				t.Errorf("%s: expected usage hint for %q, got %q", command.CommandPath(), tc.usage, msg)
+			}
+		})
+	}
+}
+
 func TestCLIStyle_topLevelHelpHasSnapshots(t *testing.T) {
 	root := cmd.NewRootCmd()
 	for _, command := range topLevelCommands(root) {
@@ -107,6 +167,34 @@ func topLevelCommands(root *cobra.Command) []*cobra.Command {
 		commands = append(commands, command)
 	}
 	return commands
+}
+
+func visibleCommands(root *cobra.Command) []*cobra.Command {
+	var commands []*cobra.Command
+	var walk func(*cobra.Command)
+	walk = func(command *cobra.Command) {
+		if command.Hidden {
+			return
+		}
+		commands = append(commands, command)
+		for _, child := range command.Commands() {
+			walk(child)
+		}
+	}
+	walk(root)
+	return commands
+}
+
+func findCommand(t *testing.T, root *cobra.Command, args ...string) *cobra.Command {
+	t.Helper()
+	command, _, err := root.Find(args)
+	if err != nil {
+		t.Fatalf("find %v: %v", args, err)
+	}
+	if command == nil {
+		t.Fatalf("find %v: nil command", args)
+	}
+	return command
 }
 
 func commandNames(commands []*cobra.Command) []string {

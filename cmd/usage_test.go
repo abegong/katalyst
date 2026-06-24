@@ -16,18 +16,37 @@ func exitCode(err error) int {
 }
 
 func TestArity_missingArgGivesUsageHintExit2(t *testing.T) {
-	// schema show needs a name; the message should be the standard arity
+	// schema get needs a name; the message should be the standard arity
 	// grammar with a usage hint, not Cobra's "accepts 1 arg(s)".
-	_, _, err := runRoot(t, "schema", "show")
+	_, _, err := runRoot(t, "schema", "get")
 	if got := exitCode(err); got != 2 {
 		t.Fatalf("exit code = %d, want 2 (err: %v)", got, err)
 	}
 	msg := err.Error()
-	if !strings.Contains(msg, "usage: katalyst schema show <name>") {
+	if !strings.Contains(msg, "usage: katalyst schema get <name>") {
 		t.Errorf("missing usage hint: %q", msg)
 	}
 	if strings.Contains(msg, "arg(s)") {
 		t.Errorf("leaked Cobra arity text: %q", msg)
+	}
+}
+
+func TestArity_noArgCommandsRejectExtraArgsExit2(t *testing.T) {
+	tests := [][]string{
+		{"schema", "list", "unexpected"},
+		{"collection", "list", "unexpected"},
+	}
+	for _, args := range tests {
+		args := args
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			_, _, err := runRoot(t, args...)
+			if got := exitCode(err); got != 2 {
+				t.Fatalf("exit code = %d, want 2 (err: %v)", got, err)
+			}
+			if !strings.Contains(err.Error(), "too many arguments") {
+				t.Errorf("unexpected message: %q", err.Error())
+			}
+		})
 	}
 }
 

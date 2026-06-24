@@ -20,7 +20,7 @@ func NewRootCmd() *cobra.Command {
 		Use:   "katalyst",
 		Short: "Inspect, check, and fix content consistency rules",
 		Long: `katalyst is a content consistency layer for agent memory,
-knowledge bases, and other curated content systems. it helps you inspect,
+knowledge bases, and other curated content systems. It helps you inspect,
 check, and fix content and metadata conventions.
 
 Project links:

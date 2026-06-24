@@ -9,8 +9,8 @@ Aliases:
   check-types, rules
 
 Available Commands:
-  list        List check types grouped by family.
-  show        Show one check type's keys, example, and siblings.
+  list        List check types grouped by family
+  show        Show one check type's keys, example, and siblings
 
 Flags:
   -h, --help   help for check-types

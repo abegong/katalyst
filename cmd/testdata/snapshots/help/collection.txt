@@ -4,8 +4,8 @@ Usage:
   katalyst collection [command]
 
 Available Commands:
-  list        List collections: name, directory, item count, schema.
-  get         Show one collection's detail.
+  list        List collections: name, directory, item count, schema
+  get         Show one collection's detail
 
 Flags:
   -h, --help   help for collection

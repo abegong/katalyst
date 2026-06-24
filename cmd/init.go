@@ -49,7 +49,8 @@ func newInitCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Prepare the current directory as a katalyst project.",
+		Short: "Prepare the current directory as a katalyst project",
+		Args:  maxArgs(0, "init"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := dir
 			if target == "" {

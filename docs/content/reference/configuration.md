@@ -38,7 +38,7 @@ inline instead of as files.
 ## Schemas
 
 Each file under `.katalyst/schemas/` is a JSON Schema. Its **name**, the
-filename stem, is the stable public handle used by `schema show <name>`, by
+filename stem, is the stable public handle used by `schema get <name>`, by
 an inline `schema: <name>` key in a document's frontmatter, and by a
 collection's `schema:` shorthand. The path can move; the name should not.
 

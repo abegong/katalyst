@@ -16,7 +16,7 @@ func newFixCmd() *cobra.Command {
 
 	c := &cobra.Command{
 		Use:   "fix [selector ...]",
-		Short: "Apply deterministic, safe fixes to the selected items.",
+		Short: "Apply deterministic, safe fixes to the selected items",
 		Long: `fix rewrites each selected item's frontmatter in a canonical form:
 top-level keys sorted alphabetically, yaml.v3 default block style, and
 exactly one trailing newline. The body is preserved verbatim.
