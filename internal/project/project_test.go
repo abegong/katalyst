@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/projecttest"
 )
 
 // setup writes a two-collection repo and returns a loaded Project.
@@ -26,18 +27,12 @@ func setup(t *testing.T) *project.Project {
 		}
 	}
 
-	write(".katalyst/storage/local.yaml", `type: filesystem
-root: .
-collections:
-  notes:
-    path: notes
-    checks:
-      - kind: markdown_requires_h1
-  people:
-    path: people
-    checks:
-      - kind: markdown_requires_h1
-`)
+	projecttest.WriteProject(t, dir, map[string]string{
+		"storage/local.yaml": projecttest.LocalStorage(map[string]string{
+			"notes":  "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+			"people": "path: people\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
 	write("notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
 	write("notes/messiah.md", "---\ntitle: Messiah\n---\n# Messiah\n")
 	write("notes/stray.txt", "not markdown\n")
