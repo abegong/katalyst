@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/project/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/query"
 )
 
 // filterIDs parses the given filter expressions, applies them, and returns

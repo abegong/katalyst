@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/project/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/query"
 )
 
 // sortIDs parses the sort spec, applies it, and returns the ordered ids.

@@ -8,8 +8,8 @@ import (
 
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/collection/query"
 	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
