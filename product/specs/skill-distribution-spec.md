@@ -15,10 +15,12 @@
 
 ## Overview
 
-Katalyst is a content-consistency layer that spans a lifecycle: catalog the
+Katalyst is a content-consistency layer that spans a workflow: catalog the
 content you have, define its language and structure, enforce that structure
-day to day, and reshape it as needs change (see
-`docs/content/why-katalyst.md`). A
+day to day, and reshape it as needs change (`docs/content/welcome.md` frames
+the headline features as **Catalog**, **Define**, and **Reshape**; enforcement
+is the day-to-day use those set up, which the **katalyst-deploy** cluster
+installs rather than a named stage of its own). A
 *skill* — a `SKILL.md`, its references, and a bootstrap — teaches a Claude/Cowork
 agent to drive the CLI for one of those jobs. These skills need a maintenance
 home that versions them with the CLI, and a way for users who never touch Git
@@ -60,23 +62,29 @@ never whether repo access is required.
   holds *contributor* agent skills — `write-spec`, `write-docs` — mirrored into
   `.claude/skills/` and `.codex/skills/` for people working *on* katalyst. The
   new skills are *product* artifacts for people *using* katalyst.)
-- **No release pipeline.** `.github/workflows/ci.yml` defines one `test` job on
-  push to `main` and on PRs: tidy-check, vet, race tests, `make build`,
-  `docs-gen-check`. There is no tag trigger, no cross-platform build, and
-  nothing uploads release assets.
-- **One local binary.** `make build` runs `go build -o bin/$(BINARY) .` — a
-  single host-platform binary. `README.md` documents install via `go install
-  github.com/katabase-ai/katalyst@latest` or `make build` from source. There is
-  no packaging or multi-platform target.
+- **A release pipeline already exists.** `.github/workflows/release.yml` fires
+  on `v*` tags with `permissions: contents: write` and runs GoReleaser
+  (`.goreleaser.yml`), which builds the cross-platform CLI matrix
+  (linux/darwin/windows × amd64/arm64) and publishes a GitHub Release. It does
+  **not** know about skills: it uploads only the binary archives and
+  `checksums.txt`. (The `test`/`docs` jobs in `ci.yml` are a separate
+  build/lint gate on PRs and `main`; they upload nothing.)
+- **Release assets are archives, not raw binaries.** GoReleaser publishes
+  `katalyst_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows) plus
+  `checksums.txt`, so anything provisioning the CLI must download and unpack an
+  archive, not a bare binary. `make build` still runs `go build -o bin/$(BINARY)
+  .` for a single host-platform binary; `README.md` documents install via `go
+  install github.com/abegong/katalyst@latest` or `make build` from source.
 - **How-to guides are separate, human docs.** `docs/content/how-to/` holds
   task recipes for human readers. Skills are independent of them (see Design):
   an agent gets everything it needs from the installed skill plus the CLI, with
   no dependency on the docs site.
-- **Skill symlinks have a precedent.** `scripts/setup-claude-code.sh` (via
-  `sync_skill_links_from_cursor` in `scripts/agent-link-utils.sh`) symlinks each
-  `.cursor/skills/*` into `.claude/skills/`. `.gitignore` excludes
-  `.claude/skills/` and `.codex/skills/`, so those mirrors stay uncommitted.
-  This is the model the local-dev symlink reuses.
+- **Skill symlinks have a precedent.** `scripts/setup-claude-code.sh` and
+  `scripts/setup-codex-skills.sh` (both via `sync_skill_links_from_cursor` in
+  `scripts/agent-link-utils.sh`) symlink each `.cursor/skills/*` into
+  `.claude/skills/` and `.codex/skills/`. `.gitignore` now excludes **all** of
+  `.claude/` and `.codex/`, so those mirrors stay uncommitted with no
+  per-path entry. This is the model the local-dev symlink reuses.
 
 ## Design
 
@@ -240,15 +248,17 @@ the `.skill` artifacts alongside `bin/`.
 
 ### Release cycle
 
-A tag-triggered GitHub Actions job (e.g. `on: push: tags: ['v*']`), separate
-from the existing `test` job in `ci.yml`:
+The tag-triggered release already exists: `.github/workflows/release.yml` runs
+GoReleaser on every `v*` tag and publishes the cross-platform binary archives.
+This spec **extends that existing release** rather than adding a parallel
+workflow:
 
-1. Build the cross-platform CLI binaries — the current `go build -o bin/katalyst .`
-   produces only the host platform, so this introduces the GOOS/GOARCH matrix.
+1. The GoReleaser build matrix already produces the cross-platform CLI archives
+   — no new GOOS/GOARCH work.
 2. Run `make skills` to package every shippable skill under `skills/`
-   (placeholders excluded).
-3. Upload the binaries and all `.skill` files as assets on the Release for that
-   tag, in one workflow.
+   (placeholders excluded) before the release publishes.
+3. Attach all `.skill` files to the same Release as extra assets (GoReleaser's
+   `release.extra_files`), alongside the binary archives and `checksums.txt`.
 
 Per-PR CI is unchanged: it builds and tests the CLI. The skills are plain files
 versioned in the same repo, so the existing review of a PR is what keeps a skill
@@ -258,16 +268,20 @@ current with the CLI it drives — no separate gate.
 
 A `make` target symlinks each `skills/{name}/` into `.claude/skills/` so they
 auto-load in a working copy, following the `sync_skill_links_from_cursor`
-pattern already in `scripts/`. `.gitignore` excludes `.claude/skills/`
-specifically (not all of `.claude/`), so the symlinks stay uncommitted.
+pattern already in `scripts/`. `.gitignore` already excludes all of `.claude/`
+(and `.codex/`), so the symlinks stay uncommitted with no new ignore entry.
 
 ### Binary provisioning: the shared bootstrap
 
-The skills' shared bootstrap installs or locates the CLI by **fetching the
-binary from the latest GitHub Release** (falling back to `go install`), not by
-embedding binaries in each `.skill`. Embedding would bloat every download and
-risk a skill whose bundled binary lags the Release; fetching keeps each `.skill`
-small and the binary current. One bootstrap serves the whole family.
+The skills' shared bootstrap installs or locates the CLI by **fetching the CLI
+archive from the latest GitHub Release and unpacking it** (falling back to `go
+install github.com/abegong/katalyst@latest`), not by embedding binaries in each
+`.skill`. Because the Release ships `katalyst_<version>_<os>_<arch>.tar.gz`
+(`.zip` on Windows), the bootstrap detects OS/arch, downloads the matching
+archive, and extracts the `katalyst` binary — it does not fetch a bare binary.
+Embedding would bloat every download and risk a skill whose bundled binary lags
+the Release; fetching keeps each `.skill` small and the binary current. One
+bootstrap serves the whole family.
 
 Tracking "latest" sidesteps version coupling for now (it's out of scope): the
 bootstrap pulls whatever the newest Release ships. Pinning a skill to a specific
@@ -278,9 +292,10 @@ skew to bite.
 
 _None — resolved or deferred._ For the record:
 
-- **Fetch, don't embed.** The shared bootstrap fetches the CLI binary from the
-  latest GitHub Release (falling back to `go install`); binaries are not bundled
-  in the `.skill`.
+- **Fetch, don't embed.** The shared bootstrap fetches and unpacks the CLI
+  archive from the latest GitHub Release (falling back to `go install
+  github.com/abegong/katalyst@latest`); binaries are not bundled in the
+  `.skill`.
 - **`define` is two skills.** `katalyst-identify-collections` and `katalyst-define-schemas` are
   discrete, cross-referencing skills rather than one merged `define` skill.
 - **Enforce is a cluster.** `katalyst-deploy` (umbrella, knows both mechanisms) plus

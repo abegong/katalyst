@@ -3,8 +3,9 @@
 > **Status: planning.** Implements
 > [`skill-distribution-spec.md`](skill-distribution-spec.md). No phases started.
 
-Branch: `claude/practical-mayer-uuo45q` (PR
-[#20](https://github.com/katabase-ai/katalyst/pull/20)).
+Branch: `claude/charming-clarke-s2nx1d` (rebased onto `main` after the repo
+moved to `github.com/abegong/katalyst` and a GoReleaser release pipeline
+landed — see [Deviations](#deviations)).
 
 ## Strategy
 
@@ -78,47 +79,59 @@ tracks the latest Release.
 ### Phase 3 — Shared bootstrap (fetch the CLI)
 
 1. Implement the bootstrap so the skill installs/locates the CLI by **fetching
-   the binary from the latest GitHub Release**, falling back to `go install
-   github.com/katabase-ai/katalyst@latest`.
-2. Detect OS/arch and pick the matching release asset name (must agree with the
-   naming Phase 4 produces).
+   and unpacking the CLI archive from the latest GitHub Release**, falling back
+   to `go install github.com/abegong/katalyst@latest`.
+2. Detect OS/arch and pick the matching release **archive** — GoReleaser ships
+   `katalyst_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows), so the bootstrap
+   downloads that archive and extracts the `katalyst` binary, rather than
+   fetching a bare binary. (`checksums.txt` is published alongside for optional
+   verification.)
 3. Make it idempotent: reuse an already-installed binary; only download when
    missing. No version pin (out of scope) — track latest.
 4. Decide and implement how the bootstrap ships inside each `.skill` (single
    shared source copied in at package time, so there is one bootstrap to
    maintain).
 
-### Phase 4 — Release workflow
+### Phase 4 — Attach skills to the existing GoReleaser release
 
-1. Add a tag-triggered workflow (`on: push: tags: ['v*']`), separate from the
-   `test` job in `ci.yml`. Also add a `workflow_dispatch` trigger so the job can
+The tag-triggered workflow this phase originally proposed **already exists** on
+`main`: `.github/workflows/release.yml` fires on `v*` tags with
+`permissions: contents: write` and runs GoReleaser (`.goreleaser.yml`), which
+builds the cross-platform CLI matrix and publishes the Release. So this phase
+shrinks to **extending** that release to also carry the `.skill` artifacts —
+the binary matrix, the tag trigger, and the token permission are all done.
+
+1. Package the skills during the release. GoReleaser supports a `before.hooks`
+   entry — add `make skills` there (or as a dedicated hook) so the `.skill`
+   files exist before the release step runs.
+2. Attach every shippable `.skill` to the Release via GoReleaser's
+   `release.extra_files`, so they land beside the binary archives and
+   `checksums.txt` in one run. (Placeholders never produce a `.skill`, per
+   Phase 2, so nothing extra is needed to exclude them.)
+3. Optionally add a `workflow_dispatch` trigger to `release.yml` so the job can
    be **dry-run** from the Actions tab without cutting a tag.
-2. Grant the job `permissions: contents: write` so the built-in `GITHUB_TOKEN`
-   can create the Release and upload assets — **no PAT or repo secret required.**
-   (Caveat: if the org/repo default caps `GITHUB_TOKEN` to read-only and the
-   explicit block is overridden by policy, the upload step 403s; the fix is a
-   repo-admin toggle at Settings → Actions → General → Workflow permissions →
-   "Read and write." Not changeable from here.)
-3. Build cross-platform CLI binaries via a GOOS/GOARCH matrix (the current
-   `go build -o bin/katalyst .` is host-only), naming each asset to match what
-   the Phase 3 bootstrap fetches (e.g. `katalyst_<os>_<arch>`).
-4. Run `make skills` in the job.
-5. Upload the binaries **and** every `.skill` as assets on the Release for that
-   tag, in one workflow run.
-6. Leave per-PR CI unchanged.
+4. Leave per-PR CI (`ci.yml`) unchanged.
+
+> **Already settled on `main` (was Phase 4 work):** the GOOS/GOARCH matrix
+> (GoReleaser builds linux/darwin/windows × amd64/arm64), `permissions:
+> contents: write` on the release job, and the `v*` tag trigger. The asset
+> *names* are now GoReleaser's archive template, not free to choose — Phase 3's
+> bootstrap must match them.
 
 > **Owner action.** Cutting a real release means pushing a `v*` tag — a
 > deliberate act outside this branch's scope, so it stays with the repo owner
 > (or is done with explicit go-ahead). Everything else in this phase is just the
-> committed workflow file.
+> edited `.goreleaser.yml` / workflow file.
 
 ### Phase 5 — Local dev symlink
 
 1. Add a `make` target that symlinks each `skills/{name}/` into
    `.claude/skills/` so they auto-load in a working copy, modeled on
    `sync_skill_links_from_cursor` in `scripts/agent-link-utils.sh`.
-2. Add `.claude/skills/` to `.gitignore` (the specific path, not all of
-   `.claude/`) so the symlinks stay uncommitted.
+2. No `.gitignore` change is needed: `main` already ignores **all** of
+   `.claude/` (and `.codex/`), so the symlinks stay uncommitted. Decide whether
+   to also mirror into `.codex/skills/` (a `setup-codex-skills.sh` now exists
+   for the contributor skills) or keep product skills Claude-only for now.
 
 ### Phase 6 — Author the remaining skills
 
@@ -166,4 +179,25 @@ Mirrors the spec's test checklist; these assertions prove the change.
 
 ## Deviations
 
-_None yet._
+Recorded when the branch was rebased onto `main`, after `main` moved well past
+the merge base this spec was first written against:
+
+- **Repo/module renamed `katabase-ai/katalyst` → `abegong/katalyst`.** All
+  `go install` references and the bootstrap fallback now use
+  `github.com/abegong/katalyst@latest`.
+- **The release pipeline already exists (GoReleaser).** What was a from-scratch
+  Phase 4 (tag trigger, GOOS/GOARCH matrix, `contents: write`) is already on
+  `main` in `.github/workflows/release.yml` + `.goreleaser.yml`. Phase 4 now
+  only *extends* that release to package and attach the `.skill` files.
+- **Release assets are GoReleaser archives, not raw binaries.** The bootstrap
+  (Phase 3) downloads and unpacks `katalyst_<version>_<os>_<arch>.tar.gz`
+  (`.zip` on Windows) instead of fetching a bare binary; asset names follow
+  GoReleaser's template rather than a name this plan chooses.
+- **`.gitignore` already ignores all of `.claude/`/`.codex/`.** Phase 5 no
+  longer needs a per-path ignore entry; only the symlink target is new.
+- **Lifecycle framing moved.** The "Why Katalyst" framing now lives in
+  `docs/content/welcome.md` and names **Catalog / Define / Reshape** as headline
+  features (no standalone **Enforce** stage). The deploy cluster is kept as-is
+  and reframed as the setup that installs day-to-day enforcement, not a named
+  lifecycle stage. Phase 7 graduation should fold rationale into
+  `welcome.md`/deep-dives accordingly.
