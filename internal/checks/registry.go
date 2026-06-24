@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/abegong/katalyst/internal/project/config"
+	"gopkg.in/yaml.v3"
 )
 
 // This file holds the check-type registry: the types describing a check type
@@ -115,11 +116,29 @@ type Builder func(config.CheckInstance) Check
 // per-item check types.
 type CollectionBuilder func(config.CheckInstance) CollectionCheck
 
-// registration is one check type's registry entry.
+// Parser decodes and validates a check's own arguments from its raw config node
+// (the deferred yaml.Node for one `checks:` entry), returning the validated args
+// as an opaque value the build functions below consume. It is how a check type
+// owns its config parsing instead of the central config.normalizeCheck switch.
+type Parser func(*yaml.Node) (any, error)
+
+// ArgsBuilder constructs a per-item Check from a Parser's validated args.
+type ArgsBuilder func(any) Check
+
+// CollectionArgsBuilder constructs a collection-scoped check from validated args.
+type CollectionArgsBuilder func(any) CollectionCheck
+
+// registration is one check type's registry entry. A check type registers
+// either the legacy union builders (build/buildColl, fed config.CheckInstance)
+// or the distributed parse + args-builders (parse/buildArgs/buildCollArgs). The
+// migration runs both styles side by side; BuildFromConfig prefers the parser.
 type registration struct {
-	desc      Descriptor
-	build     Builder
-	buildColl CollectionBuilder
+	desc          Descriptor
+	build         Builder
+	buildColl     CollectionBuilder
+	parse         Parser
+	buildArgs     ArgsBuilder
+	buildCollArgs CollectionArgsBuilder
 }
 
 var (
@@ -132,11 +151,24 @@ var (
 // collection-scoped (or specially-built) check; buildColl may be nil for a
 // per-item check. Duplicate kinds panic, a programming error caught at startup.
 func Register(desc Descriptor, build Builder, buildColl CollectionBuilder) {
-	if _, dup := byKind[desc.CheckType]; dup {
-		panic("checks: duplicate registration for kind " + string(desc.CheckType))
+	register(registration{desc: desc, build: build, buildColl: buildColl})
+}
+
+// RegisterParsed records a check type that owns its config parsing: parse
+// decodes+validates the raw node into args, and buildArgs/buildCollArgs turn
+// those args into the runnable check(s). One decode feeds both builders, so a
+// dual (item + collection-scoped) check validates once. Either builder may be
+// nil.
+func RegisterParsed(desc Descriptor, parse Parser, buildArgs ArgsBuilder, buildCollArgs CollectionArgsBuilder) {
+	register(registration{desc: desc, parse: parse, buildArgs: buildArgs, buildCollArgs: buildCollArgs})
+}
+
+func register(r registration) {
+	if _, dup := byKind[r.desc.CheckType]; dup {
+		panic("checks: duplicate registration for kind " + string(r.desc.CheckType))
 	}
-	byKind[desc.CheckType] = len(registrations)
-	registrations = append(registrations, registration{desc, build, buildColl})
+	byKind[r.desc.CheckType] = len(registrations)
+	registrations = append(registrations, r)
 }
 
 // Descriptors returns every registered check type, grouped by Families() order
@@ -180,4 +212,55 @@ func BuildCollection(ch config.CheckInstance) (CollectionCheck, bool) {
 		return nil, false
 	}
 	return registrations[i].buildColl(ch), true
+}
+
+// BuildFromConfig constructs the per-item check for a configured instance,
+// preferring the check's own parser (RegisterParsed) and falling back to the
+// legacy union builder. ok is false when the kind has no per-item form
+// (collection-scoped, or the object check the engine builds itself); err is a
+// parse/validation failure from a distributed check. During the migration both
+// paths coexist; a converted check's parse re-reads its args from ch.Node.
+func BuildFromConfig(ch config.CheckInstance) (chk Check, ok bool, err error) {
+	i, found := byKind[ch.Type]
+	if !found {
+		return nil, false, nil
+	}
+	r := registrations[i]
+	if r.parse != nil {
+		if r.buildArgs == nil {
+			return nil, false, nil
+		}
+		args, err := r.parse(ch.Node)
+		if err != nil {
+			return nil, false, err
+		}
+		return r.buildArgs(args), true, nil
+	}
+	if r.build == nil {
+		return nil, false, nil
+	}
+	return r.build(ch), true, nil
+}
+
+// BuildCollectionFromConfig is BuildFromConfig for collection-scoped checks.
+func BuildCollectionFromConfig(ch config.CheckInstance) (cc CollectionCheck, ok bool, err error) {
+	i, found := byKind[ch.Type]
+	if !found {
+		return nil, false, nil
+	}
+	r := registrations[i]
+	if r.parse != nil {
+		if r.buildCollArgs == nil {
+			return nil, false, nil
+		}
+		args, err := r.parse(ch.Node)
+		if err != nil {
+			return nil, false, err
+		}
+		return r.buildCollArgs(args), true, nil
+	}
+	if r.buildColl == nil {
+		return nil, false, nil
+	}
+	return r.buildColl(ch), true, nil
 }

@@ -173,7 +173,11 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 		if ch.Type == config.CheckObject {
 			continue
 		}
-		if chk, ok := checks.Build(ch); ok {
+		chk, ok, err := checks.BuildFromConfig(ch)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ch.Type, err)
+		}
+		if ok {
 			checkList = append(checkList, chk)
 		}
 	}
@@ -228,14 +232,18 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 
 // collectionChecksFor builds the collection-scoped checks configured for a
 // collection. These run once per collection, after the per-item pass.
-func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionCheck {
+func (e *engine) collectionChecksFor(c config.Collection) ([]checks.CollectionCheck, error) {
 	var out []checks.CollectionCheck
 	for _, ch := range c.Checks {
-		if cc, ok := checks.BuildCollection(ch); ok {
+		cc, ok, err := checks.BuildCollectionFromConfig(ch)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ch.Type, err)
+		}
+		if ok {
 			out = append(out, cc)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // projectFor wraps a loaded config in a project.

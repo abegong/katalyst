@@ -147,6 +147,11 @@ const (
 // fields are its arguments.
 type CheckInstance struct {
 	Type CheckType
+	// Node is the raw YAML node for this check's `checks:` entry, retained so a
+	// check type that owns its parsing (checks.RegisterParsed) can decode its own
+	// args. Nil for the synthesized object check. Transitional: it exists so the
+	// per-check parsers can supersede normalizeCheck field by field.
+	Node *yaml.Node
 	// FieldType is the JSON type required by object_field_type (the `type:`
 	// key); it is not the check type itself, which is Type.
 	FieldType string
@@ -362,6 +367,23 @@ type rawCheck struct {
 	Match     string   `yaml:"match"`
 	Select    string   `yaml:"select"`
 	Fix       string   `yaml:"fix"`
+
+	// node is the raw YAML node for this entry, retained so a distributed check
+	// parser can decode its own args. Captured in UnmarshalYAML.
+	node *yaml.Node
+}
+
+// UnmarshalYAML decodes the entry's fields and stashes the raw node, so the
+// node can travel to a check type's own parser (checks.RegisterParsed).
+func (rc *rawCheck) UnmarshalYAML(value *yaml.Node) error {
+	type plain rawCheck
+	var p plain
+	if err := value.Decode(&p); err != nil {
+		return err
+	}
+	*rc = rawCheck(p)
+	rc.node = value
+	return nil
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -646,6 +668,7 @@ func (c *Config) buildChecks(errCtx, schema string, raws []rawCheck) ([]CheckIns
 		if err != nil {
 			return nil, fmt.Errorf("%s: checks[%d]: %w", errCtx, j, err)
 		}
+		ch.Node = raw.node
 		checks = append(checks, ch)
 	}
 	return checks, nil

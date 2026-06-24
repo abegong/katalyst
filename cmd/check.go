@@ -219,7 +219,10 @@ func selectedCollections(res *project.Resolution) []config.Collection {
 func runCollectionChecks(errOut io.Writer, e *engine, collections []config.Collection) (bool, error) {
 	bad := false
 	for _, c := range collections {
-		collChecks := e.collectionChecksFor(c)
+		collChecks, err := e.collectionChecksFor(c)
+		if err != nil {
+			return false, err
+		}
 		if len(collChecks) == 0 {
 			continue
 		}
