@@ -26,9 +26,11 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/config       .katalyst/ loader: schemas + storage instances (which embed their collections)
+internal/project      project domain layer: the whole workspace, selectors, item enumeration (drives internal/storage)
+internal/project/config            .katalyst/ loader: schemas + storage instances (which embed their collections)
+internal/project/collection        collection-scoped logic within a project
+internal/project/collection/query  the query/filter predicate grammar (item list --filter, collection variants)
 internal/storage      backend↔domain seam: StorageType, CollectionDefinition, the filesystem mapping
-internal/project      collection/item domain layer: selectors, item enumeration (drives internal/storage)
 internal/frontmatter  YAML/TOML/JSON frontmatter parser + formatter, with line tracking
 internal/checks       check engine: per-family check types, the registry, and CheckLibrary providers
 internal/checks/jsonschema  the JSON Schema library (wraps santhosh-tekuri/jsonschema); provides the object check type
@@ -58,8 +60,8 @@ The path ⇄ item-identity translation passes through
 `internal/storage.CollectionDefinition` (forward discovery + reverse
 reconstruction). Don't inline filesystem assumptions (globbing, stem-as-id,
 path joins) elsewhere, a second backend (SQLite) attaches by implementing that
-interface. `internal/config` owns the `.katalyst/` *vocabulary* (it validates
-the storage `type` against a parse-time allowlist) but never imports
+interface. `internal/project/config` owns the `.katalyst/` *vocabulary* (it
+validates the storage `type` against a parse-time allowlist) but never imports
 `internal/storage`, which depends on it.
 
 Per-item check *routing* (collection variants) lives in the check engine

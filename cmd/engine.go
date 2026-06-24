@@ -9,8 +9,8 @@ import (
 	"github.com/abegong/katalyst/internal/checks"
 	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
 	"github.com/abegong/katalyst/internal/checks/jsonschema"
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // libPathKey identifies a compiled schema in the engine cache: a (library,

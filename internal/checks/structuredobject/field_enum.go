@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectFieldEnum checks that a string field is in the allowed set.

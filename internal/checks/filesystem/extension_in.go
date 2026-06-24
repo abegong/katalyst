@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // FilesystemExtensionIn checks that extension is in an allowed set.

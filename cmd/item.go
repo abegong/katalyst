@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"text/tabwriter"
 
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/project/collection/query"
+	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

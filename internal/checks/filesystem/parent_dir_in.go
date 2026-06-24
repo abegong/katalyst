@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // FilesystemParentDirIn checks that parent directory name is in allowed values.

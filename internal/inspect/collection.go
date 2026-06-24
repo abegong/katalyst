@@ -3,9 +3,9 @@ package inspect
 import (
 	"os"
 
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage"
 )
 

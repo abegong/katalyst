@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/abegong/katalyst/internal/config"
+import "github.com/abegong/katalyst/internal/project/config"
 
 // StorageType is a known backend kind capable of holding collections and items.
 type StorageType string

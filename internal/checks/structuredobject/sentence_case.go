@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // ObjectSentenceCase checks that a string field reads as sentence case rather

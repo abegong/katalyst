@@ -8,8 +8,8 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/plaintext"
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/spf13/cobra"
 )
 

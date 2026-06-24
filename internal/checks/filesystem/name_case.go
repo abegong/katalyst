@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // caseStyle pairs a style's anchored pattern with its human label.

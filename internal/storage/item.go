@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/abegong/katalyst/internal/config"
+import "github.com/abegong/katalyst/internal/project/config"
 
 // Item is one resolved item: a member of a collection, located in its backing
 // store. It lives here (rather than in internal/project) so a

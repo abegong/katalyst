@@ -2,7 +2,7 @@ package jsonschema
 
 import (
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // Object validates frontmatter metadata against a compiled JSON Schema. It is

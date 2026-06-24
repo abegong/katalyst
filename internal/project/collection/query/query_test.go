@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/project/collection/query"
 )
 
 func TestApply_grepRegions(t *testing.T) {

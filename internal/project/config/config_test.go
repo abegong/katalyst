@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // writeProject scaffolds a .katalyst/ tree: keys are paths relative to

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // UniqueFilename requires that no two items share a basename (without

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
 	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/project/config"
 	"gopkg.in/yaml.v3"
 )
 

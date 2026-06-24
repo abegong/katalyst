@@ -24,7 +24,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/abegong/katalyst/internal/query"
+	"github.com/abegong/katalyst/internal/project/collection/query"
 	"gopkg.in/yaml.v3"
 )
 

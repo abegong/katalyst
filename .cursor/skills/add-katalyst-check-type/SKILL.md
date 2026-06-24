@@ -10,7 +10,7 @@ Use this skill to implement a new check type in this repo.
 
 ## Quick Start
 
-1. Define the new check type and config payload in `internal/config/config.go`.
+1. Define the new check type and config payload in `internal/project/config/config.go`.
 2. Implement the check in its family package under `internal/checks/<family>/`:
    one new file holding the struct, `Run`, its `Descriptor`, and an `init()`
    that calls `checks.Register` (this *is* the CLI wiring and the docs source).
@@ -36,7 +36,7 @@ Check Type Task Progress:
 
 ## 1) Config Model
 
-Edit `internal/config/config.go`:
+Edit `internal/project/config/config.go`:
 
 - Add a `CheckType` constant for the new check type.
 - Extend `rawCheck` parsing if the check type needs new fields.
@@ -44,7 +44,7 @@ Edit `internal/config/config.go`:
 - Preserve the collection `schema:` shorthand (sugar for a leading `object`
   check).
 
-Add/extend tests in `internal/config/config_test.go`:
+Add/extend tests in `internal/project/config/config_test.go`:
 
 - Parses valid check payload.
 - Rejects malformed payload.

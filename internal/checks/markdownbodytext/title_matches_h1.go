@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/config"
+	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownTitleMatchesH1 checks that a frontmatter field matches the first H1.
