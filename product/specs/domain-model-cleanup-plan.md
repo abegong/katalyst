@@ -11,7 +11,7 @@ code already matches the settled terms (`frontmatter.Document`, `field`,
 
 - `docs/content/reference/glossary.md` — meant to be canonical but missing
   *attribute*, *field*, *operation*, *aggregate*, *validation result*, and a
-  standalone *family* entry; uses "Raw-source layer."
+  uses "Raw-source layer." Family is intentionally not a standalone term.
 - `docs/content/deep-dives/core-concepts.md` (170 lines) — encyclopedic: a "Data
   interface" concept, a structured/unstructured "Goal," full definitions of
   item/collection/attribute/check/inspector, and an "Implications" section that
@@ -58,8 +58,7 @@ pairs and their relationship explicit.
    named characteristic of an item: a frontmatter key, but also filename/path),
    **Field** (a key in an item's structured object/frontmatter; *a field is an
    attribute, a filename is not*), **Operation**, **Aggregate**, **Validation
-   result**, and a standalone **Family** row (today only implied in the
-   CheckLibrary row).
+   result**. Do NOT add a standalone Family row: family is an organizing axis for check types, kept in the CheckLibrary row and checks.md. Alphabetize the table.
 2. **File:** `docs/content/reference/glossary.md` — extend the **Document** and
    **Item** rows to state the specialization: a document is the markdown
    file-form of an item.

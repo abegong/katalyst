@@ -175,7 +175,7 @@ terminology-align the new pages.
 - **`docs/content/reference/glossary.md`** — the primary deliverable: one entry
   per concept, conflicts resolved. Add entries for *attribute* and *field* (with
   the specialization link), *operation*, *aggregate*, and *validation result*;
-  fold *family* into its own row; apply the storage / source / item-document
+  keep *family* defined in the CheckLibrary row and checks.md, not its own entry; apply the storage / source / item-document
   decisions.
 - **`docs/content/deep-dives/core-concepts.md`** — the primary doc target now:
   slim from the encyclopedic definitions into a general-altitude hub mirroring

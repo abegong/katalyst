@@ -121,7 +121,7 @@ Ordered roughly by how much they hurt. Resolutions are recorded in the
    **Resolved:** *source* wins; rename the docs.
 8. **`family` vs `library` vs `kind`.** Three orthogonal axes that only the
    glossary tries to pin, and even it relegates *family* to a sub-clause instead
-   of its own entry. **Resolved:** glossary gains a standalone *family* entry
+   of its own entry. **Resolved:** family stays folded into the CheckLibrary row and is documented in checks.md; not promoted to a standalone glossary entry
    alongside *library* and *kind*.
 9. **"Validation result" has no glossary entry**, though both the domain model
    and the code (`Result`) name it. **Resolved:** gains a glossary entry.
