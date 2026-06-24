@@ -1,4 +1,4 @@
-package document_test
+package markdownbodytext_test
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/storage/collection/document"
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 )
 
 // --- TOML ---------------------------------------------------------------
@@ -24,14 +24,14 @@ func TestParse_extractsTOMLFrontmatter(t *testing.T) {
 		"A story about spice.",
 	}, "\n")
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
 	if !doc.HasFrontmatter {
 		t.Fatalf("expected HasFrontmatter=true")
 	}
-	if doc.Format != document.KindTOML {
+	if doc.Format != markdownbodytext.KindTOML {
 		t.Errorf("Format = %v, want KindTOML", doc.Format)
 	}
 
@@ -57,11 +57,11 @@ func TestParse_extractsTOMLFrontmatter(t *testing.T) {
 }
 
 func TestParse_emptyTOMLFrontmatter(t *testing.T) {
-	doc, err := document.Parse([]byte("+++\n+++\nbody\n"))
+	doc, err := markdownbodytext.Parse([]byte("+++\n+++\nbody\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	if !doc.HasFrontmatter || doc.Format != document.KindTOML {
+	if !doc.HasFrontmatter || doc.Format != markdownbodytext.KindTOML {
 		t.Fatalf("expected TOML frontmatter, got HasFrontmatter=%v Format=%v", doc.HasFrontmatter, doc.Format)
 	}
 	if len(doc.Meta) != 0 {
@@ -73,15 +73,15 @@ func TestParse_emptyTOMLFrontmatter(t *testing.T) {
 }
 
 func TestParse_unterminatedTOML(t *testing.T) {
-	_, err := document.Parse([]byte("+++\ntitle = \"Dune\"\n\n# Body\n"))
-	if !errors.Is(err, document.ErrUnterminated) {
+	_, err := markdownbodytext.Parse([]byte("+++\ntitle = \"Dune\"\n\n# Body\n"))
+	if !errors.Is(err, markdownbodytext.ErrUnterminated) {
 		t.Fatalf("expected ErrUnterminated, got %v", err)
 	}
 }
 
 func TestParse_invalidTOML(t *testing.T) {
-	_, err := document.Parse([]byte("+++\ntitle = = =\n+++\nbody\n"))
-	if !errors.Is(err, document.ErrInvalidTOML) {
+	_, err := markdownbodytext.Parse([]byte("+++\ntitle = = =\n+++\nbody\n"))
+	if !errors.Is(err, markdownbodytext.ErrInvalidTOML) {
 		t.Fatalf("expected ErrInvalidTOML, got %v", err)
 	}
 }
@@ -101,11 +101,11 @@ func TestFormat_TOMLRoundTrip(t *testing.T) {
 
 	// Re-parsing the formatted output yields the same metadata: round-trip
 	// is meaning-preserving and never rewrites TOML as another format.
-	reparsed, err := document.Parse(got)
+	reparsed, err := markdownbodytext.Parse(got)
 	if err != nil {
 		t.Fatalf("re-Parse: %v", err)
 	}
-	if reparsed.Format != document.KindTOML {
+	if reparsed.Format != markdownbodytext.KindTOML {
 		t.Errorf("re-parsed Format = %v, want KindTOML", reparsed.Format)
 	}
 }
@@ -125,14 +125,14 @@ func TestParse_extractsJSONFrontmatter(t *testing.T) {
 		"A story about spice.",
 	}, "\n")
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
 	if !doc.HasFrontmatter {
 		t.Fatalf("expected HasFrontmatter=true")
 	}
-	if doc.Format != document.KindJSON {
+	if doc.Format != markdownbodytext.KindJSON {
 		t.Errorf("Format = %v, want KindJSON", doc.Format)
 	}
 
@@ -158,11 +158,11 @@ func TestParse_extractsJSONFrontmatter(t *testing.T) {
 }
 
 func TestParse_emptyJSONFrontmatter(t *testing.T) {
-	doc, err := document.Parse([]byte("{}\nbody\n"))
+	doc, err := markdownbodytext.Parse([]byte("{}\nbody\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	if !doc.HasFrontmatter || doc.Format != document.KindJSON {
+	if !doc.HasFrontmatter || doc.Format != markdownbodytext.KindJSON {
 		t.Fatalf("expected JSON frontmatter, got HasFrontmatter=%v Format=%v", doc.HasFrontmatter, doc.Format)
 	}
 	if len(doc.Meta) != 0 {
@@ -177,7 +177,7 @@ func TestParse_emptyJSONFrontmatter(t *testing.T) {
 // closing fence.
 func TestParse_JSONBraceInString(t *testing.T) {
 	src := "{\n  \"title\": \"a } brace\"\n}\nbody\n"
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -190,15 +190,15 @@ func TestParse_JSONBraceInString(t *testing.T) {
 }
 
 func TestParse_unterminatedJSON(t *testing.T) {
-	_, err := document.Parse([]byte("{\n  \"title\": \"Dune\"\n\n# Body\n"))
-	if !errors.Is(err, document.ErrUnterminated) {
+	_, err := markdownbodytext.Parse([]byte("{\n  \"title\": \"Dune\"\n\n# Body\n"))
+	if !errors.Is(err, markdownbodytext.ErrUnterminated) {
 		t.Fatalf("expected ErrUnterminated, got %v", err)
 	}
 }
 
 func TestParse_invalidJSON(t *testing.T) {
-	_, err := document.Parse([]byte("{\n  \"title\": ,\n}\nbody\n"))
-	if !errors.Is(err, document.ErrInvalidJSON) {
+	_, err := markdownbodytext.Parse([]byte("{\n  \"title\": ,\n}\nbody\n"))
+	if !errors.Is(err, markdownbodytext.ErrInvalidJSON) {
 		t.Fatalf("expected ErrInvalidJSON, got %v", err)
 	}
 }
@@ -216,11 +216,11 @@ func TestFormat_JSONRoundTrip(t *testing.T) {
 		t.Errorf("Format mismatch:\n got: %q\nwant: %q", string(got), want)
 	}
 
-	reparsed, err := document.Parse(got)
+	reparsed, err := markdownbodytext.Parse(got)
 	if err != nil {
 		t.Fatalf("re-Parse: %v", err)
 	}
-	if reparsed.Format != document.KindJSON {
+	if reparsed.Format != markdownbodytext.KindJSON {
 		t.Errorf("re-parsed Format = %v, want KindJSON", reparsed.Format)
 	}
 }
@@ -230,20 +230,20 @@ func TestFormat_JSONRoundTrip(t *testing.T) {
 // YAML "---" frontmatter is still detected as YAML; the new formats don't
 // disturb the original path.
 func TestParse_yamlStillDetected(t *testing.T) {
-	doc, err := document.Parse([]byte("---\ntitle: Dune\n---\nbody\n"))
+	doc, err := markdownbodytext.Parse([]byte("---\ntitle: Dune\n---\nbody\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	if doc.Format != document.KindYAML {
+	if doc.Format != markdownbodytext.KindYAML {
 		t.Errorf("Format = %v, want KindYAML", doc.Format)
 	}
 }
 
 func TestKind_String(t *testing.T) {
-	cases := map[document.Kind]string{
-		document.KindYAML: "yaml",
-		document.KindTOML: "toml",
-		document.KindJSON: "json",
+	cases := map[markdownbodytext.Kind]string{
+		markdownbodytext.KindYAML: "yaml",
+		markdownbodytext.KindTOML: "toml",
+		markdownbodytext.KindJSON: "json",
 	}
 	for k, want := range cases {
 		if got := k.String(); got != want {
@@ -255,9 +255,9 @@ func TestKind_String(t *testing.T) {
 // reencode parses src and re-serializes it canonically — the round trip the
 // fix operation performs, exercised here at the codec level (Parse + Encode).
 func reencode(src string) ([]byte, error) {
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		return nil, err
 	}
-	return document.Encode(doc)
+	return markdownbodytext.Encode(doc)
 }

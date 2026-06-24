@@ -40,6 +40,11 @@ file *is* where the CollectionDefinition lives (see
 seam is `internal/storage/collection.CollectionDefinition`; `internal/project` consumes it
 rather than implementing the filesystem mapping inline.
 
+Storage readers use codecs to decode a matched unit's content into the shape
+checks and inspectors consume. The markdown filesystem reader uses
+`internal/codec/markdownbodytext` for frontmatter/body parsing; codecs are
+shared content adapters, not storage backends.
+
 ## Lineage: GX legacy DataConnectors
 
 The design is adapted from Great Expectations' V3 `DataConnector` layer

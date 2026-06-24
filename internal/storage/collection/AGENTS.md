@@ -6,8 +6,8 @@ storage backend. `collection.go` is the backend-neutral contract
 type (plus `CollectionVariant`/`QuerySettings`) and parses a collection's config
 block (`Build`), since a collection is a storage concept; per-backend
 implementations live in subpackages (`filesystem` today, `sql` later);
-`document` is the markdown codec the readers decode and encode with; `query` is
-the filter/sort grammar.
+`internal/codec/markdownbodytext` is the markdown body text codec the readers
+decode and encode with; `query` is the filter/sort grammar.
 
 Architecture and rationale — why a collection owns the read, why items are thin,
 and how a backend attaches — live in the
@@ -19,14 +19,15 @@ and how a backend attaches — live in the
 - The contract (`CollectionDefinition`, `Item`) stays backend-neutral: no
   filesystem assumptions (globbing, stem-as-id, path joins) leak into it. A new
   backend is a new subpackage implementing the interface.
-- `document` is a leaf codec: it imports no other internal package. Keep it that
-  way so the source-layer inspector and the checks can decode without pulling in
-  a backend.
+- `internal/codec/markdownbodytext` is a leaf codec: it imports no other
+  internal package. Keep it that way so the source-layer inspector and the
+  checks can decode without pulling in a backend.
 - `collection` owns the `Collection` type, so the project loader imports
   `collection`, not the reverse. Keep the edge pointing that way: `collection`
   imports `checks` (to parse a check's args) and the sibling `query` grammar, but
   never the loader. `Build` takes schema validation as an injected
   `SchemaKnown func(string) bool` rather than reaching back into the loader.
-- Read and write are duals: the backend reader locates and `document.Parse`
-  decodes; `fix` computes the new bytes and the backend persists them
-  (`filesystem.Write`). Backend-specific IO stays in the backend subpackage.
+- Read and write are duals: the backend reader locates and
+  `markdownbodytext.Parse` decodes; `fix` computes the new bytes and the backend
+  persists them (`filesystem.Write`). Backend-specific IO stays in the backend
+  subpackage.

@@ -124,12 +124,13 @@ which decodes into its own type.
 ### The dependency design (Path A: decouple, validate at Load)
 
 The cycle worth fearing is **not** `collection ↔ checks`. Checked against the
-code: `checks.CollectionContext.Items` is a `checks`-local type, and `checks`
-imports only `storage/collection/document` (a leaf codec), never the
-`storage/collection` parent. So a `Collection` *can* hold `[]checks.Check` with
-no back-edge — eager-building does not cycle. (An earlier draft of this spec
-hedged toward lazy raw-node building to avoid that phantom cycle; that rationale
-was wrong and is dropped.)
+code: `checks.CollectionContext.Items` is a `checks`-local type. The old
+`checks -> storage/collection/document` edge was a leaf codec dependency, not a
+dependency on the `storage/collection` parent, and it is now
+`checks -> internal/codec/markdownbodytext`. So a `Collection` *can* hold
+`[]checks.Check` with no back-edge — eager-building does not cycle. (An earlier
+draft of this spec hedged toward lazy raw-node building to avoid that phantom
+cycle; that rationale was wrong and is dropped.)
 
 The **real** cycle is `checks → config`: `Descriptor.CheckType` is
 `config.CheckType` and the registry consumes `config.CheckInstance`. That edge is

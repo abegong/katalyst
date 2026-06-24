@@ -1,8 +1,8 @@
 // Package collection is the backend-neutral contract for reading a collection's
 // items from a storage backend: the CollectionDefinition interface and the thin
 // Item it yields. Per-backend implementations live in subpackages (filesystem
-// today); the query subpackage holds the filter/sort grammar; the document
-// subpackage is the markdown codec the readers decode with.
+// today); the query subpackage holds the filter/sort grammar. Readers use the
+// markdown body text codec to decode item content.
 package collection
 
 import (
@@ -11,7 +11,7 @@ import (
 
 // Item is one resolved item: a member of a collection, located in its backing
 // store. It carries no content — locating is the backend reader's job and
-// parsing is the document codec's; Item only addresses. internal/project
+// parsing is the markdown body text codec's; Item only addresses. internal/project
 // re-exports it as a type alias.
 type Item struct {
 	Collection Collection

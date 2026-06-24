@@ -9,18 +9,18 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
 	"gopkg.in/yaml.v3"
 )
 
-// parseItem reads and parses a markdown file's document.
-func parseItem(path string) (*document.Document, error) {
+// parseItem reads and parses a markdown file's frontmatter and body.
+func parseItem(path string) (*markdownbodytext.Document, error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return document.Parse(src)
+	return markdownbodytext.Parse(src)
 }
 
 // validateItemWrite validates src against the checks for collection c,
@@ -28,7 +28,7 @@ func parseItem(path string) (*document.Document, error) {
 // "schema:" key, then the collection's object checks). It returns a
 // multi-line error describing every violation, or nil when valid.
 func validateItemWrite(e *engine, c project.Collection, path string, src []byte) error {
-	doc, err := document.Parse(src)
+	doc, err := markdownbodytext.Parse(src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}

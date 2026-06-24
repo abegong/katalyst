@@ -45,6 +45,9 @@ and `config`. Update re-exports (`project.Item`) and importers (`inspect`, `cmd`
 
 ### Phase 4 — Split `frontmatter` into the `document` codec
 
+**Follow-up:** `codec-layer-spec.md` supersedes this package location and moves
+the codec to `internal/codec/markdownbodytext`.
+
 Read half (`Parse`, `Document`, `Kind`, line map; `frontmatter.go`) →
 `storage/collection/document` (package `document`). Add `Encode` (the serialize
 dual of `Parse`) — initially by relocating the serialization helpers from
@@ -57,7 +60,8 @@ temporarily, for Phase 5 to claim. **Green check.**
 
 - New package `internal/fix`: the canonical-form transform (`Format` + helpers,
   moved from the `frontmatter` remnant) and the text-fix logic (`applyTextFixes`,
-  `textFixers`, moved from `cmd/fix.go`). No file IO. Composes `document.Encode`.
+  `textFixers`, moved from `cmd/fix.go`). No file IO. Composes the markdown
+  body text codec's `Encode`.
 - The atomic temp-rename persist moves from `cmd/fix.go` into
   `storage/collection/filesystem` as a `Write`/persist function beside the read.
 - `cmd/fix.go` becomes a thin shell: read item → `fix` transform → if changed,

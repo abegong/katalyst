@@ -10,8 +10,8 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/plaintext"
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/storage/collection"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // Apply returns the canonical, fixed form of src for collection c: it applies
@@ -28,16 +28,16 @@ func Apply(src []byte, c collection.Collection) ([]byte, error) {
 // Canonical rewrites a markdown document's frontmatter into canonical form
 // (top-level keys sorted, default block style, exactly one trailing newline,
 // body verbatim). Files without frontmatter are returned unchanged. It composes
-// the document codec's Parse and Encode.
+// the markdown body text codec's Parse and Encode.
 func Canonical(src []byte) ([]byte, error) {
-	doc, err := document.Parse(src)
+	doc, err := markdownbodytext.Parse(src)
 	if err != nil {
 		return nil, err
 	}
 	if !doc.HasFrontmatter {
 		return src, nil
 	}
-	return document.Encode(doc)
+	return markdownbodytext.Encode(doc)
 }
 
 // applyTextFixes rewrites the body with the collection's opted-in text_forbids
@@ -49,7 +49,7 @@ func applyTextFixes(src []byte, c collection.Collection) ([]byte, error) {
 	if len(fixers) == 0 {
 		return src, nil
 	}
-	doc, err := document.Parse(src)
+	doc, err := markdownbodytext.Parse(src)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func applyTextFixes(src []byte, c collection.Collection) ([]byte, error) {
 	for _, f := range fixers {
 		body = f.ApplyFix(body)
 	}
-	rechecked := &document.Document{Body: body, BodyLine: doc.BodyLine}
+	rechecked := &markdownbodytext.Document{Body: body, BodyLine: doc.BodyLine}
 	for _, f := range fixers {
 		if len(f.Run(checks.Context{Doc: rechecked})) > 0 {
 			return nil, fmt.Errorf("fix did not resolve the violation for /%s/", f.Pattern)

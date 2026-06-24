@@ -3,23 +3,23 @@ package inspect
 import (
 	"os"
 
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/collection"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // CollectionView is the collection layer's addressing surface: a resolved
 // collection and its items, parsed once. Items are addressed by domain identity
 // (their Item.ID), and the bytes are reached through the project's
 // CollectionDefinition, collection inspectors never see a raw path. Parsing
-// here is a thin local adapter over document.Parse; it deliberately does not
+// here is a thin local adapter over markdownbodytext.Parse; it deliberately does not
 // reach into internal/checks.
 type CollectionView struct {
 	collection project.Collection
 	items      []collection.Item
 	// docs is aligned with items; an entry is nil when the item could not be
 	// read or parsed, so a broken item contributes nothing rather than panicking.
-	docs []*document.Document
+	docs []*markdownbodytext.Document
 }
 
 // NewCollectionView resolves a collection's items via the project and parses
@@ -29,13 +29,13 @@ func NewCollectionView(proj *project.Project, c project.Collection) (CollectionV
 	if err != nil {
 		return CollectionView{}, err
 	}
-	docs := make([]*document.Document, len(items))
+	docs := make([]*markdownbodytext.Document, len(items))
 	for i, it := range items {
 		src, err := os.ReadFile(it.Path)
 		if err != nil {
 			continue
 		}
-		if doc, err := document.Parse(src); err == nil {
+		if doc, err := markdownbodytext.Parse(src); err == nil {
 			docs[i] = doc
 		}
 	}

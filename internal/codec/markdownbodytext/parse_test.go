@@ -1,4 +1,4 @@
-package document_test
+package markdownbodytext_test
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/storage/collection/document"
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 )
 
 func TestParse_extractsYAMLFrontmatter(t *testing.T) {
@@ -24,7 +24,7 @@ func TestParse_extractsYAMLFrontmatter(t *testing.T) {
 		"A story about spice.",
 	}, "\n")
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestParse_extractsYAMLFrontmatter(t *testing.T) {
 }
 
 func TestParse_noFrontmatter_nilRawBlock(t *testing.T) {
-	doc, err := document.Parse([]byte("# Just a heading\n"))
+	doc, err := markdownbodytext.Parse([]byte("# Just a heading\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestParse_noFrontmatter_nilRawBlock(t *testing.T) {
 func TestParse_noFrontmatter(t *testing.T) {
 	src := "# Just a heading\n\nNo frontmatter here.\n"
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestParse_noFrontmatter(t *testing.T) {
 func TestParse_emptyFrontmatter(t *testing.T) {
 	src := "---\n---\nbody\n"
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
@@ -102,11 +102,11 @@ func TestParse_emptyFrontmatter(t *testing.T) {
 func TestParse_unterminatedFrontmatter(t *testing.T) {
 	src := "---\ntitle: Dune\n\n# Body\n"
 
-	_, err := document.Parse([]byte(src))
+	_, err := markdownbodytext.Parse([]byte(src))
 	if err == nil {
 		t.Fatalf("expected error for unterminated frontmatter")
 	}
-	if !errors.Is(err, document.ErrUnterminated) {
+	if !errors.Is(err, markdownbodytext.ErrUnterminated) {
 		t.Errorf("expected ErrUnterminated, got %v", err)
 	}
 }
@@ -114,11 +114,11 @@ func TestParse_unterminatedFrontmatter(t *testing.T) {
 func TestParse_malformedYAML(t *testing.T) {
 	src := "---\ntitle: : :\n---\nbody\n"
 
-	_, err := document.Parse([]byte(src))
+	_, err := markdownbodytext.Parse([]byte(src))
 	if err == nil {
 		t.Fatalf("expected error for malformed YAML")
 	}
-	if !errors.Is(err, document.ErrInvalidYAML) {
+	if !errors.Is(err, markdownbodytext.ErrInvalidYAML) {
 		t.Errorf("expected ErrInvalidYAML, got %v", err)
 	}
 }
@@ -126,7 +126,7 @@ func TestParse_malformedYAML(t *testing.T) {
 func TestParse_crlfLineEndings(t *testing.T) {
 	src := "---\r\ntitle: Dune\r\n---\r\nbody\r\n"
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
@@ -142,7 +142,7 @@ func TestParse_crlfLineEndings(t *testing.T) {
 func TestParse_leadingBOM(t *testing.T) {
 	src := "\ufeff---\ntitle: Dune\n---\nbody\n"
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
@@ -170,7 +170,7 @@ func TestParse_lineNumbers(t *testing.T) {
 		"body",
 	}, "\n")
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -195,11 +195,11 @@ func TestParse_lineNumbers(t *testing.T) {
 }
 
 // The opening "---" fence is only meaningful at the very top of the file.
-// A "---" later in the body is a thematic break, not document.
+// A "---" later in the body is a thematic break, not markdownbodytext.
 func TestParse_fenceMustBeAtTop(t *testing.T) {
 	src := "\n---\ntitle: Dune\n---\nbody\n"
 
-	doc, err := document.Parse([]byte(src))
+	doc, err := markdownbodytext.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("Parse returned unexpected error: %v", err)
 	}
