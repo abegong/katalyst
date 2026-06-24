@@ -16,7 +16,7 @@ weight = 40
 The **storage layer** is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: *what collections and items does this store
 contain, and where does each one live?*, in both directions. It is Katalyst's
-realization of the **data interface** concept from the
+realization of the general **storage** concept from
 [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
 The first real stress test will be **SQLite**, because it is the first backend

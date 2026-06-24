@@ -9,12 +9,11 @@ What `katalyst` is *about*: the concepts it manipulates and how they relate.
 This is the conceptual map and the entry point to the subsystem deep-dives -
 each piece is summarized here and documented in full on its own page.
 
-This page is katalyst-specific. For the general, tool-agnostic model these
-concepts instantiate - the same vocabulary applied to a Postgres table or a
-MongoDB collection - see [core concepts]({{< relref "core-concepts.md" >}}). For
-*what* the commands do, see the [getting-started
-tutorial]({{< relref "../getting-started.md" >}}) and the [configuration
-reference]({{< relref "../reference/configuration.md" >}}).
+This page is the katalyst-specific map; [core concepts]({{< relref "core-concepts.md" >}})
+is the same map at the general, tool-agnostic altitude (the same vocabulary
+applied to a Postgres table or a MongoDB collection). For *what* the commands do,
+see the [getting-started tutorial]({{< relref "../getting-started.md" >}}) and the
+[configuration reference]({{< relref "../reference/configuration.md" >}}).
 
 ## At a glance
 
@@ -104,8 +103,8 @@ consistently in code, docs, and user-facing copy.
 Absences worth being explicit about; they shape what katalyst currently is
 *not*:
 
-- **Relations between documents.** A schema constrains one document at a time;
-  no `$ref` across documents, no foreign keys. Planned.
+- **Relations between items.** A schema constrains one item at a time; no
+  cross-item `$ref`, no foreign keys. Planned.
 - **Schema evolution.** No "this field was renamed in v2" migrations. Planned.
 - **Query.** No "find all docs where year > 1980." Planned.
 - **Derived state.** `.katalyst/` holds only hand-authored config; nothing is
