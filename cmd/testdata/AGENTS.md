@@ -27,7 +27,7 @@ Golden fixtures for the CLI's user-facing text contracts, compared by the
 tree is embedded in one `//go:embed testdata/snapshots`
 ([`../fixtures_test.go`](../fixtures_test.go)) so reads survive the per-test
 `chdir`. The split — snapshot the *text*, property-test the *behavior* — is
-specified in `product/specs/cli-test-strategy-spec.md`.
+specified in [`../AGENTS.md`](../AGENTS.md) ("Testing the CLI").
 
 Fixtures are grouped one directory per command surface; the name passed to
 `snapshot(t, "<group>/<name>.txt", …)` is the path under `snapshots/`:

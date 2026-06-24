@@ -119,8 +119,7 @@ New commands inherit the standard by using these helpers and this grammar.
 
 ## Testing the CLI
 
-Two test styles, kept apart (full rationale in
-`product/specs/cli-test-strategy-spec.md`):
+Two test styles, kept apart:
 
 - **Snapshot the text.** User-facing output contracts — help, `list`/`show`
   output, the `inspect` report, canonical stderr diagnostics — are pinned as
