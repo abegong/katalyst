@@ -1,0 +1,12 @@
+{{- /*
+  katalyst-example-full embeds a generated worked example: the input corpus, the
+  `katalyst` command, and its real output. The snippet is Markdown (headings at
+  H3, fenced code blocks) produced by cmd/gendocs (internal/examples) under
+  docs/generated/examples/<id>.full.md and gated by the internal/examples test,
+  so it cannot drift from the shipped tool. Host pages place it under a
+  `## Worked example` heading. Usage: {{< katalyst-example-full "id" >}}
+*/ -}}
+{{- $id := .Get 0 -}}
+{{- $path := printf "generated/examples/%s.full.md" $id -}}
+{{- $content := readFile $path -}}
+{{ $content | markdownify }}

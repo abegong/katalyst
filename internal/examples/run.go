@@ -119,31 +119,42 @@ func Output(r Result) string {
 	return b.String()
 }
 
-// RenderPage returns the Markdown body of an example's catalog page: the
-// narrative, the input corpus, the command transcript, and any resulting files.
-// cmd/gendocs wraps this in Hugo frontmatter and the generated-note banner; the
-// test snapshots it directly. The output is deterministic.
+// RenderPage returns the Markdown body of a full worked example at the default
+// heading level (H2): the narrative, the input corpus, the command transcript,
+// and any resulting files. The test snapshots it directly, so it is the tested
+// contract for an example's rendered form. The output is deterministic.
 func RenderPage(ex Example, res Result) string {
+	return RenderPageAt(ex, res, 2)
+}
+
+// RenderPageAt is RenderPage with the section headings (Input, Command, Result)
+// emitted at the given level, so a full worked example can be embedded under a
+// host page's heading: cmd/gendocs renders it at H3 into the embeddable
+// generated/examples/<id>.full.md snippet, which the {{< katalyst-example-full >}}
+// shortcode nests under a `## Worked example` heading on the owning reference,
+// how-to, or deep-dive page.
+func RenderPageAt(ex Example, res Result, base int) string {
+	h := strings.Repeat("#", base)
 	var b strings.Builder
 	if ex.Doc != "" {
 		b.WriteString(ex.Doc)
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString("## Input\n\n")
+	fmt.Fprintf(&b, "%s Input\n\n", h)
 	for _, f := range ex.Files {
 		fmt.Fprintf(&b, "`%s`\n\n", f.Path)
 		fence(&b, lang(f.Path), f.Content)
 	}
 
-	b.WriteString("## Command\n\n")
+	fmt.Fprintf(&b, "%s Command\n\n", h)
 	var t strings.Builder
 	fmt.Fprintf(&t, "$ katalyst %s\n", shellArgs(ex.Args))
 	t.WriteString(Output(res))
 	fence(&b, "console", t.String())
 
 	if len(ex.ResultFiles) > 0 {
-		b.WriteString("## Result\n\n")
+		fmt.Fprintf(&b, "%s Result\n\n", h)
 		for _, rel := range ex.ResultFiles {
 			fmt.Fprintf(&b, "`%s` after `katalyst %s`:\n\n", rel, shellArgs(ex.Args))
 			fence(&b, lang(rel), res.After[rel])

@@ -30,3 +30,7 @@ collections:
       - kind: object_required_field
         field: year
 ```
+
+## Worked example
+
+{{< katalyst-example-full "check-schema-missing-field" >}}

@@ -16,17 +16,21 @@ type File struct {
 // Running it (see Run) yields deterministic output used both to gate behavior
 // and to generate documentation.
 type Example struct {
-	// ID is the slug shared by the generated catalog page, the generated output
-	// snippet (docs/generated/examples/<ID>.txt), the {{< katalyst-example >}}
-	// shortcode argument, and the golden fixture (testdata/<ID>.md).
+	// ID is the slug shared by the two generated snippets
+	// (docs/generated/examples/<ID>.txt for {{< katalyst-example >}} and
+	// <ID>.full.md for {{< katalyst-example-full >}}), the shortcode arguments
+	// that embed them into prose, and the golden fixture (testdata/<ID>.md).
+	// Each example is embedded into the reference, how-to, or deep-dive page
+	// that owns the feature it demonstrates; there is no standalone catalog.
 	ID string
-	// Title is the catalog page title. Sentence case, to satisfy the docs'
-	// own object_sentence_case check when the page is validated by katalyst.
+	// Title is a short, sentence-case label for the example. It is not rendered
+	// into the embedded snippet (the host page supplies its own heading); it
+	// documents the example here and labels its test subtest.
 	Title string
-	// Summary is a one-line description for the catalog page and its index.
+	// Summary is a one-line description of what the example demonstrates.
 	Summary string
-	// Doc is a short narrative shown on the catalog page, explaining what the
-	// example demonstrates.
+	// Doc is the short narrative rendered at the top of the embedded worked
+	// example, explaining what it demonstrates.
 	Doc string
 	// Files is the input corpus, including the .katalyst/ project files.
 	Files []File
@@ -35,7 +39,8 @@ type Example struct {
 	// ResultFiles are corpus files whose post-run content the example shows
 	// (the "after" of a fix). Empty for read-only commands.
 	ResultFiles []string
-	// Weight orders the example within the generated catalog section.
+	// Weight is a stable ordering hint for the registry. It no longer drives a
+	// catalog page; each example is embedded into the page that owns its feature.
 	Weight int
 }
 

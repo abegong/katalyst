@@ -32,3 +32,7 @@ collections:
         field: year
         type: integer
 ```
+
+## Worked example
+
+{{< katalyst-example-full "check-type-error" >}}

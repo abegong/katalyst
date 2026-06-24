@@ -24,3 +24,7 @@ Inspectors emit evidence: counts and distributions, for the reader to judge. Run
 ```
 katalyst inspect <target> --inspector object_fields
 ```
+
+## Worked example
+
+{{< katalyst-example-full "inspect-collection-fields" >}}
