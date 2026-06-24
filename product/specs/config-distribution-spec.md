@@ -77,28 +77,44 @@ and constructs itself.
   files into raw `yaml.Node`s, and *assemble* — dispatch each block to its
   owner's parser and wire the results together. This is katalyst's `DataContext`.
 - **Per-object parsers**, registered the way `Descriptor`s already are. Each
-  check type registers a parser that decodes its **own** args struct from a raw
-  node and returns the runnable `Check` (validation and construction fused,
-  GX-style). The same for each storage type, the collection, and schemas.
+  check type registers a **parse** function that decodes its **own** args struct
+  from a raw node and validates it, plus the **build** function(s) that turn those
+  args into the runnable check. Parse and build are separate steps so one decode
+  feeds both the item and collection-scoped builders (per Open Question 2's
+  resolution); the same pattern serves each storage type, the collection, and
+  schemas.
 - **`config.CheckInstance` dissolves** into per-check arg structs, each beside its
   check (e.g. `structuredobject.RequiredField{Field string}`), unmarshalled and
   validated by that check. The union struct and the `CheckType` constant list go
   away; the registry is the only enumeration.
+- **Validation phrasing stays uniform** via a small generic helper set
+  (`RequireString(kind, "field", v)`, `OneOf(kind, "style", v, allowed)`, …) that
+  every parser calls — generic primitives with no per-kind knowledge, so the
+  errors `config_test.go` asserts stay stable without recentralizing the switch
+  (Open Question 1's resolution).
 
-Concretely, the registry call changes from consuming a pre-parsed instance to
-owning the parse:
+Concretely, the registry moves from consuming a pre-parsed union to registering
+the check's own parse + build, keeping the existing dual (item / collection)
+builder shape:
 
 ```
-// today: config parses, Builder reads the union back out
-Register(desc, func(ci config.CheckInstance) Check { ... }, ...)
+// today: config parses into the union; Builder reads it back out
+Register(desc, func(ci config.CheckInstance) Check { ... }, buildColl)
 
-// target: the check type owns its args and validation
-Register(desc, func(raw yaml.Node) (Check, error) {
-    var a requiredFieldArgs            // this check's own shape
-    if err := raw.Decode(&a); err != nil { return nil, err }
-    if a.Field == "" { return nil, errors.New(`object_required_field requires "field"`) }
-    return RequiredField{Field: a.Field}, nil
-}, ...)
+// target: the check owns parse; build is a separate step, so one decode
+// feeds both builders. buildColl is nil for an item-only check.
+Register(desc,
+    func(raw yaml.Node) (any, error) {              // parse + validate its own args
+        var a requiredFieldArgs
+        if err := raw.Decode(&a); err != nil { return nil, err }
+        if err := argcheck.RequireString("object_required_field", "field", a.Field); err != nil {
+            return nil, err
+        }
+        return a, nil
+    },
+    func(a any) Check { return RequiredField{Field: a.(requiredFieldArgs).Field} },
+    nil,                                             // buildColl: collection-scoped builder, when applicable
+)
 ```
 
 `yaml.v3`'s deferred `Node.Decode` is the Go stand-in for Pydantic's per-subtype
@@ -199,60 +215,15 @@ These two were open before Spec 1 landed; the hands-on move settled them.
 
 ## Open Questions
 
-1. **Keeping per-check error messages consistent without a central switch.**
+_None._ Both resolved and folded into Design:
 
-   **Context.** Today every check's argument validation lives in one place —
-   `config.normalizeCheck` — so the phrasing is uniform by colocation:
-   `object_required_field requires "field"`, `filesystem_name_case`'s `unknown
-   style %q`, `filesystem_name_matches_field`'s `transform must be none or
-   slugify`. These exact strings are asserted in `config_test.go` (e.g. `requires
-   "prefix" or "suffix"`, `must be none or slugify`). Once each check owns its
-   parser it writes its own error strings, and without coordination they drift in
-   tone and format — `requires "field"` vs `field is required` vs `missing field`
-   — degrading the UX and churning the golden tests.
-
-   **Choices & tradeoffs.**
-
-   | Option | Cost | Buys | Forecloses |
-   |---|---|---|---|
-   | **A. Free-form** — each parser writes its own strings | none | maximal locality | nothing, but invites drift + test churn |
-   | **B. Generic validation helpers** — a small shared set (`RequireString(kind, "field", v)`, `OneOf(kind, "style", v, allowed)`) emitting canonical phrasing | a ~10-function helper file, no per-kind knowledge | uniform phrasing by construction, less boilerplate per check | nothing — bespoke errors still allowed for odd args |
-   | **C. Declarative arg schema** — struct tags / a DSL the registry validates generically | building a mini-validation framework for ~30 checks | fully uniform + machine-readable | simplicity; drifts toward the rejected JSON-Schema-for-config |
-
-   **Recommendation: B**, framed as your call. The helpers carry no per-kind
-   knowledge — they are generic primitives — so "the object owns its config"
-   still holds, while the phrasing stays test-stable. C rebuilds the framework
-   this spec dissolves; A trades a one-file helper for ongoing drift.
-
-2. **What a check type's owned parser returns, given item- vs collection-scoped checks.**
-
-   **Context.** The registry is dual: `Register(desc, build Builder, buildColl
-   CollectionBuilder)`, where `Builder func(CheckInstance) Check` builds a
-   per-item check and `CollectionBuilder func(CheckInstance) CollectionCheck`
-   builds a collection-scoped one (e.g. `filesystem_unique_filename`, which scans
-   the whole collection at once). A check registers one or both; variants reuse
-   the same builders under a `when` predicate. Today both builders read the *same*
-   parsed `CheckInstance`. When the check owns its parse, the open decision is
-   where the arg-decode sits relative to the item/collection split, so a dual
-   check neither decodes twice nor forks its validation.
-
-   **Choices & tradeoffs.**
-   - **A. Parser returns the built check** (`func(raw) (Check, error)`). Simplest
-     for the ~25 item-only checks. But a dual check must decode its args twice
-     (once per builder) or let the collection builder skip the item parser's
-     validation — re-splitting what we just unified.
-   - **B. Parser returns validated args; build is a separate step** (`func(raw)
-     (args, error)`, then `Build(args) Check` / `BuildCollection(args)
-     CollectionCheck`). One decode+validate feeds both builders. Preserves the
-     dual registration and moves only the *parse* into the check; slightly more
-     ceremony for the common item-only case.
-
-   **Recommendation: B**, your call. It preserves the existing dual-builder
-   structure (the smallest behavioral change) while still moving parse ownership
-   to the check, which is the actual goal; A optimizes the common case at the
-   expense of the few collection-scoped checks, where bugs would hide. Decide
-   before converting the first family — the registry signature is expensive to
-   reverse across ~30 call sites.
+1. **Error-message consistency** → generic validation helpers (`RequireString`,
+   `OneOf`, …): no per-kind knowledge, phrasing stays test-stable, no central
+   switch. (See *Target shape*.)
+2. **Owned-parser shape** → parse-then-build: the parser returns validated args,
+   separate `build`/`buildColl` steps consume them, so one decode feeds both the
+   item and collection-scoped paths and the dual registration survives. (See
+   *Target shape* and *dependency design*.)
 
 ## Documentation updates
 
