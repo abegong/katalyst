@@ -95,7 +95,10 @@ Examples:
 - **List** the items in a collection.
 - **Write**, **delete**, **create**, the obvious mutations.
 - **Search** items by raw content (substring or semantic similarity).
-- **Query** items by structured attribute values.
+- **Query** items by structured attribute values. Scope matters: filtering
+  and sorting *within* one collection is a weaker operation than querying
+  *across* collections (joins, aggregations), and a data interface may
+  support the first without the second.
 - **Diff**
 - **Aggregate** across items in a collection, the descriptive operation
   inspectors provide.

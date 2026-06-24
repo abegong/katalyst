@@ -88,6 +88,11 @@ Each entity is summarized here; follow the link for its full treatment.
   end-to-end flow is in [How collections work]({{< relref "collections.md" >}}).
 - **`fix`** rewrites frontmatter into canonical form without touching the body -
   see [Frontmatter and fix]({{< relref "formatting.md" >}}).
+- **`item list`** filters and sorts the items in *one* collection by their
+  structured attributes - the `--filter`/`--sort`/`--grep`/`--skip`/`--limit`
+  pipeline, backed by `internal/query`. This is katalyst's **query** today:
+  single-collection scope only. The predicate grammar is in the
+  [CLI reference]({{< relref "../reference/cli.md#filter-predicates" >}}).
 
 Each subsystem page lists its own invariants; the repo-wide engineering rules
 (such as "production code lives in `internal/`") are in the root `AGENTS.md`.
@@ -107,6 +112,9 @@ Absences worth being explicit about; they shape what katalyst currently is
 - **Relations between documents.** A schema constrains one document at a time;
   no `$ref` across documents, no foreign keys. Planned.
 - **Schema evolution.** No "this field was renamed in v2" migrations. Planned.
-- **Query.** No "find all docs where year > 1980." Planned.
+- **Cross-collection query.** Filtering and sorting *within* a single
+  collection ships today (`item list --filter`/`--sort`; see Lifecycles).
+  What remains unsupported is query *across* collections ("join people to
+  meetings"), a dedicated `query` verb, and aggregations. Planned.
 - **Derived state.** `.katalyst/` holds only hand-authored config; nothing is
   generated into it. Every run is stateless.

@@ -32,6 +32,7 @@ how each term maps onto today's code is documented in the per-package
 | **Target** | The slice of a path a filesystem name/path check type tests: `filename`, `filename-ext`, `parent-dir`, or `path-segments` (every directory segment plus the basename). For a text rule, the slice of body it tests, see Span. |
 | **Text rule** | A `text_*` check (`text_requires`, `text_forbids`, `text_denylist`) that tests the body as raw text, a regex or a literal denylist, independent of markdown structure. Applies to plain-text items too. |
 | **Span** | The slice of body text a text rule is evaluated against, chosen by its `target`: the whole `body`, each `line`, the `first-line`, or `matched-lines` (lines matching a `select` regex). |
+| **Query** | Filtering and sorting the items of a *single* collection by their structured attributes, shipped as the `item list --filter`/`--sort`/`--grep`/`--skip`/`--limit` pipeline (`internal/query`). Cross-collection query (joins), a dedicated `query` verb, and aggregations are out of scope today. |
 | **Violation** | One failed check, reported as `path:line: /pointer: message`. |
 | **Inspector** | A read-only operation that measures content and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. Inspectors come in two layers. |
 | **Raw-source layer** | Inspectors that profile a backend store directly, before any collection configuration, addressed by backend-native reference (a path today). The onboarding case: "what's in this store?" |
