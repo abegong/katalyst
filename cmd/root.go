@@ -39,7 +39,7 @@ Project links:
 	})
 
 	// The command tree is two grammars (see cmd/AGENTS.md and
-	// docs/deep-dives/command-organization.md): verbs operate over content via
+	// cmd/organization.md): verbs operate over content via
 	// selectors; resource nouns carry CRUD sub-verbs. Grouping the help output
 	// makes that split visible rather than alphabetizing them together.
 	root.AddGroup(

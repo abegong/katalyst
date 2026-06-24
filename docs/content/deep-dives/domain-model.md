@@ -62,7 +62,7 @@ Each entity is summarized here; follow the link for its full treatment.
 - **Markdown document** - a file's frontmatter (`Meta`) plus its body, parsed
   into a `Document` with source-line tracking.
 
-**Configuration and collections** - see [How collections work]({{< relref "collections.md" >}}):
+**Configuration and collections** - see [Collections]({{< relref "collections.md" >}}):
 
 - **Config** - the loaded `.katalyst/` directory: which schemas exist and what
   each collection checks.
@@ -77,14 +77,14 @@ Each entity is summarized here; follow the link for its full treatment.
 
 - **Check** and **CheckLibrary** - a check asserts one condition; a library
   provides and runs it. The product is a **validation result**: a flat list of
-  violations, or `path: OK`. See [How checks work]({{< relref "checks.md" >}}).
+  violations, or `path: OK`. See [Checks]({{< relref "checks.md" >}}).
 - **Inspector** - the descriptive dual of a check, reporting the distribution a
-  check would assert against. See [How inspectors work]({{< relref "inspectors.md" >}}).
+  check would assert against. See [Inspectors]({{< relref "inspectors.md" >}}).
 
 ## Lifecycles
 
 - **`check`** resolves each item's schema and check list and runs them; the
-  end-to-end flow is in [How collections work]({{< relref "collections.md" >}}).
+  end-to-end flow is in [Collections]({{< relref "collections.md" >}}).
 - **`fix`** rewrites frontmatter into canonical form without touching the body -
   see [Frontmatter and fix]({{< relref "formatting.md" >}}).
 

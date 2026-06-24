@@ -27,9 +27,6 @@ groups in `katalyst --help`:
 - **Resource nouns** (`collection`, `item`, `schema`, `check-types`,
   `inspectors`) carry CRUD-style sub-verbs (`list`, `get`, ...).
 
-See [Command organization]({{< relref "../deep-dives/command-organization.md" >}})
-for why the tree is shaped this way.
-
 ## Exit codes
 
 Shared across the validating commands (`check`, `fix --check`):
@@ -72,4 +69,3 @@ the query pipeline (`--grep`, `--sort`, `--skip`/`--limit`) is documented in
 - [Configuration reference]({{< relref "configuration.md" >}})
 - [Check types reference]({{< relref "check-types/_index.md" >}})
 - [Inspectors reference]({{< relref "inspectors/_index.md" >}})
-- [Command organization]({{< relref "../deep-dives/command-organization.md" >}})

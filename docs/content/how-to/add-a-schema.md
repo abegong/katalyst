@@ -80,7 +80,7 @@ katalyst check books --schema ./schemas/strict-book.json
 The precedence is `--schema` > inline `schema:` key > the collection's object
 check. See the [configuration
 reference]({{< relref "../reference/configuration.md" >}}) for the key surface,
-or [How collections work]({{< relref "../deep-dives/collections.md" >}}) for why.
+or [Collections]({{< relref "../deep-dives/collections.md" >}}) for why.
 
 ## See also
 

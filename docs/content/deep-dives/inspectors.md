@@ -1,9 +1,9 @@
 +++
-title = "How inspectors work"
+title = "Inspectors"
 weight = 46
 +++
 
-# How inspectors work
+# Inspectors
 
 An **inspector** profiles content and returns *evidence*: counts and
 distributions, never recommendations. Inspectors are the descriptive dual of
@@ -101,7 +101,7 @@ tool, not in the engine.
 
 - The [inspectors reference]({{< relref "../reference/inspectors/_index.md" >}})
   for the per-inspector surface, generated from the registry.
-- [How checks work]({{< relref "checks.md" >}}) - the prescriptive dual; an
+- [Checks]({{< relref "checks.md" >}}) - the prescriptive dual; an
   inspector measures the distribution a check would assert against.
 - [Core concepts]({{< relref "core-concepts.md" >}}) for where profiling sits in
   the catalog-define-enforce loop.

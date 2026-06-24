@@ -1,9 +1,9 @@
 +++
-title = "How checks work"
+title = "Checks"
 weight = 45
 +++
 
-# How checks work
+# Checks
 
 A **check** asserts one condition on an item and reports a violation when the
 item fails it. The check engine turns a collection's configuration into a

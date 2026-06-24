@@ -1,9 +1,9 @@
 +++
-title = "How collections work"
+title = "Collections"
 weight = 42
 +++
 
-# How collections work
+# Collections
 
 The `internal/config` package is the orchestration hub: it loads a project's
 `.katalyst/` directory, resolves named schemas and collections, and decides
@@ -165,7 +165,7 @@ The data flow per item, end to end:
    are not tripped by katalyst's own metadata.
 6. **Build the check list** from the resolved object check plus the collection's
    markdown and filesystem checks.
-7. **Run checks** (see [How checks work]({{< relref "checks.md" >}})).
+7. **Run checks** (see [Checks]({{< relref "checks.md" >}})).
 8. **Format output**: `path:line: /pointer: message` per violation; valid items
    print `path: OK`.
 
