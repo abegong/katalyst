@@ -73,7 +73,7 @@ together they are ANDed; all must hold.
 
 Run as `item list --filter`, a comparison against an incompatible type is
 skipped by default (`--on-type-mismatch error` makes it exit `2`). The rest of
-the query pipeline (`--grep`, `--sort`, `--skip`/`--limit`) is documented in
+the listing pipeline (`--grep`, `--sort`, `--skip`/`--limit`) is documented in
 `katalyst item list --help`.
 
 ## See also

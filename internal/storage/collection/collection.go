@@ -1,8 +1,9 @@
 // Package collection is the backend-neutral contract for reading a collection's
 // items from a storage backend: the CollectionDefinition interface and the thin
 // Item it yields. Per-backend implementations live in subpackages (filesystem
-// today); the query subpackage holds the filter/sort grammar. Readers use the
-// markdown body text codec to decode item content.
+// today); listing and predicate subpackages hold the item-list pipeline and
+// metadata predicate grammar. Readers use the markdown body text codec to decode
+// item content.
 package collection
 
 import (

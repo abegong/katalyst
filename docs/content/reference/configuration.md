@@ -84,7 +84,7 @@ Collections are declared inside their storage instance, under `collections:`.
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `schema` | no | - | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | - | List of checks (see below). |
-| `query` | no | - | `item list` query behavior for this collection (see [`query`](#query)). |
+| `listing` | no | - | `item list` listing defaults for this collection (see [`listing`](#listing)). |
 
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match
