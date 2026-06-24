@@ -31,8 +31,8 @@ internal/storage      backend-kind registry: StorageType, Known, Granularity, Re
 internal/storage/collection            the read stack: CollectionDefinition + the thin Item
 internal/storage/collection/listing    item list filter/grep/sort/skip/limit pipeline
 internal/storage/collection/predicate  metadata predicate grammar (item list --filter, collection variants)
-internal/storage/collection/document   markdown codec: Parse/Encode (frontmatter + body), with line tracking
 internal/storage/collection/filesystem the filesystem backend: structural read (glob/locate) + atomic persist
+internal/codec/markdownbodytext        markdown codec: Parse/Encode (frontmatter + body), with line tracking
 internal/fix          fix transform engine: canonical form + text fixes (decides what to write; no IO)
 internal/checks       check engine: per-family check types, the registry, and CheckLibrary providers
 internal/checks/jsonschema  the JSON Schema library (wraps santhosh-tekuri/jsonschema); provides the object check type
@@ -119,11 +119,11 @@ test needs to scaffold a realistic multi-file repo.
 **Keep it inline when**: the input is one-off, byte-exact (BOM, CRLF,
 malformed YAML, exact line numbers), or a tiny one-liner. In those cases
 the literal bytes *are* the assertion and a file would only add indirection.
-See `internal/storage/collection/document/document_test.go` for the canonical example.
+See `internal/codec/markdownbodytext/parse_test.go` for the canonical example.
 
 **Honest duplication is fine** when two layers genuinely test different
 contracts. The book schema fixtures in `cmd/testdata/schemas/book.json`
-and `internal/validator/testdata/schemas/book.json` differ on purpose: one
+and `internal/checks/jsonschema/testdata/schemas/book.json` differ on purpose: one
 exercises CLI plumbing, the other exercises validator rule coverage.
 
 Per-`testdata/` READMEs list what each fixture is for. Update them when
