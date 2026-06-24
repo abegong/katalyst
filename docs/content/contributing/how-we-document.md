@@ -42,7 +42,8 @@ The durable home for everything a user needs, organized by
   the Go doc comments / `AGENTS.md` home below), not a per-feature explanation
   page that will drift.
 - **`contributing/`:** project and process records (this file,
-  [How we plan]({{< relref "how-we-plan.md" >}}), and the page templates). Not
+  [How we plan]({{< relref "how-we-plan.md" >}}),
+  [How we test]({{< relref "how-we-test.md" >}}), and the page templates). Not
   a Diátaxis quadrant.
 
 ### 2. Go doc comments
@@ -86,6 +87,11 @@ them by hand, run `make docs-gen` and commit the result. CI fails if a
 registered check type has no page, so a new check type cannot ship
 undocumented. To add a check type, see
 [add-katalyst-check-type](../../.cursor/skills/add-katalyst-check-type/SKILL.md).
+
+Worked examples (small corpora run through a real `katalyst` command) are also
+generated, from the example registry, and embedded into the pages that own each
+feature. They are tests that double as documentation; see
+[How we test]({{< relref "how-we-test.md" >}}) for the mechanism.
 
 ## Templates
 
