@@ -1,0 +1,10 @@
+{{- /*
+  katalyst-example embeds a generated worked-example output snippet, so prose
+  pages can show real `katalyst` output that cannot drift. The snippet is
+  produced by cmd/gendocs (internal/examples) under docs/generated/examples/
+  and gated by the internal/examples test. Usage: {{< katalyst-example "id" >}}
+*/ -}}
+{{- $id := .Get 0 -}}
+{{- $path := printf "generated/examples/%s.txt" $id -}}
+{{- $content := readFile $path -}}
+<pre><code>{{ $content }}</code></pre>
