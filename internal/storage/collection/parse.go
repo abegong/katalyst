@@ -277,6 +277,9 @@ func buildChecks(errCtx, schema string, raws []RawCheck, schemaKnown func(string
 			if !schemaKnown(raw.Schema) {
 				return nil, fmt.Errorf("%s: checks[%d]: unknown schema %q", errCtx, j, raw.Schema)
 			}
+			if raw.Field != "" {
+				return nil, fmt.Errorf("%s: checks[%d]: object check does not support \"field\"", errCtx, j)
+			}
 			out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: raw.Schema})
 			continue
 		}

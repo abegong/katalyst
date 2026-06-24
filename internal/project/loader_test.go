@@ -630,6 +630,26 @@ checks:
 	}
 }
 
+func TestLoad_rejectsObjectCheckField(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+checks:
+  - kind: object
+    schema: book
+    field: title
+`}),
+	})
+	_, err := project.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for unsupported object field")
+	}
+	if !strings.Contains(err.Error(), `does not support "field"`) {
+		t.Fatalf("expected unsupported field error, got: %v", err)
+	}
+}
+
 func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
 	cases := map[string]struct{ checks, want string }{
 		"name_case unknown style": {
