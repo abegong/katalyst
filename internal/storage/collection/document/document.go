@@ -1,4 +1,4 @@
-// Package frontmatter extracts and parses frontmatter from markdown
+// Package document extracts and parses frontmatter from markdown
 // documents.
 //
 // A frontmatter block is the metadata document at the very top of a
@@ -23,7 +23,7 @@
 // for TOML and JSON the map is empty. Error messages degrade gracefully
 // when a line is unknown. Richer line tracking for the other formats is a
 // planned follow-up.
-package frontmatter
+package document
 
 import (
 	"bytes"

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/abegong/katalyst/internal/frontmatter"
+	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // sourceFile is one file discovered by a SourceView walk: cheap path-level
@@ -22,7 +22,7 @@ type sourceFile struct {
 type sourceDoc struct {
 	rel string
 	dir string
-	doc *frontmatter.Document // nil when the file failed to read or parse
+	doc *document.Document // nil when the file failed to read or parse
 }
 
 // mdCache is the lazily-populated markdown parse, shared across value copies of
@@ -115,7 +115,7 @@ func (v SourceView) markdown() []sourceDoc {
 		v.md.count++
 		sd := sourceDoc{rel: f.rel, dir: f.dir}
 		if src, err := os.ReadFile(filepath.Join(v.root, filepath.FromSlash(f.rel))); err == nil {
-			if doc, perr := frontmatter.Parse(src); perr == nil {
+			if doc, perr := document.Parse(src); perr == nil {
 				sd.doc = doc
 			}
 		}

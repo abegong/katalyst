@@ -1,4 +1,4 @@
-package frontmatter
+package document
 
 import (
 	"bytes"
@@ -10,28 +10,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Format normalizes a markdown document's frontmatter:
+// Encode serializes a parsed document back into bytes in canonical form — the
+// dual of Parse:
 //
 //   - the source format is preserved (TOML stays TOML, JSON stays JSON)
 //   - top-level keys sorted alphabetically
 //   - each format's default block/indent style
 //   - exactly one trailing newline on the whole file
-//   - body bytes preserved verbatim
+//   - body bytes preserved verbatim (leading blank lines trimmed)
 //
-// Files without frontmatter are returned unchanged. See
-// internal/frontmatter/AGENTS.md for why this is intentionally inflexible.
-func Format(src []byte) ([]byte, error) {
-	doc, err := Parse(src)
+// It assumes doc.HasFrontmatter; the no-frontmatter passthrough is the caller's
+// policy (see internal/fix). Why this canonical form is intentionally inflexible
+// is documented in the formatting deep-dive.
+func Encode(doc *Document) ([]byte, error) {
+	open, block, closeFence, err := marshalBlock(doc.Format, doc.Meta)
 	if err != nil {
-		return nil, err
-	}
-	if !doc.HasFrontmatter {
-		return src, nil
-	}
-
-	open, block, close, err := marshalBlock(doc.Format, doc.Meta)
-	if err != nil {
-		return nil, fmt.Errorf("format frontmatter: %w", err)
+		return nil, fmt.Errorf("encode frontmatter: %w", err)
 	}
 
 	var out bytes.Buffer
@@ -40,11 +34,11 @@ func Format(src []byte) ([]byte, error) {
 	if !bytes.HasSuffix(block, []byte("\n")) {
 		out.WriteByte('\n')
 	}
-	out.WriteString(close)
+	out.WriteString(closeFence)
 
-	// The body returned by Parse starts immediately after the closing
-	// fence. Strip any further leading blank lines (they were noise) and
-	// collapse trailing whitespace into a single final newline.
+	// The body starts immediately after the closing fence. Strip any further
+	// leading blank lines (they were noise) and collapse trailing whitespace
+	// into a single final newline.
 	body := bytes.TrimLeft(doc.Body, "\n")
 	body = bytes.TrimRight(body, "\n")
 	out.Write(body)
@@ -55,7 +49,7 @@ func Format(src []byte) ([]byte, error) {
 
 // marshalBlock renders meta in the given format and returns the opening
 // fence, the marshaled block (sans fences), and the closing fence.
-func marshalBlock(format Kind, meta map[string]any) (open string, block []byte, close string, err error) {
+func marshalBlock(format Kind, meta map[string]any) (open string, block []byte, closeFence string, err error) {
 	switch format {
 	case KindTOML:
 		b, err := toml.Marshal(meta)
