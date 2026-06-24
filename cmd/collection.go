@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/spf13/cobra"
@@ -29,17 +28,20 @@ func newCollectionListCmd() *cobra.Command {
 				return err
 			}
 			p := projectFor(cfg)
-
-			tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-			fmt.Fprintln(tw, "NAME\tDIRECTORY\tITEMS\tSCHEMA")
-			for _, c := range p.Collections() {
+			cols := p.Collections()
+			out := cmd.OutOrStdout()
+			printListSectionHeader(out, "Collections", len(cols))
+			for _, c := range cols {
 				items, err := p.Items(c)
 				if err != nil {
 					return asUsageErr(err)
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%d\t%s\n", c.Name, c.Path, len(items), schemaLabel(c.Schema))
+				fmt.Fprintf(out, "- %s\n", c.Name)
+				fmt.Fprintf(out, "  directory: %s\n", c.Path)
+				fmt.Fprintf(out, "  items: %d\n", len(items))
+				fmt.Fprintf(out, "  schema: %s\n", schemaLabel(c.Schema))
 			}
-			return tw.Flush()
+			return nil
 		},
 	}
 }

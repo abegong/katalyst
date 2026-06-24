@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
@@ -104,12 +103,17 @@ Narrow, search, and order the result (MongoDB find-inspired):
 				// which the spec treats as a usage error (exit 2).
 				return usageErr(err.Error())
 			}
-
-			tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-			for _, rec := range out {
-				fmt.Fprintf(tw, "%s\t%s\n", rec.ID, statuses[rec.ID])
+			if len(out) == 0 {
+				return nil
 			}
-			return tw.Flush()
+
+			w := cmd.OutOrStdout()
+			printListSectionHeader(w, fmt.Sprintf("Items in %s", sel.Collection), len(out))
+			for _, rec := range out {
+				fmt.Fprintf(w, "- %s\n", rec.ID)
+				fmt.Fprintf(w, "  status: %s\n", statuses[rec.ID])
+			}
+			return nil
 		},
 	}
 

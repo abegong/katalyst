@@ -205,7 +205,8 @@ func TestItemList_showsIdsAndStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("item list: %v", err)
 	}
-	// The fixture pins the id + status table (good: ok, bad: missing-year error).
+	// The fixture pins the bulleted id + status output (good: ok, bad:
+	// missing-year error).
 	snapshot(t, "item/list.txt", stdout)
 }
 
@@ -232,14 +233,18 @@ func seedBooks(t *testing.T, dir string) {
 		"---\ntitle: WIP\nyear: 2025\nstatus: draft\n---\n# WIP\n")
 }
 
-// listIDs returns the first column (item id) of each non-empty output line.
+// listIDs returns the item ids from the `item list` bullets.
 func listIDs(out string) []string {
 	var got []string
 	for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
-		if line == "" {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "- ") {
 			continue
 		}
-		got = append(got, strings.Fields(line)[0])
+		id := strings.TrimSpace(strings.TrimPrefix(line, "- "))
+		if id != "" {
+			got = append(got, id)
+		}
 	}
 	return got
 }

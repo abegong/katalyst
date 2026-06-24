@@ -1,2 +1,6 @@
-bad   1 error
-good  ok
+Items in notes (2)
+------------------
+- bad
+  status: 1 error
+- good
+  status: ok

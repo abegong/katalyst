@@ -30,13 +30,16 @@ func newSchemaListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			names := cfg.SchemaNames()
 			out := cmd.OutOrStdout()
-			for _, name := range cfg.SchemaNames() {
+			printListSectionHeader(out, "Schemas", len(names))
+			for _, name := range names {
 				rel, _ := filepath.Rel(cfg.Root, cfg.SchemaPath(name))
 				if rel == "" {
 					rel = cfg.SchemaPath(name)
 				}
-				fmt.Fprintf(out, "%s\t%s\n", name, rel)
+				fmt.Fprintf(out, "- %s\n", name)
+				fmt.Fprintf(out, "  path: %s\n", rel)
 			}
 			return nil
 		},

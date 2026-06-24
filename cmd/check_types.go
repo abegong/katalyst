@@ -92,15 +92,14 @@ func runCheckTypesList(cmd *cobra.Command, family string, asJSON bool) error {
 		if i > 0 {
 			fmt.Fprintln(out)
 		}
-		fmt.Fprintln(out, fam.Title)
-		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "CHECK TYPE\tPURPOSE\tREQUIRED\tOPTIONAL")
-		for _, d := range byFamily[fam.ID] {
+		ds := byFamily[fam.ID]
+		printListSectionHeader(out, fam.Title, len(ds))
+		for _, d := range ds {
 			req, opt := splitFields(d.Fields)
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", d.CheckType, plainSummary(d.Summary), req, opt)
-		}
-		if err := tw.Flush(); err != nil {
-			return err
+			fmt.Fprintf(out, "- %s\n", d.CheckType)
+			fmt.Fprintf(out, "  purpose: %s\n", plainSummary(d.Summary))
+			fmt.Fprintf(out, "  required: %s\n", req)
+			fmt.Fprintf(out, "  optional: %s\n", opt)
 		}
 	}
 	return nil

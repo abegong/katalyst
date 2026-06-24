@@ -92,9 +92,7 @@ func runInspectorsList(cmd *cobra.Command, layer string, asJSON bool) error {
 			fmt.Fprintln(out)
 		}
 		ds := byLayer[l.ID]
-		header := fmt.Sprintf("%s (%d)", l.Title, len(ds))
-		fmt.Fprintln(out, header)
-		fmt.Fprintln(out, strings.Repeat("-", len(header)))
+		printListSectionHeader(out, l.Title, len(ds))
 		for _, d := range ds {
 			fmt.Fprintf(out, "- %s\n", d.Name)
 			fmt.Fprintf(out, "  %s\n", plainSummary(d.Summary))
