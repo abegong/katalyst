@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -32,8 +33,13 @@ func (c NameRegex) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type nameRegexArgs struct {
+	Pattern string `yaml:"pattern"`
+	Target  string `yaml:"target"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameRegex,
 		Family:    "fileSystem",
 		Slug:      "name-regex",
@@ -49,11 +55,20 @@ func init() {
     checks:
       - kind: filesystem_name_regex
         pattern: '[0-9]{4}-[a-z-]+'`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.ParseInto(func(a nameRegexArgs) error {
+		if err := argcheck.RequireString("filesystem_name_regex", "pattern", a.Pattern); err != nil {
+			return err
+		}
+		if _, err := regexp.Compile(checks.AnchoredPattern(a.Pattern)); err != nil {
+			return fmt.Errorf("filesystem_name_regex: invalid pattern %q: %w", a.Pattern, err)
+		}
+		return validateTarget("filesystem_name_regex", a.Target)
+	}), func(a any) checks.Check {
+		x := a.(nameRegexArgs)
 		return NameRegex{
-			Re:      regexp.MustCompile(checks.AnchoredPattern(ch.Pattern)),
-			Pattern: ch.Pattern,
-			Target:  ch.Target,
+			Re:      regexp.MustCompile(checks.AnchoredPattern(x.Pattern)),
+			Pattern: x.Pattern,
+			Target:  x.Target,
 		}
 	}, nil)
 }

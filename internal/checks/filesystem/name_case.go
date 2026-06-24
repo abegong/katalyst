@@ -53,8 +53,13 @@ func (c NameCase) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type nameCaseArgs struct {
+	Style  string `yaml:"style"`
+	Target string `yaml:"target"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameCase,
 		Family:    "fileSystem",
 		Slug:      "name-case",
@@ -70,7 +75,13 @@ func init() {
     checks:
       - kind: filesystem_name_case
         style: kebab`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return NameCase{Style: ch.Style, Target: ch.Target}
+	}, checks.ParseInto(func(a nameCaseArgs) error {
+		if err := validateCaseStyle("filesystem_name_case", a.Style); err != nil {
+			return err
+		}
+		return validateTarget("filesystem_name_case", a.Target)
+	}), func(a any) checks.Check {
+		x := a.(nameCaseArgs)
+		return NameCase{Style: x.Style, Target: x.Target}
 	}, nil)
 }

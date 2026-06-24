@@ -30,7 +30,7 @@ func (m MarkdownNoHeadingLevelJumps) Run(ctx checks.Context) []checks.Violation 
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownNoHeadingLevelJumps,
 		Family:    "markdownBodyText",
 		Slug:      "no-heading-level-jumps",
@@ -41,7 +41,7 @@ func init() {
     path: notes
     checks:
       - kind: markdown_no_heading_level_jumps`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.NoArgs, func(any) checks.Check {
 		return MarkdownNoHeadingLevelJumps{}
 	}, nil)
 }

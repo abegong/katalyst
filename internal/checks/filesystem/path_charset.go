@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -54,8 +55,13 @@ func (c PathCharset) Run(ctx checks.Context) []checks.Violation {
 	return nil
 }
 
+type pathCharsetArgs struct {
+	Allow []string `yaml:"allow"`
+	Deny  []string `yaml:"deny"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemPathCharset,
 		Family:    "fileSystem",
 		Slug:      "path-charset",
@@ -71,7 +77,16 @@ func init() {
     checks:
       - kind: filesystem_path_charset
         deny: [" "]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return PathCharset{Allow: ch.Allow, Deny: ch.Deny}
+	}, checks.ParseInto(func(a pathCharsetArgs) error {
+		if len(a.Allow) > 0 && len(a.Deny) > 0 {
+			return errors.New(`filesystem_path_charset accepts "allow" or "deny", not both`)
+		}
+		if len(a.Allow) == 0 && len(a.Deny) == 0 {
+			return errors.New(`filesystem_path_charset requires "allow" or "deny"`)
+		}
+		return nil
+	}), func(a any) checks.Check {
+		x := a.(pathCharsetArgs)
+		return PathCharset{Allow: x.Allow, Deny: x.Deny}
 	}, nil)
 }

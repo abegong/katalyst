@@ -1,11 +1,13 @@
 package plaintext
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -68,8 +70,16 @@ func (t TextForbids) ApplyFix(body []byte) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
+type forbidsArgs struct {
+	Pattern string `yaml:"pattern"`
+	Target  string `yaml:"target"`
+	Select  string `yaml:"select"`
+	Fix     string `yaml:"fix"`
+	Match   string `yaml:"match"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckTextForbids,
 		Family:    "plainText",
 		Slug:      "forbids",
@@ -88,13 +98,28 @@ func init() {
       - kind: text_forbids
         target: line
         pattern: '\bTODO\b'`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.ParseInto(func(a forbidsArgs) error {
+		if err := argcheck.RequireString("text_forbids", "pattern", a.Pattern); err != nil {
+			return err
+		}
+		if _, err := regexp.Compile(a.Pattern); err != nil {
+			return fmt.Errorf("text_forbids: invalid pattern %q: %w", a.Pattern, err)
+		}
+		if a.Match != "" {
+			return errors.New(`text_forbids does not support "match"`)
+		}
+		if err := validateTextTarget("text_forbids", a.Target); err != nil {
+			return err
+		}
+		return validateSelect("text_forbids", a.Target, a.Select)
+	}), func(a any) checks.Check {
+		x := a.(forbidsArgs)
 		return TextForbids{
-			Re:      regexp.MustCompile(ch.Pattern),
-			Pattern: ch.Pattern,
-			Target:  ch.Target,
-			Select:  CompileSelect(ch.Select),
-			Fix:     ch.Fix,
+			Re:      regexp.MustCompile(x.Pattern),
+			Pattern: x.Pattern,
+			Target:  x.Target,
+			Select:  CompileSelect(x.Select),
+			Fix:     x.Fix,
 		}
 	}, nil)
 }

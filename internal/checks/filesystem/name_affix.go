@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -34,8 +35,14 @@ func (c NameAffix) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type nameAffixArgs struct {
+	Prefix string `yaml:"prefix"`
+	Suffix string `yaml:"suffix"`
+	Target string `yaml:"target"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameAffix,
 		Family:    "fileSystem",
 		Slug:      "name-affix",
@@ -52,7 +59,13 @@ func init() {
     checks:
       - kind: filesystem_name_affix
         prefix: book-`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return NameAffix{Prefix: ch.Prefix, Suffix: ch.Suffix, Target: ch.Target}
+	}, checks.ParseInto(func(a nameAffixArgs) error {
+		if err := argcheck.RequireOneOfFields("filesystem_name_affix", a.Prefix != "" || a.Suffix != "", "prefix", "suffix"); err != nil {
+			return err
+		}
+		return validateTarget("filesystem_name_affix", a.Target)
+	}), func(a any) checks.Check {
+		x := a.(nameAffixArgs)
+		return NameAffix{Prefix: x.Prefix, Suffix: x.Suffix, Target: x.Target}
 	}, nil)
 }

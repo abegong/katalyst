@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -43,8 +44,12 @@ func (c ParentDirMatchesField) Run(ctx checks.Context) []checks.Violation {
 	}}
 }
 
+type parentDirMatchesArgs struct {
+	Field string `yaml:"field"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemParentDirMatchesFld,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-matches-field",
@@ -59,7 +64,9 @@ func init() {
     checks:
       - kind: filesystem_parent_dir_matches_field
         field: category`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ParentDirMatchesField{Field: ch.Field}
+	}, checks.ParseInto(func(a parentDirMatchesArgs) error {
+		return argcheck.RequireString("filesystem_parent_dir_matches_field", "field", a.Field)
+	}), func(a any) checks.Check {
+		return ParentDirMatchesField{Field: a.(parentDirMatchesArgs).Field}
 	}, nil)
 }

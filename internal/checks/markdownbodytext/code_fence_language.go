@@ -35,7 +35,7 @@ func (m MarkdownCodeFenceHasLanguage) Run(ctx checks.Context) []checks.Violation
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownCodeFenceHasLanguage,
 		Family:    "markdownBodyText",
 		Slug:      "code-fence-language-required",
@@ -46,7 +46,7 @@ func init() {
     path: notes
     checks:
       - kind: markdown_code_fence_language_required`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.NoArgs, func(any) checks.Check {
 		return MarkdownCodeFenceHasLanguage{}
 	}, nil)
 }

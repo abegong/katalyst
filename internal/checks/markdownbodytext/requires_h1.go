@@ -20,7 +20,7 @@ func (m MarkdownRequiresH1) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownRequiresH1,
 		Family:    "markdownBodyText",
 		Slug:      "requires-h1",
@@ -31,7 +31,7 @@ func init() {
     path: notes
     checks:
       - kind: markdown_requires_h1`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.NoArgs, func(any) checks.Check {
 		return MarkdownRequiresH1{}
 	}, nil)
 }

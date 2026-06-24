@@ -24,7 +24,7 @@ func (UniqueFilename) RunCollection(ctx checks.CollectionContext) []checks.Viola
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemUniqueFilename,
 		Family:    "fileSystem",
 		Slug:      "unique-filename",
@@ -36,7 +36,7 @@ func init() {
     path: notes
     checks:
       - kind: filesystem_unique_filename`,
-	}, nil, func(ch config.CheckInstance) checks.CollectionCheck {
+	}, checks.NoArgs, nil, func(any) checks.CollectionCheck {
 		return UniqueFilename{}
 	})
 }

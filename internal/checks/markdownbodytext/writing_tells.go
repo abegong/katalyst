@@ -137,7 +137,7 @@ func (MarkdownWritingTells) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownWritingTells,
 		Family:    "markdownBodyText",
 		Slug:      "writing-tells",
@@ -149,7 +149,7 @@ func init() {
     path: notes
     checks:
       - kind: markdown_writing_tells`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.NoArgs, func(any) checks.Check {
 		return MarkdownWritingTells{}
 	}, nil)
 }

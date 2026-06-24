@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -26,8 +27,12 @@ func (f FilesystemParentDirIn) Run(ctx checks.Context) []checks.Violation {
 	}}
 }
 
+type parentDirInArgs struct {
+	Values []string `yaml:"values"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemParentDirIn,
 		Family:    "fileSystem",
 		Slug:      "parent-dir-in",
@@ -42,7 +47,9 @@ func init() {
     checks:
       - kind: filesystem_parent_dir_in
         values: [books, people]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return FilesystemParentDirIn{Values: ch.Values}
+	}, checks.ParseInto(func(a parentDirInArgs) error {
+		return argcheck.RequireStrings("filesystem_parent_dir_in", "values", a.Values)
+	}), func(a any) checks.Check {
+		return FilesystemParentDirIn{Values: a.(parentDirInArgs).Values}
 	}, nil)
 }

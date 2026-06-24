@@ -1,12 +1,21 @@
 package markdownbodytext
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/project/config"
+	"gopkg.in/yaml.v3"
 )
+
+// titleMatchesArgs is markdown_title_matches_h1's own config shape. It rejects
+// schema and defaults field to "title".
+type titleMatchesArgs struct {
+	Field  string `yaml:"field"`
+	Schema string `yaml:"schema"`
+}
 
 // MarkdownTitleMatchesH1 checks that a frontmatter field matches the first H1.
 type MarkdownTitleMatchesH1 struct {
@@ -51,7 +60,7 @@ func (m MarkdownTitleMatchesH1) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownTitleMatchesH1,
 		Family:    "markdownBodyText",
 		Slug:      "title-matches-h1",
@@ -66,7 +75,21 @@ func init() {
     checks:
       - kind: markdown_title_matches_h1
         field: title`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return MarkdownTitleMatchesH1{Field: ch.Field}
+	}, func(n *yaml.Node) (any, error) {
+		var a titleMatchesArgs
+		if n != nil {
+			if err := n.Decode(&a); err != nil {
+				return nil, err
+			}
+		}
+		if a.Schema != "" {
+			return nil, errors.New(`markdown_title_matches_h1 does not support "schema"`)
+		}
+		if a.Field == "" {
+			a.Field = "title"
+		}
+		return a, nil
+	}, func(a any) checks.Check {
+		return MarkdownTitleMatchesH1{Field: a.(titleMatchesArgs).Field}
 	}, nil)
 }

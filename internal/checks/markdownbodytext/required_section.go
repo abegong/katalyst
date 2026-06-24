@@ -5,8 +5,14 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
+
+// requiredSectionArgs is markdown_required_section's own config shape.
+type requiredSectionArgs struct {
+	Heading string `yaml:"heading"`
+}
 
 // MarkdownRequiredSection checks that a specific heading exists.
 type MarkdownRequiredSection struct {
@@ -31,7 +37,7 @@ func (m MarkdownRequiredSection) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckMarkdownRequiredSection,
 		Family:    "markdownBodyText",
 		Slug:      "required-section",
@@ -46,7 +52,9 @@ func init() {
     checks:
       - kind: markdown_required_section
         heading: Summary`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return MarkdownRequiredSection{Heading: ch.Heading}
+	}, checks.ParseInto(func(a requiredSectionArgs) error {
+		return argcheck.RequireString("markdown_required_section", "heading", a.Heading)
+	}), func(a any) checks.Check {
+		return MarkdownRequiredSection{Heading: a.(requiredSectionArgs).Heading}
 	}, nil)
 }

@@ -1,10 +1,13 @@
 package plaintext
 
 import (
+	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -46,8 +49,16 @@ func (t TextRequires) Run(ctx checks.Context) []checks.Violation {
 	}}
 }
 
+type requiresArgs struct {
+	Pattern string `yaml:"pattern"`
+	Target  string `yaml:"target"`
+	Select  string `yaml:"select"`
+	Match   string `yaml:"match"`
+	Fix     string `yaml:"fix"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckTextRequires,
 		Family:    "plainText",
 		Slug:      "requires",
@@ -65,13 +76,43 @@ func init() {
     checks:
       - kind: text_requires
         pattern: Sources`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, func(n *yaml.Node) (any, error) {
+		var a requiresArgs
+		if n != nil {
+			if err := n.Decode(&a); err != nil {
+				return nil, err
+			}
+		}
+		if err := argcheck.RequireString("text_requires", "pattern", a.Pattern); err != nil {
+			return nil, err
+		}
+		if _, err := regexp.Compile(a.Pattern); err != nil {
+			return nil, fmt.Errorf("text_requires: invalid pattern %q: %w", a.Pattern, err)
+		}
+		if a.Match == "" {
+			a.Match = "any"
+		}
+		if a.Match != "any" && a.Match != "all" {
+			return nil, fmt.Errorf(`text_requires: "match" must be any or all (got %q)`, a.Match)
+		}
+		if a.Fix != "" {
+			return nil, errors.New(`text_requires does not support "fix"`)
+		}
+		if err := validateTextTarget("text_requires", a.Target); err != nil {
+			return nil, err
+		}
+		if err := validateSelect("text_requires", a.Target, a.Select); err != nil {
+			return nil, err
+		}
+		return a, nil
+	}, func(a any) checks.Check {
+		x := a.(requiresArgs)
 		return TextRequires{
-			Re:      regexp.MustCompile(ch.Pattern),
-			Pattern: ch.Pattern,
-			Target:  ch.Target,
-			Select:  CompileSelect(ch.Select),
-			All:     ch.Match == "all",
+			Re:      regexp.MustCompile(x.Pattern),
+			Pattern: x.Pattern,
+			Target:  x.Target,
+			Select:  CompileSelect(x.Select),
+			All:     x.Match == "all",
 		}
 	}, nil)
 }

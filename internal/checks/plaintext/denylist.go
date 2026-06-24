@@ -1,11 +1,13 @@
 package plaintext
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -33,8 +35,17 @@ func (t TextDenylist) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type denylistArgs struct {
+	Values  []string `yaml:"values"`
+	Target  string   `yaml:"target"`
+	Select  string   `yaml:"select"`
+	Pattern string   `yaml:"pattern"`
+	Match   string   `yaml:"match"`
+	Fix     string   `yaml:"fix"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckTextDenylist,
 		Family:    "plainText",
 		Slug:      "denylist",
@@ -51,11 +62,29 @@ func init() {
     checks:
       - kind: text_denylist
         values: [TODO, FIXME, XXX]`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.ParseInto(func(a denylistArgs) error {
+		if err := argcheck.RequireStrings("text_denylist", "values", a.Values); err != nil {
+			return err
+		}
+		if a.Pattern != "" {
+			return errors.New(`text_denylist does not support "pattern"`)
+		}
+		if a.Match != "" {
+			return errors.New(`text_denylist does not support "match"`)
+		}
+		if a.Fix != "" {
+			return errors.New(`text_denylist does not support "fix"`)
+		}
+		if err := validateTextTarget("text_denylist", a.Target); err != nil {
+			return err
+		}
+		return validateSelect("text_denylist", a.Target, a.Select)
+	}), func(a any) checks.Check {
+		x := a.(denylistArgs)
 		return TextDenylist{
-			Values: ch.Values,
-			Target: ch.Target,
-			Select: CompileSelect(ch.Select),
+			Values: x.Values,
+			Target: x.Target,
+			Select: CompileSelect(x.Select),
 		}
 	}, nil)
 }

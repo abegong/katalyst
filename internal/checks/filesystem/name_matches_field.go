@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"regexp"
 	"strings"
 
@@ -59,8 +60,14 @@ func slugify(s string) string {
 	return strings.Trim(s, "-")
 }
 
+type nameMatchesFieldArgs struct {
+	Field     string `yaml:"field"`
+	Transform string `yaml:"transform"`
+	Target    string `yaml:"target"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemNameMatchesField,
 		Family:    "fileSystem",
 		Slug:      "name-matches-field",
@@ -77,7 +84,28 @@ func init() {
     checks:
       - kind: filesystem_name_matches_field
         field: slug`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return NameMatchesField{Field: ch.Field, Transform: ch.Transform, Target: ch.Target}
+	}, func(n *yaml.Node) (any, error) {
+		var a nameMatchesFieldArgs
+		if n != nil {
+			if err := n.Decode(&a); err != nil {
+				return nil, err
+			}
+		}
+		if a.Field == "" {
+			a.Field = "slug"
+		}
+		if a.Transform == "" {
+			a.Transform = "none"
+		}
+		if a.Transform != "none" && a.Transform != "slugify" {
+			return nil, fmt.Errorf(`filesystem_name_matches_field: "transform" must be none or slugify (got %q)`, a.Transform)
+		}
+		if err := validateTarget("filesystem_name_matches_field", a.Target); err != nil {
+			return nil, err
+		}
+		return a, nil
+	}, func(a any) checks.Check {
+		x := a.(nameMatchesFieldArgs)
+		return NameMatchesField{Field: x.Field, Transform: x.Transform, Target: x.Target}
 	}, nil)
 }

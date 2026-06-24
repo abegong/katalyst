@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -12,6 +13,12 @@ import (
 type ObjectFieldType struct {
 	Field string
 	Type  string
+}
+
+// fieldTypeArgs is object_field_type's own config shape.
+type fieldTypeArgs struct {
+	Field string `yaml:"field"`
+	Type  string `yaml:"type"`
 }
 
 func (o ObjectFieldType) Run(ctx checks.Context) []checks.Violation {
@@ -36,7 +43,7 @@ func (o ObjectFieldType) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckObjectFieldType,
 		Family:    "structuredObject",
 		Slug:      "field-type",
@@ -53,7 +60,13 @@ func init() {
       - kind: object_field_type
         field: year
         type: integer`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ObjectFieldType{Field: ch.Field, Type: ch.FieldType}
+	}, checks.ParseInto(func(a fieldTypeArgs) error {
+		if err := argcheck.RequireString("object_field_type", "field", a.Field); err != nil {
+			return err
+		}
+		return argcheck.RequireString("object_field_type", "type", a.Type)
+	}), func(a any) checks.Check {
+		t := a.(fieldTypeArgs)
+		return ObjectFieldType{Field: t.Field, Type: t.Type}
 	}, nil)
 }

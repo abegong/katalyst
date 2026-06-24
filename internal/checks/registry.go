@@ -122,6 +122,31 @@ type CollectionBuilder func(config.CheckInstance) CollectionCheck
 // owns its config parsing instead of the central config.normalizeCheck switch.
 type Parser func(*yaml.Node) (any, error)
 
+// NoArgs is a Parser for a check type that takes no configuration: it ignores
+// the node and yields an empty value the builder discards.
+func NoArgs(*yaml.Node) (any, error) { return struct{}{}, nil }
+
+// ParseInto builds a Parser that decodes the raw node into a fresh T and runs
+// validate (nil for none). A nil node (no keys) yields the zero T, so validate
+// sees the same empty value the loader would. The returned args are consumed by
+// an ArgsBuilder/CollectionArgsBuilder that type-asserts T.
+func ParseInto[T any](validate func(T) error) Parser {
+	return func(n *yaml.Node) (any, error) {
+		var a T
+		if n != nil {
+			if err := n.Decode(&a); err != nil {
+				return nil, err
+			}
+		}
+		if validate != nil {
+			if err := validate(a); err != nil {
+				return nil, err
+			}
+		}
+		return a, nil
+	}
+}
+
 // ArgsBuilder constructs a per-item Check from a Parser's validated args.
 type ArgsBuilder func(any) Check
 

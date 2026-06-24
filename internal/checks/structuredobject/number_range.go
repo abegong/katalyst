@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 	"github.com/abegong/katalyst/internal/project/config"
 )
 
@@ -12,6 +13,13 @@ type ObjectNumberRange struct {
 	Field string
 	Min   *float64
 	Max   *float64
+}
+
+// numberRangeArgs is object_number_range's own config shape.
+type numberRangeArgs struct {
+	Field string   `yaml:"field"`
+	Min   *float64 `yaml:"min"`
+	Max   *float64 `yaml:"max"`
 }
 
 func (o ObjectNumberRange) Run(ctx checks.Context) []checks.Violation {
@@ -50,7 +58,7 @@ func (o ObjectNumberRange) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckObjectNumberRange,
 		Family:    "structuredObject",
 		Slug:      "number-range",
@@ -69,7 +77,13 @@ func init() {
         field: year
         min: 1900
         max: 2100`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ObjectNumberRange{Field: ch.Field, Min: ch.Min, Max: ch.Max}
+	}, checks.ParseInto(func(a numberRangeArgs) error {
+		if err := argcheck.RequireString("object_number_range", "field", a.Field); err != nil {
+			return err
+		}
+		return argcheck.RequireOneOfFields("object_number_range", a.Min != nil || a.Max != nil, "min", "max")
+	}), func(a any) checks.Check {
+		r := a.(numberRangeArgs)
+		return ObjectNumberRange{Field: r.Field, Min: r.Min, Max: r.Max}
 	}, nil)
 }

@@ -22,3 +22,9 @@ func register(d checks.Descriptor, build checks.Builder, buildColl checks.Collec
 	d.Library = libraryName
 	checks.Register(d, build, buildColl)
 }
+
+// registerParsed is register for a check type that owns its config parsing.
+func registerParsed(d checks.Descriptor, parse checks.Parser, build checks.ArgsBuilder, buildColl checks.CollectionArgsBuilder) {
+	d.Library = libraryName
+	checks.RegisterParsed(d, parse, build, buildColl)
+}

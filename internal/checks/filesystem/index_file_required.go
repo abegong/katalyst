@@ -44,8 +44,12 @@ func (c IndexFileRequired) RunCollection(ctx checks.CollectionContext) []checks.
 	return out
 }
 
+type indexFileArgs struct {
+	Name string `yaml:"name"`
+}
+
 func init() {
-	register(checks.Descriptor{
+	registerParsed(checks.Descriptor{
 		CheckType: config.CheckFilesystemIndexFileRequired,
 		Family:    "fileSystem",
 		Slug:      "index-file-required",
@@ -60,7 +64,7 @@ func init() {
     path: notes
     checks:
       - kind: filesystem_index_file_required`,
-	}, nil, func(ch config.CheckInstance) checks.CollectionCheck {
-		return IndexFileRequired{Name: ch.Name}
+	}, checks.ParseInto[indexFileArgs](nil), nil, func(a any) checks.CollectionCheck {
+		return IndexFileRequired{Name: a.(indexFileArgs).Name}
 	})
 }
