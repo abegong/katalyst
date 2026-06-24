@@ -199,6 +199,24 @@ terminology-align the new pages.
   item/document decisions here.
 - **`docs/content/deep-dives/storage.md`** — confirm wording now that "data
   interface" is deprecated in favor of the storage vocabulary.
+- **Deep-dive titles** — rename to match the key terms, not "How X work":
+  `collections.md` → "Collections", `checks.md` → "Checks", `inspectors.md` →
+  "Inspectors". Title-only edits; `relref` links use filenames, so nothing else
+  changes.
+- **Table-of-contents order** — put `progressive-operations.md` above
+  `core-concepts.md`: swap weights to progressive-operations `20`,
+  core-concepts `30`. Reading order becomes vision → progressive operations (the
+  big idea, now carrying the operations thesis) → core concepts (the vocabulary)
+  → katalyst specifics.
+- **`command-organization.md`** — **moved out of the published deep-dives** into
+  `cmd/`, since it is CLI-surface code organization, not a cross-cutting model.
+  New home: `cmd/organization.md` (plain markdown, no Hugo frontmatter or
+  `relref` shortcodes, converted to relative links), linked from `cmd/AGENTS.md`
+  (which already links to the deep-dive version, just repoint it). Remove the
+  page from `docs/content/deep-dives/` and drop its clause from
+  `deep-dives/_index.md`. Rationale: keep the *why* next to the `cmd/` code it
+  explains, per `how-we-document.md`; a standalone file (rather than inlining ~95
+  lines into `cmd/AGENTS.md`, already 118 lines) keeps the conventions file lean.
 - **Generated check-types/inspectors reference** — regenerate with `make
   docs-gen` if any family or layer label changes (e.g. raw-source → source);
   never hand-edit.
