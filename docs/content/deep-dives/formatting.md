@@ -82,6 +82,10 @@ if it hurts in practice.
 `--check` makes `fix` non-destructive: it writes nothing, prints the items that
 *would* change, and exits 1. That is the CI form.
 
+## Worked example
+
+{{< katalyst-example-full "fix-normalize-frontmatter" >}}
+
 ## Why fix never injects missing values
 
 An earlier idea had a mode that would add "sentinel" placeholder values for

@@ -34,3 +34,7 @@ collections:
         target: line
         pattern: '\bTODO\b'
 ```
+
+## Worked example
+
+{{< katalyst-example-full "fix-text-forbids" >}}

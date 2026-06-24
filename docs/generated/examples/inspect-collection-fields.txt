@@ -1,0 +1,38 @@
+# Inspection report: books
+
+## Object
+
+### object_fields (n=5)
+
+_A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values._
+
+- author:
+  - cardinality: 4
+  - present: 4
+  - types:
+    - string: 4
+  - values:
+    - Frank Herbert: 1
+    - Isaac Asimov: 1
+    - Neal Stephenson: 1
+    - William Gibson: 1
+- status:
+  - cardinality: 3
+  - present: 5
+  - types:
+    - string: 5
+  - values:
+    - read: 3
+    - reading: 1
+    - to-read: 1
+- title:
+  - cardinality: 5
+  - present: 5
+  - types:
+    - string: 5
+  - values:
+    - Dune: 1
+    - Dune Messiah: 1
+    - Foundation: 1
+    - Neuromancer: 1
+    - Snow Crash: 1

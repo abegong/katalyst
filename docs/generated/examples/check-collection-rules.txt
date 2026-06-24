@@ -1,0 +1,4 @@
+<project>/content/posts/hello-world.md: OK
+<project>/content/posts/Bad_Title.md:4: /title: "Bad title" does not match first H1 "A different heading"
+<project>/content/posts/Bad_Title.md: /: filename "Bad_Title" must be kebab-case
+exit status 1

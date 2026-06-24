@@ -30,3 +30,7 @@ collections:
       - kind: markdown_title_matches_h1
         field: title
 ```
+
+## Worked example
+
+{{< katalyst-example-full "check-title-h1-mismatch" >}}

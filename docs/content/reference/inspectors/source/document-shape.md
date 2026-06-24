@@ -24,3 +24,7 @@ Inspectors emit evidence: counts and distributions, for the reader to judge. Run
 ```
 katalyst inspect <target> --inspector document_shape
 ```
+
+## Worked example
+
+{{< katalyst-example-full "inspect-source-shape" >}}

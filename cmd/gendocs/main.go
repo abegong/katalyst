@@ -1,13 +1,20 @@
 // Command gendocs renders the check-type reference under
 // docs/reference/check-types/ from the check descriptors in
 // internal/checks/registry.go, and the inspector reference under
-// docs/reference/inspectors/ from internal/inspect/registry.go. It also
-// mirrors the repo-root governance files (CODE_OF_CONDUCT.md, SECURITY.md)
-// into docs/content/contributing/ so the published site carries them without a
+// docs/reference/inspectors/ from internal/inspect/registry.go. From
+// internal/examples it runs each worked example's command and writes two
+// embeddable snippets under docs/generated/examples/ (<id>.txt for output and
+// <id>.full.md for the full corpus+command+output), and it embeds the
+// feature-demonstrating examples into the generated reference page that owns
+// each feature; the rest are embedded by hand into how-to and deep-dive pages.
+// It also mirrors the
+// repo-root governance files (CODE_OF_CONDUCT.md, SECURITY.md) into
+// docs/content/contributing/ so the published site carries them without a
 // second source of truth: the root files stay canonical (GitHub surfaces them
 // from the repo root), the docs copies are generated. Run via `make docs-gen`.
-// CI fails if the working tree drifts from its output, so the registries and
-// root files are the single source of truth for that documentation.
+// CI fails if the working tree drifts from its output, so the registries, the
+// example registry, and the root files are the single source of truth for that
+// documentation.
 package main
 
 import (
@@ -19,6 +26,7 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
+	"github.com/abegong/katalyst/internal/examples"
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
@@ -27,6 +35,42 @@ const outDir = "docs/content/reference/check-types"
 
 // inspectorsOut is the generated inspectors section, relative to the repo root.
 const inspectorsOut = "docs/content/reference/inspectors"
+
+// examplesOut is the retired worked-examples catalog section; gendocs removes
+// it so the directory does not linger after examples moved inline.
+// examplesSnippetsOut holds the embeddable snippets the {{< katalyst-example >}}
+// and {{< katalyst-example-full >}} shortcodes pull into prose pages; it lives
+// outside content/ so Hugo does not render it and katalyst does not check it.
+const (
+	examplesOut         = "docs/content/reference/examples"
+	examplesSnippetsOut = "docs/generated/examples"
+)
+
+// examplesByPage maps a generated reference page to the worked example embedded
+// into it as a "## Worked example" section. The key identifies the page:
+// "checktype:<family>/<slug>", "family:<family>", or "inspector:<layer>/<slug>".
+// Examples not listed here are embedded by hand into how-to and deep-dive pages
+// via the {{< katalyst-example-full >}} shortcode (the command/workflow bucket).
+var examplesByPage = map[string]string{
+	"checktype:structured-object/field-type":        "check-type-error",
+	"checktype:structured-object/required-field":    "check-schema-missing-field",
+	"family:structured-object":                      "check-valid-item",
+	"checktype:markdown-body-text/title-matches-h1": "check-title-h1-mismatch",
+	"checktype:plain-text/forbids":                  "fix-text-forbids",
+	"inspector:source/document-shape":               "inspect-source-shape",
+	"inspector:collection/object-fields":            "inspect-collection-fields",
+}
+
+// workedExample returns the "## Worked example" block for a generated page, or
+// "" if no example is homed there. The block defers to the embeddable snippet so
+// the rendered example lives in exactly one generated artifact.
+func workedExample(pageKey string) string {
+	id, ok := examplesByPage[pageKey]
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("\n## Worked example\n\n{{< katalyst-example-full \"%s\" >}}\n", id)
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -94,6 +138,13 @@ func run() error {
 		}
 	}
 
+	// Worked examples: run each example and write the embeddable snippets the
+	// reference, how-to, and deep-dive pages pull in. The feature examples are
+	// embedded inline above (via workedExample); this writes their snippets.
+	if err := prepareExamples(); err != nil {
+		return err
+	}
+
 	// Governance pages: mirror the repo-root files into the contributing
 	// section so the site carries them without duplicating their content by
 	// hand. The root files remain the single source of truth.
@@ -103,6 +154,36 @@ func run() error {
 			return err
 		}
 		if err := write(g.out, page); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// prepareExamples runs each worked example and writes its two embeddable
+// snippets under examplesSnippetsOut: <id>.txt (raw command output, embedded by
+// {{< katalyst-example >}}) and <id>.full.md (the full corpus+command+output at
+// H3, embedded by {{< katalyst-example-full >}}). The same Run is gated by
+// internal/examples' test, so the published output is a tested contract. It also
+// removes the retired catalog section so it does not linger in the working tree.
+func prepareExamples() error {
+	if err := os.RemoveAll(examplesOut); err != nil {
+		return err
+	}
+	if err := os.RemoveAll(examplesSnippetsOut); err != nil {
+		return err
+	}
+	for _, ex := range examples.All() {
+		res, err := examples.Run(ex)
+		if err != nil {
+			return fmt.Errorf("run example %s: %w", ex.ID, err)
+		}
+		if err := write(filepath.Join(examplesSnippetsOut, ex.ID+".txt"), examples.Output(res)); err != nil {
+			return err
+		}
+		// H3 so the shortcode nests the example under a host page's
+		// `## Worked example` heading.
+		if err := write(filepath.Join(examplesSnippetsOut, ex.ID+".full.md"), examples.RenderPageAt(ex, res, 3)); err != nil {
 			return err
 		}
 	}
@@ -189,6 +270,7 @@ func inspectorPage(d inspect.Descriptor, weight int) string {
 	fmt.Fprint(&b, "## Usage\n\nInspectors emit evidence: counts and distributions, for the reader to ")
 	fmt.Fprint(&b, "judge. Run this one with:\n\n")
 	fmt.Fprintf(&b, "```\nkatalyst inspect <target> --inspector %s\n```\n", d.Name)
+	b.WriteString(workedExample("inspector:" + d.Layer + "/" + d.Slug))
 	return b.String()
 }
 
@@ -220,6 +302,7 @@ func familyIndex(fam checks.Family, ds []checks.Descriptor, weight int) string {
 	for _, d := range ds {
 		fmt.Fprintf(&b, "- [%s]({{< relref \"%s.md\" >}}): %s\n", d.Title, d.Slug, plain(d.Summary))
 	}
+	b.WriteString(workedExample("family:" + fam.Slug))
 	return b.String()
 }
 
@@ -254,6 +337,7 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 		fmt.Fprintln(&b)
 	}
 	fmt.Fprintf(&b, "## Example\n\n```yaml\n%s\n```\n", d.ConfigExample)
+	b.WriteString(workedExample("checktype:" + fam.Slug + "/" + d.Slug))
 	return b.String()
 }
 

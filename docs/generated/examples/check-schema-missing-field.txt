@@ -1,0 +1,3 @@
+<project>/notes/books/dune.md: OK
+<project>/notes/books/foundation.md: /: missing property 'year'
+exit status 1

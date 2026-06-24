@@ -1,0 +1,48 @@
+The `text_forbids` check forbids a trailing period on the first line; its `fix` template strips it. Only the matched text changes; the later `keep this.` line is untouched.
+
+## Input
+
+`notes/doc.md`
+
+```markdown
+---
+t: 1
+---
+# Title.
+keep this.
+```
+
+`.katalyst/storage/my_directory.yaml`
+
+```yaml
+type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: text_forbids
+        target: first-line
+        pattern: '\.(\s*)$'
+        fix: '$1'
+```
+
+## Command
+
+```console
+$ katalyst fix notes/doc
+<project>/notes/doc.md
+```
+
+## Result
+
+`notes/doc.md` after `katalyst fix notes/doc`:
+
+```markdown
+---
+t: 1
+---
+# Title
+keep this.
+```
+

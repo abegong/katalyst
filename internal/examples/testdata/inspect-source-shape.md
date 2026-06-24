@@ -1,0 +1,85 @@
+Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `document_shape` clusters files by a composite fingerprint, so a shared convention shows up as one class and the stragglers as outliers.
+
+## Input
+
+`wiki/dune.md`
+
+```markdown
+---
+title: Dune
+author: Frank Herbert
+status: read
+---
+# Dune
+
+## Review
+A landmark of the genre.
+```
+
+`wiki/neuromancer.md`
+
+```markdown
+---
+title: Neuromancer
+author: William Gibson
+status: reading
+---
+# Neuromancer
+
+## Review
+```
+
+`wiki/foundation.md`
+
+```markdown
+---
+title: Foundation
+author: Isaac Asimov
+status: to-read
+---
+# Foundation
+
+## Review
+```
+
+`wiki/snow-crash.md`
+
+```markdown
+---
+title: Snow Crash
+author: Neal Stephenson
+status: read
+---
+# Snow Crash
+
+## Review
+```
+
+`wiki/Dune Messiah.md`
+
+```markdown
+---
+title: Dune Messiah
+status: read
+---
+# Dune Messiah
+```
+
+## Command
+
+```console
+$ katalyst inspect ./wiki --inspector document_shape
+# Inspection report: ./wiki
+
+## Structural
+
+### document_shape (n=5)
+
+_Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming._
+
+- classes:
+  - class=P1 features=[ext:.md, casing:kebab, fmkey:author, fmkey:status, fmkey:title, sec:Review] members=[dune.md, foundation.md, neuromancer.md, snow-crash.md] size=4
+- outliers:
+  - features=[ext:.md, casing:other, fmkey:status, fmkey:title] label=Dune Messiah.md
+```
+

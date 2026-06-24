@@ -43,14 +43,16 @@ clean:
 docs-gen:
 	go run ./cmd/gendocs
 
-# docs-gen-check fails if the generated check-type or inspector reference, or
-# the mirrored governance pages, are out of date. Run in CI so a new check type
-# or inspector — or an edit to a root governance file — can't ship without its
-# generated page.
+# docs-gen-check fails if the generated check-type or inspector reference, the
+# embeddable worked-example snippets, or the mirrored governance pages, are out
+# of date. Run in CI so a new check type or inspector, a behavior change that
+# alters an example's output, or an edit to a root governance file can't ship
+# without regenerating its docs.
 docs-gen-check: docs-gen
 	git diff --exit-code -- \
 		docs/content/reference/check-types \
 		docs/content/reference/inspectors \
+		docs/generated/examples \
 		docs/content/contributing/code-of-conduct.md \
 		docs/content/contributing/security.md
 

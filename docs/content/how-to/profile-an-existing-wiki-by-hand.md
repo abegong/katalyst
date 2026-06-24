@@ -31,18 +31,11 @@ katalyst inspect ./wiki
 fingerprint (frontmatter keys, body section skeleton, and file naming) so you
 can see what natural groups exist:
 
-```
-### document_shape (n=142)
-- classes:
-  - class=P1 features=[ext:.md, casing:kebab, fmkey:author, fmkey:status, fmkey:title, sec:Review] members=[...] size=139
-- outliers:
-  - features=[ext:.md, casing:other] label=Dune Messiah.md
-```
+{{< katalyst-example "inspect-source-shape" >}}
 
 `file_tree` reports the file types and naming conventions per directory. Use
-this layer to decide **which directories are collections**: here, 139 files
-share one shape, so `./wiki` is a single `books` collection with three
-outliers.
+this layer to decide **which directories are collections**: here the files
+share one shape, so `./wiki` is a single `books` collection with one outlier.
 
 ## 2. Configure the collection
 
@@ -71,16 +64,7 @@ katalyst inspect books
 field, presence over `n`, observed types, value cardinality, and the common
 values when the set is small:
 
-```
-### object_fields (n=142)
-- author:
-  - present: 141
-  - types: { string: 141 }
-- status:
-  - present: 142
-  - cardinality: 3
-  - values: { read: 80, reading: 12, to-read: 50 }
-```
+{{< katalyst-example "inspect-collection-fields" >}}
 
 `markdown_body` reports the body conventions: single-H1 / H1-matches-title rates
 and recurring section headings. For a machine-readable form, add `--json`; to
@@ -101,8 +85,8 @@ judgment, not the tool's:
 | `file_tree` naming (step 1) | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
 
 The denominator `n` is always reported, so you decide what "nearly every item"
-means. The outliers: the one-of-142 missing `author`, the `document_shape`
-outlier with spaces in its name, are exactly the files a schema will flag.
+means. The one item missing `author`, which is also the `document_shape`
+outlier with spaces in its name, is exactly the kind of file a schema will flag.
 
 ## 5. Draft a schema and check
 

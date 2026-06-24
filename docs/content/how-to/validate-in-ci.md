@@ -27,6 +27,11 @@ violation:
 katalyst check
 ```
 
+An item with a violation, here one missing its H1, prints the diagnostic and
+the run exits 1, the non-zero status that fails the CI step:
+
+{{< katalyst-example "ci-check-fails" >}}
+
 ## Gate on formatting
 
 `katalyst fix --check` writes nothing; it lists items whose frontmatter is
@@ -35,6 +40,11 @@ not canonical and exits `1` if any are found:
 ```bash
 katalyst fix --check
 ```
+
+It prints one line per non-canonical item and exits 1, writing nothing. Here
+`messy.md` has unsorted keys while `tidy.md` is already canonical:
+
+{{< katalyst-example "ci-fix-check" >}}
 
 ## Example GitHub Actions step
 

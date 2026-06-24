@@ -19,3 +19,7 @@ Check types in this family:
 - [String length]({{< relref "string-length.md" >}}): Constrain the minimum and/or maximum length of a string field.
 - [Unique field]({{< relref "unique-field.md" >}}): Require that no two items share a value for a frontmatter field.
 - [Object validation]({{< relref "object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
+
+## Worked example
+
+{{< katalyst-example-full "check-valid-item" >}}
