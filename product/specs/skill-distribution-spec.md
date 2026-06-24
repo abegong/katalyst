@@ -27,7 +27,7 @@ and published through Channel 1 (the `.skill`-on-Releases download). Out of
 scope:
 
 - **The user's deployment cycle** — how an adopter wires katalyst into their
-  environment (a pre-commit hook, a gate on directory access). That is skill
+  environment (a pre-commit hook, a gate on writes to its content). That is skill
   *content* — what the **katalyst-deploy** cluster teaches — authored with those
   skills.
 - **Channel 2, marketplace plugins** — recorded in Design as the future
@@ -94,12 +94,12 @@ cluster.
 | Skill | Stage | What it teaches the agent to do |
 |---|---|---|
 | **katalyst-overview** | Orientation (all) | What katalyst is, its model and vocabulary (collections, items, schemas, checks), and which skill to reach for. The front door and router; does no task work itself. |
-| **katalyst-catalog** | Catalog | Take stock of existing content in a specific knowledge base, map the main concepts, get oriented. |
-| **katalyst-identify-collections** | Define (1 of 2) | Identify the collections — the object types the knowledge base has repeatable instances of. Points to **katalyst-define-schemas** as the next step. |
-| **katalyst-define-schemas** | Define (2 of 2) | Define each collection's schema — the properties and invariants of its items. Points back to **katalyst-identify-collections** as its prerequisite. |
+| **katalyst-catalog** | Catalog | Take stock of existing content in a specific knowledge base, surface its candidate collections, get oriented. |
+| **katalyst-identify-collections** | Define (1 of 2) | Identify the collections — the recurring kinds of item the knowledge base is full of. Points to **katalyst-define-schemas** as the next step. |
+| **katalyst-define-schemas** | Define (2 of 2) | Define each collection's schema — the fields its items must have and the constraints they must satisfy. Points back to **katalyst-identify-collections** as its prerequisite. |
 | **katalyst-deploy** | Enforce (setup) | Set up automatic enforcement *once*. Knows **both** mechanisms, helps choose, and routes to the two specific skills below. |
 | **katalyst-deploy-precommit-hook** | Enforce (setup) | Install a pre-commit hook that runs `katalyst check`, so violations are caught at commit time. |
-| **katalyst-deploy-cli-gating** | Enforce (setup) | Gate write access to the content directory through the CLI, so writes are validated as they happen. |
+| **katalyst-deploy-cli-gating** | Enforce (setup) | Gate writes to the project's content through the CLI, so writes are validated as they happen. |
 | **katalyst-migrate-schema** | Reshape | *Placeholder — no content yet.* Migrate content when a collection's schema changes. |
 | **katalyst-migrate-storage** | Reshape | *Placeholder — no content yet.* Migrate when the storage layer changes. |
 
@@ -121,8 +121,8 @@ directory under `skills/`, kept 1:1 so there is no dir→name mapping to drift.
 their action letter instead of grouping them.)
 
 The define stage is **two discrete skills**, not one: `katalyst-identify-collections`
-(name the object types) precedes `katalyst-define-schemas` (formalize each type's
-fields and invariants). They **cross-reference** each other — identify points
+(name the collections) precedes `katalyst-define-schemas` (formalize each
+collection's fields and constraints). They **cross-reference** each other — identify points
 forward, define-schemas points back — so the two-step flow is explicit without
 merging two jobs an agent invokes at different times into one skill.
 
@@ -146,7 +146,7 @@ write. Relying on an agent to *choose* to run `check`/`fix` each time is fragile
 umbrella skill: it knows **both** mechanisms, helps pick between them, and routes
 to the specific skill. `katalyst-deploy-precommit-hook` installs a pre-commit
 hook that runs `katalyst check`; `katalyst-deploy-cli-gating` gates write access
-to the content directory through the CLI. Either way enforcement is set up once
+to the project's content through the CLI. Either way enforcement is set up once
 and then runs automatically, no matter which agent — or human — does the writing;
 the day-to-day loop needs no skill of its own. The three cross-reference each
 other, the same way the two define skills do. (How each mechanism is wired is the
