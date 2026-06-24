@@ -145,6 +145,16 @@ here, by construction.
 - **`Descriptor`s stay** as the documentation source; `cmd/gendocs` and
   `katalyst check-types` are unaffected (metadata didn't move, only parsing did).
 
+### Behavior parity (a constraint)
+
+Distributing config changes *who parses*, not *what is valid*. The set of
+accepted `.katalyst/` configs, the validation errors users see, and the dogfood
+result (`katalyst check` over `docs/`, validated by the repo-root `.katalyst/`)
+stay identical. Each phase is verified green against the existing `config_test.go`
+suite and the dogfood before its legacy `normalizeCheck`/`build*` path is deleted.
+This is a hard constraint, not a decision — the migration is behavior-preserving
+the way Spec 1 was.
+
 ### Phasing
 
 The migration is incremental and stays green throughout, because the loader can
@@ -189,12 +199,60 @@ These two were open before Spec 1 landed; the hands-on move settled them.
 
 ## Open Questions
 
-1. **Validation-message consistency.** Central `normalizeCheck` gives uniform
-   error phrasing; per-object parsers must not drift in tone. A tiny shared helper
-   set (required-field, enum-of) keeps them consistent without recentralizing.
-2. **Does the on-disk schema (`.katalyst/schemas/page.json`-style validation of
-   the config files themselves) change?** No intent to; confirm the dogfood
-   `pages` collection still validates after the loader is rehomed.
+1. **Keeping per-check error messages consistent without a central switch.**
+
+   **Context.** Today every check's argument validation lives in one place —
+   `config.normalizeCheck` — so the phrasing is uniform by colocation:
+   `object_required_field requires "field"`, `filesystem_name_case`'s `unknown
+   style %q`, `filesystem_name_matches_field`'s `transform must be none or
+   slugify`. These exact strings are asserted in `config_test.go` (e.g. `requires
+   "prefix" or "suffix"`, `must be none or slugify`). Once each check owns its
+   parser it writes its own error strings, and without coordination they drift in
+   tone and format — `requires "field"` vs `field is required` vs `missing field`
+   — degrading the UX and churning the golden tests.
+
+   **Choices & tradeoffs.**
+
+   | Option | Cost | Buys | Forecloses |
+   |---|---|---|---|
+   | **A. Free-form** — each parser writes its own strings | none | maximal locality | nothing, but invites drift + test churn |
+   | **B. Generic validation helpers** — a small shared set (`RequireString(kind, "field", v)`, `OneOf(kind, "style", v, allowed)`) emitting canonical phrasing | a ~10-function helper file, no per-kind knowledge | uniform phrasing by construction, less boilerplate per check | nothing — bespoke errors still allowed for odd args |
+   | **C. Declarative arg schema** — struct tags / a DSL the registry validates generically | building a mini-validation framework for ~30 checks | fully uniform + machine-readable | simplicity; drifts toward the rejected JSON-Schema-for-config |
+
+   **Recommendation: B**, framed as your call. The helpers carry no per-kind
+   knowledge — they are generic primitives — so "the object owns its config"
+   still holds, while the phrasing stays test-stable. C rebuilds the framework
+   this spec dissolves; A trades a one-file helper for ongoing drift.
+
+2. **What a check type's owned parser returns, given item- vs collection-scoped checks.**
+
+   **Context.** The registry is dual: `Register(desc, build Builder, buildColl
+   CollectionBuilder)`, where `Builder func(CheckInstance) Check` builds a
+   per-item check and `CollectionBuilder func(CheckInstance) CollectionCheck`
+   builds a collection-scoped one (e.g. `filesystem_unique_filename`, which scans
+   the whole collection at once). A check registers one or both; variants reuse
+   the same builders under a `when` predicate. Today both builders read the *same*
+   parsed `CheckInstance`. When the check owns its parse, the open decision is
+   where the arg-decode sits relative to the item/collection split, so a dual
+   check neither decodes twice nor forks its validation.
+
+   **Choices & tradeoffs.**
+   - **A. Parser returns the built check** (`func(raw) (Check, error)`). Simplest
+     for the ~25 item-only checks. But a dual check must decode its args twice
+     (once per builder) or let the collection builder skip the item parser's
+     validation — re-splitting what we just unified.
+   - **B. Parser returns validated args; build is a separate step** (`func(raw)
+     (args, error)`, then `Build(args) Check` / `BuildCollection(args)
+     CollectionCheck`). One decode+validate feeds both builders. Preserves the
+     dual registration and moves only the *parse* into the check; slightly more
+     ceremony for the common item-only case.
+
+   **Recommendation: B**, your call. It preserves the existing dual-builder
+   structure (the smallest behavioral change) while still moving parse ownership
+   to the check, which is the actual goal; A optimizes the common case at the
+   expense of the few collection-scoped checks, where bugs would hide. Decide
+   before converting the first family — the registry signature is expensive to
+   reverse across ~30 call sites.
 
 ## Documentation updates
 
