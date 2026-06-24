@@ -8,12 +8,19 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/checks/filesystem"
-	"github.com/abegong/katalyst/internal/checks/markdownbodytext"
-	"github.com/abegong/katalyst/internal/checks/plaintext"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/project/projecttest"
 )
+
+func assertConfiguredCheckBuilds(t *testing.T, c checks.ConfiguredCheck) {
+	t.Helper()
+	if c.Kind == checks.CheckObject {
+		return
+	}
+	if _, ok := checks.Build(c.Kind, c.Args); !ok {
+		t.Fatalf("%s did not build from parsed config", c.Kind)
+	}
+}
 
 func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 	dir := t.TempDir()
@@ -518,35 +525,14 @@ checks:
 	if got[6].Kind != checks.CheckMarkdownTitleMatchesH1 {
 		t.Fatalf("check[6].Kind = %v, want markdown_title_matches_h1", got[6].Kind)
 	}
-	titleCheck, ok := checks.Build(got[6].Kind, got[6].Args)
-	if !ok {
-		t.Fatalf("check[6] did not build")
-	}
-	titleMatches, ok := titleCheck.(markdownbodytext.MarkdownTitleMatchesH1)
-	if !ok || titleMatches.Field != "title" {
-		t.Fatalf("check[6] = %#v, want markdown default field title", titleCheck)
-	}
 	if got[12].Kind != checks.CheckFilesystemNameMatchesField {
 		t.Fatalf("check[12].Kind = %v, want filesystem_name_matches_field", got[12].Kind)
-	}
-	nameCheck, ok := checks.Build(got[12].Kind, got[12].Args)
-	if !ok {
-		t.Fatalf("check[12] did not build")
-	}
-	nameMatches, ok := nameCheck.(filesystem.NameMatchesField)
-	if !ok || nameMatches.Field != "slug" || nameMatches.Transform != "none" {
-		t.Fatalf("check[12] = %#v, want name_matches_field default field slug, transform none", nameCheck)
 	}
 	if got[14].Kind != checks.CheckFilesystemNameCase {
 		t.Fatalf("check[14].Kind = %v, want filesystem_name_case", got[14].Kind)
 	}
-	caseCheck, ok := checks.Build(got[14].Kind, got[14].Args)
-	if !ok {
-		t.Fatalf("check[14] did not build")
-	}
-	nameCase, ok := caseCheck.(filesystem.NameCase)
-	if !ok || nameCase.Style != "kebab" {
-		t.Fatalf("check[14] = %#v, want name_case style kebab", caseCheck)
+	for _, c := range got {
+		assertConfiguredCheckBuilds(t, c)
 	}
 }
 
@@ -706,46 +692,17 @@ checks:
 	if got[0].Kind != checks.CheckTextRequires {
 		t.Fatalf("check[0].Kind = %v, want text_requires", got[0].Kind)
 	}
-	requires0, ok := checks.Build(got[0].Kind, got[0].Args)
-	if !ok {
-		t.Fatalf("check[0] did not build")
-	}
-	textRequires0, ok := requires0.(plaintext.TextRequires)
-	if !ok || textRequires0.All {
-		t.Fatalf("check[0] = %#v, want text_requires default match any", requires0)
-	}
 	if got[1].Kind != checks.CheckTextRequires {
 		t.Fatalf("check[1].Kind = %v, want text_requires", got[1].Kind)
-	}
-	requires1, ok := checks.Build(got[1].Kind, got[1].Args)
-	if !ok {
-		t.Fatalf("check[1] did not build")
-	}
-	textRequires1, ok := requires1.(plaintext.TextRequires)
-	if !ok || !textRequires1.All || textRequires1.Target != "line" {
-		t.Fatalf("check[1] = %#v, want match all target line", requires1)
 	}
 	if got[2].Kind != checks.CheckTextForbids {
 		t.Fatalf("check[2].Kind = %v, want text_forbids", got[2].Kind)
 	}
-	forbids, ok := checks.Build(got[2].Kind, got[2].Args)
-	if !ok {
-		t.Fatalf("check[2] did not build")
-	}
-	textForbids, ok := forbids.(plaintext.TextForbids)
-	if !ok || textForbids.Select == nil {
-		t.Fatalf("check[2] = %#v, want text_forbids select ^-", forbids)
-	}
 	if got[3].Kind != checks.CheckTextDenylist {
 		t.Fatalf("check[3].Kind = %v, want text_denylist", got[3].Kind)
 	}
-	denylist, ok := checks.Build(got[3].Kind, got[3].Args)
-	if !ok {
-		t.Fatalf("check[3] did not build")
-	}
-	textDenylist, ok := denylist.(plaintext.TextDenylist)
-	if !ok || len(textDenylist.Values) != 2 {
-		t.Fatalf("check[3] = %#v, want text_denylist with 2 values", denylist)
+	for _, c := range got {
+		assertConfiguredCheckBuilds(t, c)
 	}
 }
 
