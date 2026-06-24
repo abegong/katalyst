@@ -106,10 +106,11 @@ reported as unmatched references (errors).`,
 // results. Returns (true, nil) if valid, (false, nil) on validation
 // errors, or (_, err) if the file couldn't be read/parsed.
 func checkItem(out, errOut io.Writer, e *engine, item project.Item) (bool, error) {
-	doc, err := parseItem(item.Path)
+	content, err := e.proj.ReadItem(item)
 	if err != nil {
 		return false, err
 	}
+	doc := content.Doc
 
 	// A frontmatter-less file is not rejected outright: the configured checks
 	// run against it (text/filesystem rules lint the body and path; object
@@ -171,10 +172,11 @@ func printViolation(w io.Writer, path string, v checks.Violation) {
 // advisory and do not count toward an item's failing status. Used by
 // `item list`.
 func itemStatus(e *engine, c project.Collection, item project.Item) (int, error) {
-	doc, err := parseItem(item.Path)
+	content, err := e.proj.ReadItem(item)
 	if err != nil {
 		return 0, err
 	}
+	doc := content.Doc
 	checkList, err := e.checksFor(c, doc.Meta)
 	if err != nil {
 		return 0, err
@@ -231,12 +233,13 @@ func runCollectionChecks(errOut io.Writer, e *engine, collections []project.Coll
 		}
 		ctx := checks.CollectionContext{Root: c.Dir, Items: make([]checks.ItemContext, 0, len(items))}
 		for _, it := range items {
-			doc, err := parseItem(it.Path)
+			content, err := e.proj.ReadItem(it)
 			if err != nil {
 				fmt.Fprintf(errOut, "%s: %v\n", it.Path, err)
 				bad = true
 				continue
 			}
+			doc := content.Doc
 			ctx.Items = append(ctx.Items, checks.ItemContext{
 				FilePath: it.Path,
 				Meta:     dropKey(doc.Meta, "schema"),

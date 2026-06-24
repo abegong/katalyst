@@ -130,6 +130,7 @@ type rawStorageKind struct {
 type rawStorageInstance struct {
 	Type        string                              `yaml:"type"`
 	Root        string                              `yaml:"root"`
+	Path        string                              `yaml:"path"`
 	Collections map[string]collection.RawCollection `yaml:"collections"`
 }
 
@@ -300,6 +301,9 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 
 	rootRel := ri.Root
 	if rootRel == "" {
+		rootRel = ri.Path
+	}
+	if rootRel == "" {
 		rootRel = "."
 	}
 	instRoot := resolve(c.Root, rootRel)
@@ -342,6 +346,7 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 			Raw:            raws[cn],
 			InstRoot:       instRoot,
 			InstName:       name,
+			StorageType:    typ,
 			ProjectListing: projectListing,
 			SchemaKnown:    c.schemaKnown,
 		})

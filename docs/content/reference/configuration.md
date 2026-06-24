@@ -47,15 +47,16 @@ by the referencing check type's `kind` (the `object` check uses JSON Schema).
 
 ## Storage instances
 
-A **storage instance** is one configured backend store, today always the local
-filesystem, plus the collections it maps onto the domain model. Each file under
+A **storage instance** is one configured backend store, plus the collections it
+maps onto the domain model. Each file under
 `.katalyst/storage/` is one instance, named for its filename stem. There is no
 implicit instance; `katalyst init` writes a default `local` one.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
-| `type` | no | `filesystem` | Backend kind. `filesystem` is the only kind today. |
-| `root` | no | `.` | Instance root directory, relative to the repo root. Collection paths resolve against it. |
+| `type` | no | `filesystem` | Backend kind: `filesystem` or `sqlite`. |
+| `root` | no | `.` | Filesystem instance root directory, relative to the repo root. Collection paths resolve against it. |
+| `path` | for `sqlite` | - | SQLite database path, relative to the repo root. Alias for `root` on SQLite instances. |
 | `collections` | no | - | Map of collection name → definition (see below). |
 
 ```yaml
@@ -73,6 +74,22 @@ collections:
 Collection names are unique across the whole project (selectors are
 `<collection>/<item>`, with no instance qualifier).
 
+SQLite instances use one table per collection. Each row is one item:
+
+```yaml
+# .katalyst/storage/db.yaml
+type: sqlite
+path: content.sqlite
+collections:
+  books:
+    table: books
+    id: slug
+    body: body
+    checks:
+      - kind: object_required_field
+        field: title
+```
+
 ## Collections
 
 A **collection** is a directory of items plus the checks every item must pass.
@@ -82,6 +99,9 @@ Collections are declared inside their storage instance, under `collections:`.
 |---|---|---|---|
 | `path` | no | the collection name | Directory, relative to the instance `root`. |
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
+| `table` | for `sqlite` | - | SQLite table backing the collection. |
+| `id` | for `sqlite` | - | SQLite column that provides item identity. |
+| `body` | no | - | Optional SQLite column that provides item body text. |
 | `schema` | no | - | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | - | List of checks (see below). |
 | `listing` | no | - | `item list` listing defaults for this collection (see [`listing`](#listing)). |
@@ -89,6 +109,10 @@ Collections are declared inside their storage instance, under `collections:`.
 A collection must configure at least one check: set `schema`, or provide a
 non-empty `checks` list, or both. Files in the directory that do not match
 `pattern` are reported as errors.
+
+SQLite collections do not support filesystem check types. Configure
+structured-object checks, text checks, or markdown body-text checks when a
+`body` column is present.
 
 ### Per-collection files
 

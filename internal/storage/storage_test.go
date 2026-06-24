@@ -6,11 +6,11 @@ import (
 	"github.com/abegong/katalyst/internal/storage"
 )
 
-func TestKnown_onlyFilesystem(t *testing.T) {
+func TestKnown_implementedBackends(t *testing.T) {
 	if !storage.Known(storage.Filesystem) {
 		t.Errorf("filesystem should be a known storage type")
 	}
-	if storage.Known(storage.StorageType("sqlite")) {
-		t.Errorf("sqlite is not implemented yet and should not be known")
+	if !storage.Known(storage.SQLite) {
+		t.Errorf("sqlite should be a known storage type")
 	}
 }

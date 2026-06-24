@@ -5,8 +5,8 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection/listing"
 	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 	"github.com/spf13/cobra"
@@ -216,10 +216,14 @@ func buildListingOptions(col project.Collection, f listingFlags) (listing.Option
 // label. A parse error still yields a record (raw bytes for --grep, empty
 // Meta) so the listing stays robust; the label reports the error.
 func itemRecord(e *engine, col project.Collection, item project.Item) (listing.Record, string) {
-	raw := mustRead(item.Path)
-	rec := listing.Record{ID: item.ID, Raw: raw, Body: raw}
+	content, err := e.proj.ReadItem(item)
+	if err != nil {
+		rec := listing.Record{ID: item.ID, Status: 1 << 30}
+		return rec, "error: " + err.Error()
+	}
+	rec := listing.Record{ID: item.ID, Raw: content.Raw, Body: content.Raw}
 
-	if doc, err := parseItem(item.Path); err == nil && doc != nil {
+	if doc := content.Doc; doc != nil {
 		rec.Meta = doc.Meta
 		rec.Body = doc.Body
 		rec.Frontmatter = doc.Frontmatter
@@ -259,29 +263,25 @@ func newItemGetCmd() *cobra.Command {
 			if err != nil {
 				return asUsageErr(err)
 			}
+			content, err := p.ReadItem(item)
+			if err != nil {
+				return err
+			}
 
 			out := cmd.OutOrStdout()
 			switch {
 			case frontmatterOnly:
-				doc, err := markdownbodytext.Parse(mustRead(item.Path))
-				if err != nil {
-					return err
-				}
-				b, err := yaml.Marshal(doc.Meta)
+				b, err := yaml.Marshal(content.Doc.Meta)
 				if err != nil {
 					return err
 				}
 				_, err = out.Write(b)
 				return err
 			case bodyOnly:
-				doc, err := markdownbodytext.Parse(mustRead(item.Path))
-				if err != nil {
-					return err
-				}
-				_, err = out.Write(doc.Body)
+				_, err = out.Write(content.Doc.Body)
 				return err
 			default:
-				_, err := out.Write(mustRead(item.Path))
+				_, err := out.Write(content.Raw)
 				return err
 			}
 		},
@@ -319,8 +319,15 @@ The result is validated before writing (use --no-validate to bypass).`,
 			if !ok {
 				return unknownCollectionErr(sel.Collection)
 			}
-			path := project.ItemPath(c, sel.Item)
-			if _, err := os.Stat(path); err == nil {
+			path, err := e.proj.Reference(c, sel.Item)
+			if err != nil {
+				return err
+			}
+			exists, err := e.proj.ItemExists(c, sel.Item)
+			if err != nil {
+				return err
+			}
+			if exists {
 				return usageErr(fmt.Sprintf("%q already exists; refusing to overwrite", c.Name+"/"+sel.Item))
 			}
 
@@ -343,6 +350,14 @@ The result is validated before writing (use --no-validate to bypass).`,
 					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
 					return &exitError{code: exitValidationFail, msg: err.Error()}
 				}
+			}
+
+			if c.StorageType == string(storage.SQLite) {
+				if err := e.proj.AddItem(c, sel.Item, meta, nil); err != nil {
+					return err
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "created %s/%s\n", c.Name, sel.Item)
+				return nil
 			}
 
 			if err := os.MkdirAll(filepathDir(path), 0o755); err != nil {
@@ -391,10 +406,11 @@ bypass). Key removal (--unset) is out of scope for v0.`,
 			}
 			c := item.Collection
 
-			doc, err := parseItem(item.Path)
+			content, err := e.proj.ReadItem(item)
 			if err != nil {
 				return err
 			}
+			doc := content.Doc
 			if !doc.HasFrontmatter {
 				return usageErr(fmt.Sprintf("%s: no frontmatter found", item.Path))
 			}
@@ -421,6 +437,10 @@ bypass). Key removal (--unset) is out of scope for v0.`,
 					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
 					return &exitError{code: exitValidationFail, msg: err.Error()}
 				}
+			}
+
+			if c.StorageType == string(storage.SQLite) {
+				return e.proj.UpdateItem(c, item.ID, meta, doc.Body)
 			}
 
 			info, err := os.Stat(item.Path)
@@ -464,7 +484,7 @@ func newItemDeleteCmd() *cobra.Command {
 			}
 
 			for _, item := range items {
-				if err := os.Remove(item.Path); err != nil {
+				if err := p.DeleteItem(item); err != nil {
 					return usageErr(fmt.Sprintf("delete %s: %v", item.Path, err))
 				}
 			}

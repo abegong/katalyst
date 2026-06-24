@@ -213,6 +213,15 @@ func Descriptors() []Descriptor {
 // Known reports whether kind is a registered check type.
 func Known(kind CheckType) bool { _, ok := byKind[kind]; return ok }
 
+// DescriptorFor returns the descriptor for kind.
+func DescriptorFor(kind CheckType) (Descriptor, bool) {
+	i, ok := byKind[kind]
+	if !ok {
+		return Descriptor{}, false
+	}
+	return registrations[i].desc, true
+}
+
 // CollectionScoped reports whether kind runs once per collection (vs. per item).
 func CollectionScoped(kind CheckType) bool {
 	i, ok := byKind[kind]

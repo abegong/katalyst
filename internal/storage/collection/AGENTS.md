@@ -5,7 +5,7 @@ storage backend. `collection.go` is the backend-neutral contract
 (`CollectionDefinition` + the thin `Item`); `parse.go` owns the `Collection`
 type (plus `CollectionVariant`/`ListingDefaults`) and parses a collection's
 config block (`Build`), since a collection is a storage concept; per-backend
-implementations live in subpackages (`filesystem` today, `sql` later);
+implementations live in subpackages (`filesystem`, `sqlite`);
 `internal/codec/markdownbodytext` is the markdown body text codec the readers
 decode and encode with; `predicate` is the metadata predicate grammar; `listing`
 is the in-memory `item list` pipeline.
@@ -32,3 +32,6 @@ and how a backend attaches — live in the
   `markdownbodytext.Parse` decodes; `fix` computes the new bytes and the backend
   persists them (`filesystem.Write`). Backend-specific IO stays in the backend
   subpackage.
+- SQLite maps one configured table to one collection, with one row per item.
+  The table/id/body-column mapping is storage-owned, not a codec abstraction;
+  only extract a codec if row decoding becomes reusable outside SQLite storage.

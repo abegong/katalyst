@@ -18,6 +18,14 @@ type Collection struct {
 	Path string
 	// Dir is the absolute directory (Root + Path).
 	Dir string
+	// StorageType is the backend kind of the declaring storage instance.
+	StorageType string
+	// Table is the SQLite table backing this collection. Empty for filesystem.
+	Table string
+	// IDColumn is the SQLite column that provides item identity.
+	IDColumn string
+	// BodyColumn is the optional SQLite column that provides item body text.
+	BodyColumn string
 	// Pattern is the filename glob for items (default "*.md").
 	Pattern string
 	// Schema is the object-schema name associated with the collection, or
@@ -80,6 +88,9 @@ const (
 type RawCollection struct {
 	Path                  string              `yaml:"path"`
 	Pattern               string              `yaml:"pattern"`
+	Table                 string              `yaml:"table"`
+	ID                    string              `yaml:"id"`
+	Body                  string              `yaml:"body"`
 	Schema                string              `yaml:"schema"`
 	Checks                []RawCheck          `yaml:"checks"`
 	Listing               *RawListingDefaults `yaml:"listing"`
@@ -215,6 +226,7 @@ type BuildInput struct {
 	Raw            RawCollection
 	InstRoot       string
 	InstName       string
+	StorageType    string
 	ProjectListing *RawListingDefaults
 	SchemaKnown    func(string) bool
 }
@@ -223,8 +235,13 @@ type BuildInput struct {
 // resolving its directory against the owning instance's root. The name comes
 // from the source (map key), never the file body.
 func Build(in BuildInput) (Collection, error) {
+	storageType := in.StorageType
+	if storageType == "" {
+		storageType = "filesystem"
+	}
+
 	dirRel := in.Raw.Path
-	if dirRel == "" {
+	if dirRel == "" && storageType == "filesystem" {
 		// A collection without an explicit path defaults to a directory
 		// named after the collection itself.
 		dirRel = in.Name
@@ -246,6 +263,17 @@ func Build(in BuildInput) (Collection, error) {
 
 	if len(cks) == 0 && len(variants) == 0 {
 		return Collection{}, fmt.Errorf("collection %q: no checks configured (set schema, checks, or variants)", in.Name)
+	}
+	if storageType == "sqlite" {
+		if in.Raw.Table == "" {
+			return Collection{}, fmt.Errorf("collection %q: sqlite collection requires \"table\"", in.Name)
+		}
+		if in.Raw.ID == "" {
+			return Collection{}, fmt.Errorf("collection %q: sqlite collection requires \"id\"", in.Name)
+		}
+		if err := rejectUnsupportedSQLiteChecks(in.Name, cks, variants); err != nil {
+			return Collection{}, err
+		}
 	}
 
 	schemaName := ""
@@ -269,6 +297,10 @@ func Build(in BuildInput) (Collection, error) {
 		Name:                  in.Name,
 		Path:                  dirRel,
 		Dir:                   resolveDir(in.InstRoot, dirRel),
+		StorageType:           storageType,
+		Table:                 in.Raw.Table,
+		IDColumn:              in.Raw.ID,
+		BodyColumn:            in.Raw.Body,
 		Pattern:               pattern,
 		Schema:                schemaName,
 		Checks:                cks,
@@ -277,6 +309,23 @@ func Build(in BuildInput) (Collection, error) {
 		Variants:              variants,
 		UseExhaustiveVariants: in.Raw.UseExhaustiveVariants,
 	}, nil
+}
+
+func rejectUnsupportedSQLiteChecks(name string, base []checks.ConfiguredCheck, variants []CollectionVariant) error {
+	checkSet := append([]checks.ConfiguredCheck{}, base...)
+	for _, v := range variants {
+		checkSet = append(checkSet, v.Checks...)
+	}
+	for _, ch := range checkSet {
+		desc, ok := checks.DescriptorFor(ch.Kind)
+		if !ok {
+			continue
+		}
+		if desc.Family == "fileSystem" {
+			return fmt.Errorf("collection %q: sqlite storage does not support filesystem check %q", name, ch.Kind)
+		}
+	}
+	return nil
 }
 
 // buildChecks folds an optional schema name into a leading object check and
