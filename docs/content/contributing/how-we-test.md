@@ -24,9 +24,8 @@ each assertion stays fast and close to the code that can break it.
 A behavior is covered when its owning seam has a focused unit test **and** the
 CLI or docs tests exercise the composition (below). Push each assertion to the
 lowest level that can make it; reserve the CLI for what genuinely needs the
-whole pipeline. The
-[testing coverage report](https://github.com/abegong/katalyst/blob/main/product/testing-coverage-report.md)
-maps each boundary to its current coverage.
+whole pipeline. Known coverage gaps are tracked in
+[issue #86](https://github.com/abegong/katalyst/issues/86).
 
 ## How they interlock
 
