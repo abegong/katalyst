@@ -72,6 +72,24 @@ Examples:
 - `init        Initialize a directory as a katalyst project`
 - `collection  Commands to inspect and modify collections in this project`
 
+## Terminal readout layout
+
+Human-readable read commands use one terminal layout so output is easy to scan.
+
+- `list` surfaces use a counted section header plus an underline, then render
+  entries as `-` bullets with indented detail lines. Use
+  `printListSectionHeader` in `cmd/list_format.go`.
+- `show` surfaces and summary `get` surfaces use a titled section header plus an
+  underline, then render metadata as `- key: value` bullets. Use
+  `printSectionHeader` in `cmd/list_format.go`.
+- Related-item sections ("other ...") use the same counted section style as
+  `list` output.
+- Preserve machine-oriented output contracts as-is: `check` diagnostics
+  (`path:line: /pointer: message`), `fix --check` path lists, JSON output, and
+  raw content surfaces such as `item get --frontmatter` / `item get --body`.
+- Any user-facing wording or layout change must update the matching snapshot
+  under `cmd/testdata/snapshots/`.
+
 ## Error messages
 
 One grammar for every user-facing error:

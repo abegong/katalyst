@@ -44,6 +44,18 @@ Fixtures are grouped one directory per command surface; the name passed to
 | `check/` | Canonical stderr diagnostics — pointer, unmatched, writing-tell (paths normalized) |
 | `selftest/` | Tiny fixture the harness self-tests read; not a command surface |
 
+### Readout formatting contract
+
+For human-facing read commands, snapshots also enforce the terminal layout
+contract:
+
+- section header followed by an underline divider,
+- `list` sections include counts,
+- entries render as bullets with indented detail lines.
+
+Do not apply this layout to machine-contract surfaces (`check/` diagnostics,
+`fix --check` path lists, JSON output, raw content output).
+
 **Path normalization.** Output that embeds the test's temp dir (the `check`
 diagnostics, the `inspect` report header) is passed through `normTmp(dir)`,
 which rewrites the temp path to `<project>` so the fixture is deterministic.

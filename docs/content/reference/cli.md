@@ -27,6 +27,18 @@ groups in `katalyst --help`:
 - **Resource nouns** (`collection`, `item`, `schema`, `check-types`,
   `inspectors`) carry CRUD-style sub-verbs (`list`, `get`, ...).
 
+## Human-readable output layout
+
+Read-oriented resource commands use one terminal layout for scanability:
+
+- section headers followed by underline dividers,
+- counted section headers for list surfaces,
+- bullet entries with indented detail lines.
+
+This applies to human-facing read output such as `list`, `show`, and summary
+`get` output. It does not apply to machine-oriented contracts such as `check`
+diagnostics, `fix --check` path lists, or `--json` output.
+
 ## Exit codes
 
 Shared across the validating commands (`check`, `fix --check`):

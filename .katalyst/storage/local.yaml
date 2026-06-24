@@ -41,3 +41,68 @@ collections:
         checks:
           - kind: object_required_field
             field: weight
+  # Snapshot hygiene checks for user-facing CLI contracts.
+  snapshot_contracts:
+    path: cmd/testdata/snapshots
+    pattern: "**/*.txt"
+    checks:
+      # Snapshot tests normalize temp roots to "<project>".
+      - kind: text_forbids
+        target: line
+        pattern: "/private<project>/"
+      # Keep snapshots plain-space text so diffs stay stable.
+      - kind: text_forbids
+        target: line
+        pattern: "\\t"
+      - kind: text_forbids
+        target: line
+        pattern: "[ \\t]+$"
+  # Readout snapshots that use section headers and bullets.
+  snapshot_readout_collection:
+    path: cmd/testdata/snapshots/collection
+    pattern: "*.txt"
+    checks:
+      - kind: text_requires
+        target: line
+        pattern: "^-{3,}$"
+      - kind: text_requires
+        target: line
+        pattern: "^- "
+  snapshot_readout_schema:
+    path: cmd/testdata/snapshots/schema
+    pattern: "*.txt"
+    checks:
+      - kind: text_requires
+        target: line
+        pattern: "^-{3,}$"
+      - kind: text_requires
+        target: line
+        pattern: "^- "
+  snapshot_readout_check_types:
+    path: cmd/testdata/snapshots/check-types
+    pattern: "*.txt"
+    checks:
+      - kind: text_requires
+        target: line
+        pattern: "^-{3,}$"
+      - kind: text_requires
+        target: line
+        pattern: "^- "
+  snapshot_readout_inspectors:
+    path: cmd/testdata/snapshots/inspectors
+    pattern: "*.txt"
+    checks:
+      - kind: text_requires
+        target: line
+        pattern: "^-{3,}$"
+      - kind: text_requires
+        target: line
+        pattern: "^- "
+  # Generated worked examples embed CLI output contracts too.
+  generated_example_output:
+    path: docs/generated/examples
+    pattern: "*"
+    checks:
+      - kind: text_forbids
+        target: line
+        pattern: "/private<project>/"
