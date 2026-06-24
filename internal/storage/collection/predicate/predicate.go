@@ -1,4 +1,6 @@
-package query
+// Package predicate parses and evaluates metadata predicates used by collection
+// variants and listing filters.
+package predicate
 
 import (
 	"fmt"
@@ -24,8 +26,8 @@ const (
 	opAbsent
 )
 
-// Predicate is one parsed --filter expression, evaluated against an item's
-// frontmatter. Build it with ParseFilter; its internals are opaque.
+// Predicate is one metadata condition, evaluated against an item's metadata.
+// Build it with Parse; its internals are opaque.
 type Predicate struct {
 	field string // dot path into the frontmatter
 	op    op
@@ -34,19 +36,19 @@ type Predicate struct {
 	re    *regexp.Regexp // compiled pattern for =~
 }
 
-// TypeMismatchError reports a --filter comparison against an incomparable
-// type when filterTypeMismatch is "error".
+// TypeMismatchError reports a predicate comparison against an incomparable type
+// when filterTypeMismatch is "error".
 type TypeMismatchError struct{ Field string }
 
 func (e *TypeMismatchError) Error() string {
 	return fmt.Sprintf("filter on %q: incomparable types", e.Field)
 }
 
-// ParseFilter parses one shorthand filter expression. The operator is the
+// Parse parses one shorthand predicate expression. The operator is the
 // first one found scanning left to right (two-char operators win at a given
 // position): >= <= != =~ > < =. A bare field is an existence test; a leading
 // ! is an absence test. A comma-separated RHS on = / != becomes in / nin.
-func ParseFilter(s string) (Predicate, error) {
+func Parse(s string) (Predicate, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return Predicate{}, fmt.Errorf("empty filter expression")
@@ -123,10 +125,10 @@ func splitOp(s string) (field string, o op, rhs string, ok bool) {
 }
 
 // Matches evaluates the predicate against an item's metadata map. It is the
-// exported, per-item evaluator reused by collection-variant discriminators
-// (cmd/engine.go) and by config validation, not only by item list. The
-// typeMismatch argument behaves as in Apply: "skip" reports a non-match on an
-// incomparable comparison, "error" returns a *TypeMismatchError.
+// exported, per-item evaluator reused by collection-variant discriminators and
+// item listing. The typeMismatch argument behaves as in listing.Apply: "skip"
+// reports a non-match on an incomparable comparison, "error" returns a
+// *TypeMismatchError.
 func (p Predicate) Matches(meta map[string]any, typeMismatch string) (bool, error) {
 	return p.match(meta, typeMismatch)
 }

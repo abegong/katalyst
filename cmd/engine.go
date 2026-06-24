@@ -200,7 +200,7 @@ func matchVariant(c project.Collection, meta map[string]any) (project.Collection
 	for _, v := range c.Variants {
 		all := true
 		for _, p := range v.Where {
-			ok, err := p.Matches(meta, c.Query.FilterTypeMismatch)
+			ok, err := p.Matches(meta, c.ListingDefaults.FilterTypeMismatch)
 			if err != nil {
 				return project.CollectionVariant{}, false, err
 			}

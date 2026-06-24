@@ -1,4 +1,4 @@
-package query
+package listing
 
 import (
 	"fmt"
@@ -91,6 +91,23 @@ func keyValue(r Record, field string) (any, bool) {
 	}
 }
 
+// lookup resolves a dot path into nested metadata maps.
+func lookup(meta map[string]any, path string) (any, bool) {
+	var cur any = meta
+	for _, part := range strings.Split(path, ".") {
+		m, ok := cur.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		v, ok := m[part]
+		if !ok {
+			return nil, false
+		}
+		cur = v
+	}
+	return cur, true
+}
+
 // compareVals orders two values for sorting. Directly comparable pairs
 // (numbers, strings) use compare; otherwise a stable type rank applies
 // (numbers < strings < bools < other) so mixed-type columns stay
@@ -121,5 +138,45 @@ func typeRank(v any) int {
 		return 2
 	default:
 		return 3
+	}
+}
+
+// compare orders two scalars: numbers numerically, strings lexicographically.
+// ok is false when the pair is not directly comparable.
+func compare(a, b any) (int, bool) {
+	if af, ok := toFloat(a); ok {
+		bf, ok2 := toFloat(b)
+		if !ok2 {
+			return 0, false
+		}
+		switch {
+		case af < bf:
+			return -1, true
+		case af > bf:
+			return 1, true
+		default:
+			return 0, true
+		}
+	}
+	if as, ok := a.(string); ok {
+		if bs, ok2 := b.(string); ok2 {
+			return strings.Compare(as, bs), true
+		}
+	}
+	return 0, false
+}
+
+func toFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	case float64:
+		return n, true
+	case float32:
+		return float64(n), true
+	default:
+		return 0, false
 	}
 }

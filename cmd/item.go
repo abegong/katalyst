@@ -7,7 +7,8 @@ import (
 
 	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/storage/collection/query"
+	"github.com/abegong/katalyst/internal/storage/collection/listing"
+	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -79,7 +80,7 @@ Narrow, search, and order the result (MongoDB find-inspired):
 				return asUsageErr(err)
 			}
 
-			opts, err := buildQueryOptions(col, queryFlags{
+			opts, err := buildListingOptions(col, listingFlags{
 				filters: filters, greps: greps, sorts: sorts,
 				grepIn: grepIn, ignoreCase: ignoreCase,
 				skip: skip, limit: limit,
@@ -89,7 +90,7 @@ Narrow, search, and order the result (MongoDB find-inspired):
 				return err
 			}
 
-			records := make([]query.Record, 0, len(items))
+			records := make([]listing.Record, 0, len(items))
 			statuses := make(map[string]string, len(items))
 			for _, item := range items {
 				rec, label := itemRecord(e, col, item)
@@ -97,7 +98,7 @@ Narrow, search, and order the result (MongoDB find-inspired):
 				statuses[item.ID] = label
 			}
 
-			out, err := query.Apply(records, opts)
+			out, err := listing.Apply(records, opts)
 			if err != nil {
 				// The only error Apply returns is a filter type mismatch,
 				// which the spec treats as a usage error (exit 2).
@@ -129,9 +130,9 @@ Narrow, search, and order the result (MongoDB find-inspired):
 	return c
 }
 
-// queryFlags collects the raw --filter/--grep/--sort flag values for the
-// item list query.
-type queryFlags struct {
+// listingFlags collects the raw --filter/--grep/--sort flag values for the
+// item list operation.
+type listingFlags struct {
 	filters, greps, sorts     []string
 	grepIn                    string
 	ignoreCase                bool
@@ -139,16 +140,16 @@ type queryFlags struct {
 	typeMismatch, sortMissing string
 }
 
-// buildQueryOptions parses and validates the query flags into a
-// query.Options, resolving the configurable defaults flag-over-collection.
+// buildListingOptions parses and validates the listing flags into a
+// listing.Options, resolving the configurable defaults flag-over-collection.
 // Any parse or validation failure is a usage error (exit 2).
-func buildQueryOptions(col project.Collection, f queryFlags) (query.Options, error) {
-	opts := query.Options{}
+func buildListingOptions(col project.Collection, f listingFlags) (listing.Options, error) {
+	opts := listing.Options{}
 
 	for _, expr := range f.filters {
-		p, err := query.ParseFilter(expr)
+		p, err := predicate.Parse(expr)
 		if err != nil {
-			return query.Options{}, usageErr(err.Error())
+			return listing.Options{}, usageErr(err.Error())
 		}
 		opts.Filters = append(opts.Filters, p)
 	}
@@ -159,51 +160,51 @@ func buildQueryOptions(col project.Collection, f queryFlags) (query.Options, err
 		}
 		re, err := regexp.Compile(pat)
 		if err != nil {
-			return query.Options{}, usageErr(fmt.Sprintf("--grep: %v", err))
+			return listing.Options{}, usageErr(fmt.Sprintf("--grep: %v", err))
 		}
 		opts.Greps = append(opts.Greps, re)
 	}
 
 	switch f.grepIn {
 	case "", "all":
-		opts.GrepIn = query.RegionAll
+		opts.GrepIn = listing.RegionAll
 	case "body":
-		opts.GrepIn = query.RegionBody
+		opts.GrepIn = listing.RegionBody
 	case "frontmatter":
-		opts.GrepIn = query.RegionFrontmatter
+		opts.GrepIn = listing.RegionFrontmatter
 	default:
-		return query.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or frontmatter (got %q)", f.grepIn))
+		return listing.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or frontmatter (got %q)", f.grepIn))
 	}
 
 	for _, spec := range f.sorts {
-		keys, err := query.ParseSort(spec)
+		keys, err := listing.ParseSort(spec)
 		if err != nil {
-			return query.Options{}, usageErr(err.Error())
+			return listing.Options{}, usageErr(err.Error())
 		}
 		opts.Sorts = append(opts.Sorts, keys...)
 	}
 
 	if f.skip < 0 {
-		return query.Options{}, usageErr("--skip: must not be negative")
+		return listing.Options{}, usageErr("--skip: must not be negative")
 	}
 	if f.limit < 0 {
-		return query.Options{}, usageErr("--limit: must not be negative")
+		return listing.Options{}, usageErr("--limit: must not be negative")
 	}
 	opts.Skip = f.skip
 	opts.Limit = f.limit
 
-	opts.TypeMismatch = col.Query.FilterTypeMismatch
+	opts.TypeMismatch = col.ListingDefaults.FilterTypeMismatch
 	if f.typeMismatch != "" {
 		if f.typeMismatch != "skip" && f.typeMismatch != "error" {
-			return query.Options{}, usageErr(fmt.Sprintf("--on-type-mismatch: must be skip or error (got %q)", f.typeMismatch))
+			return listing.Options{}, usageErr(fmt.Sprintf("--on-type-mismatch: must be skip or error (got %q)", f.typeMismatch))
 		}
 		opts.TypeMismatch = f.typeMismatch
 	}
 
-	opts.SortMissing = col.Query.SortMissing
+	opts.SortMissing = col.ListingDefaults.SortMissing
 	if f.sortMissing != "" {
 		if f.sortMissing != "last" && f.sortMissing != "lowest" {
-			return query.Options{}, usageErr(fmt.Sprintf("--sort-missing: must be last or lowest (got %q)", f.sortMissing))
+			return listing.Options{}, usageErr(fmt.Sprintf("--sort-missing: must be last or lowest (got %q)", f.sortMissing))
 		}
 		opts.SortMissing = f.sortMissing
 	}
@@ -211,12 +212,12 @@ func buildQueryOptions(col project.Collection, f queryFlags) (query.Options, err
 	return opts, nil
 }
 
-// itemRecord assembles a query.Record for one item and its display status
+// itemRecord assembles a listing.Record for one item and its display status
 // label. A parse error still yields a record (raw bytes for --grep, empty
 // Meta) so the listing stays robust; the label reports the error.
-func itemRecord(e *engine, col project.Collection, item project.Item) (query.Record, string) {
+func itemRecord(e *engine, col project.Collection, item project.Item) (listing.Record, string) {
 	raw := mustRead(item.Path)
-	rec := query.Record{ID: item.ID, Raw: raw, Body: raw}
+	rec := listing.Record{ID: item.ID, Raw: raw, Body: raw}
 
 	if doc, err := parseItem(item.Path); err == nil && doc != nil {
 		rec.Meta = doc.Meta

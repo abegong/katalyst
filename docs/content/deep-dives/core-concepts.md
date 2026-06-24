@@ -35,8 +35,8 @@ instantiation, see the [domain model]({{< relref "domain-model.md" >}}).
   key, a response field, even its name or path. A key in a structured object
   specifically is a **field**.
 - **Operation** is something storage lets you do with its data: read, list,
-  query, aggregate, write. Which operations a backend supports is the subject of
-  [progressive operations]({{< relref "progressive-operations.md" >}}).
+  aggregate, write, and eventually query. Which operations a backend supports is
+  the subject of [progressive operations]({{< relref "progressive-operations.md" >}}).
 - **Check** asserts a condition on an item or its attributes and reports a
   violation when it fails. See [checks]({{< relref "checks.md" >}}).
 - **Inspector** is the descriptive dual of a check: it measures a distribution

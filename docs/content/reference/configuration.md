@@ -18,7 +18,7 @@ collection]({{< relref "../how-to/configure-rules.md" >}}).
 
 ```
 .katalyst/
-  config.yaml          # optional: query defaults and discovery settings
+  config.yaml          # optional: listing defaults and discovery settings
   schemas/             # one JSON Schema file per named schema
     book.json
   storage/             # one file per storage instance
@@ -31,7 +31,7 @@ By default, schemas and storage instances are discovered by **convention**:
 every file under `schemas/` is a schema whose name is its filename stem
 (`book.json` → `book`), and every file under `storage/` is a
 [storage instance](#storage-instances) named for its filename stem
-(`local.yaml` → `local`). `config.yaml` is optional; it carries `query:`
+(`local.yaml` → `local`). `config.yaml` is optional; it carries `listing:`
 defaults and can switch a kind to **explicit** discovery, listing definitions
 inline instead of as files.
 
@@ -196,9 +196,9 @@ marker). `pattern` still governs collection **membership** and which files are
 reported as [unmatched]({{< relref "../deep-dives/domain-model.md" >}}#invariants);
 variants only route checks.
 
-## `query`
+## `listing`
 
-Two `item list` behaviors have configurable defaults. A `query:` block sets
+Two `item list` behaviors have configurable defaults. A `listing:` block sets
 them project-wide in `.katalyst/config.yaml`, and a collection's file can
 override either key for that collection.
 
@@ -209,7 +209,7 @@ override either key for that collection.
 
 ```yaml
 # .katalyst/config.yaml — project default
-query:
+listing:
   filterTypeMismatch: skip
   sortMissing: last
 ```
@@ -219,13 +219,13 @@ query:
 books:
   path: notes/books
   schema: book
-  query:
+  listing:
     filterTypeMismatch: error
 ```
 
 Resolution is highest-precedence first: the `--on-type-mismatch` /
-`--sort-missing` flags, then the collection's `query:`, then the project
-`query:`, then the built-in default. An unset key falls through to the next
+`--sort-missing` flags, then the collection's `listing:`, then the project
+`listing:`, then the built-in default. An unset key falls through to the next
 level.
 
 ## Object-schema resolution precedence

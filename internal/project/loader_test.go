@@ -992,7 +992,7 @@ func TestLoad_rejectsBadDiscovery(t *testing.T) {
 	}
 }
 
-func TestLoad_queryDefaults_whenUnset(t *testing.T) {
+func TestLoad_listingDefaults_whenUnset(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml":  minimalSchema,
@@ -1003,19 +1003,19 @@ func TestLoad_queryDefaults_whenUnset(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if notes.Query.FilterTypeMismatch != "skip" {
-		t.Errorf("FilterTypeMismatch = %q, want default skip", notes.Query.FilterTypeMismatch)
+	if notes.ListingDefaults.FilterTypeMismatch != "skip" {
+		t.Errorf("FilterTypeMismatch = %q, want default skip", notes.ListingDefaults.FilterTypeMismatch)
 	}
-	if notes.Query.SortMissing != "last" {
-		t.Errorf("SortMissing = %q, want default last", notes.Query.SortMissing)
+	if notes.ListingDefaults.SortMissing != "last" {
+		t.Errorf("SortMissing = %q, want default last", notes.ListingDefaults.SortMissing)
 	}
 }
 
-func TestLoad_query_projectDefaultApplies(t *testing.T) {
+func TestLoad_listing_projectDefaultApplies(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml": minimalSchema,
-		"config.yaml": `query:
+		"config.yaml": `listing:
   filterTypeMismatch: error
   sortMissing: lowest
 `,
@@ -1026,25 +1026,25 @@ func TestLoad_query_projectDefaultApplies(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if notes.Query.FilterTypeMismatch != "error" {
-		t.Errorf("FilterTypeMismatch = %q, want error from project default", notes.Query.FilterTypeMismatch)
+	if notes.ListingDefaults.FilterTypeMismatch != "error" {
+		t.Errorf("FilterTypeMismatch = %q, want error from project default", notes.ListingDefaults.FilterTypeMismatch)
 	}
-	if notes.Query.SortMissing != "lowest" {
-		t.Errorf("SortMissing = %q, want lowest from project default", notes.Query.SortMissing)
+	if notes.ListingDefaults.SortMissing != "lowest" {
+		t.Errorf("SortMissing = %q, want lowest from project default", notes.ListingDefaults.SortMissing)
 	}
 }
 
-func TestLoad_query_collectionOverridesPerKey(t *testing.T) {
+func TestLoad_listing_collectionOverridesPerKey(t *testing.T) {
 	// The collection sets only filterTypeMismatch; sortMissing must fall
 	// through to the project default, not back to the built-in.
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml": minimalSchema,
-		"config.yaml": `query:
+		"config.yaml": `listing:
   sortMissing: lowest
 `,
 		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
-query:
+listing:
   filterTypeMismatch: error
 `}),
 	})
@@ -1053,26 +1053,56 @@ query:
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if notes.Query.FilterTypeMismatch != "error" {
-		t.Errorf("FilterTypeMismatch = %q, want error from collection", notes.Query.FilterTypeMismatch)
+	if notes.ListingDefaults.FilterTypeMismatch != "error" {
+		t.Errorf("FilterTypeMismatch = %q, want error from collection", notes.ListingDefaults.FilterTypeMismatch)
 	}
-	if notes.Query.SortMissing != "lowest" {
-		t.Errorf("SortMissing = %q, want lowest from project (fall-through)", notes.Query.SortMissing)
+	if notes.ListingDefaults.SortMissing != "lowest" {
+		t.Errorf("SortMissing = %q, want lowest from project (fall-through)", notes.ListingDefaults.SortMissing)
 	}
 }
 
-func TestLoad_query_rejectsUnknownValue(t *testing.T) {
+func TestLoad_listing_rejectsUnknownValue(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml": minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
-query:
+listing:
   filterTypeMismatch: bogus
 `}),
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "filterTypeMismatch") {
 		t.Fatalf("expected filterTypeMismatch validation error, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsProjectQueryConfigBlock(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"config.yaml": `query:
+  sortMissing: lowest
+`,
+		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
+	})
+	_, err := project.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "query is no longer a config block; use listing") {
+		t.Fatalf("expected query migration error, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsCollectionQueryConfigBlock(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"notes": `schema: book
+query:
+  sortMissing: lowest
+`}),
+	})
+	_, err := project.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), `collection "notes": query is no longer a config block; use listing`) {
+		t.Fatalf("expected collection query migration error, got: %v", err)
 	}
 }
 

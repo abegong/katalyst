@@ -87,7 +87,7 @@ type StorageInstance struct {
 	Collections []Collection
 }
 
-// Collection, CollectionVariant, and QuerySettings live in
+// Collection, CollectionVariant, and ListingDefaults live in
 // internal/storage/collection (a collection is a storage concept); project
 // re-exports them under their historical names so callers that load project
 // config keep referring to project.Collection. The loader assembles these types
@@ -95,16 +95,17 @@ type StorageInstance struct {
 type (
 	Collection        = collection.Collection
 	CollectionVariant = collection.CollectionVariant
-	QuerySettings     = collection.QuerySettings
+	ListingDefaults   = collection.ListingDefaults
 )
 
 // rawConfig mirrors .katalyst/config.yaml. Both blocks are optional; an
 // absent file (or an absent block) means convention discovery with the
 // default YAML format.
 type rawConfig struct {
-	Schemas rawSchemaKind        `yaml:"schemas"`
-	Storage rawStorageKind       `yaml:"storage"`
-	Query   *collection.RawQuery `yaml:"query"`
+	Schemas rawSchemaKind                  `yaml:"schemas"`
+	Storage rawStorageKind                 `yaml:"storage"`
+	Listing *collection.RawListingDefaults `yaml:"listing"`
+	Query   *collection.RawListingDefaults `yaml:"query"`
 }
 
 // rawSchemaKind configures how schemas are discovered. Defs is consulted
@@ -157,7 +158,10 @@ func Load(start string) (*Config, error) {
 	if err := cfg.loadSchemas(raw.Schemas); err != nil {
 		return nil, err
 	}
-	if err := cfg.loadStorage(raw.Storage, raw.Query); err != nil {
+	if raw.Query != nil {
+		return nil, errors.New("config: query is no longer a config block; use listing")
+	}
+	if err := cfg.loadStorage(raw.Storage, raw.Listing); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -215,7 +219,7 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 // by name) from either the storage directory (convention: one file per
 // instance) or an explicit defs map in config.yaml. Collection names are
 // validated unique across every instance.
-func (c *Config) loadStorage(k rawStorageKind, projectQuery *collection.RawQuery) error {
+func (c *Config) loadStorage(k rawStorageKind, projectListing *collection.RawListingDefaults) error {
 	discovery, err := normDiscovery(k.Discovery)
 	if err != nil {
 		return fmt.Errorf("storage: %w", err)
@@ -259,7 +263,7 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *collection.RawQuery
 	// collision across instances is reported with both sides.
 	instanceOf := map[string]string{}
 	for _, name := range names {
-		inst, err := c.buildInstance(name, defs[name], exts, projectQuery)
+		inst, err := c.buildInstance(name, defs[name], exts, projectListing)
 		if err != nil {
 			return err
 		}
@@ -285,7 +289,7 @@ func (c *Config) loadStorage(k rawStorageKind, projectQuery *collection.RawQuery
 // under .katalyst/storage/<name>/. A name declared in both places is an error.
 // The instance name comes from the source (filename stem or map key), never the
 // body.
-func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectQuery *collection.RawQuery) (StorageInstance, error) {
+func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectListing *collection.RawListingDefaults) (StorageInstance, error) {
 	typ := ri.Type
 	if typ == "" {
 		typ = string(storage.Filesystem)
@@ -334,12 +338,12 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 	cols := make([]Collection, 0, len(colNames))
 	for _, cn := range colNames {
 		col, err := collection.Build(collection.BuildInput{
-			Name:         cn,
-			Raw:          raws[cn],
-			InstRoot:     instRoot,
-			InstName:     name,
-			ProjectQuery: projectQuery,
-			SchemaKnown:  c.schemaKnown,
+			Name:           cn,
+			Raw:            raws[cn],
+			InstRoot:       instRoot,
+			InstName:       name,
+			ProjectListing: projectListing,
+			SchemaKnown:    c.schemaKnown,
 		})
 		if err != nil {
 			return StorageInstance{}, err
