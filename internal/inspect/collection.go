@@ -14,8 +14,7 @@ import (
 // (their Item.ID), and the bytes are reached through the project's
 // CollectionDefinition, collection inspectors never see a raw path. Parsing
 // here is a thin local adapter over frontmatter.Parse; it deliberately does not
-// reach into internal/checks, which a parallel branch is reworking
-// (inspector-layers-spec.md, Q3).
+// reach into internal/checks.
 type CollectionView struct {
 	collection config.Collection
 	items      []storage.Item

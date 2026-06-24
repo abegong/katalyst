@@ -7,7 +7,7 @@ import (
 )
 
 // The list/get text contracts are pinned as snapshots; the exit-code behavior
-// stays a property test. See product/specs/cli-test-strategy-spec.md.
+// stays a property test. See cmd/AGENTS.md ("Testing the CLI").
 
 func TestCollectionList_showsNamePathCountSchema(t *testing.T) {
 	dir := writeConfigDir(t)

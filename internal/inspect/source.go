@@ -38,7 +38,7 @@ type mdCache struct {
 // (the relative path). Path-level inspectors (file_tree) read only this
 // metadata and open no files; content inspectors trigger a one-time markdown
 // parse. Filesystem-only for now; generalizing the walk into the storage layer
-// is future work (inspector-layers-spec.md).
+// is future work.
 type SourceView struct {
 	root  string
 	files []sourceFile

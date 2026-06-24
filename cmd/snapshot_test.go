@@ -13,7 +13,7 @@ import (
 // suite. Text contracts (help, list/show output, the inspect report, canonical
 // stderr diagnostics) are pinned as golden files under testdata/snapshots/ and
 // reviewed as plain text; behavior stays in property tests. See
-// product/specs/cli-test-strategy-spec.md.
+// cmd/AGENTS.md ("Testing the CLI").
 
 // updateSnapshots rewrites fixtures instead of asserting:
 //
