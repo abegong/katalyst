@@ -1,7 +1,11 @@
 # Plan — collection consolidation and fix extraction
 
 > References [`collection-reorg-spec.md`](./collection-reorg-spec.md) (Spec 1).
-> **Status: implementing.**
+> **Status: done.** Executed in four commits: phase 1; phases 2+3 merged (moving
+> the interface while the FS reader stayed in `package storage` would have
+> cycled); phases 4+5 merged (the frontmatter test files mixed Parse and Format,
+> so re-homing them coherently needed both moves); phase 6 (docs). `make all`
+> green and `make docs-gen-check` byte-identical throughout.
 
 ## Approach
 

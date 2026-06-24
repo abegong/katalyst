@@ -26,12 +26,14 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/project      project domain layer: the whole workspace, selectors, item enumeration (drives internal/storage)
+internal/project      project domain layer: the whole workspace, selectors, item enumeration
 internal/project/config            .katalyst/ loader: schemas + storage instances (which embed their collections)
-internal/project/collection        collection-scoped logic within a project
-internal/project/collection/query  the query/filter predicate grammar (item list --filter, collection variants)
-internal/storage      backend↔domain seam: StorageType, CollectionDefinition, the filesystem mapping
-internal/frontmatter  YAML/TOML/JSON frontmatter parser + formatter, with line tracking
+internal/storage      backend-kind registry: StorageType, Known, Granularity, Reference
+internal/storage/collection            the read stack: CollectionDefinition + the thin Item
+internal/storage/collection/query      query/filter predicate grammar (item list --filter, collection variants)
+internal/storage/collection/document   markdown codec: Parse/Encode (frontmatter + body), with line tracking
+internal/storage/collection/filesystem the filesystem backend: structural read (glob/locate) + atomic persist
+internal/fix          fix transform engine: canonical form + text fixes (decides what to write; no IO)
 internal/checks       check engine: per-family check types, the registry, and CheckLibrary providers
 internal/checks/jsonschema  the JSON Schema library (wraps santhosh-tekuri/jsonschema); provides the object check type
 internal/inspect      corpus profiling: inspectors return descriptive evidence (dual of checks)
@@ -57,12 +59,15 @@ Production code stays in `internal/` unless something genuinely needs to be
 importable from outside the module.
 
 The path ⇄ item-identity translation passes through
-`internal/storage.CollectionDefinition` (forward discovery + reverse
-reconstruction). Don't inline filesystem assumptions (globbing, stem-as-id,
+`internal/storage/collection.CollectionDefinition` (forward discovery + reverse
+reconstruction), implemented per backend under `storage/collection/<backend>`
+(filesystem today). Don't inline filesystem assumptions (globbing, stem-as-id,
 path joins) elsewhere, a second backend (SQLite) attaches by implementing that
 interface. `internal/project/config` owns the `.katalyst/` *vocabulary* (it
-validates the storage `type` against a parse-time allowlist) but never imports
-`internal/storage`, which depends on it.
+validates the storage `type` against a parse-time allowlist); it imports only
+the `query` grammar from the collection subtree (for variant predicates), never
+the readers — those depend on `config`, not the reverse. That `config → …/query`
+edge is a known cross-tree compromise the config-distribution spec retires.
 
 Per-item check *routing* (collection variants) lives in the check engine
 (`engine.checksFor`), keyed on the item's parsed metadata via
@@ -110,7 +115,7 @@ test needs to scaffold a realistic multi-file repo.
 **Keep it inline when**: the input is one-off, byte-exact (BOM, CRLF,
 malformed YAML, exact line numbers), or a tiny one-liner. In those cases
 the literal bytes *are* the assertion and a file would only add indirection.
-See `internal/frontmatter/frontmatter_test.go` for the canonical example.
+See `internal/storage/collection/document/document_test.go` for the canonical example.
 
 **Honest duplication is fine** when two layers genuinely test different
 contracts. The book schema fixtures in `cmd/testdata/schemas/book.json`

@@ -19,7 +19,9 @@ local code conventions.
 - `config` never imports `internal/storage`: it validates a declared storage
   `type` against a parse-time allowlist and otherwise treats it as opaque. The
   dependency runs the other way (`internal/storage` depends on `config`).
-- `config` imports `internal/project/collection/query` for the variant `when`
-  predicate grammar; `query` imports no `config`, so there is no cycle.
+- `config` imports `internal/storage/collection/query` for the variant `when`
+  predicate grammar; `query` imports no `config`, so there is no cycle. (This is
+  the one `project/ → storage/` cross-tree edge; the config-distribution spec
+  retires it.)
 - Schema discovery resolves symlinks on both the root and the input path
   (`EvalSymlinks`), or relative-path resolution breaks under macOS `$TMPDIR`.
