@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
 
 // ReferencedFilesExist checks that path-valued frontmatter fields resolve to
@@ -70,9 +70,13 @@ func stringOrList(v any) ([]string, bool) {
 	}
 }
 
+type referencedFilesArgs struct {
+	Fields []string `yaml:"fields"`
+}
+
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemReferencedFiles,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemReferencedFiles,
 		Family:    "fileSystem",
 		Slug:      "referenced-files-exist",
 		Title:     "Referenced files exist",
@@ -86,7 +90,9 @@ func init() {
     checks:
       - kind: filesystem_referenced_files_exist
         fields: [cover, attachments]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ReferencedFilesExist{Fields: ch.Fields}
+	}, checks.ParseInto(func(a referencedFilesArgs) error {
+		return argcheck.RequireStrings("filesystem_referenced_files_exist", "fields", a.Fields)
+	}), func(a any) checks.Check {
+		return ReferencedFilesExist{Fields: a.(referencedFilesArgs).Fields}
 	}, nil)
 }

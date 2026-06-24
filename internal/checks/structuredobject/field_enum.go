@@ -4,13 +4,19 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
 
 // ObjectFieldEnum checks that a string field is in the allowed set.
 type ObjectFieldEnum struct {
 	Field  string
 	Values []string
+}
+
+// fieldEnumArgs is object_field_enum's own config shape.
+type fieldEnumArgs struct {
+	Field  string   `yaml:"field"`
+	Values []string `yaml:"values"`
 }
 
 func (o ObjectFieldEnum) Run(ctx checks.Context) []checks.Violation {
@@ -44,8 +50,8 @@ func (o ObjectFieldEnum) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckObjectFieldEnum,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckObjectFieldEnum,
 		Family:    "structuredObject",
 		Slug:      "field-enum",
 		Title:     "Field enum",
@@ -61,7 +67,13 @@ func init() {
       - kind: object_field_enum
         field: status
         values: [draft, published, archived]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ObjectFieldEnum{Field: ch.Field, Values: ch.Values}
+	}, checks.ParseInto(func(a fieldEnumArgs) error {
+		if err := argcheck.RequireString("object_field_enum", "field", a.Field); err != nil {
+			return err
+		}
+		return argcheck.RequireStrings("object_field_enum", "values", a.Values)
+	}), func(a any) checks.Check {
+		e := a.(fieldEnumArgs)
+		return ObjectFieldEnum{Field: e.Field, Values: e.Values}
 	}, nil)
 }

@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
 	"github.com/abegong/katalyst/internal/storage/collection/query"
 	"github.com/spf13/cobra"
@@ -139,7 +138,7 @@ type queryFlags struct {
 // buildQueryOptions parses and validates the query flags into a
 // query.Options, resolving the configurable defaults flag-over-collection.
 // Any parse or validation failure is a usage error (exit 2).
-func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, error) {
+func buildQueryOptions(col project.Collection, f queryFlags) (query.Options, error) {
 	opts := query.Options{}
 
 	for _, expr := range f.filters {
@@ -211,7 +210,7 @@ func buildQueryOptions(col config.Collection, f queryFlags) (query.Options, erro
 // itemRecord assembles a query.Record for one item and its display status
 // label. A parse error still yields a record (raw bytes for --grep, empty
 // Meta) so the listing stays robust; the label reports the error.
-func itemRecord(e *engine, col config.Collection, item project.Item) (query.Record, string) {
+func itemRecord(e *engine, col project.Collection, item project.Item) (query.Record, string) {
 	raw := mustRead(item.Path)
 	rec := query.Record{ID: item.ID, Raw: raw, Body: raw}
 

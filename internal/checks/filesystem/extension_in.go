@@ -6,8 +6,12 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
+
+type extensionInArgs struct {
+	Values []string `yaml:"values"`
+}
 
 // FilesystemExtensionIn checks that extension is in an allowed set.
 type FilesystemExtensionIn struct {
@@ -32,8 +36,8 @@ func (f FilesystemExtensionIn) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemExtensionIn,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemExtensionIn,
 		Family:    "fileSystem",
 		Slug:      "extension-in",
 		Title:     "Extension in",
@@ -48,7 +52,9 @@ func init() {
     checks:
       - kind: filesystem_extension_in
         values: [.md, .markdown]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return FilesystemExtensionIn{Values: ch.Values}
+	}, checks.ParseInto(func(a extensionInArgs) error {
+		return argcheck.RequireStrings("filesystem_extension_in", "values", a.Values)
+	}), func(a any) checks.Check {
+		return FilesystemExtensionIn{Values: a.(extensionInArgs).Values}
 	}, nil)
 }

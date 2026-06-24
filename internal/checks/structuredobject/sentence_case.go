@@ -6,8 +6,14 @@ import (
 	"unicode"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
+
+// sentenceCaseArgs is object_sentence_case's own config shape.
+type sentenceCaseArgs struct {
+	Field string   `yaml:"field"`
+	Allow []string `yaml:"allow"`
+}
 
 // ObjectSentenceCase checks that a string field reads as sentence case rather
 // than Title Case: the first word is capitalized and every following word is
@@ -94,8 +100,8 @@ func isAcronym(word string) bool {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckObjectSentenceCase,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckObjectSentenceCase,
 		Family:    "structuredObject",
 		Slug:      "sentence-case",
 		Title:     "Sentence case",
@@ -111,11 +117,14 @@ func init() {
       - kind: object_sentence_case
         field: title
         allow: [Katalyst]`,
-	}, func(ch config.CheckInstance) checks.Check {
-		allow := make(map[string]bool, len(ch.Allow))
-		for _, a := range ch.Allow {
-			allow[a] = true
+	}, checks.ParseInto(func(a sentenceCaseArgs) error {
+		return argcheck.RequireString("object_sentence_case", "field", a.Field)
+	}), func(a any) checks.Check {
+		s := a.(sentenceCaseArgs)
+		allow := make(map[string]bool, len(s.Allow))
+		for _, v := range s.Allow {
+			allow[v] = true
 		}
-		return ObjectSentenceCase{Field: ch.Field, Allow: allow}
+		return ObjectSentenceCase{Field: s.Field, Allow: allow}
 	}, nil)
 }

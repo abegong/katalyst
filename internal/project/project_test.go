@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // setup writes a two-collection repo and returns a loaded Project.
@@ -44,7 +43,7 @@ collections:
 	write("notes/stray.txt", "not markdown\n")
 	write("people/herbert.md", "---\ntitle: Herbert\n---\n# Herbert\n")
 
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}

@@ -16,9 +16,8 @@ func (library) Available() error { return nil }
 
 func init() { checks.RegisterLibrary(library{}) }
 
-// register records a check type owned by this library, stamping
-// Descriptor.Library so each check type's init need not repeat it.
-func register(d checks.Descriptor, build checks.Builder, buildColl checks.CollectionBuilder) {
+// registerParsed is register for a check type that owns its config parsing.
+func registerParsed(d checks.Descriptor, parse checks.Parser, build checks.ArgsBuilder, buildColl checks.CollectionArgsBuilder) {
 	d.Library = libraryName
-	checks.Register(d, build, buildColl)
+	checks.RegisterParsed(d, parse, build, buildColl)
 }

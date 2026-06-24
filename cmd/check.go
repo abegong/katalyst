@@ -7,7 +7,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/spf13/cobra"
 )
 
@@ -171,7 +170,7 @@ func printViolation(w io.Writer, path string, v checks.Violation) {
 // violations (or an error if the file couldn't be read/parsed). Warnings are
 // advisory and do not count toward an item's failing status. Used by
 // `item list`.
-func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) {
+func itemStatus(e *engine, c project.Collection, item project.Item) (int, error) {
 	doc, err := parseItem(item.Path)
 	if err != nil {
 		return 0, err
@@ -194,8 +193,8 @@ func itemStatus(e *engine, c config.Collection, item project.Item) (int, error) 
 // selectedCollections returns the distinct collections touched by a
 // resolution: those selected wholesale and those owning a selected item,
 // in name order, so collection-scoped checks run once each, deterministically.
-func selectedCollections(res *project.Resolution) []config.Collection {
-	byName := map[string]config.Collection{}
+func selectedCollections(res *project.Resolution) []project.Collection {
+	byName := map[string]project.Collection{}
 	for _, c := range res.Scan {
 		byName[c.Name] = c
 	}
@@ -207,7 +206,7 @@ func selectedCollections(res *project.Resolution) []config.Collection {
 		names = append(names, n)
 	}
 	sort.Strings(names)
-	out := make([]config.Collection, 0, len(names))
+	out := make([]project.Collection, 0, len(names))
 	for _, n := range names {
 		out = append(out, byName[n])
 	}
@@ -216,10 +215,13 @@ func selectedCollections(res *project.Resolution) []config.Collection {
 
 // runCollectionChecks runs each collection's collection-scoped checks over
 // its full item set. Returns whether any violation was reported.
-func runCollectionChecks(errOut io.Writer, e *engine, collections []config.Collection) (bool, error) {
+func runCollectionChecks(errOut io.Writer, e *engine, collections []project.Collection) (bool, error) {
 	bad := false
 	for _, c := range collections {
-		collChecks := e.collectionChecksFor(c)
+		collChecks, err := e.collectionChecksFor(c)
+		if err != nil {
+			return false, err
+		}
 		if len(collChecks) == 0 {
 			continue
 		}

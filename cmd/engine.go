@@ -10,7 +10,6 @@ import (
 	_ "github.com/abegong/katalyst/internal/checks/all" // register every check-type family
 	"github.com/abegong/katalyst/internal/checks/jsonschema"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // libPathKey identifies a compiled schema in the engine cache: a (library,
@@ -75,13 +74,13 @@ func (e *engine) compile(sl checks.SchemaLibrary, name, path string) (checks.Sch
 // loudly rather than silently skipping enforcement. The object check's library
 // is checked separately in objectLibrary, since the forced --schema and inline
 // schema: paths reach it without an object entry in the check list.
-func ensureLibrariesAvailable(effective []config.CheckInstance) error {
+func ensureLibrariesAvailable(effective []checks.ConfiguredCheck) error {
 	seen := map[string]bool{}
-	for _, ch := range effective {
-		if ch.Type == config.CheckObject {
+	for _, cc := range effective {
+		if cc.Kind == checks.CheckObject {
 			continue
 		}
-		lib, ok := checks.LibraryFor(ch.Type)
+		lib, ok := checks.LibraryFor(cc.Kind)
 		if !ok || seen[lib.Name()] {
 			continue
 		}
@@ -97,9 +96,9 @@ func ensureLibrariesAvailable(effective []config.CheckInstance) error {
 // after confirming it is available. Availability is checked before any schema
 // is compiled so a missing engine fails the run loudly.
 func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
-	lib, ok := checks.LibraryFor(config.CheckObject)
+	lib, ok := checks.LibraryFor(checks.CheckObject)
 	if !ok {
-		return nil, fmt.Errorf("no library provides the %q check type", config.CheckObject)
+		return nil, fmt.Errorf("no library provides the %q check type", checks.CheckObject)
 	}
 	if err := lib.Available(); err != nil {
 		return nil, fmt.Errorf("check library %q is unavailable: %w", lib.Name(), err)
@@ -121,7 +120,7 @@ func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
 // the base set (additively, through the same precedence). An item that matches
 // no variant runs the base only, or, under useExhaustiveVariants, fails with
 // "matches no variant".
-func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.Check, error) {
+func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.Check, error) {
 	cfg := e.proj.Config()
 
 	matched, routed, err := matchVariant(c, meta)
@@ -130,7 +129,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	}
 	effective := c.Checks
 	if routed {
-		effective = make([]config.CheckInstance, 0, len(c.Checks)+len(matched.Checks))
+		effective = make([]checks.ConfiguredCheck, 0, len(c.Checks)+len(matched.Checks))
 		effective = append(effective, c.Checks...)
 		effective = append(effective, matched.Checks...)
 	}
@@ -148,7 +147,7 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 
 	// The JSON Schema library owns the object-schema precedence policy
 	// (forced --schema, inline schema:, then collection object checks).
-	refs, err := jsonschema.Resolve(e.forcedPath, inlineSchema, effective, cfg)
+	refs, err := jsonschema.Resolve(e.forcedPath, inlineSchema, effective, cfg.SchemaPath)
 	if err != nil {
 		return nil, err
 	}
@@ -169,11 +168,11 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 	// Every non-object, per-item check is built from its registry entry. The
 	// object check is handled above (it needs a compiled schema); collection-
 	// scoped checks have no per-item builder, so Build skips them here.
-	for _, ch := range effective {
-		if ch.Type == config.CheckObject {
+	for _, cc := range effective {
+		if cc.Kind == checks.CheckObject {
 			continue
 		}
-		if chk, ok := checks.Build(ch); ok {
+		if chk, ok := checks.Build(cc.Kind, cc.Args); ok {
 			checkList = append(checkList, chk)
 		}
 	}
@@ -197,13 +196,13 @@ func (e *engine) checksFor(c config.Collection, meta map[string]any) ([]checks.C
 // matchVariant returns the first variant whose `when` predicates the item's
 // metadata all satisfy, and whether any matched. The collection's
 // filterTypeMismatch governs an incomparable predicate (skip vs. error).
-func matchVariant(c config.Collection, meta map[string]any) (config.CollectionVariant, bool, error) {
+func matchVariant(c project.Collection, meta map[string]any) (project.CollectionVariant, bool, error) {
 	for _, v := range c.Variants {
 		all := true
 		for _, p := range v.Where {
 			ok, err := p.Matches(meta, c.Query.FilterTypeMismatch)
 			if err != nil {
-				return config.CollectionVariant{}, false, err
+				return project.CollectionVariant{}, false, err
 			}
 			if !ok {
 				all = false
@@ -214,7 +213,7 @@ func matchVariant(c config.Collection, meta map[string]any) (config.CollectionVa
 			return v, true, nil
 		}
 	}
-	return config.CollectionVariant{}, false, nil
+	return project.CollectionVariant{}, false, nil
 }
 
 // unroutedCheck reports a single violation for an item that matched no variant
@@ -228,18 +227,18 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 
 // collectionChecksFor builds the collection-scoped checks configured for a
 // collection. These run once per collection, after the per-item pass.
-func (e *engine) collectionChecksFor(c config.Collection) []checks.CollectionCheck {
+func (e *engine) collectionChecksFor(c project.Collection) ([]checks.CollectionCheck, error) {
 	var out []checks.CollectionCheck
-	for _, ch := range c.Checks {
-		if cc, ok := checks.BuildCollection(ch); ok {
-			out = append(out, cc)
+	for _, cc := range c.Checks {
+		if col, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
+			out = append(out, col)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // projectFor wraps a loaded config in a project.
-func projectFor(cfg *config.Config) *project.Project { return project.New(cfg) }
+func projectFor(cfg *project.Config) *project.Project { return project.New(cfg) }
 
 // resolveSelectors maps a *project.UsageError to a cmd usage error (exit
 // 2) and passes other errors through unchanged.

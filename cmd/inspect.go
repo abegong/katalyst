@@ -6,7 +6,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/spf13/cobra"
 )
 
@@ -96,27 +95,27 @@ func runInspect(arg string, names []string, params inspect.Params) ([]inspect.Ev
 
 // resolveCollection reports whether arg names a configured collection in a
 // project rooted at or above the working directory.
-func resolveCollection(arg string) (*project.Project, config.Collection, bool) {
+func resolveCollection(arg string) (*project.Project, project.Collection, bool) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return nil, config.Collection{}, false
+		return nil, project.Collection{}, false
 	}
-	cfg, err := config.Load(wd)
+	cfg, err := project.Load(wd)
 	if err != nil {
-		return nil, config.Collection{}, false // no project → raw path
+		return nil, project.Collection{}, false // no project → raw path
 	}
 	sel, err := project.ParseSelector(arg)
 	if err != nil {
-		return nil, config.Collection{}, false
+		return nil, project.Collection{}, false
 	}
 	c, ok := cfg.Collection(sel.Collection)
 	if !ok {
-		return nil, config.Collection{}, false
+		return nil, project.Collection{}, false
 	}
 	return project.New(cfg), c, true
 }
 
-func runCollectionLayer(proj *project.Project, c config.Collection, names []string, params inspect.Params) ([]inspect.Evidence, error) {
+func runCollectionLayer(proj *project.Project, c project.Collection, names []string, params inspect.Params) ([]inspect.Evidence, error) {
 	selected, err := selectCollectionInspectors(names)
 	if err != nil {
 		return nil, err

@@ -6,7 +6,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/spf13/cobra"
 )
 
@@ -92,10 +91,10 @@ func schemaLabel(name string) string {
 	return name
 }
 
-func checkTypes(c config.Collection) []string {
+func checkTypes(c project.Collection) []string {
 	types := make([]string, 0, len(c.Checks))
-	for _, ch := range c.Checks {
-		types = append(types, string(ch.Type))
+	for _, cc := range c.Checks {
+		types = append(types, string(cc.Kind))
 	}
 	return types
 }

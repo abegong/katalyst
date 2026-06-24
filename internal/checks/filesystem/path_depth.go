@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
 
 // PathDepth bounds directory nesting relative to the collection root. A file
@@ -51,9 +51,14 @@ func (c PathDepth) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type pathDepthArgs struct {
+	Min *float64 `yaml:"min"`
+	Max *float64 `yaml:"max"`
+}
+
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemPathDepth,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemPathDepth,
 		Family:    "fileSystem",
 		Slug:      "path-depth",
 		Title:     "Path depth",
@@ -68,7 +73,10 @@ func init() {
     checks:
       - kind: filesystem_path_depth
         max: 0`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return PathDepth{Min: ch.MinInt, Max: ch.MaxInt}
+	}, checks.ParseInto(func(a pathDepthArgs) error {
+		return argcheck.RequireOneOfFields("filesystem_path_depth", a.Min != nil || a.Max != nil, "min", "max")
+	}), func(a any) checks.Check {
+		x := a.(pathDepthArgs)
+		return PathDepth{Min: intPtr(x.Min), Max: intPtr(x.Max)}
 	}, nil)
 }

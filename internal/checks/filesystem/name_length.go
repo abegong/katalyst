@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
 
 // NameLength bounds the character length of the target. At least one of
@@ -37,9 +37,15 @@ func (c NameLength) Run(ctx checks.Context) []checks.Violation {
 	return out
 }
 
+type nameLengthArgs struct {
+	Min    *float64 `yaml:"min"`
+	Max    *float64 `yaml:"max"`
+	Target string   `yaml:"target"`
+}
+
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemNameLength,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemNameLength,
 		Family:    "fileSystem",
 		Slug:      "name-length",
 		Title:     "Name length",
@@ -55,7 +61,13 @@ func init() {
     checks:
       - kind: filesystem_name_length
         max: 80`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return NameLength{Min: ch.MinInt, Max: ch.MaxInt, Target: ch.Target}
+	}, checks.ParseInto(func(a nameLengthArgs) error {
+		if err := argcheck.RequireOneOfFields("filesystem_name_length", a.Min != nil || a.Max != nil, "min", "max"); err != nil {
+			return err
+		}
+		return validateTarget("filesystem_name_length", a.Target)
+	}), func(a any) checks.Check {
+		x := a.(nameLengthArgs)
+		return NameLength{Min: intPtr(x.Min), Max: intPtr(x.Max), Target: x.Target}
 	}, nil)
 }

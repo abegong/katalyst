@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // IndexFileRequired requires that every directory containing items also
@@ -44,9 +43,13 @@ func (c IndexFileRequired) RunCollection(ctx checks.CollectionContext) []checks.
 	return out
 }
 
+type indexFileArgs struct {
+	Name string `yaml:"name"`
+}
+
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemIndexFileRequired,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemIndexFileRequired,
 		Family:    "fileSystem",
 		Slug:      "index-file-required",
 		Title:     "Index file required",
@@ -60,7 +63,7 @@ func init() {
     path: notes
     checks:
       - kind: filesystem_index_file_required`,
-	}, nil, func(ch config.CheckInstance) checks.CollectionCheck {
-		return IndexFileRequired{Name: ch.Name}
+	}, checks.ParseInto[indexFileArgs](nil), nil, func(a any) checks.CollectionCheck {
+		return IndexFileRequired{Name: a.(indexFileArgs).Name}
 	})
 }

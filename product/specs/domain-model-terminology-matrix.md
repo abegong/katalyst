@@ -45,7 +45,7 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 | Body | `Document.Body` | "body" | **Body** | — | **Body** |
 | Selector | `project.Selector` | `[selector ...]` | **Selector** | — | **Selector** |
 | Coordinates / reference | `storage.Reference` | — | **coordinates** | — | — |
-| Repo root | `config.Config.Root` | — | **repo root** | — | **Repo root** |
+| Repo root | `project.Config.Root` | — | **repo root** | — | **Repo root** |
 
 ## C. Schema & resolution
 
@@ -87,8 +87,8 @@ source defines or owns; plain text marks an incidental or prose-only mention.
 
 | Concept | Internal code | CLI | Domain model | Core concepts | Glossary |
 |---|---|---|---|---|---|
-| Config / `.katalyst` | `internal/project/config`, `config.Config` | `init`, `.katalyst/` | **Config** | "Config" (a project's configuration) | **Config** |
-| Query / filter | `internal/storage/collection/query`, `config.QuerySettings` | `item list --filter` | "Query" (**out of scope**) | **Query** (an operation) | (in Discriminator row) |
+| Config / `.katalyst` | `internal/project` loader (`loader.go`), `project.Config` | `init`, `.katalyst/` | **Config** | "Config" (a project's configuration) | **Config** |
+| Query / filter | `internal/storage/collection/query`, `collection.QuerySettings` | `item list --filter` | "Query" (**out of scope**) | **Query** (an operation) | (in Discriminator row) |
 
 ## Conflicts and gaps the matrix exposes
 

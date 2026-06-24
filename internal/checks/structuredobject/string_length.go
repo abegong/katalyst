@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
 
 // ObjectStringLength checks minimum and/or maximum string length.
@@ -13,6 +13,13 @@ type ObjectStringLength struct {
 	Field     string
 	MinLength int
 	MaxLength int
+}
+
+// stringLengthArgs is object_string_length's own config shape.
+type stringLengthArgs struct {
+	Field     string `yaml:"field"`
+	MinLength int    `yaml:"min_length"`
+	MaxLength int    `yaml:"max_length"`
 }
 
 func (o ObjectStringLength) Run(ctx checks.Context) []checks.Violation {
@@ -52,8 +59,8 @@ func (o ObjectStringLength) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckObjectStringLength,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckObjectStringLength,
 		Family:    "structuredObject",
 		Slug:      "string-length",
 		Title:     "String length",
@@ -71,7 +78,13 @@ func init() {
         field: title
         min_length: 3
         max_length: 120`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ObjectStringLength{Field: ch.Field, MinLength: ch.MinLength, MaxLength: ch.MaxLength}
+	}, checks.ParseInto(func(a stringLengthArgs) error {
+		if err := argcheck.RequireString("object_string_length", "field", a.Field); err != nil {
+			return err
+		}
+		return argcheck.RequireOneOfFields("object_string_length", a.MinLength != 0 || a.MaxLength != 0, "min_length", "max_length")
+	}), func(a any) checks.Check {
+		s := a.(stringLengthArgs)
+		return ObjectStringLength{Field: s.Field, MinLength: s.MinLength, MaxLength: s.MaxLength}
 	}, nil)
 }

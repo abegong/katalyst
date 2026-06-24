@@ -5,7 +5,6 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	_ "github.com/abegong/katalyst/internal/checks/all" // populate the registry
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // fakeSchema is a compiled schema that returns a fixed violation list.
@@ -61,7 +60,7 @@ func TestRegisterLibrary_duplicatePanics(t *testing.T) {
 // A native check type resolves to its family's library now that the native
 // families register as CheckLibraries.
 func TestLibraryFor_nativeKindResolvesToLibrary(t *testing.T) {
-	lib, ok := checks.LibraryFor(config.CheckMarkdownSingleH1)
+	lib, ok := checks.LibraryFor(checks.CheckMarkdownSingleH1)
 	if !ok {
 		t.Fatalf("LibraryFor(native kind) returned no library")
 	}
@@ -85,7 +84,7 @@ func TestNativeLibraries_registeredAndAvailable(t *testing.T) {
 }
 
 func TestLibraryFor_unknownKind(t *testing.T) {
-	if _, ok := checks.LibraryFor(config.CheckType("not_a_real_kind")); ok {
+	if _, ok := checks.LibraryFor(checks.CheckType("not_a_real_kind")); ok {
 		t.Errorf("LibraryFor(unknown kind) returned a library")
 	}
 }

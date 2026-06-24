@@ -2,7 +2,6 @@ package jsonschema
 
 import (
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // Object validates frontmatter metadata against a compiled JSON Schema. It is
@@ -22,8 +21,8 @@ func (o Object) Run(ctx checks.Context) []checks.Violation {
 // Schema library that owns it.
 func init() {
 	checks.RegisterLibrary(Library{})
-	checks.Register(checks.Descriptor{
-		CheckType: config.CheckObject,
+	checks.RegisterDescriptor(checks.Descriptor{
+		CheckType: checks.CheckObject,
 		Library:   "json-schema",
 		Family:    "structuredObject",
 		Slug:      "object",
@@ -40,5 +39,5 @@ collections:
     checks:
       - kind: object
         schema: book`,
-	}, nil, nil)
+	})
 }

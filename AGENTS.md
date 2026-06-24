@@ -26,8 +26,7 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/project      project domain layer: the whole workspace, selectors, item enumeration
-internal/project/config            .katalyst/ loader: schemas + storage instances (which embed their collections)
+internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + storage instances, which embed their collections), the whole workspace, selectors, item enumeration
 internal/storage      backend-kind registry: StorageType, Known, Granularity, Reference
 internal/storage/collection            the read stack: CollectionDefinition + the thin Item
 internal/storage/collection/query      query/filter predicate grammar (item list --filter, collection variants)
@@ -63,11 +62,14 @@ The path ⇄ item-identity translation passes through
 reconstruction), implemented per backend under `storage/collection/<backend>`
 (filesystem today). Don't inline filesystem assumptions (globbing, stem-as-id,
 path joins) elsewhere, a second backend (SQLite) attaches by implementing that
-interface. `internal/project/config` owns the `.katalyst/` *vocabulary* (it
-validates the storage `type` against a parse-time allowlist); it imports only
-the `query` grammar from the collection subtree (for variant predicates), never
-the readers — those depend on `config`, not the reverse. That `config → …/query`
-edge is a known cross-tree compromise the config-distribution spec retires.
+interface. The `internal/project` loader (`loader.go`) owns the `.katalyst/`
+*vocabulary*: it reads the workspace, resolves schemas, and assembles storage
+instances. Each object type owns the parse of its own config — the storage
+registry validates a declared `type` (`storage.Known`), and a collection parses
+its own block, including variant predicates, in `storage/collection` (which
+imports the sibling `query` grammar intra-subtree). The loader depends on the
+collection layer, not the reverse; the old cross-tree `config → …/query` edge is
+gone (config-distribution spec).
 
 Per-item check *routing* (collection variants) lives in the check engine
 (`engine.checksFor`), keyed on the item's parsed metadata via
@@ -138,19 +140,21 @@ you add a fixture.
   note it in that package's `testdata/README.md`.
 - Each check type lives in its own file in a per-family package under
   `internal/checks/` (`structuredobject`, `markdownbodytext`, `filesystem`,
-  `plaintext`), holding its struct, `Run`, `Descriptor`, and an `init()` that
-  registers it through the package's `register` helper (in `library.go`), which
-  stamps `Descriptor.Library`. The core `checks` package owns the shared types
-  and registry and imports none of the families; callers blank-import
-  `internal/checks/all` to wire them all in. To add a check type, add one file
-  (and a `config.CheckType` constant + `normalizeCheck` case, which `checks`
-  can't own because it imports `config`).
-- The check registry (populated by those `Register` calls) is the single source
-  of truth for check types: `cmd/engine` builds the runnable list by registry
-  lookup (`Build`/`BuildCollection`), and both `cmd/gendocs` and `katalyst
-  check-types list` read `Descriptors()`/`Families()`. `registry_test.go` fails
-  if a dispatched check type has no descriptor, a new check type ships with its
-  descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
+  `plaintext`), holding its struct, `Run`, an args struct, `Descriptor`, and an
+  `init()` that registers it through the package's `registerParsed` helper (in
+  `library.go`), which stamps `Descriptor.Library` and registers the check's
+  *own parser* for its YAML args. The core `checks` package owns the shared types
+  and registry (including the `CheckType` kind constants in `kinds.go`) and
+  imports none of the families; callers blank-import `internal/checks/all` to
+  wire them all in. To add a check type, add a kind constant in `kinds.go` plus
+  one family file — there is no central config switch to touch, because the
+  parser travels with the check.
+- The check registry (populated by those `registerParsed` calls) is the single
+  source of truth for check types: the loader parses a configured check through
+  it (`checks.Parse`), `cmd/engine` builds the runnable list by registry lookup
+  (`Build`/`BuildCollection`), and both `cmd/gendocs` and `katalyst check-types
+  list` read `Descriptors()`/`Families()`. `registry_test.go` fails if a
+  descriptor is malformed, so a new check type ships with a complete descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
   contract for `katalyst check-types list --json`; keep them stable.
 - A check type's **family** groups it by source-data kind, and is orthogonal to
   its granularity: a collection-scoped check is filed by the data it reads
@@ -188,10 +192,11 @@ you add a fixture.
   `check` runs every configured check on frontmatter-less items too (no
   "no frontmatter" rejection).
 - **Collection-scoped check types** implement `checks.CollectionCheck`
-  (`RunCollection(CollectionContext)`), not `Check`. They register a
-  `CollectionBuilder` (not a per-item builder); `engine.collectionChecksFor`
-  builds them via `checks.BuildCollection` and a second pass in `cmd/check.go`
-  re-scans the *whole* collection via `project.Items`, independent of the
-  selector, a uniqueness verdict is only correct against every item. Mark such
-  types in `config.collectionScopedTypes` and set `Scope: "collection"` on their
-  descriptor.
+  (`RunCollection(CollectionContext)`), not `Check`. They register a `buildColl`
+  closure (not a per-item `build`) through `registerParsed`;
+  `engine.collectionChecksFor` builds them via `checks.BuildCollection` and a
+  second pass in `cmd/check.go` re-scans the *whole* collection via
+  `project.Items`, independent of the selector, a uniqueness verdict is only
+  correct against every item. Set `Scope: "collection"` on their descriptor;
+  `checks.CollectionScoped` reads that scope (the registry is the single source,
+  no separate allowlist).

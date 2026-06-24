@@ -3,8 +3,6 @@ package project
 import (
 	"fmt"
 	"strings"
-
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // UsageError signals an exit-code-2 condition: an unknown or
@@ -66,7 +64,7 @@ type Resolution struct {
 	// Scan holds collections that were selected wholesale (empty or
 	// collection-level selectors), so callers can scan them for unmatched
 	// references. De-duplicated, in resolution order.
-	Scan []config.Collection
+	Scan []Collection
 }
 
 // Resolve expands selectors into items. With no selectors, it selects
@@ -84,7 +82,7 @@ func (p *Project) Resolve(selectors []string) (*Resolution, error) {
 		seenItem[it.Path] = true
 		res.Items = append(res.Items, it)
 	}
-	addScan := func(c config.Collection) {
+	addScan := func(c Collection) {
 		if seenScan[c.Name] {
 			return
 		}

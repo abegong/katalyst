@@ -1,4 +1,4 @@
-package config_test
+package project_test
 
 import (
 	"errors"
@@ -7,7 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/checks/filesystem"
+	"github.com/abegong/katalyst/internal/checks/markdownbodytext"
+	"github.com/abegong/katalyst/internal/checks/plaintext"
+	"github.com/abegong/katalyst/internal/project"
 )
 
 // writeProject scaffolds a .katalyst/ tree: keys are paths relative to
@@ -90,7 +94,7 @@ func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 		}),
 	})
 
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -135,7 +139,7 @@ func TestLoad_convention_discoversSchemasAndCollections(t *testing.T) {
 	if books.Dir != filepath.Join(wantRoot, "notes/books") {
 		t.Errorf("books.Dir = %q", books.Dir)
 	}
-	if len(books.Checks) != 1 || books.Checks[0].Type != config.CheckObject {
+	if len(books.Checks) != 1 || books.Checks[0].Kind != checks.CheckObject {
 		t.Fatalf("books schema shorthand should map to one object check, got %+v", books.Checks)
 	}
 
@@ -154,7 +158,7 @@ func TestLoad_defaultsPathToCollectionName(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -172,7 +176,7 @@ func TestLoad_instanceRoot_resolvesCollectionDirs(t *testing.T) {
 		"storage/vault.yaml": "type: filesystem\nroot: content\ncollections:\n" +
 			"  notes:\n    path: notes\n    schema: book\n",
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -192,7 +196,7 @@ func TestLoad_perCollectionFiles_inInstanceDir(t *testing.T) {
 		"storage/local/books.yaml":  "path: notes/books\nschema: book\n",
 		"storage/local/people.yaml": "path: notes/people\nschema: book\n",
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -212,7 +216,7 @@ func TestLoad_perCollectionFiles_coexistWithInline(t *testing.T) {
 		"storage/local.yaml":       localStorage(map[string]string{"books": "path: notes/books\nschema: book\n"}),
 		"storage/local/notes.yaml": "path: notes\nschema: book\n",
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -228,7 +232,7 @@ func TestLoad_perCollectionFiles_rejectInlineCollision(t *testing.T) {
 		"storage/local.yaml":       localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
 		"storage/local/notes.yaml": "path: other\nschema: book\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "both inline and in a file") {
 		t.Fatalf("expected inline/file collision error, got: %v", err)
 	}
@@ -242,7 +246,7 @@ func TestLoad_ascendsToFindProject(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg, err := config.Load(deep)
+	cfg, err := project.Load(deep)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -259,7 +263,7 @@ func TestLoad_noStorage_isEmptyButValid(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"schemas/book.yaml": minimalSchema,
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -279,7 +283,7 @@ func TestLoad_noConfigFile_usesConventionDefaults(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -290,8 +294,8 @@ func TestLoad_noConfigFile_usesConventionDefaults(t *testing.T) {
 
 func TestLoad_notFound(t *testing.T) {
 	dir := t.TempDir()
-	_, err := config.Load(dir)
-	if !errors.Is(err, config.ErrNotFound) {
+	_, err := project.Load(dir)
+	if !errors.Is(err, project.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
@@ -301,7 +305,7 @@ func TestLoad_rejectsUnknownStorageType(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"storage/db.yaml": "type: sqlite\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "unknown type") {
 		t.Fatalf("expected unknown-type error, got: %v", err)
 	}
@@ -313,7 +317,7 @@ func TestLoad_rejectsDuplicateCollectionAcrossInstances(t *testing.T) {
 		"storage/a.yaml": "type: filesystem\ncollections:\n  notes:\n    path: a\n    checks:\n      - kind: markdown_requires_h1\n",
 		"storage/b.yaml": "type: filesystem\ncollections:\n  notes:\n    path: b\n    checks:\n      - kind: markdown_requires_h1\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "unique") {
 		t.Fatalf("expected duplicate-collection-name error, got: %v", err)
 	}
@@ -325,7 +329,7 @@ func TestLoad_rejectsUnknownSchemaInCollection(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nschema: nonexistent\n"}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for collection referencing unknown schema")
 	}
@@ -339,7 +343,7 @@ func TestLoad_rejectsCollectionWithNoChecks(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\n"}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for collection with no checks")
 	}
@@ -366,7 +370,7 @@ func TestLoad_variantsParsed(t *testing.T) {
 		"storage/local.yaml":   localStorage(map[string]string{"pages": body}),
 	})
 
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -386,7 +390,7 @@ func TestLoad_variantsParsed(t *testing.T) {
 	if len(v0.Where) != 1 {
 		t.Errorf("variant 0 Where = %d predicates, want 1", len(v0.Where))
 	}
-	if len(v0.Checks) != 1 || v0.Checks[0].Type != config.CheckObject || v0.Checks[0].Schema != "section" {
+	if len(v0.Checks) != 1 || v0.Checks[0].Kind != checks.CheckObject || v0.Checks[0].Schema != "section" {
 		t.Errorf("variant 0 Checks = %+v, want one object check on 'section'", v0.Checks)
 	}
 
@@ -395,11 +399,11 @@ func TestLoad_variantsParsed(t *testing.T) {
 	if len(v1.Where) != 2 {
 		t.Errorf("variant 1 Where = %d predicates, want 2", len(v1.Where))
 	}
-	if len(v1.Checks) != 2 || v1.Checks[0].Type != config.CheckObject || v1.Checks[0].Schema != "content" {
+	if len(v1.Checks) != 2 || v1.Checks[0].Kind != checks.CheckObject || v1.Checks[0].Schema != "content" {
 		t.Fatalf("variant 1 Checks = %+v, want object check then requires_h1", v1.Checks)
 	}
-	if v1.Checks[1].Type != config.CheckMarkdownRequiresH1 {
-		t.Errorf("variant 1 second check = %q, want markdown_requires_h1", v1.Checks[1].Type)
+	if v1.Checks[1].Kind != checks.CheckMarkdownRequiresH1 {
+		t.Errorf("variant 1 second check = %q, want markdown_requires_h1", v1.Checks[1].Kind)
 	}
 }
 
@@ -418,7 +422,7 @@ func TestLoad_whenShorthandDesugars(t *testing.T) {
 		"schemas/page.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -445,7 +449,7 @@ func TestLoad_variantOnlyCollectionIsValid(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
 	})
-	if _, err := config.Load(dir); err != nil {
+	if _, err := project.Load(dir); err != nil {
 		t.Fatalf("variant-only collection should load: %v", err)
 	}
 }
@@ -459,7 +463,7 @@ func TestLoad_rejectsInvalidVariantPredicate(t *testing.T) {
 		"schemas/page.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "variants[0]") {
 		t.Fatalf("expected variants[0] predicate error, got: %v", err)
 	}
@@ -475,7 +479,7 @@ func TestLoad_rejectsUnknownVariantSchema(t *testing.T) {
 		"schemas/page.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "nonexistent") {
 		t.Fatalf("expected unknown variant schema error, got: %v", err)
 	}
@@ -495,7 +499,7 @@ func TestLoad_rejectsEmptyWhen(t *testing.T) {
 		"schemas/page.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"pages": body}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "at least one predicate") {
 		t.Fatalf("expected empty-when error, got: %v", err)
 	}
@@ -507,7 +511,7 @@ func TestLoad_useExhaustiveVariantsDefaultsFalse(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nschema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -564,7 +568,7 @@ checks:
     prefix: book-
 `}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -576,17 +580,41 @@ checks:
 	if len(got) != 18 {
 		t.Fatalf("expected 18 checks, got %d", len(got))
 	}
-	if got[0].Type != config.CheckObject || got[0].Schema != "book" {
+	if got[0].Kind != checks.CheckObject || got[0].Schema != "book" {
 		t.Fatalf("check[0] = %+v, want object schema=book", got[0])
 	}
-	if got[6].Type != config.CheckMarkdownTitleMatchesH1 || got[6].Field != "title" {
-		t.Fatalf("check[6] = %+v, want markdown default field title", got[6])
+	if got[6].Kind != checks.CheckMarkdownTitleMatchesH1 {
+		t.Fatalf("check[6].Kind = %v, want markdown_title_matches_h1", got[6].Kind)
 	}
-	if got[12].Type != config.CheckFilesystemNameMatchesField || got[12].Field != "slug" || got[12].Transform != "none" {
-		t.Fatalf("check[12] = %+v, want name_matches_field default field slug, transform none", got[12])
+	titleCheck, ok := checks.Build(got[6].Kind, got[6].Args)
+	if !ok {
+		t.Fatalf("check[6] did not build")
 	}
-	if got[14].Type != config.CheckFilesystemNameCase || got[14].Style != "kebab" {
-		t.Fatalf("check[14] = %+v, want name_case style kebab", got[14])
+	titleMatches, ok := titleCheck.(markdownbodytext.MarkdownTitleMatchesH1)
+	if !ok || titleMatches.Field != "title" {
+		t.Fatalf("check[6] = %#v, want markdown default field title", titleCheck)
+	}
+	if got[12].Kind != checks.CheckFilesystemNameMatchesField {
+		t.Fatalf("check[12].Kind = %v, want filesystem_name_matches_field", got[12].Kind)
+	}
+	nameCheck, ok := checks.Build(got[12].Kind, got[12].Args)
+	if !ok {
+		t.Fatalf("check[12] did not build")
+	}
+	nameMatches, ok := nameCheck.(filesystem.NameMatchesField)
+	if !ok || nameMatches.Field != "slug" || nameMatches.Transform != "none" {
+		t.Fatalf("check[12] = %#v, want name_matches_field default field slug, transform none", nameCheck)
+	}
+	if got[14].Kind != checks.CheckFilesystemNameCase {
+		t.Fatalf("check[14].Kind = %v, want filesystem_name_case", got[14].Kind)
+	}
+	caseCheck, ok := checks.Build(got[14].Kind, got[14].Args)
+	if !ok {
+		t.Fatalf("check[14] did not build")
+	}
+	nameCase, ok := caseCheck.(filesystem.NameCase)
+	if !ok || nameCase.Style != "kebab" {
+		t.Fatalf("check[14] = %#v, want name_case style kebab", caseCheck)
 	}
 }
 
@@ -599,12 +627,30 @@ checks:
   - kind: not-real
 `}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for unknown check type")
 	}
 	if !strings.Contains(err.Error(), "unknown check type") {
 		t.Fatalf("expected unknown check type message, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsUnknownCheckKey(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+checks:
+  - kind: markdown_requires_h1
+    typo: true
+`}),
+	})
+	_, err := project.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for unknown check key")
+	}
+	if !strings.Contains(err.Error(), `unknown check key "typo"`) {
+		t.Fatalf("expected unknown check key error, got: %v", err)
 	}
 }
 
@@ -617,12 +663,32 @@ checks:
   - kind: object
 `}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil {
 		t.Fatalf("expected error for missing object schema")
 	}
 	if !strings.Contains(err.Error(), "requires") {
 		t.Fatalf("expected malformed payload error, got: %v", err)
+	}
+}
+
+func TestLoad_rejectsObjectCheckField(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"schemas/book.yaml": minimalSchema,
+		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+checks:
+  - kind: object
+    schema: book
+    field: title
+`}),
+	})
+	_, err := project.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for unsupported object field")
+	}
+	if !strings.Contains(err.Error(), `does not support "field"`) {
+		t.Fatalf("expected unsupported field error, got: %v", err)
 	}
 }
 
@@ -665,7 +731,7 @@ func TestLoad_rejectsInvalidFilesystemCheckConfig(t *testing.T) {
 			writeProject(t, dir, map[string]string{
 				"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
 			})
-			_, err := config.Load(dir)
+			_, err := project.Load(dir)
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
@@ -696,7 +762,7 @@ checks:
     values: [TODO, FIXME]
 `}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -705,17 +771,49 @@ checks:
 	if len(got) != 4 {
 		t.Fatalf("expected 4 checks, got %d", len(got))
 	}
-	if got[0].Type != config.CheckTextRequires || got[0].Match != "any" {
-		t.Fatalf("check[0] = %+v, want text_requires default match any", got[0])
+	if got[0].Kind != checks.CheckTextRequires {
+		t.Fatalf("check[0].Kind = %v, want text_requires", got[0].Kind)
 	}
-	if got[1].Match != "all" || got[1].Target != "line" {
-		t.Fatalf("check[1] = %+v, want match all target line", got[1])
+	requires0, ok := checks.Build(got[0].Kind, got[0].Args)
+	if !ok {
+		t.Fatalf("check[0] did not build")
 	}
-	if got[2].Type != config.CheckTextForbids || got[2].Select != "^-" {
-		t.Fatalf("check[2] = %+v, want text_forbids select ^-", got[2])
+	textRequires0, ok := requires0.(plaintext.TextRequires)
+	if !ok || textRequires0.All {
+		t.Fatalf("check[0] = %#v, want text_requires default match any", requires0)
 	}
-	if got[3].Type != config.CheckTextDenylist || len(got[3].Values) != 2 {
-		t.Fatalf("check[3] = %+v, want text_denylist with 2 values", got[3])
+	if got[1].Kind != checks.CheckTextRequires {
+		t.Fatalf("check[1].Kind = %v, want text_requires", got[1].Kind)
+	}
+	requires1, ok := checks.Build(got[1].Kind, got[1].Args)
+	if !ok {
+		t.Fatalf("check[1] did not build")
+	}
+	textRequires1, ok := requires1.(plaintext.TextRequires)
+	if !ok || !textRequires1.All || textRequires1.Target != "line" {
+		t.Fatalf("check[1] = %#v, want match all target line", requires1)
+	}
+	if got[2].Kind != checks.CheckTextForbids {
+		t.Fatalf("check[2].Kind = %v, want text_forbids", got[2].Kind)
+	}
+	forbids, ok := checks.Build(got[2].Kind, got[2].Args)
+	if !ok {
+		t.Fatalf("check[2] did not build")
+	}
+	textForbids, ok := forbids.(plaintext.TextForbids)
+	if !ok || textForbids.Select == nil {
+		t.Fatalf("check[2] = %#v, want text_forbids select ^-", forbids)
+	}
+	if got[3].Kind != checks.CheckTextDenylist {
+		t.Fatalf("check[3].Kind = %v, want text_denylist", got[3].Kind)
+	}
+	denylist, ok := checks.Build(got[3].Kind, got[3].Args)
+	if !ok {
+		t.Fatalf("check[3] did not build")
+	}
+	textDenylist, ok := denylist.(plaintext.TextDenylist)
+	if !ok || len(textDenylist.Values) != 2 {
+		t.Fatalf("check[3] = %#v, want text_denylist with 2 values", denylist)
 	}
 }
 
@@ -761,7 +859,7 @@ func TestLoad_rejectsInvalidTextCheckConfig(t *testing.T) {
 			writeProject(t, dir, map[string]string{
 				"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n" + tc.checks}),
 			})
-			_, err := config.Load(dir)
+			_, err := project.Load(dir)
 			if err == nil {
 				t.Fatalf("expected error, got nil")
 			}
@@ -797,7 +895,7 @@ storage:
 		"schemas/ignored.yaml":      minimalSchema,
 		"storage/ignored-inst.yaml": "type: filesystem\ncollections: {}\n",
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -823,7 +921,7 @@ func TestLoad_explicitDiscovery_requiresDefs(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"config.yaml": "storage:\n  discovery: explicit\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "defs") {
 		t.Fatalf("expected explicit-requires-defs error, got: %v", err)
 	}
@@ -836,7 +934,7 @@ func TestLoad_formatJSON_scansJSONFiles(t *testing.T) {
 		"config.yaml":        "schemas:\n  format: json\n",
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -852,7 +950,7 @@ func TestLoad_formatBoth_rejectsNameCollision(t *testing.T) {
 		"schemas/book.json": `{"type":"object"}`,
 		"config.yaml":       "schemas:\n  format: both\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "two files") {
 		t.Fatalf("expected name-collision error, got: %v", err)
 	}
@@ -871,7 +969,7 @@ func TestLoad_perKindIndependence(t *testing.T) {
 `,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -888,7 +986,7 @@ func TestLoad_rejectsBadDiscovery(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"config.yaml": "schemas:\n  discovery: bogus\n",
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "discovery") {
 		t.Fatalf("expected discovery validation error, got: %v", err)
 	}
@@ -900,7 +998,7 @@ func TestLoad_queryDefaults_whenUnset(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -923,7 +1021,7 @@ func TestLoad_query_projectDefaultApplies(t *testing.T) {
 `,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -950,7 +1048,7 @@ query:
   filterTypeMismatch: error
 `}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -972,7 +1070,7 @@ query:
   filterTypeMismatch: bogus
 `}),
 	})
-	_, err := config.Load(dir)
+	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "filterTypeMismatch") {
 		t.Fatalf("expected filterTypeMismatch validation error, got: %v", err)
 	}
@@ -984,7 +1082,7 @@ func TestCollection_unknownReturnsFalse(t *testing.T) {
 		"schemas/book.yaml":  minimalSchema,
 		"storage/local.yaml": localStorage(map[string]string{"notes": "schema: book\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1000,7 +1098,7 @@ func TestSchemaNames_returnsSortedNames(t *testing.T) {
 		"schemas/apple.yaml":  minimalSchema,
 		"schemas/middle.yaml": minimalSchema,
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1016,12 +1114,12 @@ func TestLoad_parsesWritingTells(t *testing.T) {
 	writeProject(t, dir, map[string]string{
 		"storage/local.yaml": localStorage(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
 	})
-	cfg, err := config.Load(dir)
+	cfg, err := project.Load(dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	notes, _ := cfg.Collection("notes")
-	if len(notes.Checks) != 1 || notes.Checks[0].Type != config.CheckMarkdownWritingTells {
+	if len(notes.Checks) != 1 || notes.Checks[0].Kind != checks.CheckMarkdownWritingTells {
 		t.Fatalf("expected one markdown_writing_tells check, got %+v", notes.Checks)
 	}
 }

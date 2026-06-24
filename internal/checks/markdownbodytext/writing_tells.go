@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // MarkdownWritingTells flags likely "AI slop" tells in a document's
@@ -137,8 +136,8 @@ func (MarkdownWritingTells) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckMarkdownWritingTells,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckMarkdownWritingTells,
 		Family:    "markdownBodyText",
 		Slug:      "writing-tells",
 		Severity:  "warning",
@@ -149,7 +148,7 @@ func init() {
     path: notes
     checks:
       - kind: markdown_writing_tells`,
-	}, func(ch config.CheckInstance) checks.Check {
+	}, checks.NoArgs, func(any) checks.Check {
 		return MarkdownWritingTells{}
 	}, nil)
 }

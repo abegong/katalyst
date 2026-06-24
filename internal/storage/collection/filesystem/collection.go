@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/bmatcuk/doublestar/v4"
@@ -22,16 +21,16 @@ import (
 // StorageType filesystem.
 //
 // The per-collection methods operate on the absolute Dir already resolved on
-// each config.Collection, so root is unused today; it is retained because a
+// each collection.Collection, so root is unused today; it is retained because a
 // filesystem instance is identified by its root and Phase 2's BuildInstance
 // resolves collection directories against it.
 type Definition struct {
 	root        string
-	collections []config.Collection
+	collections []collection.Collection
 }
 
 // New builds a filesystem definition for the given collections, rooted at root.
-func New(root string, collections []config.Collection) *Definition {
+func New(root string, collections []collection.Collection) *Definition {
 	return &Definition{root: root, collections: collections}
 }
 
@@ -39,11 +38,11 @@ func New(root string, collections []config.Collection) *Definition {
 func (f *Definition) Granularity() storage.Granularity { return storage.FileIsItem }
 
 // Collections returns the collections this definition maps.
-func (f *Definition) Collections() []config.Collection { return f.collections }
+func (f *Definition) Collections() []collection.Collection { return f.collections }
 
 // Items lists the items in a collection: files under its directory that match
 // its pattern, sorted by id. A missing directory yields no items.
-func (f *Definition) Items(c config.Collection) ([]collection.Item, error) {
+func (f *Definition) Items(c collection.Collection) ([]collection.Item, error) {
 	if info, err := os.Stat(c.Dir); err != nil || !info.IsDir() {
 		return nil, nil
 	}
@@ -66,7 +65,7 @@ func (f *Definition) Items(c config.Collection) ([]collection.Item, error) {
 
 // Unmatched lists files inside a collection's directory that do NOT match its
 // pattern, as references relative to Dir. A missing directory yields nothing.
-func (f *Definition) Unmatched(c config.Collection) ([]storage.Reference, error) {
+func (f *Definition) Unmatched(c collection.Collection) ([]storage.Reference, error) {
 	info, err := os.Stat(c.Dir)
 	if err != nil || !info.IsDir() {
 		return nil, nil
@@ -100,6 +99,6 @@ func (f *Definition) Unmatched(c config.Collection) ([]storage.Reference, error)
 // Reference reconstructs the absolute file path for an item id within a
 // collection (reverse resolution: notes/dune → <dir>/dune.md). Filesystem
 // reconstruction cannot fail, but the interface allows backends that can.
-func (f *Definition) Reference(c config.Collection, id string) (storage.Reference, error) {
+func (f *Definition) Reference(c collection.Collection, id string) (storage.Reference, error) {
 	return storage.Reference(filepath.Join(c.Dir, filepath.FromSlash(id)+c.Ext())), nil
 }

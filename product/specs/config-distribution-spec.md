@@ -38,7 +38,12 @@ instead of a tolerated cross-tree edge.
   parsed result is `config.CheckInstance` — a **union of every check's fields**
   (`Field`, `Schema`, `Values`, `Min`, `Max`, `MinLength`, `Style`, `Target`,
   `Transform`, `Prefix`, `Suffix`, …), most nil for any given check. `CheckType`
-  constants re-enumerate the registry's kinds.
+  constants re-enumerate the registry's kinds. The blast radius is wide: **every
+  check family package imports `config` solely to read its fields off this
+  union** — `filesystem`, `structuredobject`, `markdownbodytext`, `plaintext`,
+  and `jsonschema` all appear in `config`'s importer list for no reason but
+  `CheckInstance`. Distributing args removes `config` from ~7 packages at once,
+  which is why checks-first (below) is where most of the coupling lives.
 - **Storage.** `knownStorageTypes` allowlists backend kinds; `buildInstance`
   validates and constructs `StorageInstance`.
 - **Collections.** `buildCollection`/`buildVariants`/`resolveQuery` parse and
@@ -72,49 +77,78 @@ and constructs itself.
   files into raw `yaml.Node`s, and *assemble* — dispatch each block to its
   owner's parser and wire the results together. This is katalyst's `DataContext`.
 - **Per-object parsers**, registered the way `Descriptor`s already are. Each
-  check type registers a parser that decodes its **own** args struct from a raw
-  node and returns the runnable `Check` (validation and construction fused,
-  GX-style). The same for each storage type, the collection, and schemas.
+  check type registers a **parse** function that decodes its **own** args struct
+  from a raw node and validates it, plus the **build** function(s) that turn those
+  args into the runnable check. Parse and build are separate steps so one decode
+  feeds both the item and collection-scoped builders (per Open Question 2's
+  resolution); the same pattern serves each storage type, the collection, and
+  schemas.
 - **`config.CheckInstance` dissolves** into per-check arg structs, each beside its
   check (e.g. `structuredobject.RequiredField{Field string}`), unmarshalled and
   validated by that check. The union struct and the `CheckType` constant list go
   away; the registry is the only enumeration.
+- **Validation phrasing stays uniform** via a small generic helper set
+  (`RequireString(kind, "field", v)`, `OneOf(kind, "style", v, allowed)`, …) that
+  every parser calls — generic primitives with no per-kind knowledge, so the
+  errors `config_test.go` asserts stay stable without recentralizing the switch
+  (Open Question 1's resolution).
 
-Concretely, the registry call changes from consuming a pre-parsed instance to
-owning the parse:
+Concretely, the registry moves from consuming a pre-parsed union to registering
+the check's own parse + build, keeping the existing dual (item / collection)
+builder shape:
 
 ```
-// today: config parses, Builder reads the union back out
-Register(desc, func(ci config.CheckInstance) Check { ... }, ...)
+// today: config parses into the union; Builder reads it back out
+Register(desc, func(ci config.CheckInstance) Check { ... }, buildColl)
 
-// target: the check type owns its args and validation
-Register(desc, func(raw yaml.Node) (Check, error) {
-    var a requiredFieldArgs            // this check's own shape
-    if err := raw.Decode(&a); err != nil { return nil, err }
-    if a.Field == "" { return nil, errors.New(`object_required_field requires "field"`) }
-    return RequiredField{Field: a.Field}, nil
-}, ...)
+// target: the check owns parse; build is a separate step, so one decode
+// feeds both builders. buildColl is nil for an item-only check.
+Register(desc,
+    func(raw yaml.Node) (any, error) {              // parse + validate its own args
+        var a requiredFieldArgs
+        if err := raw.Decode(&a); err != nil { return nil, err }
+        if err := argcheck.RequireString("object_required_field", "field", a.Field); err != nil {
+            return nil, err
+        }
+        return a, nil
+    },
+    func(a any) Check { return RequiredField{Field: a.(requiredFieldArgs).Field} },
+    nil,                                             // buildColl: collection-scoped builder, when applicable
+)
 ```
 
 `yaml.v3`'s deferred `Node.Decode` is the Go stand-in for Pydantic's per-subtype
 validation: the loader holds the block as a `Node` and hands it to the owner,
 which decodes into its own type.
 
-### The dependency design (and how it pays off Spec 1)
+### The dependency design (Path A: decouple, validate at Load)
 
-Distributing config raises one real hazard: **collections contain checks, and
-collection-scoped checks reference collections** — so naively giving each its own
-package risks a `collection ↔ checks` cycle that the single `config` package
-currently avoids by holding both.
+The cycle worth fearing is **not** `collection ↔ checks`. Checked against the
+code: `checks.CollectionContext.Items` is a `checks`-local type, and `checks`
+imports only `storage/collection/document` (a leaf codec), never the
+`storage/collection` parent. So a `Collection` *can* hold `[]checks.Check` with
+no back-edge — eager-building does not cycle. (An earlier draft of this spec
+hedged toward lazy raw-node building to avoid that phantom cycle; that rationale
+was wrong and is dropped.)
 
-Resolution: **the loader is the assembler.** It parses checks (via the checks
-registry) and collections (via the collection parser) *independently*, then wires
-the parsed checks into the parsed collections. The collection parser does not
-import the checks registry; the loader does the wiring. The only residual edge is
-runtime `checks → collection` for the `CollectionCheck` target type — one
-direction, no cycle.
+The **real** cycle is `checks → config`: `Descriptor.CheckType` is
+`config.CheckType` and the registry consumes `config.CheckInstance`. That edge is
+what stops `config.Load` from validating checks (it can't call into `checks`).
+**Path A removes it:** move the `CheckType` kind enumeration *into* `checks`
+(check Descriptors stop importing `config`), and change the registry entry point
+to take `(kind, node)` instead of `config.CheckInstance`. With `checks` no longer
+importing `config`, `config` can import `checks` — and the loader parses each
+check through the registry **at Load**, so a successful `config.Load` is the
+proof that every check is valid. This is "parse, don't validate" at the I/O
+boundary: validation is not a deferred re-check (Path B's regression, where a bad
+check in an item-less collection is never seen) but a property of the loaded type.
 
-This is also exactly what **removes Spec 1's interleaving**. The variant `when`
+The `Collection` then carries **validated, parsed checks** (each check's own typed
+args, produced by its parser) rather than raw `yaml.Node`s — the build into a
+runnable `Check` stays a thin lazy step at the engine, but the *parse* happened
+once at the boundary.
+
+This decoupling is also what **removes Spec 1's interleaving**. The variant `when`
 predicate grammar (`query`) is used only while parsing a collection's variant
 config — which, once the collection owns that parsing, lives under
 `storage/collection/`. So `collection → query` becomes *intra-`collection`*, and
@@ -130,12 +164,26 @@ here, by construction.
 - **`Descriptor`s stay** as the documentation source; `cmd/gendocs` and
   `katalyst check-types` are unaffected (metadata didn't move, only parsing did).
 
+### Behavior parity (a constraint)
+
+Distributing config changes *who parses*, not *what is valid*. The set of
+accepted `.katalyst/` configs, the validation errors users see, and the dogfood
+result (`katalyst check` over `docs/`, validated by the repo-root `.katalyst/`)
+stay identical. Each phase is verified green against the existing `config_test.go`
+suite and the dogfood before its legacy `normalizeCheck`/`build*` path is deleted.
+This is a hard constraint, not a decision — the migration is behavior-preserving
+the way Spec 1 was.
+
 ### Phasing
 
 The migration is incremental and stays green throughout, because the loader can
 dispatch already-migrated kinds to their owners while the rest run the legacy
 path:
 
+0. **Relocate the types** — a mechanical, Spec-1-style pre-step: move the
+   `Collection` type to `storage/collection` and `StorageInstance` to `storage`
+   (storage root is already config-free post-Spec-1), leaving the parsing behind
+   in `config` for now. This sets the homes before redistributing parse logic.
 1. **Checks first** — the registry already exists; convert `Builder` to own its
    parse, one family at a time (`structuredobject`, `markdownbodytext`,
    `filesystem`, `plaintext`), deleting `normalizeCheck` cases and `CheckInstance`
@@ -147,23 +195,38 @@ path:
    that dissolves `config → query`.
 4. **Collapse** what remains of `config` into the thin loader; rename/rehome it.
 
+## Resolved by implementing Spec 1
+
+These two were open before Spec 1 landed; the hands-on move settled them.
+
+- **Where the types and loader live.** The concept *types* redistribute to their
+  concept packages; the *loader* is the assembler on top. No `config` package
+  survives.
+
+  | Today (central `config`) | Distributed home |
+  |---|---|
+  | `CheckInstance` + `normalizeCheck` | per-check arg structs, in each check family |
+  | `Collection` | `storage/collection` (the readers already consume it) |
+  | `StorageInstance` | `storage` (backend config; root is config-free post-Spec-1) |
+  | `.katalyst/` discovery + YAML + assembly | `project` — the DataContext/loader |
+
+- **No shared "model" package is needed.** The earlier worry — a neutral
+  `Check`-interface package to break `collection ↔ checks` — is moot given the
+  lazy-build boundary above: `Collection` holds raw check config, not `Check`
+  values, so `collection` never imports `checks`. Keep the assembler in the
+  engine; add no shared-interface package.
+
 ## Open Questions
 
-1. **Where does the thin loader live, and what is it called?** It is project-level
-   (it assembles the whole `.katalyst/` workspace), so `project/` or a much-slimmer
-   `project/config` (loader only, no typed config). Leaning `project/` as the
-   assembler, with no `config` package left. Decide during phase 4.
-2. **How much shared "model" survives?** Collections need an item/identity vocabulary
-   and a `Check` interface to hold their wired checks. If the loader-as-assembler
-   pattern isn't enough to keep `collection ⊥ checks`, a minimal neutral package
-   (a `Check` interface only) may be needed. Prefer the assembler; treat a shared
-   interface package as the fallback.
-3. **Validation-message consistency.** Central `normalizeCheck` gives uniform
-   error phrasing; per-object parsers must not drift in tone. A tiny shared helper
-   set (required-field, enum-of) keeps them consistent without recentralizing.
-4. **Does the on-disk schema (`.katalyst/schemas/page.json`-style validation of
-   the config files themselves) change?** No intent to; confirm the dogfood
-   `pages` collection still validates after the loader is rehomed.
+_None._ Both resolved and folded into Design:
+
+1. **Error-message consistency** → generic validation helpers (`RequireString`,
+   `OneOf`, …): no per-kind knowledge, phrasing stays test-stable, no central
+   switch. (See *Target shape*.)
+2. **Owned-parser shape** → parse-then-build: the parser returns validated args,
+   separate `build`/`buildColl` steps consume them, so one decode feeds both the
+   item and collection-scoped paths and the dual registration survives. (See
+   *Target shape* and *dependency design*.)
 
 ## Documentation updates
 

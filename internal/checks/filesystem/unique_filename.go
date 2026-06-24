@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
 )
 
 // UniqueFilename requires that no two items share a basename (without
@@ -24,8 +23,8 @@ func (UniqueFilename) RunCollection(ctx checks.CollectionContext) []checks.Viola
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemUniqueFilename,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemUniqueFilename,
 		Family:    "fileSystem",
 		Slug:      "unique-filename",
 		Title:     "Unique filename",
@@ -36,7 +35,7 @@ func init() {
     path: notes
     checks:
       - kind: filesystem_unique_filename`,
-	}, nil, func(ch config.CheckInstance) checks.CollectionCheck {
+	}, checks.NoArgs, nil, func(any) checks.CollectionCheck {
 		return UniqueFilename{}
 	})
 }

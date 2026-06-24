@@ -4,8 +4,13 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
+
+// uniqueFieldArgs is filesystem_unique_field's own config shape.
+type uniqueFieldArgs struct {
+	Field string `yaml:"field"`
+}
 
 // UniqueField requires that no two items share a value for Field. It is
 // collection-scoped (it reasons across siblings) but belongs to the
@@ -32,8 +37,8 @@ func (c UniqueField) RunCollection(ctx checks.CollectionContext) []checks.Violat
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckFilesystemUniqueField,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckFilesystemUniqueField,
 		Family:    "structuredObject",
 		Slug:      "unique-field",
 		Title:     "Unique field",
@@ -48,7 +53,9 @@ func init() {
     checks:
       - kind: filesystem_unique_field
         field: slug`,
-	}, nil, func(ch config.CheckInstance) checks.CollectionCheck {
-		return UniqueField{Field: ch.Field}
+	}, checks.ParseInto(func(a uniqueFieldArgs) error {
+		return argcheck.RequireString("filesystem_unique_field", "field", a.Field)
+	}), nil, func(a any) checks.CollectionCheck {
+		return UniqueField{Field: a.(uniqueFieldArgs).Field}
 	})
 }

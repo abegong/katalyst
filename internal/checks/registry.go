@@ -1,22 +1,22 @@
 package checks
 
 import (
+	"errors"
+	"fmt"
 	"sort"
 
-	"github.com/abegong/katalyst/internal/project/config"
+	"gopkg.in/yaml.v3"
 )
 
-// This file holds the check-type registry: the types describing a check type
-// for documentation, and the Register/Descriptors/Build machinery check types
-// self-register with from their family subpackages.
+// This file holds the check-type registry: the types describing a check type for
+// documentation, and the Register/Parse/Build machinery check types self-register
+// with from their family subpackages.
 //
-// Each check type owns its Descriptor and registers it (along with a
-// constructor) from an init() in its own file, so adding a check type touches
-// one file instead of a central switch. cmd/engine builds the runnable check
-// list by registry lookup (Build / BuildCollection); cmd/gendocs and
+// Each check type owns its Descriptor, parser, and constructor and registers them
+// from an init() in its own file, so adding a check type touches one file. The
+// loader (config) parses each configured check through Parse at load time; the
+// engine builds the runnable check via Build/BuildCollection; cmd/gendocs and
 // `katalyst check-types` render the catalog from Descriptors() / Families().
-// registry_test.go enforces parity with config.normalizeCheck so a check type
-// cannot ship undocumented.
 
 // Field describes one configuration key accepted by a check type. The json tags
 // are the wire contract for `katalyst check-types list --json`; keep them
@@ -33,7 +33,7 @@ type Field struct {
 // are the wire contract for `katalyst check-types list --json`; see Field.
 type Descriptor struct {
 	// CheckType is the value used as `kind:` in a collection's checks.
-	CheckType config.CheckType `json:"check_type"`
+	CheckType CheckType `json:"check_type"`
 	// Library names the CheckLibrary that provides this check type
 	// (Descriptor.Library == library.Name()), e.g. "json-schema". Empty until
 	// a check type is migrated onto a library; resolved by LibraryFor. Library
@@ -105,38 +105,88 @@ func Families() []Family {
 	}
 }
 
-// Builder constructs a per-item Check from a normalized config instance. It is
-// nil for check types that have no ordinary per-item form (collection-scoped
-// checks, and the object check, which the engine builds specially because it
-// needs a compiled schema).
-type Builder func(config.CheckInstance) Check
+// ConfiguredCheck is one check as it sits on a collection after loading: its
+// kind and the validated args its parser produced (parse, don't validate — by
+// the time a ConfiguredCheck exists, its args are valid). The object check
+// carries its Schema name instead; the engine builds it from a compiled schema.
+type ConfiguredCheck struct {
+	Kind   CheckType
+	Args   any
+	Schema string
+}
 
-// CollectionBuilder constructs a collection-scoped check. It is nil for
-// per-item check types.
-type CollectionBuilder func(config.CheckInstance) CollectionCheck
+// Parser decodes and validates a check's own arguments from its raw config node
+// (the deferred yaml.Node for one `checks:` entry), returning the validated args
+// as an opaque value the build functions consume. It is how a check type owns
+// its config parsing.
+type Parser func(*yaml.Node) (any, error)
 
-// registration is one check type's registry entry.
+// NoArgs is a Parser for a check type that takes no configuration: it ignores
+// the node and yields an empty value the builder discards.
+func NoArgs(*yaml.Node) (any, error) { return struct{}{}, nil }
+
+// ParseInto builds a Parser that decodes the raw node into a fresh T and runs
+// validate (nil for none). A nil node (no keys) yields the zero T, so validate
+// sees the same empty value the loader would. The returned args are consumed by
+// an ArgsBuilder/CollectionArgsBuilder that type-asserts T.
+func ParseInto[T any](validate func(T) error) Parser {
+	return func(n *yaml.Node) (any, error) {
+		var a T
+		if n != nil {
+			if err := n.Decode(&a); err != nil {
+				return nil, err
+			}
+		}
+		if validate != nil {
+			if err := validate(a); err != nil {
+				return nil, err
+			}
+		}
+		return a, nil
+	}
+}
+
+// ArgsBuilder constructs a per-item Check from a Parser's validated args.
+type ArgsBuilder func(any) Check
+
+// CollectionArgsBuilder constructs a collection-scoped check from validated args.
+type CollectionArgsBuilder func(any) CollectionCheck
+
+// registration is one check type's registry entry: its Descriptor plus, for a
+// configurable check, its parser and args-builders. A Descriptor-only entry (the
+// object check) has nil parse/builders; the engine builds it specially.
 type registration struct {
-	desc      Descriptor
-	build     Builder
-	buildColl CollectionBuilder
+	desc          Descriptor
+	parse         Parser
+	buildArgs     ArgsBuilder
+	buildCollArgs CollectionArgsBuilder
 }
 
 var (
 	registrations []registration
-	byKind        = map[config.CheckType]int{}
+	byKind        = map[CheckType]int{}
 )
 
-// Register records a check type: its Descriptor plus optional constructors. A
-// check type calls this from an init() in its own file. build may be nil for a
-// collection-scoped (or specially-built) check; buildColl may be nil for a
-// per-item check. Duplicate kinds panic, a programming error caught at startup.
-func Register(desc Descriptor, build Builder, buildColl CollectionBuilder) {
-	if _, dup := byKind[desc.CheckType]; dup {
-		panic("checks: duplicate registration for kind " + string(desc.CheckType))
+// RegisterParsed records a check type that owns its config parsing: parse
+// decodes+validates the raw node into args, and buildArgs/buildCollArgs turn
+// those args into the runnable check(s). One decode feeds both builders, so a
+// dual (item + collection-scoped) check validates once. Either builder may be
+// nil.
+func RegisterParsed(desc Descriptor, parse Parser, buildArgs ArgsBuilder, buildCollArgs CollectionArgsBuilder) {
+	register(registration{desc: desc, parse: parse, buildArgs: buildArgs, buildCollArgs: buildCollArgs})
+}
+
+// RegisterDescriptor records a check type that has only a Descriptor (no parser
+// or builder): the object check, which the engine builds from a compiled schema.
+// It still appears in the catalog and is a Known kind.
+func RegisterDescriptor(desc Descriptor) { register(registration{desc: desc}) }
+
+func register(r registration) {
+	if _, dup := byKind[r.desc.CheckType]; dup {
+		panic("checks: duplicate registration for kind " + string(r.desc.CheckType))
 	}
-	byKind[desc.CheckType] = len(registrations)
-	registrations = append(registrations, registration{desc, build, buildColl})
+	byKind[r.desc.CheckType] = len(registrations)
+	registrations = append(registrations, r)
 }
 
 // Descriptors returns every registered check type, grouped by Families() order
@@ -160,24 +210,50 @@ func Descriptors() []Descriptor {
 	return out
 }
 
-// Build constructs the per-item check for a configured instance. It returns
-// (nil, false) for a kind with no per-item builder (collection-scoped, or the
-// object check the engine builds itself), so callers skip it in the per-item
-// loop.
-func Build(ch config.CheckInstance) (Check, bool) {
-	i, ok := byKind[ch.Type]
-	if !ok || registrations[i].build == nil {
-		return nil, false
-	}
-	return registrations[i].build(ch), true
+// Known reports whether kind is a registered check type.
+func Known(kind CheckType) bool { _, ok := byKind[kind]; return ok }
+
+// CollectionScoped reports whether kind runs once per collection (vs. per item).
+func CollectionScoped(kind CheckType) bool {
+	i, ok := byKind[kind]
+	return ok && registrations[i].desc.Scope == "collection"
 }
 
-// BuildCollection constructs the collection-scoped check for a configured
-// instance, or returns (nil, false) for a per-item kind.
-func BuildCollection(ch config.CheckInstance) (CollectionCheck, bool) {
-	i, ok := byKind[ch.Type]
-	if !ok || registrations[i].buildColl == nil {
+// Parse decodes and validates one configured check's arguments through the
+// check type's own parser. It is called at load time, so a parse error fails
+// config.Load. An unknown kind, or one with no parser (the object check, which
+// the loader handles separately), is an error here.
+func Parse(kind CheckType, node *yaml.Node) (any, error) {
+	i, ok := byKind[kind]
+	if !ok {
+		if kind == "" {
+			return nil, errors.New("check type is required")
+		}
+		return nil, fmt.Errorf("unknown check type %q", kind)
+	}
+	if registrations[i].parse == nil {
+		return nil, fmt.Errorf("check type %q takes no configurable arguments here", kind)
+	}
+	return registrations[i].parse(node)
+}
+
+// Build constructs the per-item check from already-validated args (from Parse).
+// ok is false for a kind with no per-item form (collection-scoped, or the object
+// check the engine builds itself).
+func Build(kind CheckType, args any) (Check, bool) {
+	i, ok := byKind[kind]
+	if !ok || registrations[i].buildArgs == nil {
 		return nil, false
 	}
-	return registrations[i].buildColl(ch), true
+	return registrations[i].buildArgs(args), true
+}
+
+// BuildCollection constructs the collection-scoped check from validated args, or
+// returns (nil, false) for a per-item kind.
+func BuildCollection(kind CheckType, args any) (CollectionCheck, bool) {
+	i, ok := byKind[kind]
+	if !ok || registrations[i].buildCollArgs == nil {
+		return nil, false
+	}
+	return registrations[i].buildCollArgs(args), true
 }

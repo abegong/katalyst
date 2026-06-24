@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/abegong/katalyst/internal/project"
-	"github.com/abegong/katalyst/internal/project/config"
 	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
@@ -16,7 +15,7 @@ import (
 // here is a thin local adapter over document.Parse; it deliberately does not
 // reach into internal/checks.
 type CollectionView struct {
-	collection config.Collection
+	collection project.Collection
 	items      []collection.Item
 	// docs is aligned with items; an entry is nil when the item could not be
 	// read or parsed, so a broken item contributes nothing rather than panicking.
@@ -25,7 +24,7 @@ type CollectionView struct {
 
 // NewCollectionView resolves a collection's items via the project and parses
 // each once.
-func NewCollectionView(proj *project.Project, c config.Collection) (CollectionView, error) {
+func NewCollectionView(proj *project.Project, c project.Collection) (CollectionView, error) {
 	items, err := proj.Items(c)
 	if err != nil {
 		return CollectionView{}, err
@@ -44,7 +43,7 @@ func NewCollectionView(proj *project.Project, c config.Collection) (CollectionVi
 }
 
 // Collection returns the collection this view describes.
-func (v CollectionView) Collection() config.Collection { return v.collection }
+func (v CollectionView) Collection() project.Collection { return v.collection }
 
 // N is the number of items in the collection (the evidence denominator).
 func (v CollectionView) N() int { return len(v.items) }

@@ -7,18 +7,17 @@ package fix
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/checks/plaintext"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 // Apply returns the canonical, fixed form of src for collection c: it applies
 // the collection's opted-in text_forbids body fixes, then rewrites the
 // frontmatter into canonical form. The result equals src when nothing changes.
-func Apply(src []byte, c config.Collection) ([]byte, error) {
+func Apply(src []byte, c collection.Collection) ([]byte, error) {
 	fixed, err := applyTextFixes(src, c)
 	if err != nil {
 		return nil, err
@@ -45,7 +44,7 @@ func Canonical(src []byte) ([]byte, error) {
 // fixes, then re-checks its own work: if a fix leaves the rule still violated
 // (a bad template), it fails rather than producing a still-broken result. Files
 // in collections with no text fixes are returned untouched.
-func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
+func applyTextFixes(src []byte, c collection.Collection) ([]byte, error) {
 	fixers := textFixers(c)
 	if len(fixers) == 0 {
 		return src, nil
@@ -73,18 +72,21 @@ func applyTextFixes(src []byte, c config.Collection) ([]byte, error) {
 }
 
 // textFixers builds the fixable text_forbids checks configured for a
-// collection (those with a non-empty fix template).
-func textFixers(c config.Collection) []plaintext.TextForbids {
+// collection (those with a non-empty fix template). Each check is built from its
+// validated config through the registry, so fix reuses the same TextForbids the
+// engine would run.
+func textFixers(c collection.Collection) []plaintext.TextForbids {
 	var out []plaintext.TextForbids
-	for _, ch := range c.Checks {
-		if ch.Type == config.CheckTextForbids && ch.Fix != "" {
-			out = append(out, plaintext.TextForbids{
-				Re:      regexp.MustCompile(ch.Pattern),
-				Pattern: ch.Pattern,
-				Target:  ch.Target,
-				Select:  plaintext.CompileSelect(ch.Select),
-				Fix:     ch.Fix,
-			})
+	for _, cc := range c.Checks {
+		if cc.Kind != checks.CheckTextForbids {
+			continue
+		}
+		chk, ok := checks.Build(cc.Kind, cc.Args)
+		if !ok {
+			continue
+		}
+		if tf, ok := chk.(plaintext.TextForbids); ok && tf.Fix != "" {
+			out = append(out, tf)
 		}
 	}
 	return out

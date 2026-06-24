@@ -4,8 +4,13 @@ import (
 	"fmt"
 
 	"github.com/abegong/katalyst/internal/checks"
-	"github.com/abegong/katalyst/internal/project/config"
+	"github.com/abegong/katalyst/internal/checks/argcheck"
 )
+
+// requiredFieldArgs is object_required_field's own config shape.
+type requiredFieldArgs struct {
+	Field string `yaml:"field"`
+}
 
 // ObjectRequiredField checks that a frontmatter field exists.
 type ObjectRequiredField struct {
@@ -25,8 +30,8 @@ func (o ObjectRequiredField) Run(ctx checks.Context) []checks.Violation {
 }
 
 func init() {
-	register(checks.Descriptor{
-		CheckType: config.CheckObjectRequiredField,
+	registerParsed(checks.Descriptor{
+		CheckType: checks.CheckObjectRequiredField,
 		Family:    "structuredObject",
 		Slug:      "required-field",
 		Title:     "Required field",
@@ -40,7 +45,9 @@ func init() {
     checks:
       - kind: object_required_field
         field: year`,
-	}, func(ch config.CheckInstance) checks.Check {
-		return ObjectRequiredField{Field: ch.Field}
+	}, checks.ParseInto(func(a requiredFieldArgs) error {
+		return argcheck.RequireString("object_required_field", "field", a.Field)
+	}), func(a any) checks.Check {
+		return ObjectRequiredField{Field: a.(requiredFieldArgs).Field}
 	}, nil)
 }
