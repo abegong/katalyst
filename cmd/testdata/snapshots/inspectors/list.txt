@@ -1,10 +1,15 @@
-Raw-source inspectors
-INSPECTOR          PURPOSE
-file_tree          Profile each directory's file types, naming, and depth, opening no files.
-file_tree_content  Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
-document_shape     Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
+Raw-source inspectors (3)
+-------------------------
+- file_tree
+  Profile each directory's file types, naming, and depth, opening no files.
+- file_tree_content
+  Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
+- document_shape
+  Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
 
-Collection inspectors
-INSPECTOR      PURPOSE
-object_fields  A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
-markdown_body  Body conventions across items: heading shape and recurring sections.
+Collection inspectors (2)
+-------------------------
+- object_fields
+  A data dictionary over item frontmatter: per-field presence, types, cardinality, and common values.
+- markdown_body
+  Body conventions across items: heading shape and recurring sections.

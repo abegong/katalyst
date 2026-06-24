@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/abegong/katalyst/internal/inspect"
 	"github.com/spf13/cobra"
@@ -92,14 +91,13 @@ func runInspectorsList(cmd *cobra.Command, layer string, asJSON bool) error {
 		if i > 0 {
 			fmt.Fprintln(out)
 		}
-		fmt.Fprintln(out, l.Title)
-		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "INSPECTOR\tPURPOSE")
-		for _, d := range byLayer[l.ID] {
-			fmt.Fprintf(tw, "%s\t%s\n", d.Name, plainSummary(d.Summary))
-		}
-		if err := tw.Flush(); err != nil {
-			return err
+		ds := byLayer[l.ID]
+		header := fmt.Sprintf("%s (%d)", l.Title, len(ds))
+		fmt.Fprintln(out, header)
+		fmt.Fprintln(out, strings.Repeat("-", len(header)))
+		for _, d := range ds {
+			fmt.Fprintf(out, "- %s\n", d.Name)
+			fmt.Fprintf(out, "  %s\n", plainSummary(d.Summary))
 		}
 	}
 	return nil
