@@ -173,9 +173,28 @@ type RawCheck struct {
 	node *yaml.Node
 }
 
+var rawCheckKeys = map[string]bool{
+	"kind": true, "schema": true, "field": true, "type": true,
+	"value": true, "values": true, "min": true, "max": true,
+	"min_length": true, "max_length": true, "heading": true,
+	"style": true, "target": true, "transform": true,
+	"prefix": true, "suffix": true, "allow": true, "deny": true,
+	"pattern": true, "fields": true, "name": true, "match": true,
+	"select": true, "fix": true,
+}
+
 // UnmarshalYAML decodes the entry's fields and stashes the raw node, so the
 // node can travel to a check type's own parser (checks.RegisterParsed).
 func (rc *RawCheck) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("invalid check: expected a mapping")
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		key := value.Content[i].Value
+		if !rawCheckKeys[key] {
+			return fmt.Errorf("unknown check key %q", key)
+		}
+	}
 	type plain RawCheck
 	var p plain
 	if err := value.Decode(&p); err != nil {

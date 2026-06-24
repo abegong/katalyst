@@ -636,6 +636,24 @@ checks:
 	}
 }
 
+func TestLoad_rejectsUnknownCheckKey(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"storage/local.yaml": localStorage(map[string]string{"notes": `path: notes
+checks:
+  - kind: markdown_requires_h1
+    typo: true
+`}),
+	})
+	_, err := project.Load(dir)
+	if err == nil {
+		t.Fatalf("expected error for unknown check key")
+	}
+	if !strings.Contains(err.Error(), `unknown check key "typo"`) {
+		t.Fatalf("expected unknown check key error, got: %v", err)
+	}
+}
+
 func TestLoad_rejectsMalformedCheckPayload(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
