@@ -90,10 +90,37 @@ comment:
 
 ## Acceptance Checklist
 
-- [ ] The current main-directory inventory has been audited.
-- [ ] Every main ownership directory has concise local guidance or a documented
+- [x] The current main-directory inventory has been audited.
+- [x] Every main ownership directory has concise local guidance or a documented
       reason it is covered by a parent.
-- [ ] New files use a consistent format with existing `cmd/AGENTS.md` and
+- [x] New files use a consistent format with existing `cmd/AGENTS.md` and
       package guidance.
-- [ ] Stale paths from the issue body are explicitly accounted for.
-- [ ] Relevant docs/checks/tests are run for any touched area.
+- [x] Stale paths from the issue body are explicitly accounted for.
+- [x] Relevant docs/checks/tests are run for any touched area.
+
+## Completed Coverage
+
+Added or confirmed local guidance for the current main ownership homes:
+
+- `docs/AGENTS.md` - Hugo module boundaries, generated docs, and dogfooding
+  checks;
+- `internal/project/AGENTS.md` - project loading, selectors, and storage import
+  direction;
+- `internal/storage/AGENTS.md` - backend registry and opaque references;
+- `internal/storage/collection/AGENTS.md` - existing collection read-stack
+  guidance;
+- `internal/codec/markdownbodytext/AGENTS.md` - markdown/frontmatter codec
+  boundaries;
+- `internal/checks/AGENTS.md`, `internal/inspect/AGENTS.md`,
+  `internal/fix/AGENTS.md`, and `internal/examples/AGENTS.md` - existing local
+  package guidance;
+- `internal/skillpack/AGENTS.md` - skill archive packaging rules.
+
+Original issue paths now covered by renamed or collapsed ownership homes:
+
+- `internal/config/` is covered by `internal/project/`;
+- `internal/frontmatter/` is covered by `internal/codec/markdownbodytext/`;
+- `internal/query/` is covered by `internal/storage/collection/`;
+- `internal/validator/` is no longer a current main directory; schema-backed
+  validation lives under `internal/checks/jsonschema/`, covered by
+  `internal/checks/AGENTS.md`.
