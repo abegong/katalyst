@@ -165,7 +165,7 @@ reference is unchanged.
 | "source" vs "raw-source" | **Keep "raw-source" as the prose term**; `Source*` stays the short code identifier | Reverses the spec's earlier "source wins": "raw-source" is the dominant, clearer prose term and is baked into `registry.go`-generated reference text; flipping it would mean editing code + regenerating docs for no user benefit. Update the spec's Settled-naming line to match. |
 | data interface vs storage | Storage wins everywhere, including the general level in core-concepts | The shipped code and `storage-layer-spec.md` use the storage vocabulary; one name for the backend. |
 | command-organization home | `cmd/organization.md` linked from `cmd/AGENTS.md`, not inlined | `cmd/AGENTS.md` is already 118 lines and loads as agent context; a sibling file keeps the conventions lean, mirroring the prior AGENTS-points-to-page pattern. |
-| Query / engine | Deferred to their own GitHub issues | Each needs separate treatment; tracked outside this branch. |
+| Query / engine | Deferred to GitHub issues #76 (query) and #77 (engine) | Each needs separate treatment; tracked outside this branch. |
 
 ## Documentation updates
 
@@ -176,7 +176,7 @@ and inspectors reference must stay byte-identical (Phase 5, step 1).
 
 ## Out of Scope
 
-- **Query** and **engine** terminology — their own issues.
+- **Query** (#76) and **engine** (#77) terminology — tracked in their own issues.
 - **#39** internal/ package realignment — deferred entirely.
 - **Go identifier renames** — `frontmatter.Document`, `Source*`, etc. stay.
 - **Regenerating the reference with new labels** — only runs to *confirm no

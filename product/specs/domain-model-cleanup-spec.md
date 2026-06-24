@@ -149,8 +149,7 @@ what keeps them sharing one vocabulary.
 - **Item primary, document specialized**; **attribute general, field
   specialized**, per the rule above.
 
-Two contested calls, *Query* and *engine*, are **deferred to their own
-branches**: each is large enough to need separate treatment and would bloat this
+Two contested calls, *Query* (#76) and *engine* (#77), are **deferred to their own issues**: each is large enough to need separate treatment and would bloat this
 cleanup.
 
 - **Query** is genuinely contradictory across the sources (a supported operation
@@ -165,8 +164,7 @@ glossary or the doc reconciliation.
 
 ## Open Questions
 
-_None._ Query and engine are deferred to their own branches (see Settled
-naming). The doc-consolidation direction settled after rebasing on #73, which
+_None._ Query (#76) and engine (#77) are deferred to their own issues (see Settled naming). The doc-consolidation direction settled after rebasing on #73, which
 already turned `domain-model.md` into a katalyst-specific hub and rehomed its
 detail into the new `collections.md` and `inspectors.md`: keep `domain-model.md`
 as that hub, slim `core-concepts.md` into the parallel general-altitude hub, and
