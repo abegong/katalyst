@@ -237,6 +237,9 @@ func (d *Definition) read(db *sql.DB, c collection.Collection, id string) ([]byt
 	if err != nil {
 		return nil, nil, err
 	}
+	if err := validateConfiguredColumns(c, columnSet(cols)); err != nil {
+		return nil, nil, err
+	}
 	vals := make([]any, len(cols))
 	ptrs := make([]any, len(cols))
 	for i := range vals {
@@ -338,6 +341,14 @@ func rowMap(cols []string, vals []any) map[string]any {
 	out := make(map[string]any, len(cols))
 	for i, col := range cols {
 		out[col] = normalize(vals[i])
+	}
+	return out
+}
+
+func columnSet(cols []string) map[string]bool {
+	out := make(map[string]bool, len(cols))
+	for _, col := range cols {
+		out[col] = true
 	}
 	return out
 }
