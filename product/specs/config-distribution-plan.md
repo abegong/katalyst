@@ -88,18 +88,36 @@ Per family (`structuredobject` → `markdownbodytext` → `filesystem` →
    (valid + each validation error); the family's existing behavior tests stay
    green.
 
-### Phase 3 — Remove the legacy check path
+### Phase 3 — Decouple `checks` from `config`; validate at Load (Path A)
 
-**Goal:** one representation per check; the parity test is unnecessary.
+**Goal:** one representation per check, validated at Load; `checks` no longer
+imports `config`, so the loader can parse checks through the registry.
 
-1. **File:** `internal/project/config/config.go`. Delete `normalizeCheck`, the
-   `CheckInstance` struct, the `CheckType` constants, and the raw-check legacy
-   decode.
-2. **File:** `internal/checks/registry.go`. Drop the legacy `Builder`/
-   `CollectionBuilder` union-arg signatures and the fallback in
-   `BuildFromConfig`.
-3. **File:** `internal/checks/registry_test.go`. Delete `dispatchedKinds` and the
-   parity test — the registry is now the only enumeration.
+1. **File:** `internal/checks/kinds.go` (new). Move the `CheckType` type and its
+   `Check*` constants here from `config`.
+2. **File:** `internal/checks/*/**.go` (the ~35 check files + `jsonschema/object.go`).
+   `config.CheckX` → `checks.CheckX` in each Descriptor; drop the now-unused
+   `config` import.
+3. **File:** `internal/checks/registry.go`. `Descriptor.CheckType` and `byKind`
+   become `checks.CheckType`; change the entry point to `Parse(kind, node)
+   (args, error)` + `Build(kind, args)` / `BuildCollection(kind, args)`; drop the
+   legacy `Builder`/`Build`/`BuildCollection`(`CheckInstance`) and the `config`
+   import. Move `CollectionScoped(kind)` here (answered by `Descriptor.Scope`).
+4. **File:** `internal/checks/jsonschema/object.go`. Register the object check via
+   a Descriptor-only `RegisterDescriptor` (no builder); the engine still builds it
+   from the compiled schema.
+5. **File:** `internal/project/config/config.go`. `config` now imports `checks`.
+   Replace `CheckInstance` with the carrier `[]checks.ConfiguredCheck{Kind, Args}`;
+   `buildChecks` calls `checks.Parse(kind, node)` at Load (errors fail
+   `config.Load`, preserving Load-time validation) and stores the validated args.
+   Delete `normalizeCheck`, the union fields, the filesystem/text validators
+   (now in the family packages), and the default consts.
+6. **File:** `cmd/engine.go`. Iterate `[]checks.ConfiguredCheck`, build via
+   `checks.Build(kind, args)` / `BuildCollection`; the object check stays special.
+7. **File:** `internal/checks/registry_test.go`. Delete `dispatchedKinds` and the
+   parity test — the registry is the only enumeration.
+8. **File:** `internal/project/config/config_test.go`. Stays green (Load still
+   validates); adjust only error strings where `argcheck` phrasing differs.
 
 ### Phase 4 — Storage types own their config
 

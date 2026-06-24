@@ -121,31 +121,34 @@ Register(desc,
 validation: the loader holds the block as a `Node` and hands it to the owner,
 which decodes into its own type.
 
-### The dependency design (and how it pays off Spec 1)
+### The dependency design (Path A: decouple, validate at Load)
 
-Distributing config *seems* to risk a `collection ↔ checks` cycle: collections
-contain checks, and collection-scoped checks reference collections. Implementing
-Spec 1 showed the codebase **already avoids this, and the resolution is just to
-preserve the existing boundary.** Two facts from the code:
+The cycle worth fearing is **not** `collection ↔ checks`. Checked against the
+code: `checks.CollectionContext.Items` is a `checks`-local type, and `checks`
+imports only `storage/collection/document` (a leaf codec), never the
+`storage/collection` parent. So a `Collection` *can* hold `[]checks.Check` with
+no back-edge — eager-building does not cycle. (An earlier draft of this spec
+hedged toward lazy raw-node building to avoid that phantom cycle; that rationale
+was wrong and is dropped.)
 
-- `config.Collection.Checks` is `[]CheckInstance` — a collection holds its checks
-  as **config data, never built `Check` values**.
-- Building is lazy, at the top layer: `cmd/engine.go:176` calls `checks.Build(ch)`
-  (and `:234` `BuildCollection`) at run time, not at load time.
+The **real** cycle is `checks → config`: `Descriptor.CheckType` is
+`config.CheckType` and the registry consumes `config.CheckInstance`. That edge is
+what stops `config.Load` from validating checks (it can't call into `checks`).
+**Path A removes it:** move the `CheckType` kind enumeration *into* `checks`
+(check Descriptors stop importing `config`), and change the registry entry point
+to take `(kind, node)` instead of `config.CheckInstance`. With `checks` no longer
+importing `config`, `config` can import `checks` — and the loader parses each
+check through the registry **at Load**, so a successful `config.Load` is the
+proof that every check is valid. This is "parse, don't validate" at the I/O
+boundary: validation is not a deferred re-check (Path B's regression, where a bad
+check in an item-less collection is never seen) but a property of the loaded type.
 
-So nothing holds a `Collection`-that-contains-`Check`-values; the `Collection`→
-`Check` relationship is data, and the *engine* is the assembler. The distributed
-version keeps exactly that shape: a `Collection` carries its checks as **raw
-check config** (the deferred `yaml.Node`s), and the registry builds them lazily
-at the engine boundary. `checks → collection` (for the `CollectionCheck` target
-type) stays one-directional; `collection` never imports `checks`. No cycle.
+The `Collection` then carries **validated, parsed checks** (each check's own typed
+args, produced by its parser) rather than raw `yaml.Node`s — the build into a
+runnable `Check` stays a thin lazy step at the engine, but the *parse* happened
+once at the boundary.
 
-**The anti-pattern to avoid** is eager building: if the loader built
-`[]checks.Check` onto `Collection`, and `Collection` lives in `storage/collection`,
-you would get `storage/collection → checks → storage/collection`. Lazy building
-is therefore load-bearing, not incidental — the spec commits to it.
-
-This is also exactly what **removes Spec 1's interleaving**. The variant `when`
+This decoupling is also what **removes Spec 1's interleaving**. The variant `when`
 predicate grammar (`query`) is used only while parsing a collection's variant
 config — which, once the collection owns that parsing, lives under
 `storage/collection/`. So `collection → query` becomes *intra-`collection`*, and
