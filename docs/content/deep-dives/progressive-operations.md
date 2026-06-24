@@ -1,13 +1,13 @@
 +++
 title = "Progressive operations"
-weight = 30
+weight = 20
 +++
 
 # Progressive Operations
 
-_How data interfaces evolve as query complexity grows. Each tier unlocks new operations, but requires structural commitments the previous tier doesn't._
+_How storage backends evolve as query complexity grows. Each tier unlocks new operations, but requires structural commitments the previous tier doesn't._
 
-The core thesis: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary, each tier is driven by a class of operations that can't be satisfied at the previous level.
+Structuredness comes down to which operations a backend supports, and schemas and checks are the means: enforcing checks is what makes new operations available. The core thesis follows: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary, each tier is driven by a class of operations that can't be satisfied at the previous level.
 
 ---
 
