@@ -4,9 +4,10 @@ weight = 20
 +++
 
 > [!NOTE]
-> **Primary onboarding path: delegate setup to your agent.**
+> ## Primary onboarding path
 > 
-> Copy this into your agent client:
+> The simplest way to install Katalyst is to delegate setup to your agent.
+> Copy this into your agent chat:
 >
 > ```text
 > You are setting up Katalyst for this workspace.
@@ -43,21 +44,8 @@ Or install with Go (1.25+) if you already have a Go toolchain:
 go install github.com/abegong/katalyst@latest
 ```
 
-The release includes macOS, Linux, and Windows archives for common Intel and ARM
-machines. The archive names follow this pattern:
-
-```text
-katalyst_<version>_<os>_<arch>.tar.gz
-katalyst_<version>_windows_<arch>.zip
-```
-
-Build from source only if you are working on Katalyst itself:
-
-```bash
-git clone https://github.com/abegong/katalyst
-cd katalyst
-make build
-```
+Need another install path (archives or source build)?
+See [Installation reference]({{< relref "reference/installation.md" >}}).
 
 ## Create an empty project
 
