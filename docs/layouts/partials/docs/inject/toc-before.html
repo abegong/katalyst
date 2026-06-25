@@ -1,0 +1,10 @@
+{{- $stale := .Params.stale -}}
+{{- $staleMessage := .Params.stale_message -}}
+{{- if or $stale $staleMessage -}}
+<div class="book-toc-warning">
+  <p>
+    <strong>⚠︎ This page may be incomplete, stale or inaccurate.</strong>
+    {{- if $staleMessage }} {{ $staleMessage }}{{- else }}{{- end }}
+  </p>
+</div>
+{{- end -}}
