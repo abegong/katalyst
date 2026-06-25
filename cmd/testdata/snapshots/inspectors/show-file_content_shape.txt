@@ -1,4 +1,4 @@
-Raw-source inspectors › File content shape
+Raw base inspectors › File content shape
 --------------------------------------------
 - inspector: file_content_shape
 - layer: source
@@ -7,8 +7,8 @@ Raw-source inspectors › File content shape
 
 Layer context
 -------------
-Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.
+Raw base inspectors profile a base directly, before any collection configuration: what files are present, how they parse, and how they are named.
 
-Other raw-source inspectors (1)
--------------------------------
+Other raw base inspectors (1)
+-----------------------------
 - file_tree

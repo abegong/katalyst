@@ -1,4 +1,4 @@
-Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.
+Pointed at a bare directory (no project), `inspect` runs the raw base inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.
 
 ## Input
 
@@ -129,4 +129,3 @@ tree:
 read/parse issues:
   none
 ```
-

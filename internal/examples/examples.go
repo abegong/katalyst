@@ -235,8 +235,8 @@ func All() []Example {
 		{
 			ID:      "inspect-source-shape",
 			Title:   "Profile selected raw files by content shape",
-			Summary: "The raw-source file_content_shape inspector profiles a selected slice of files.",
-			Doc:     "Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.",
+			Summary: "The raw base file_content_shape inspector profiles a selected slice of files.",
+			Doc:     "Pointed at a bare directory (no project), `inspect` runs the raw base inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.",
 			Weight:  60,
 			Files:   wikiCorpus,
 			Args:    []string{"inspect", "./wiki", "--inspector", "file_content_shape", "--select", `ext = ".md"`},

@@ -22,8 +22,7 @@ model and the rationale behind it.
 | **Evidence** | The measured counts, distributions, classes, or summaries an inspector reports. Evidence is not a recommendation or verdict. |
 | **Raw base layer** | Inspectors that measure a base directly before collection configuration. |
 | **Collection layer** | Inspectors that measure configured collection items by domain identity. |
-| **Measurement primitive** | A reusable profiler such as `objectFields`, `markdownBody`, or `fileMetadata` that inspectors point at a specific input. |
-| **Profile class** | A group of near-identical profiles collapsed together so output scales with distinct shapes rather than total files. |
+| **Measurement primitive** | A reusable profiler such as `objectFields`, `markdownBody`, `fileMetadata`, or content-shape parsing that inspectors point at a specific input. |
 
 ## Model
 
@@ -32,8 +31,7 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 - **The raw base layer** (`SourceInspector` over a `SourceView`) measures a
   base directly, before any collection configuration, addressed by
   base-native reference (a relative path today). It answers "what is in this
-  base?" - the onboarding case. `file_tree`, `file_tree_content`, and
-  `document_shape` live here.
+  base?" - the onboarding case. `file_tree` and `file_content_shape` live here.
 - **The collection layer** (`CollectionInspector` over a `CollectionView`)
   measures a configured collection's items, addressed by domain identity
   (collection + item id) and reached through the project's
@@ -59,12 +57,12 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   shape (types, naming, depth, regions, directory density) over references,
   opening no files.
 
-The same small primitives are reused where the layer makes sense. `objectFields`
-runs over a collection's items in the collection layer and over loose-file
-frontmatter inside the `document_shape` fingerprint in the raw base layer, so
-the two layers share one engine rather than re-deriving it. Raw base inspectors
-still avoid proposing collections: they report store and content facts, and a
-human or agent decides what collection boundaries those facts imply.
+The same small primitives are reused where the layer makes sense.
+`file_content_shape` opens selected raw files and reports their frontmatter keys
+and body structure; once those files belong to a collection, `object_fields`
+measures item frontmatter by domain identity. Raw base inspectors still avoid
+proposing collections: they report store and content facts, and a human or agent
+decides what collection boundaries those facts imply.
 
 ## Design rationale
 
@@ -92,10 +90,10 @@ none of it here.
 
 **Keep output small.**
 
-`file_tree`, `file_tree_content`, and `document_shape` keep Markdown output
-small with deterministic caps: small trees get an actual tree; content-shape
-reports show the selected file set, dominant structures, and compact
-text/tabular/tree facets, with `-v` for expanded evidence.
+`file_tree` and `file_content_shape` keep Markdown output small with
+deterministic caps: small trees get an actual tree; content-shape reports show
+the selected file set, dominant structures, and compact text/tabular/tree
+facets, with `-v` for expanded evidence.
 
 ## Output
 

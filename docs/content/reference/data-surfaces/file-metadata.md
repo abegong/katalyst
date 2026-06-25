@@ -25,9 +25,9 @@ File metadata belongs to the item because the item's reference can carry
 meaning: a file's name may need to match a field, an extension may need to be
 allowed, or a collection may require one index file per directory.
 
-This view backs file-system check types. It also feeds source inspectors such
-as `file_tree` and `document_shape`, where file names and paths help profile a
-base before or after collections are configured.
+This view backs file-system check types. It also feeds raw base inspectors such
+as `file_tree`, where file names and paths help profile a base before
+collections are configured.
 
 Unlike [Markdown body text]({{< relref "markdown-body-text.md" >}}), file
 metadata is not a codec. It is derived from the reference the base already uses
@@ -46,4 +46,4 @@ to address the item.
 
 - [File system check types]({{< relref "../check-types/file-system/_index.md" >}})
 - [File tree inspector]({{< relref "../inspectors/source/file-tree.md" >}})
-- [Document shape inspector]({{< relref "../inspectors/source/document-shape.md" >}})
+- [File content shape inspector]({{< relref "../inspectors/source/file-content-shape.md" >}})

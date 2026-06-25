@@ -16,7 +16,7 @@ deciding that a field present in 94% of files should be `required`, or that a
 directory should be a collection, is the agent's call. Keep that division
 and the loop stays debuggable.
 
-## 1. Give the agent the raw-store evidence
+## 1. Give the agent the raw base evidence
 
 Run `inspect` on the directory with `--json` so the agent gets structured
 records: one per inspector, each carrying the unit count `n` as the
@@ -26,9 +26,9 @@ denominator:
 katalyst inspect ./wiki --json
 ```
 
-With no project this runs the **raw base** layer. The key record is
-`document_shape`, which clusters files into candidate collections by a composite
-fingerprint (frontmatter keys, body section skeleton, file naming). Feed the
+With no project this runs the **raw base** layer. The useful records are
+`file_tree`, which shows how the directory is laid out, and
+`file_content_shape`, which reports shared structure in selected files. Feed the
 output to the agent. Tell it the contract: every record is *evidence*, not a
 recommendation; it must choose its own thresholds and justify them.
 
@@ -36,10 +36,10 @@ recommendation; it must choose its own thresholds and justify them.
 
 A capable agent then:
 
-1. **Clusters** the `document_shape` classes into candidate collections.
-   `inspect` groups files with *matching* fingerprints; the agent decides when
-   two near-but-distinct classes are really one collection, and names them. It
-   drafts `.katalyst/bases/*` pointing each collection at its directory.
+1. **Drafts candidate collections** from the raw base evidence. `inspect` shows
+   the directory layout and the shared content structure; the agent decides which
+   files belong together, names the collection, and drafts `.katalyst/bases/*`
+   pointing each collection at its directory.
 2. **Profiles the fields** by inspecting each new collection, `katalyst inspect
    <collection> --json` runs the collection layer, whose `object_fields` record
    is the per-field data dictionary (presence, types, values).

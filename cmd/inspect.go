@@ -28,7 +28,7 @@ finds as evidence: counts and distributions, never recommendations.
 The layer is inferred from the argument. Inside a katalyst project, a
 configured collection name (e.g. notes) runs the collection inspectors over
 that collection's items. Otherwise the argument is a filesystem path and the
-raw-source inspectors profile the tree (the onboarding case: "what's here?").
+raw base inspectors profile the tree (the onboarding case: "what's here?").
 
 Inspectors describe; they never recommend. inspect writes no schema and mutates
 nothing. Output is Markdown by default; --json emits the same evidence as JSON.`,
@@ -37,7 +37,7 @@ nothing. Output is Markdown by default; --json emits the same evidence as JSON.`
 			params := inspect.Params{}
 			if selectExpr != "" {
 				if len(inspectors) != 1 || inspectors[0] != "file_content_shape" {
-					return usageErr("--select requires exactly one source inspector: --inspector file_content_shape")
+					return usageErr("--select requires exactly one raw base inspector: --inspector file_content_shape")
 				}
 				params = params.WithSelection(inspect.ParseSelection(selectExpr))
 			}
@@ -82,7 +82,7 @@ nothing. Output is Markdown by default; --json emits the same evidence as JSON.`
 
 // runInspect selects the layer from the argument and runs its inspectors. A
 // configured collection name runs the collection layer; anything else is a
-// filesystem path for the raw-source layer.
+// filesystem path for the raw base layer.
 func runInspect(arg string, names []string, params inspect.Params) ([]inspect.Evidence, error) {
 	if proj, c, ok := resolveCollection(arg); ok {
 		return runCollectionLayer(proj, c, names, params)

@@ -21,7 +21,7 @@ func newInspectorsCmd() *cobra.Command {
 		Short: "Inspect the inspectors katalyst can run, grouped by layer",
 		Long: `inspectors is a read-only view of katalyst's inspector registry, the same
 catalog cmd/gendocs renders and that the inspect command runs. List every
-inspector grouped by layer (raw-source, collection), or show one inspector's
+inspector grouped by layer (raw base, collection), or show one inspector's
 docs-style readout. It reads no project, so it runs in any directory.`,
 	}
 	c.AddCommand(newInspectorsListCmd(), newInspectorsShowCmd())

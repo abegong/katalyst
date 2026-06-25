@@ -8,11 +8,11 @@ bookCollapseSection = true
 
 # Inspectors reference
 
-Inspectors describe the shape of content and return evidence: counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../cli.md" >}}) command. They come in two layers: source inspectors profile a base before configuration, collection inspectors profile a configured collection. These pages are generated from the inspector registry, so they always match the shipped binary.
+Inspectors describe the shape of content and return evidence: counts and distributions, never recommendations. They are the descriptive dual of [check types]({{< relref "../check-types/_index.md" >}}) and drive the [`inspect`]({{< relref "../cli.md" >}}) command. They come in two layers: raw base inspectors profile a base before configuration, collection inspectors profile a configured collection. These pages are generated from the inspector registry, so they always match the shipped binary.
 
-## Source inspectors
+## Raw base inspectors
 
-Source inspectors profile a base directly, before any collection configuration: what files are present, how they parse, and how they are named.
+Raw base inspectors profile a base directly, before any collection configuration: what files are present, how they parse, and how they are named.
 
 - [File tree]({{< relref "source/file-tree.md" >}}): Map files, directories, extensions, regions, and filename conventions, opening no files.
 - [File content shape]({{< relref "source/file-content-shape.md" >}}): Profile selected files by text, tabular, and tree content structure.

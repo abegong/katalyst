@@ -21,7 +21,7 @@ func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 	}
 
 	last := -1
-	for _, title := range []string{"Raw-source inspectors", "Collection inspectors"} {
+	for _, title := range []string{"Raw base inspectors", "Collection inspectors"} {
 		i := strings.Index(stdout, title)
 		if i < 0 {
 			t.Errorf("expected layer title %q in output", title)

@@ -1,4 +1,4 @@
-Pointed at a bare directory (no project), `inspect` runs the raw base inspectors. `document_shape` clusters files by a composite fingerprint, so a shared convention shows up as one class and the stragglers as outliers.
+Pointed at a bare directory (no project), `inspect` runs the raw base inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.
 
 ### Input
 
