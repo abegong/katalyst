@@ -164,7 +164,7 @@ func buildFileTreeSummary(v SourceView) map[string]any {
 	s.naming.dominantExtScope = dominantNamingScope(s.naming.byExtension)
 	s.representativePaths = representativePaths(files, 10)
 	if len(files) <= smallTreeFileLimit && s.dirCount <= smallTreeDirLimit {
-		s.treeLines = asciiTree(files)
+		s.treeLines = unicodeTree(files)
 	}
 	return s.toMap()
 }
@@ -427,7 +427,7 @@ func representativePaths(files []sourceFile, cap int) []string {
 	return out
 }
 
-func asciiTree(files []sourceFile) []string {
+func unicodeTree(files []sourceFile) []string {
 	type node struct {
 		name     string
 		file     bool
@@ -463,10 +463,10 @@ func asciiTree(files []sourceFile) []string {
 		for i, name := range names {
 			child := n.children[name]
 			last := i == len(names)-1
-			connector := "+-- "
-			nextPrefix := prefix + "|   "
+			connector := "├── "
+			nextPrefix := prefix + "│   "
 			if last {
-				connector = "+-- "
+				connector = "└── "
 				nextPrefix = prefix + "    "
 			}
 			label := child.name

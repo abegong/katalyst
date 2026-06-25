@@ -32,9 +32,9 @@ summary:
 
 tree:
 .
-+-- books/
-    +-- dune.md
-    +-- it.md
+└── books/
+    ├── dune.md
+    └── it.md
 
 file types:
   TYPE  FILES

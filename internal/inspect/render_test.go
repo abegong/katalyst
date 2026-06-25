@@ -67,7 +67,7 @@ func TestRenderMarkdown_fileTreeSmallTree(t *testing.T) {
 		"top_level_regions": []any{
 			map[string]any{"path": "books/", "file_count": 3, "extensions": map[string]any{".md": 3}},
 		},
-		"tree_entries":         []any{".", "+-- books/", "    +-- dune.md", "    +-- it.md"},
+		"tree_entries":         []any{".", "└── books/", "    ├── dune.md", "    └── it.md"},
 		"representative_paths": []any{"books/dune.md", "books/it.md"},
 		"directory_summaries":  []any{},
 		"naming": map[string]any{
@@ -84,7 +84,7 @@ func TestRenderMarkdown_fileTreeSmallTree(t *testing.T) {
 		"  files        : 3",
 		"  dominant type: .md (3 of 3 files)",
 		"tree:",
-		"+-- books/",
+		"└── books/",
 		"file types:",
 		"  TYPE  FILES",
 		"  .md   3",
