@@ -15,26 +15,6 @@ registry validates a declared `type`, and a collection parses its own block in
 This page is the model and the *why*; for the key-by-key surface see the
 [configuration reference]({{< relref "../../reference/configuration.md" >}}).
 
-## The `.katalyst/` directory
-
-Configuration lives in a `.katalyst/` directory, discovered by walking **up**
-from the working directory to the nearest ancestor that contains one. That
-ancestor becomes the repo root for all path resolution.
-
-The directory holds an optional `config.yaml`, one schema file per definition
-under `schemas/`, and one base file per definition under `bases/`. A directory
-rather than one big file keeps each schema and base in its own reviewable file
-and lets the name fall out of the filename by convention. A nearest-ancestor
-lookup mirrors `.git`, `.editorconfig`, and `go.mod`: familiar and predictable.
-Discovery resolves symlinks on both the root and the input path, because on
-macOS `$TMPDIR` lives behind `/var` to `/private/var` and relative-path
-resolution would otherwise produce garbage.
-
-`config.yaml` is YAML; schema and base files default to YAML/JSON and the
-accepted format is set per kind there. Default discovery is **convention**: one
-file per definition. A kind can be switched to **explicit** to list its
-definitions inline in `config.yaml` instead.
-
 Collections are declared *inside* a [base]({{< relref "base.md" >}}), which owns
 the base-to-collection mapping. This page covers the collection model and
 schema resolution; the base page covers how a base maps a backend source onto
@@ -125,49 +105,6 @@ config drift: a typo'd pattern or a misfiled document would simply disappear
 from validation. Opt-outs (`--allow-unmatched` and a config knob) are deferred
 until real usage shows the need. The base page frames the same decision as
 [unmatched references being first-class]({{< relref "base.md" >}}).
-
-## Why named collections replaced the old `rules:` list
-
-Earlier versions used a flat, ordered `rules:` list of `{paths: <glob>, schema:
-<name>}` pairs, where the *first matching glob wins*. Named collections replaced
-it for three reasons:
-
-- **Identity.** A collection has a name, so commands can address it (`check
-  books`, `item list books`). An anonymous glob rule cannot be named or
-  selected.
-- **No precedence puzzles.** Glob ordering made the active rule for a file
-  depend on the order of unrelated entries. A file now belongs to exactly one
-  collection - the one whose directory contains it - so there is no "first match
-  wins" to reason about.
-- **More than schemas.** A collection carries a whole `checks:` list (markdown
-  and filesystem checks, not just an object schema), which the old `{paths,
-  schema}` shape could not express cleanly.
-
-The `schema: <name>` shorthand is the one piece of the old model that survived:
-sugar for a single leading `object` check.
-
-## Lifecycle of `check`
-
-The data flow per item, end to end:
-
-1. **Load config** (or take the `--schema` flag). Discover the `.katalyst/`
-   directory from the working directory; failing to find one is a usage error.
-2. **Resolve selectors to items.** No selector means every collection;
-   `<collection>` means all its items; `<collection>/<item>` means one. Files
-   inside a collection directory that do not match its `pattern` are unmatched
-   references (errors).
-3. **Read file bytes.** Read errors are reported per item but do not abort the
-   run; exit-1 status accumulates.
-4. **Parse frontmatter.** Malformed YAML/TOML/JSON is a per-item failure; no
-   frontmatter is itself an error.
-5. **Resolve the object schema** via the precedence above, then **strip the
-   `schema:` directive** so user schemas with `additionalProperties: false`
-   are not tripped by katalyst's own metadata.
-6. **Build the check list** from the resolved object check plus the collection's
-   markdown and filesystem checks.
-7. **Run checks** (see [Checks]({{< relref "checks.md" >}})).
-8. **Format output**: `path:line: /pointer: message` per violation; valid items
-   print `path: OK`.
 
 ## Invariants
 
