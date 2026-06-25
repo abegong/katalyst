@@ -19,6 +19,7 @@ Resources:
   collection  Commands to inspect and modify collections in this project
   item        Commands to inspect and modify individual items in collections within this project
   schema      Commands to inspect and modify schemas defined in this project
+  skills      Commands to list and install agent skills
   check-types Commands to inspect the check types that katalyst can enforce
   inspectors  Commands to inspect the inspectors that katalyst can run
 

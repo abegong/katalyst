@@ -68,6 +68,8 @@ Project links:
 	schemaCmd := newSchemaCmd()
 	schemaCmd.Short = "Commands to inspect and modify schemas defined in this project"
 
+	skillsCmd := newSkillsCmd()
+
 	checkTypesCmd := newCheckTypesCmd()
 	checkTypesCmd.Short = "Commands to inspect the check types that katalyst can enforce"
 
@@ -87,6 +89,7 @@ Project links:
 		collectionCmd,
 		itemCmd,
 		schemaCmd,
+		skillsCmd,
 		checkTypesCmd,
 		inspectorsCmd,
 	)

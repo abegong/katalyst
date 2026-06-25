@@ -3,47 +3,60 @@ title = "Getting started"
 weight = 20
 +++
 
+> [!NOTE]
+> **Primary onboarding path: delegate setup to your agent.** Copy this into your
+> agent client:
+>
+> ```text
+> You are setting up Katalyst for this workspace.
+>
+> 1. Install the latest Katalyst CLI from the release binary for this machine:
+>    curl -fsSL https://raw.githubusercontent.com/abegong/katalyst/main/scripts/install.sh | sh
+>
+> 2. Verify the CLI works:
+>    katalyst --version
+>
+> 3. Download the Katalyst agent skills:
+>    katalyst skills install
+>
+> 4. Tell me where the `.skill` files were written and what I need to do, if
+>    anything, to activate them in this client.
+> ```
+>
+> This is the intended onboarding path. The agent installs the CLI from a
+> prebuilt release binary, downloads the current skill bundles, and reports any
+> client-specific activation step. Manual installs are fallback paths.
+
 ## Install
 
-Install the latest release with Go (1.25+):
+The agent-delegated flow above is the recommended way to get started. If you only
+want the CLI, install the latest release binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/abegong/katalyst/main/scripts/install.sh | sh
+```
+
+Or install with Go (1.25+) if you already have a Go toolchain:
 
 ```bash
 go install github.com/abegong/katalyst@latest
 ```
 
-Or download a prebuilt binary from the
-[latest GitHub Release](https://github.com/abegong/katalyst/releases/latest).
-Releases include macOS, Linux, and Windows archives for common Intel and ARM
-machines.
+The release includes macOS, Linux, and Windows archives for common Intel and ARM
+machines. The archive names follow this pattern:
 
-Build from source only if you are working on katalyst itself:
+```text
+katalyst_<version>_<os>_<arch>.tar.gz
+katalyst_<version>_windows_<arch>.zip
+```
+
+Build from source only if you are working on Katalyst itself:
 
 ```bash
 git clone https://github.com/abegong/katalyst
 cd katalyst
 make build
 ```
-
-## Agent setup
-
-Katalyst also ships task skills for agents. Download the `.skill` files from the
-[latest GitHub Release](https://github.com/abegong/katalyst/releases/latest) and
-install them with your agent client.
-
-Each skill includes a shared bootstrap script. If an agent needs the CLI and
-`katalyst` is not already on `PATH`, run the bundled script from inside the
-installed skill:
-
-```bash
-./bootstrap.sh
-```
-
-The script is idempotent. It reuses an existing `katalyst` command when one is
-available; otherwise it detects the current OS and architecture, downloads the
-matching archive from the latest GitHub Release, and installs it into
-`~/.local/bin`. Set `KATALYST_INSTALL_DIR` before running the script to install
-somewhere else. If no matching archive is available, the script falls back to
-`go install github.com/abegong/katalyst@latest`.
 
 ## Quickstart
 

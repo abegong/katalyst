@@ -1,0 +1,15 @@
+skills manages the agent skill bundles that teach agents to use
+katalyst. List the shipped skills, or download the latest release's .skill
+bundles into a local directory so they can be imported into an agent client.
+
+Usage:
+  katalyst skills [command]
+
+Available Commands:
+  list        List shipped agent skills
+  install     Download latest agent skill bundles
+
+Flags:
+  -h, --help   help for skills
+
+Use "katalyst skills [command] --help" for more information about a command.
