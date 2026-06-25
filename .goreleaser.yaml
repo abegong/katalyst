@@ -40,19 +40,12 @@ checksum:
   name_template: checksums.txt
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^ci:"
-      - "^chore:"
+  disable: true
 
 release:
   draft: false
   prerelease: auto
-  # Attach the packaged skills (built by the `make skills` before-hook) to the
-  # Release, beside the binary archives and checksums. Placeholders never
-  # produce a .skill, so they are excluded automatically.
+  header: |
+    First public Katalyst release.
   extra_files:
     - glob: ./bin/*.skill
