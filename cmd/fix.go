@@ -7,6 +7,7 @@ import (
 
 	"github.com/abegong/katalyst/internal/fix"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -69,6 +70,9 @@ printed and the command exits with status 1. Use this in CI.`,
 // persists it through the filesystem backend (an atomic replace). The split is
 // deliberate: deciding what to write is fix's, writing it is the backend's.
 func fixOne(path string, c project.Collection, check bool) (changed bool, err error) {
+	if c.StorageType == string(storage.SQLite) {
+		return false, fmt.Errorf("fix is not supported for sqlite collections yet")
+	}
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return false, err

@@ -11,8 +11,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
+	sqlitestore "github.com/abegong/katalyst/internal/storage/collection/sqlite"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to
@@ -31,11 +34,34 @@ func (p *Project) Config() *Config { return p.cfg }
 // callers (and the cmd layer) keep using project.Item unchanged.
 type Item = collection.Item
 
-// def builds the filesystem CollectionDefinition for this project's config.
-// Today every configured storage instance is filesystem-backed, and the loaded
-// collection directories have already been resolved against their instance root.
-func (p *Project) def() *filesystem.Definition {
-	return filesystem.New(p.cfg.Root, p.cfg.Collections)
+// ItemContent is the decoded content for one item.
+type ItemContent struct {
+	Raw []byte
+	Doc *markdownbodytext.Document
+}
+
+func (p *Project) storageInstance(name string) (StorageInstance, bool) {
+	for _, inst := range p.cfg.Storage {
+		if inst.Name == name {
+			return inst, true
+		}
+	}
+	return StorageInstance{}, false
+}
+
+func (p *Project) def(c Collection) (collection.CollectionDefinition, error) {
+	inst, ok := p.storageInstance(c.Storage)
+	if !ok {
+		return nil, fmt.Errorf("collection %q: unknown storage instance %q", c.Name, c.Storage)
+	}
+	switch storage.StorageType(inst.Type) {
+	case storage.Filesystem:
+		return filesystem.New(inst.Root, inst.Collections), nil
+	case storage.SQLite:
+		return sqlitestore.New(inst.Root, inst.Collections), nil
+	default:
+		return nil, fmt.Errorf("collection %q: unsupported storage type %q", c.Name, inst.Type)
+	}
 }
 
 // Collections returns all collections in name order.
@@ -58,14 +84,22 @@ func ItemPath(c Collection, id string) string {
 // Items lists the items in a collection: files under its directory that
 // match its pattern, sorted by id. A missing directory yields no items.
 func (p *Project) Items(c Collection) ([]Item, error) {
-	return p.def().Items(c)
+	def, err := p.def(c)
+	if err != nil {
+		return nil, err
+	}
+	return def.Items(c)
 }
 
 // Unmatched lists files inside a collection's directory that do NOT match
 // its pattern. These are reported as errors by `check` (cf.
 // docs/content/reference/configuration.md). Paths are returned relative to Dir.
 func (p *Project) Unmatched(c Collection) ([]string, error) {
-	refs, err := p.def().Unmatched(c)
+	def, err := p.def(c)
+	if err != nil {
+		return nil, err
+	}
+	refs, err := def.Unmatched(c)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +121,125 @@ func (p *Project) ItemAt(collection, id string) (Item, error) {
 	if !ok {
 		return Item{}, &UsageError{Msg: fmt.Sprintf("unknown collection %q", collection)}
 	}
-	ref, err := p.def().Reference(c, id)
+	def, err := p.def(c)
+	if err != nil {
+		return Item{}, err
+	}
+	ref, err := def.Reference(c, id)
 	if err != nil {
 		return Item{}, err
 	}
 	path := string(ref)
+	if c.StorageType == string(storage.SQLite) {
+		def, err := p.def(c)
+		if err != nil {
+			return Item{}, err
+		}
+		exists, err := def.(*sqlitestore.Definition).Exists(c, id)
+		if err != nil {
+			return Item{}, err
+		}
+		if !exists {
+			return Item{}, &UsageError{Msg: fmt.Sprintf("unknown item %q in collection %q", id, collection)}
+		}
+		return Item{Collection: c, ID: id, Path: path}, nil
+	}
 	if info, err := os.Stat(path); err != nil || info.IsDir() {
 		return Item{}, &UsageError{Msg: fmt.Sprintf("unknown item %q in collection %q", id, collection)}
 	}
 	return Item{Collection: c, ID: id, Path: path}, nil
+}
+
+// Reference resolves an item id to a backend-native reference string.
+func (p *Project) Reference(c Collection, id string) (string, error) {
+	def, err := p.def(c)
+	if err != nil {
+		return "", err
+	}
+	ref, err := def.Reference(c, id)
+	return string(ref), err
+}
+
+// ReadItem reads and decodes an item through its storage backend.
+func (p *Project) ReadItem(item Item) (ItemContent, error) {
+	switch storage.StorageType(item.Collection.StorageType) {
+	case storage.SQLite:
+		def, err := p.def(item.Collection)
+		if err != nil {
+			return ItemContent{}, err
+		}
+		raw, doc, err := def.(*sqlitestore.Definition).Read(item)
+		return ItemContent{Raw: raw, Doc: doc}, err
+	default:
+		src, err := os.ReadFile(item.Path)
+		if err != nil {
+			return ItemContent{}, err
+		}
+		doc, err := markdownbodytext.Parse(src)
+		if err != nil {
+			return ItemContent{}, err
+		}
+		return ItemContent{Raw: src, Doc: doc}, nil
+	}
+}
+
+// ItemExists reports whether id already exists in c.
+func (p *Project) ItemExists(c Collection, id string) (bool, error) {
+	switch storage.StorageType(c.StorageType) {
+	case storage.SQLite:
+		def, err := p.def(c)
+		if err != nil {
+			return false, err
+		}
+		return def.(*sqlitestore.Definition).Exists(c, id)
+	default:
+		ref, err := p.Reference(c, id)
+		if err != nil {
+			return false, err
+		}
+		info, err := os.Stat(ref)
+		return err == nil && !info.IsDir(), nil
+	}
+}
+
+// AddItem creates a new item in c.
+func (p *Project) AddItem(c Collection, id string, meta map[string]any, body []byte) error {
+	switch storage.StorageType(c.StorageType) {
+	case storage.SQLite:
+		def, err := p.def(c)
+		if err != nil {
+			return err
+		}
+		return def.(*sqlitestore.Definition).Add(c, id, meta, body)
+	default:
+		return fmt.Errorf("filesystem item writes are handled by cmd")
+	}
+}
+
+// UpdateItem updates an existing item in c.
+func (p *Project) UpdateItem(c Collection, id string, meta map[string]any, body []byte) error {
+	switch storage.StorageType(c.StorageType) {
+	case storage.SQLite:
+		def, err := p.def(c)
+		if err != nil {
+			return err
+		}
+		return def.(*sqlitestore.Definition).Update(c, id, meta, body)
+	default:
+		return fmt.Errorf("filesystem item writes are handled by cmd")
+	}
+}
+
+// DeleteItem deletes an existing item.
+func (p *Project) DeleteItem(item Item) error {
+	switch storage.StorageType(item.Collection.StorageType) {
+	case storage.SQLite:
+		def, err := p.def(item.Collection)
+		if err != nil {
+			return err
+		}
+		return def.(*sqlitestore.Definition).Delete(item.Collection, item.ID)
+	default:
+		return os.Remove(item.Path)
+	}
 }

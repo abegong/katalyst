@@ -1,8 +1,6 @@
 package inspect
 
 import (
-	"os"
-
 	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/collection"
@@ -31,12 +29,8 @@ func NewCollectionView(proj *project.Project, c project.Collection) (CollectionV
 	}
 	docs := make([]*markdownbodytext.Document, len(items))
 	for i, it := range items {
-		src, err := os.ReadFile(it.Path)
-		if err != nil {
-			continue
-		}
-		if doc, err := markdownbodytext.Parse(src); err == nil {
-			docs[i] = doc
+		if content, err := proj.ReadItem(it); err == nil {
+			docs[i] = content.Doc
 		}
 	}
 	return CollectionView{collection: c, items: items, docs: docs}, nil

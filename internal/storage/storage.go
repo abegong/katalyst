@@ -3,14 +3,19 @@ package storage
 // StorageType is a known backend kind capable of holding collections and items.
 type StorageType string
 
-// Filesystem is the only backend implemented today.
-const Filesystem StorageType = "filesystem"
+const (
+	// Filesystem stores each item as one file.
+	Filesystem StorageType = "filesystem"
+	// SQLite stores each collection in one table, with each row as one item.
+	SQLite StorageType = "sqlite"
+)
 
 // registered is the set of backend kinds with an implementation. It is the
 // extension point: a new StorageType is added here when its
 // CollectionDefinition lands.
 var registered = map[StorageType]bool{
 	Filesystem: true,
+	SQLite:     true,
 }
 
 // Known reports whether a StorageType has an implementation. The project loader

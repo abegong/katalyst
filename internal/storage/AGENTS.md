@@ -13,7 +13,7 @@ read stack has its own local guide in
 
 - Add a backend kind here only when its `CollectionDefinition` implementation
   exists. `Known` is the source of truth the project loader uses to validate
-  configured storage types.
+  configured storage types. `filesystem` and `sqlite` are implemented.
 - `Reference` is opaque. Treat it as a backend-native locator, not always a
   filesystem path; filesystem interpretation belongs in `collection/filesystem`.
 - Granularity is a property of the storage type, not user configuration. Keep

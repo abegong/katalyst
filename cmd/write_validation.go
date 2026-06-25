@@ -32,6 +32,10 @@ func validateItemWrite(e *engine, c project.Collection, path string, src []byte)
 	if err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
+	return validateDocWrite(e, c, path, doc)
+}
+
+func validateDocWrite(e *engine, c project.Collection, path string, doc *markdownbodytext.Document) error {
 	if !doc.HasFrontmatter {
 		return fmt.Errorf("%s: no frontmatter found", path)
 	}

@@ -5,8 +5,8 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/project"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection/listing"
 	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 	"github.com/spf13/cobra"
@@ -55,7 +55,7 @@ func newItemListCmd() *cobra.Command {
 Filter, search, sort, and page the result:
   --filter 'year>=1965'   field predicate (= != > >= < <= =~; comma RHS = in;
                           bare field = exists, !field = absent). Repeatable, ANDed.
-  --grep TODO             regexp search; --grep-in all|body|frontmatter; -i.
+  --grep TODO             regexp search; --grep-in all|body|attributes; -i.
   --sort -year,title      sort keys (id, status, or a field); leading - is desc.
   --skip N / --limit N    pagination, applied after sort.`,
 		Args: exactArgs(1, "item list <collection>"),
@@ -120,7 +120,7 @@ Filter, search, sort, and page the result:
 
 	c.Flags().StringArrayVar(&filters, "filter", nil, "Keep items matching a field predicate (repeatable, ANDed)")
 	c.Flags().StringArrayVar(&greps, "grep", nil, "Keep items whose text matches a regexp (repeatable, ANDed)")
-	c.Flags().StringVar(&grepIn, "grep-in", "all", "Region --grep searches: all, body, or frontmatter")
+	c.Flags().StringVar(&grepIn, "grep-in", "all", "Region --grep searches: all, body, or attributes")
 	c.Flags().BoolVarP(&ignoreCase, "ignore-case", "i", false, "Make --grep patterns case-insensitive")
 	c.Flags().StringArrayVar(&sorts, "sort", nil, "Sort by key(s); leading - is descending (e.g. -year,title)")
 	c.Flags().IntVar(&skip, "skip", 0, "Drop the first N results (after sorting)")
@@ -170,10 +170,10 @@ func buildListingOptions(col project.Collection, f listingFlags) (listing.Option
 		opts.GrepIn = listing.RegionAll
 	case "body":
 		opts.GrepIn = listing.RegionBody
-	case "frontmatter":
+	case "attributes", "frontmatter":
 		opts.GrepIn = listing.RegionFrontmatter
 	default:
-		return listing.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or frontmatter (got %q)", f.grepIn))
+		return listing.Options{}, usageErr(fmt.Sprintf("--grep-in: must be all, body, or attributes (got %q)", f.grepIn))
 	}
 
 	for _, spec := range f.sorts {
@@ -216,10 +216,14 @@ func buildListingOptions(col project.Collection, f listingFlags) (listing.Option
 // label. A parse error still yields a record (raw bytes for --grep, empty
 // Meta) so the listing stays robust; the label reports the error.
 func itemRecord(e *engine, col project.Collection, item project.Item) (listing.Record, string) {
-	raw := mustRead(item.Path)
-	rec := listing.Record{ID: item.ID, Raw: raw, Body: raw}
+	content, err := e.proj.ReadItem(item)
+	if err != nil {
+		rec := listing.Record{ID: item.ID, Status: 1 << 30}
+		return rec, "error: " + err.Error()
+	}
+	rec := listing.Record{ID: item.ID, Raw: content.Raw, Body: content.Raw}
 
-	if doc, err := parseItem(item.Path); err == nil && doc != nil {
+	if doc := content.Doc; doc != nil {
 		rec.Meta = doc.Meta
 		rec.Body = doc.Body
 		rec.Frontmatter = doc.Frontmatter
@@ -236,15 +240,21 @@ func itemRecord(e *engine, col project.Collection, item project.Item) (listing.R
 }
 
 func newItemGetCmd() *cobra.Command {
-	var frontmatterOnly, bodyOnly bool
+	var attributesOnly, frontmatterOnly, bodyOnly bool
 
 	c := &cobra.Command{
 		Use:   "get <collection>/<item>",
-		Short: "Print an item (frontmatter and body by default)",
+		Short: "Print an item (attributes and content by default)",
 		Args:  exactArgs(1, "item get <collection>/<item>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if frontmatterOnly && bodyOnly {
-				return usageErr("--frontmatter and --body are mutually exclusive")
+			selected := 0
+			for _, v := range []bool{attributesOnly, frontmatterOnly, bodyOnly} {
+				if v {
+					selected++
+				}
+			}
+			if selected > 1 {
+				return usageErr("--attributes, --frontmatter, and --body are mutually exclusive")
 			}
 			cfg, err := loadConfigFromCWD()
 			if err != nil {
@@ -259,36 +269,33 @@ func newItemGetCmd() *cobra.Command {
 			if err != nil {
 				return asUsageErr(err)
 			}
+			content, err := p.ReadItem(item)
+			if err != nil {
+				return err
+			}
 
 			out := cmd.OutOrStdout()
 			switch {
-			case frontmatterOnly:
-				doc, err := markdownbodytext.Parse(mustRead(item.Path))
-				if err != nil {
-					return err
-				}
-				b, err := yaml.Marshal(doc.Meta)
+			case attributesOnly || frontmatterOnly:
+				b, err := yaml.Marshal(content.Doc.Meta)
 				if err != nil {
 					return err
 				}
 				_, err = out.Write(b)
 				return err
 			case bodyOnly:
-				doc, err := markdownbodytext.Parse(mustRead(item.Path))
-				if err != nil {
-					return err
-				}
-				_, err = out.Write(doc.Body)
+				_, err = out.Write(content.Doc.Body)
 				return err
 			default:
-				_, err := out.Write(mustRead(item.Path))
+				_, err := out.Write(content.Raw)
 				return err
 			}
 		},
 	}
 
-	c.Flags().BoolVar(&frontmatterOnly, "frontmatter", false, "Print only the parsed frontmatter")
-	c.Flags().BoolVar(&bodyOnly, "body", false, "Print only the body")
+	c.Flags().BoolVar(&attributesOnly, "attributes", false, "Print only the item attributes")
+	c.Flags().BoolVar(&frontmatterOnly, "frontmatter", false, "Print only the parsed frontmatter (compatibility alias for --attributes)")
+	c.Flags().BoolVar(&bodyOnly, "body", false, "Print only the content body")
 	return c
 }
 
@@ -319,8 +326,15 @@ The result is validated before writing (use --no-validate to bypass).`,
 			if !ok {
 				return unknownCollectionErr(sel.Collection)
 			}
-			path := project.ItemPath(c, sel.Item)
-			if _, err := os.Stat(path); err == nil {
+			path, err := e.proj.Reference(c, sel.Item)
+			if err != nil {
+				return err
+			}
+			exists, err := e.proj.ItemExists(c, sel.Item)
+			if err != nil {
+				return err
+			}
+			if exists {
 				return usageErr(fmt.Sprintf("%q already exists; refusing to overwrite", c.Name+"/"+sel.Item))
 			}
 
@@ -343,6 +357,14 @@ The result is validated before writing (use --no-validate to bypass).`,
 					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
 					return &exitError{code: exitValidationFail, msg: err.Error()}
 				}
+			}
+
+			if c.StorageType == string(storage.SQLite) {
+				if err := e.proj.AddItem(c, sel.Item, meta, nil); err != nil {
+					return err
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "created %s/%s\n", c.Name, sel.Item)
+				return nil
 			}
 
 			if err := os.MkdirAll(filepathDir(path), 0o755); err != nil {
@@ -391,10 +413,11 @@ bypass). Key removal (--unset) is out of scope for v0.`,
 			}
 			c := item.Collection
 
-			doc, err := parseItem(item.Path)
+			content, err := e.proj.ReadItem(item)
 			if err != nil {
 				return err
 			}
+			doc := content.Doc
 			if !doc.HasFrontmatter {
 				return usageErr(fmt.Sprintf("%s: no frontmatter found", item.Path))
 			}
@@ -421,6 +444,10 @@ bypass). Key removal (--unset) is out of scope for v0.`,
 					fmt.Fprintln(cmd.ErrOrStderr(), err.Error())
 					return &exitError{code: exitValidationFail, msg: err.Error()}
 				}
+			}
+
+			if c.StorageType == string(storage.SQLite) {
+				return e.proj.UpdateItem(c, item.ID, meta, doc.Body)
 			}
 
 			info, err := os.Stat(item.Path)
@@ -464,7 +491,7 @@ func newItemDeleteCmd() *cobra.Command {
 			}
 
 			for _, item := range items {
-				if err := os.Remove(item.Path); err != nil {
+				if err := p.DeleteItem(item); err != nil {
 					return usageErr(fmt.Sprintf("delete %s: %v", item.Path, err))
 				}
 			}

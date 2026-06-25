@@ -19,8 +19,8 @@ contain, and where does each one live?*, in both directions. It is Katalyst's
 realization of the general **storage** concept from
 [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
-The first real stress test will be **SQLite**, because it is the first backend
-that forces the granularity question below.
+The first real stress test is **SQLite**, because it is the first backend that
+forces the granularity question below.
 
 ## Three concepts
 
@@ -122,11 +122,12 @@ template for a future `doctor` / `explain` that diagnoses a definition's mapping
 A collection may run different checks on different items via
 [variants]({{< relref "../reference/configuration.md" >}}#variants), but that is
 a *check-engine* concern, not a storage one. A variant's discriminator is a
-predicate over an item's **metadata**: portable across every StorageType, since
-each yields a metadata map (frontmatter for a file, columns for a row). It never
-touches the seam: membership, `Unmatched`, and `Reference` stay governed by the
-definition's `pattern`. Discriminating by *path* would be a storage-type-scoped
-condition; it is deferred precisely to keep the seam closed for now.
+predicate over an item's **attributes**: portable across every StorageType,
+since each yields a structured attribute object (frontmatter fields for a file,
+configured column captures for a row). It never touches the seam: membership,
+`Unmatched`, and `Reference` stay governed by the definition's `pattern`.
+Discriminating by *path* would be a storage-type-scoped condition; it is
+deferred precisely to keep the seam closed for now.
 
 ## Coordinates are the selector
 
@@ -160,10 +161,12 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 ## What is built, and the seam left open
 
 - **Built:** the `internal/storage` seam (`StorageType`, `StorageInstance`,
-  `CollectionDefinition`, `Granularity`, `Reference`), the
-  `FilesystemCollectionDefinition` (collection = directory, item = each `*.md`
-  file, id = stem, granularity = *file-is-item*), and the config model where an
-  instance declares its collections.
+  `CollectionDefinition`, `Granularity`, `Reference`), the filesystem
+  collection definition (collection = directory, item = each `*.md` file, id =
+  stem, granularity = *file-is-item*), the SQLite collection definition
+  (collection = table, item = row, id = configured column, attributes =
+  configured column captures, granularity = *unit-is-collection*), and the
+  config model where an instance declares its collections.
 - **Open seam:** anything that turns a path into an item identity (or back)
   passes through `CollectionDefinition`, so a second backend (SQLite) can be
   added later without touching the check engine, the CRUD verbs, or selector

@@ -242,7 +242,7 @@ func TestLoad_notFound(t *testing.T) {
 func TestLoad_rejectsUnknownStorageType(t *testing.T) {
 	dir := t.TempDir()
 	projecttest.WriteProject(t, dir, map[string]string{
-		"storage/db.yaml": "type: sqlite\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n",
+		"storage/db.yaml": "type: postgres\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n",
 	})
 	_, err := project.Load(dir)
 	if err == nil || !strings.Contains(err.Error(), "unknown type") {
