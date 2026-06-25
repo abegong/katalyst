@@ -1,26 +1,24 @@
 +++
-title = "Storage layer"
+title = "Bases"
 weight = 40
 +++
 
-# Storage layer
+# Bases
 
-> **Status: partly shipped.** The seam and the config model exist
-> (`internal/storage`, storage instances under `.katalyst/storage/`); the
-> richer mapping (multi-coordinate templates, inferred mode, non-filesystem
-> backends) is still ahead. This page describes the whole arc, and notes what
-> is built versus planned.
+The **storage layer** is how Katalyst reaches a backend store and maps that
+store into the domain model.
 
-## What the storage layer is
+Every base must have include configuration for **raw** access. Raw access gives Katalyst a stable way to
+locate content in the store. For a filesystem, that can be a root directory.
+For SQL, that can be connection information for a specific instance.
 
-The **storage layer** is the two-way mapping between a backend store and the
-Katalyst domain model. It answers: *what collections and items does this store
-contain, and where does each one live?*, in both directions. It is Katalyst's
-realization of the general **storage** concept from
-[domain model]({{< relref "_index.md" >}}): the filesystem is one
-backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
-The first real stress test will be **SQLite**, because it is the first backend
-that forces the scope question below.
+A **collectionized** base keeps that raw access and adds collection
+definitions. Those definitions map backend-native references into named
+collections and item identities that Katalyst commands can address directly.
+This is where two-way mapping applies.
+
+Katalyst's storage model covers filesystem backends today and is designed to
+extend to backends such as SQLite, Postgres, S3, and hosted APIs.
 
 ## Three concepts
 
@@ -30,8 +28,8 @@ and *how does its content map to the model*, so it was split:
 
 | Concept | Meaning |
 |---|---|
-| **StorageType** | A known backend kind capable of holding collections and items: `filesystem` today; `sqlite`, `postgresql`, `mongodb` later. |
-| **StorageInstance** | A specific, connectable instance of a StorageType, plus the information needed to reach it (for `filesystem`, a root directory). |
+| **BaseType** | A known backend kind capable of holding collections and items: `filesystem` today; `sqlite`, `postgresql`, `mongodb` later. |
+| **BaseInstance** | A specific, connectable instance of a StorageType, plus the information needed to reach it (for `filesystem`, a root directory). |
 | **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. `FilesystemCollectionDefinition` is the first; one definition may yield **more than one** collection. |
 
 In config, a StorageInstance declares the collections it maps, the instance
@@ -45,9 +43,9 @@ checks and inspectors consume. The markdown filesystem reader uses
 `internal/codec/markdownbodytext` for frontmatter/body parsing; codecs are
 shared content adapters, not storage backends.
 
-## The heart: a two-way mapping
+## Collectionized bases use a two-way mapping
 
-Storage mapping has two directions:
+When a base is collectionized, mapping has two directions:
 
 - **Forward (discovery):** `path → match pattern → captured groups` become
   the unit's *coordinates*.
@@ -77,14 +75,12 @@ Implication: **Item and Collection are roles, not file counts.** A backend that
 packs many items into one physical unit (rows in a table) and one that spreads a
 single item across a whole unit (a markdown file) are both valid.
 
-## Two modes: Configured vs Inferred
+## Base capability stack
 
-- **Configured:** collections and their patterns are declared explicitly (the
-  instance's `collections:` block). This is the `check` path: known structure,
-  enforced. *Shipped.*
-- **Inferred:** collection names and structure are *discovered* by applying
-  the pattern to whatever is in the store. This is the `infer` / `profile`
-  path: structure read out of the data. *Planned.*
+- **Raw base:** Katalyst can connect to the store and reference backend-native
+  content.
+- **Collectionized base:** a raw base plus collection definitions that map
+  backend-native references into domain collections and items.
 
 ## Unmatched references are first-class
 
@@ -119,8 +115,9 @@ the definition's pattern are two views of the same thing.
 
 - **The contract is two-way, not one-way.** Discovery and reconstruction are
   both core storage operations.
-- **Configured and inferred modes are the same axis.** `check` uses declared
-  structure; `infer` / `profile` discovers structure from the data.
+- **Raw and collectionized are one progression.** A base starts with
+  backend-native references, then gains collection definitions that make
+  collection-aware operations possible.
 - **Surface unmatched references.** Silent skips hide drift between the
   backend's real contents and the configured model.
 - **Coordinates and selectors are one concept.** The fields captured from a
@@ -135,14 +132,13 @@ the definition's pattern are two views of the same thing.
   Collection names and item coordinates answer different questions and should
   stay distinct.
 
-## What is built, and the seam left open
+## Seam and extension points
 
-- **Built:** the `internal/storage` seam (`StorageType`, `StorageInstance`,
-  `CollectionDefinition`, `Reference`), the
-  `FilesystemCollectionDefinition` (collection = directory, item = each `*.md`
-  file, id = stem, item scope), and the config model where an
-  instance declares its collections.
-- **Open seam:** anything that turns a path into an item identity (or back)
+- **Core seam:** `internal/storage` defines `StorageType`,
+  `StorageInstance`, `CollectionDefinition`, and `Reference`. The filesystem
+  implementation maps a directory to a collection and each `*.md` file to an
+  item with a stem id.
+- **Extension point:** anything that turns a path into an item identity (or back)
   passes through `CollectionDefinition`, so a second backend (SQLite) can be
   added later without touching the check engine, the CRUD verbs, or selector
   parsing. Multi-coordinate templates, inferred mode, and non-filesystem types
