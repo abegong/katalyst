@@ -15,24 +15,24 @@ import (
 // the available knobs.
 const scaffoldConfig = `# katalyst project configuration.
 #
-# Schemas live in .katalyst/schemas/<name>.yaml. Storage instances live in
-# .katalyst/storage/<name>.yaml, and each instance declares the collections it
-# maps. The settings below are optional and shown at their defaults; uncomment
-# to change them.
+# Schemas live in .katalyst/schemas/<name>.yaml. Bases live in
+# .katalyst/bases/<name>.yaml, and each base declares the collections it maps.
+# The settings below are optional and shown at their defaults; uncomment to
+# change them.
 #
 # schemas:
 #   discovery: convention   # convention | explicit
 #   format: yaml            # yaml | json | both
-# storage:
+# bases:
 #   discovery: convention
 #   format: yaml
 `
 
-// scaffoldLocalStorage is the default storage instance written by init: the
-// local filesystem rooted at the project. There is no implicit instance,
-// this file is what makes the default explicit. Collections are declared
-// inline here (or split into .katalyst/storage/local/<name>.yaml).
-const scaffoldLocalStorage = `# The default storage instance: the local filesystem, rooted at the project.
+// scaffoldLocalBase is the default base written by init: the local filesystem
+// rooted at the project. There is no implicit base, this file is what makes the
+// default explicit. Collections are declared inline here (or split into
+// .katalyst/bases/local/<name>.yaml).
+const scaffoldLocalBase = `# The default base: the local filesystem, rooted at the project.
 # Declare collections under "collections:", e.g.
 #
 #   collections:
@@ -68,7 +68,7 @@ func newInitCmd() *cobra.Command {
 				return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", katalystDir))
 			}
 
-			for _, sub := range []string{"schemas", "storage"} {
+			for _, sub := range []string{"schemas", "bases"} {
 				rel := filepath.Join(project.Dir, sub)
 				if err := os.MkdirAll(filepath.Join(target, rel), 0o755); err != nil {
 					return err
@@ -76,13 +76,13 @@ func newInitCmd() *cobra.Command {
 				fmt.Fprintf(cmd.OutOrStdout(), "created %s/\n", rel)
 			}
 
-			// Write the default storage instance explicitly; katalyst never
-			// synthesizes one at runtime.
-			storageRel := filepath.Join(project.Dir, "storage", "local.yaml")
-			if err := os.WriteFile(filepath.Join(target, storageRel), []byte(scaffoldLocalStorage), 0o644); err != nil {
+			// Write the default base explicitly; katalyst never synthesizes one
+			// at runtime.
+			baseRel := filepath.Join(project.Dir, "bases", "local.yaml")
+			if err := os.WriteFile(filepath.Join(target, baseRel), []byte(scaffoldLocalBase), 0o644); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", storageRel)
+			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", baseRel)
 
 			cfgRel := filepath.Join(project.Dir, "config.yaml")
 			if err := os.WriteFile(filepath.Join(target, cfgRel), []byte(scaffoldConfig), 0o644); err != nil {

@@ -20,7 +20,7 @@ title: Draft
 No heading here.
 ```
 
-`.katalyst/storage/my_directory.yaml`
+`.katalyst/bases/my_directory.yaml`
 
 ```yaml
 type: filesystem

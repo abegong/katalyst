@@ -31,7 +31,7 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 
 The two are **distinct interfaces, not one type at two scopes**, precisely
 because they reference the data through different machinery. This mirrors the
-seam in the [storage layer]({{< relref "storage.md" >}}).
+seam in the [Bases]({{< relref "storage.md" >}}).
 
 ## Built from primitives
 

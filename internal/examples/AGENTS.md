@@ -27,8 +27,8 @@ for where this fits the wider testing strategy.
 
 ## Corpus house style
 
-- Data files first, then the storage config, then a schema file if one is kept.
-- Name the storage config `.katalyst/storage/my_directory.yaml`.
+- Data files first, then the base config, then a schema file if one is kept.
+- Name the base config `.katalyst/bases/my_directory.yaml`.
 - Prefer inline `checks:` over a schema file; keep a schema only when the example
   is specifically about schema binding.
 

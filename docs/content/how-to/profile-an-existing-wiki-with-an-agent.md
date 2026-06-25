@@ -39,7 +39,7 @@ A capable agent then:
 1. **Clusters** the `document_shape` classes into candidate collections.
    `inspect` groups files with *matching* fingerprints; the agent decides when
    two near-but-distinct classes are really one collection, and names them. It
-   drafts `.katalyst/storage/*` pointing each collection at its directory.
+   drafts `.katalyst/bases/*` pointing each collection at its directory.
 2. **Profiles the fields** by inspecting each new collection, `katalyst inspect
    <collection> --json` runs the collection layer, whose `object_fields` record
    is the per-field data dictionary (presence, types, values).

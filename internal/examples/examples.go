@@ -52,8 +52,8 @@ properties:
   year:  { type: integer }
 `
 
-// notesStorage declares a single `notes` collection bound to the book schema.
-const notesStorage = `type: filesystem
+// notesBase declares a single `notes` collection bound to the book schema.
+const notesBase = `type: filesystem
 root: .
 collections:
   notes:
@@ -61,10 +61,10 @@ collections:
     schema: book
 `
 
-// notesFieldTypeStorage declares the `notes` collection with an inline
+// notesFieldTypeBase declares the `notes` collection with an inline
 // object_field_type check instead of a schema, so the type-error example needs
 // no separate schema file and matches the field-type reference page it sits on.
-const notesFieldTypeStorage = `type: filesystem
+const notesFieldTypeBase = `type: filesystem
 root: .
 collections:
   notes:
@@ -85,8 +85,8 @@ properties:
   status: { enum: [read, reading, to-read] }
 `
 
-// wikiStorage binds a `books` collection over the wiki/ tree.
-const wikiStorage = `type: filesystem
+// wikiBase binds a `books` collection over the wiki/ tree.
+const wikiBase = `type: filesystem
 root: .
 collections:
   books:
@@ -94,9 +94,9 @@ collections:
     schema: book
 `
 
-// postsRulesStorage is the `posts` collection from the configure-rules how-to:
+// postsRulesBase is the `posts` collection from the configure-rules how-to:
 // the three structural/markdown/filesystem checks that guide attaches.
-const postsRulesStorage = `type: filesystem
+const postsRulesBase = `type: filesystem
 root: .
 collections:
   posts:
@@ -122,9 +122,9 @@ properties:
   year:  { type: integer, minimum: 0 }
 `
 
-// booksAtNotesStorage binds the `book` schema to a `books` collection at
+// booksAtNotesBase binds the `book` schema to a `books` collection at
 // notes/books, matching the add-a-schema how-to.
-const booksAtNotesStorage = `type: filesystem
+const booksAtNotesBase = `type: filesystem
 root: .
 collections:
   books:
@@ -132,10 +132,10 @@ collections:
     schema: book
 `
 
-// ciStorage is the small project the validate-in-ci how-to gates: a `notes`
+// ciBase is the small project the validate-in-ci how-to gates: a `notes`
 // collection that only requires an H1, so the failing item fails on structure
 // alone and the canonical-frontmatter gate is easy to read.
-const ciStorage = `type: filesystem
+const ciBase = `type: filesystem
 root: .
 collections:
   notes:
@@ -156,12 +156,12 @@ var wikiCorpus = []File{
 }
 
 // withWikiProject appends the .katalyst project files to the wiki corpus so the
-// data files lead and the storage config (then the schema) trail in the
+// data files lead and the base config (then the schema) trail in the
 // rendered input.
 func withWikiProject() []File {
 	out := append([]File{}, wikiCorpus...)
 	return append(out,
-		File{Path: ".katalyst/storage/my_directory.yaml", Content: wikiStorage},
+		File{Path: ".katalyst/bases/my_directory.yaml", Content: wikiBase},
 		File{Path: ".katalyst/schemas/book.yaml", Content: wikiBookSchema},
 	)
 }
@@ -177,7 +177,7 @@ func All() []Example {
 			Weight:  10,
 			Files: []File{
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: notesStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: notesBase},
 				{Path: ".katalyst/schemas/book.yaml", Content: bookSchema},
 			},
 			Args: []string{"check", "notes/dune"},
@@ -190,7 +190,7 @@ func All() []Example {
 			Weight:  20,
 			Files: []File{
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\nyear: \"not a number\"\n---\n# Dune\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: notesFieldTypeStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: notesFieldTypeBase},
 			},
 			Args: []string{"check", "notes/dune"},
 		},
@@ -202,7 +202,7 @@ func All() []Example {
 			Weight:  30,
 			Files: []File{
 				{Path: "notes/dune.md", Content: "---\ntitle: Dune\n---\n# Children of Dune\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_title_matches_h1\n        field: title\n"},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_title_matches_h1\n        field: title\n"},
 			},
 			Args: []string{"check", "notes/dune"},
 		},
@@ -215,7 +215,7 @@ func All() []Example {
 			ResultFiles: []string{"notes/doc.md"},
 			Files: []File{
 				{Path: "notes/doc.md", Content: "---\nzebra: 1\napple: 2\n---\n# Body\nverbatim\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n"},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: markdown_requires_h1\n"},
 			},
 			Args: []string{"fix", "notes/doc"},
 		},
@@ -228,7 +228,7 @@ func All() []Example {
 			ResultFiles: []string{"notes/doc.md"},
 			Files: []File{
 				{Path: "notes/doc.md", Content: "---\nt: 1\n---\n# Title.\nkeep this.\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: text_forbids\n        target: first-line\n        pattern: '\\.(\\s*)$'\n        fix: '$1'\n"},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: "type: filesystem\nroot: .\ncollections:\n  notes:\n    path: notes\n    checks:\n      - kind: text_forbids\n        target: first-line\n        pattern: '\\.(\\s*)$'\n        fix: '$1'\n"},
 			},
 			Args: []string{"fix", "notes/doc"},
 		},
@@ -259,7 +259,7 @@ func All() []Example {
 			Files: []File{
 				{Path: "notes/books/dune.md", Content: "---\ntitle: Dune\nyear: 1965\n---\n# Dune\n"},
 				{Path: "notes/books/foundation.md", Content: "---\ntitle: Foundation\n---\n# Foundation\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: booksAtNotesStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: booksAtNotesBase},
 				{Path: ".katalyst/schemas/book.yaml", Content: bookConstrainedSchema},
 			},
 			Args: []string{"check", "books"},
@@ -273,7 +273,7 @@ func All() []Example {
 			Files: []File{
 				{Path: "content/posts/hello-world.md", Content: "---\ntitle: Hello world\n---\n# Hello world\n"},
 				{Path: "content/posts/Bad_Title.md", Content: "---\ntitle: Bad title\n---\n# A different heading\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: postsRulesStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: postsRulesBase},
 			},
 			Args: []string{"check", "posts"},
 		},
@@ -286,7 +286,7 @@ func All() []Example {
 			Files: []File{
 				{Path: "notes/intro.md", Content: "---\ntitle: Intro\n---\n# Intro\n"},
 				{Path: "notes/draft.md", Content: "---\ntitle: Draft\n---\nNo heading here.\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: ciStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: ciBase},
 			},
 			Args: []string{"check"},
 		},
@@ -299,7 +299,7 @@ func All() []Example {
 			Files: []File{
 				{Path: "notes/tidy.md", Content: "---\ntitle: Tidy\n---\n# Tidy\n"},
 				{Path: "notes/messy.md", Content: "---\ntitle: Messy\nauthor: Ada\n---\n# Messy\n"},
-				{Path: ".katalyst/storage/my_directory.yaml", Content: ciStorage},
+				{Path: ".katalyst/bases/my_directory.yaml", Content: ciBase},
 			},
 			Args: []string{"fix", "--check"},
 		},

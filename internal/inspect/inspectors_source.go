@@ -14,7 +14,7 @@ type FileTree struct{}
 
 func (FileTree) Name() string { return "file_tree" }
 
-func (FileTree) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
+func (FileTree) AppliesTo(t storage.BaseType) bool { return t == storage.Filesystem }
 
 func (FileTree) Inspect(v SourceView, p Params) Evidence {
 	byDir := v.refsByDir()
@@ -33,7 +33,7 @@ type FileTreeContent struct{}
 
 func (FileTreeContent) Name() string { return "file_tree_content" }
 
-func (FileTreeContent) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
+func (FileTreeContent) AppliesTo(t storage.BaseType) bool { return t == storage.Filesystem }
 
 func (FileTreeContent) Inspect(v SourceView, p Params) Evidence {
 	byDir := map[string][]sourceDoc{}
@@ -55,7 +55,7 @@ type DocumentShape struct{}
 
 func (DocumentShape) Name() string { return "document_shape" }
 
-func (DocumentShape) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
+func (DocumentShape) AppliesTo(t storage.BaseType) bool { return t == storage.Filesystem }
 
 func (DocumentShape) Inspect(v SourceView, p Params) Evidence {
 	docs := v.markdown()

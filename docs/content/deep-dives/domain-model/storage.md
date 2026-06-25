@@ -5,12 +5,13 @@ weight = 40
 
 # Bases
 
-The **storage layer** is how Katalyst reaches a backend store and maps that
-store into the domain model.
+The **base layer** is how Katalyst reaches a backend store and maps that store
+into the domain model.
 
-Every base must have include configuration for **raw** access. Raw access gives Katalyst a stable way to
-locate content in the store. For a filesystem, that can be a root directory.
-For SQL, that can be connection information for a specific instance.
+Every base includes configuration for **raw** access. Raw access gives Katalyst
+a stable way to locate content in the store. For a filesystem, that can be a
+root directory. For SQL, that can be connection information for a specific
+instance.
 
 A **collectionized** base keeps that raw access and adds collection
 definitions. Those definitions map backend-native references into named
@@ -29,16 +30,16 @@ and *how does its content map to the model*, so it was split:
 | Concept | Meaning |
 |---|---|
 | **BaseType** | A known backend kind capable of holding collections and items: `filesystem` today; `sqlite`, `postgresql`, `mongodb` later. |
-| **BaseInstance** | A specific, connectable instance of a StorageType, plus the information needed to reach it (for `filesystem`, a root directory). |
-| **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. `FilesystemCollectionDefinition` is the first; one definition may yield **more than one** collection. |
+| **BaseInstance** | A specific, connectable instance of a BaseType, plus the information needed to reach it (for `filesystem`, a root directory). |
+| **CollectionDefinition** | The two-way mapping from a BaseInstance's contents to collections and items. `FilesystemCollectionDefinition` is the first; one definition may yield **more than one** collection. |
 
-In config, a StorageInstance declares the collections it maps, the instance
-file *is* where the CollectionDefinition lives (see
+In config, a BaseInstance declares the collections it maps, the base file *is*
+where the CollectionDefinition lives (see
 [Configuration]({{< relref "../../reference/configuration.md" >}})). In code, the
 seam is `internal/storage/collection.CollectionDefinition`; `internal/project` consumes it
 rather than implementing the filesystem mapping inline.
 
-Storage readers use codecs to decode a matched unit's content into the shape
+Base readers use codecs to decode a matched unit's content into the shape
 checks and inspectors consume. The markdown filesystem reader uses
 `internal/codec/markdownbodytext` for frontmatter/body parsing; codecs are
 shared content adapters, not storage backends.
@@ -59,7 +60,7 @@ path-reconstruction problem. Today it is the degenerate, stem-only case
 ## The scope principle
 
 **"What does one matched store unit become?" has no global answer, it is a
-property each StorageType declares for its backend.**
+property each BaseType declares for its backend.**
 
 - **Markdown filesystem:** one file = one **Item**; a directory of files =
   a **Collection**.
@@ -98,7 +99,7 @@ that matched nothing.
 A collection may run different checks on different items via
 [variants]({{< relref "../../reference/configuration.md" >}}#variants), but that is
 a *check-engine* concern, not a storage one. A variant's discriminator is a
-predicate over an item's **metadata**: portable across every StorageType, since
+predicate over an item's **metadata**: portable across every BaseType, since
 each yields a metadata map (frontmatter for a file, columns for a row). It never
 touches the seam: membership, `Unmatched`, and `Reference` stay governed by the
 definition's `pattern`. Discriminating by *path* would be a storage-type-scoped
@@ -134,8 +135,9 @@ the definition's pattern are two views of the same thing.
 
 ## Seam and extension points
 
-- **Core seam:** `internal/storage` defines `StorageType`,
-  `StorageInstance`, `CollectionDefinition`, and `Reference`. The filesystem
+- **Core seam:** `internal/storage` defines `BaseType`, `Scope`, and
+  `Reference`; `internal/project` assembles `BaseInstance` values, and
+  `internal/storage/collection` defines `CollectionDefinition`. The filesystem
   implementation maps a directory to a collection and each `*.md` file to an
   item with a stem id.
 - **Extension point:** anything that turns a path into an item identity (or back)
@@ -148,11 +150,11 @@ the definition's pattern are two views of the same thing.
 
 | Term | Meaning |
 |---|---|
-| **StorageType** | A known backend kind (filesystem, sqlite, ...). |
-| **StorageInstance** | A configured instance of a StorageType plus how to reach it. |
+| **BaseType** | A known backend kind (filesystem, sqlite, ...). |
+| **BaseInstance** | A configured instance of a BaseType plus how to reach it. |
 | **CollectionDefinition** | The backend↔domain two-way mapping; yields one or more collections. |
 | **Data reference** | A backend-native locator (file path, S3 key, table name). |
 | **Coordinates** | The captured fields that identify a unit within its collection. |
-| **Scope** | The domain level, item or collection, at which a StorageType attaches a store's units to the model. |
+| **Scope** | The domain level, item or collection, at which a BaseType attaches a store's units to the model. |
 
 [addressing]: {{< relref "_index.md" >}}

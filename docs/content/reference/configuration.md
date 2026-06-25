@@ -21,19 +21,23 @@ collection]({{< relref "../how-to/configure-rules.md" >}}).
   config.yaml          # optional: listing defaults and discovery settings
   schemas/             # one JSON Schema file per named schema
     book.json
-  storage/             # one file per storage instance
-    local.yaml         # an instance + the collections it declares
+  bases/               # one file per base
+    local.yaml         # a base + the collections it declares
     local/             # optional: one file per collection (escape hatch)
       books.yaml
 ```
 
-By default, schemas and storage instances are discovered by **convention**:
+By default, schemas and bases are discovered by **convention**:
 every file under `schemas/` is a schema whose name is its filename stem
-(`book.json` → `book`), and every file under `storage/` is a
-[storage instance](#storage-instances) named for its filename stem
-(`local.yaml` → `local`). `config.yaml` is optional; it carries `listing:`
+(`book.json` → `book`), and every file under `bases/` is a
+[base](#bases) named for its filename stem (`local.yaml` → `local`).
+`config.yaml` is optional; it carries `listing:`
 defaults and can switch a kind to **explicit** discovery, listing definitions
 inline instead of as files.
+
+Legacy projects that still use `storage:` in `config.yaml` or
+`.katalyst/storage/` continue to load. Do not mix legacy and new forms in the
+same project; move legacy base files to `.katalyst/bases/` when you edit them.
 
 ## Schemas
 
@@ -45,21 +49,21 @@ collection's `schema:` shorthand. The path can move; the name should not.
 Schemas are stored flat; the check library that compiles a schema is determined
 by the referencing check type's `kind` (the `object` check uses JSON Schema).
 
-## Storage instances
+## Bases
 
-A **storage instance** is one configured backend store, today always the local
-filesystem, plus the collections it maps onto the domain model. Each file under
-`.katalyst/storage/` is one instance, named for its filename stem. There is no
-implicit instance; `katalyst init` writes a default `local` one.
+A **base** is one configured backend store, today always the local filesystem,
+plus the collections it maps onto the domain model. Each file under
+`.katalyst/bases/` is one base, named for its filename stem. There is no
+implicit base; `katalyst init` writes a default `local` one.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
 | `type` | no | `filesystem` | Backend kind. `filesystem` is the only kind today. |
-| `root` | no | `.` | Instance root directory, relative to the repo root. Collection paths resolve against it. |
+| `root` | no | `.` | Base root directory, relative to the repo root. Collection paths resolve against it. |
 | `collections` | no | - | Map of collection name → definition (see below). |
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -71,16 +75,16 @@ collections:
 ```
 
 Collection names are unique across the whole project (selectors are
-`<collection>/<item>`, with no instance qualifier).
+`<collection>/<item>`, with no base qualifier).
 
 ## Collections
 
 A **collection** is a directory of items plus the checks every item must pass.
-Collections are declared inside their storage instance, under `collections:`.
+Collections are declared inside their base, under `collections:`.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
-| `path` | no | the collection name | Directory, relative to the instance `root`. |
+| `path` | no | the collection name | Directory, relative to the base `root`. |
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `schema` | no | - | Schema name; shorthand for a leading `object` check. |
 | `checks` | no | - | List of checks (see below). |
@@ -92,13 +96,13 @@ non-empty `checks` list, or both. Files in the directory that do not match
 
 ### Per-collection files
 
-An instance whose `collections:` block grows unwieldy may split collections into
-one file each under `.katalyst/storage/<instance>/<collection>.yaml`, named for
+A base whose `collections:` block grows unwieldy may split collections into
+one file each under `.katalyst/bases/<base>/<collection>.yaml`, named for
 its filename stem. Inline and per-file collections coexist; a name declared both
 inline and in a file is an error.
 
 ```yaml
-# .katalyst/storage/local/books.yaml
+# .katalyst/bases/local/books.yaml
 path: notes/books
 schema: book
 ```
@@ -215,7 +219,7 @@ listing:
 ```
 
 ```yaml
-# under a storage instance's collections: — override for one collection
+# under a base's collections: override for one collection
 books:
   path: notes/books
   schema: book
@@ -244,8 +248,8 @@ variant), even when `--schema` is used.
 ## See also
 
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
-- [Storage layer]({{< relref "../deep-dives/domain-model/storage.md" >}}), the storage
-  instance / collection-definition model and its lineage.
+- [Bases]({{< relref "../deep-dives/domain-model/storage.md" >}}), the base /
+  collection-definition model and its lineage.
 - [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.

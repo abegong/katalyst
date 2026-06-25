@@ -6,10 +6,10 @@ weight = 42
 # Collections
 
 The `internal/project` loader (`loader.go`) is the orchestration hub: it loads a
-project's `.katalyst/` directory, resolves named schemas, and assembles storage
-instances and their collections (each object type parses its own config — the
-storage registry validates a declared `type`, and a collection parses its own
-block in `storage/collection`). It decides which schema applies to a given item,
+project's `.katalyst/` directory, resolves named schemas, and assembles bases
+and their collections (each object type parses its own config — the storage
+registry validates a declared `type`, and a collection parses its own block in
+`storage/collection`). It decides which schema applies to a given item,
 and the `check` lifecycle is driven from here.
 This page is the model and the *why*; for the key-by-key surface see the
 [configuration reference]({{< relref "../../reference/configuration.md" >}}).
@@ -21,22 +21,22 @@ from the working directory to the nearest ancestor that contains one. That
 ancestor becomes the repo root for all path resolution.
 
 The directory holds an optional `config.yaml`, one schema file per definition
-under `schemas/`, and one storage-instance file per definition under `storage/`.
-A directory (rather than one big file) keeps each schema and instance in its own
+under `schemas/`, and one base file per definition under `bases/`. A directory
+(rather than one big file) keeps each schema and base in its own
 reviewable file and lets the name fall out of the filename by convention. A
 nearest-ancestor lookup mirrors `.git`, `.editorconfig`, and `go.mod`: familiar
 and predictable. Discovery resolves symlinks on both the root and the input
 path, because on macOS `$TMPDIR` lives behind `/var` to `/private/var` and
 relative-path resolution would otherwise produce garbage.
 
-`config.yaml` is YAML; schema and storage files default to YAML/JSON and the
+`config.yaml` is YAML; schema and base files default to YAML/JSON and the
 accepted format is set per kind there. Default discovery is **convention** (one
 file per definition); a kind can be switched to **explicit** to list its
 definitions inline in `config.yaml` instead.
 
-Collections are declared *inside* a [storage instance]({{< relref "storage.md" >}}),
+Collections are declared *inside* a [base]({{< relref "storage.md" >}}),
 which owns the backend-to-collection mapping. This page covers the collection
-model and schema resolution; the storage layer covers how an instance maps a
+model and schema resolution; the base layer covers how a base maps a
 backend onto those collections.
 
 ## The model
@@ -44,10 +44,10 @@ backend onto those collections.
 - **Collection** - a named group of items backed by a directory; the unit you
   select on the command line and the unit that owns a set of checks. `path`
   defaults to the collection name; `pattern` defaults to `*.md`. Collection
-  names are unique project-wide, since a selector carries no instance qualifier.
+  names are unique project-wide, since a selector carries no base qualifier.
 
   ```yaml
-  # inside .katalyst/storage/local.yaml
+  # inside .katalyst/bases/local.yaml
   collections:
     books:
       path: notes/books   # directory, relative to the repo root
@@ -86,7 +86,7 @@ The collection model is intentionally broader than "a directory of markdown
 files." A collection is the named group Katalyst can list, select, inspect, and
 check, even when the backing storage has a different native vocabulary.
 
-| System               | Storage       | Collection      | Item       | Attribute        |
+| System               | Base          | Collection      | Item       | Attribute        |
 |----------------------|---------------|-----------------|------------|------------------|
 | Postgres             | The database  | A table         | A row      | A column         |
 | MongoDB              | The database  | A collection    | A document | A field          |
@@ -137,7 +137,7 @@ The discriminator is metadata, not a glob, on purpose: metadata is the one
 property every item yields on every backend (frontmatter for a file, columns for
 a future row), so routing stays portable and the engine never depends on the
 storage type. Selecting by *path* is a storage-type-scoped condition, deferred.
-(The storage layer covers [how variants route checks rather than
+(The base layer covers [how variants route checks rather than
 membership]({{< relref "storage.md" >}}).)
 
 ## Why a file inside a collection must match
@@ -146,7 +146,7 @@ A file that sits inside a collection's directory but does not match its
 `pattern` is reported as an **error**, not silently skipped. Silent skips hide
 config drift: a typo'd pattern or a misfiled document would simply disappear
 from validation. Opt-outs (`--allow-unmatched` and a config knob) are deferred
-until real usage shows the need. The storage layer frames the same decision as
+until real usage shows the need. The base layer frames the same decision as
 [unmatched references being first-class]({{< relref "storage.md" >}}).
 
 ## Why named collections replaced the old `rules:` list
@@ -207,8 +207,8 @@ The data flow per item, end to end:
 
 - The [configuration reference]({{< relref "../../reference/configuration.md" >}})
   for the precise `.katalyst/` surface.
-- The [storage layer]({{< relref "storage.md" >}}) for how a backend maps onto
-  collections, and the instance model.
+- The [base layer]({{< relref "storage.md" >}}) for how a backend maps onto
+  collections, and the base model.
 - The [domain model]({{< relref "_index.md" >}}) for the cross-subsystem
   entity map and invariants.
 - `go doc ./internal/project` for the code-level contract.

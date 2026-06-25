@@ -32,8 +32,8 @@ func (p *Project) Config() *Config { return p.cfg }
 type Item = collection.Item
 
 // def builds the filesystem CollectionDefinition for this project's config.
-// Today every configured storage instance is filesystem-backed, and the loaded
-// collection directories have already been resolved against their instance root.
+// Today every configured base is filesystem-backed, and the loaded collection
+// directories have already been resolved against their base root.
 func (p *Project) def() *filesystem.Definition {
 	return filesystem.New(p.cfg.Root, p.cfg.Collections)
 }

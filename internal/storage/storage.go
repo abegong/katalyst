@@ -1,32 +1,32 @@
 package storage
 
-// StorageType is a known backend kind capable of holding collections and items.
-type StorageType string
+// BaseType is a known backend kind capable of holding collections and items.
+type BaseType string
 
 // Filesystem is the only backend implemented today.
-const Filesystem StorageType = "filesystem"
+const Filesystem BaseType = "filesystem"
 
 // registered is the set of backend kinds with an implementation. It is the
-// extension point: a new StorageType is added here when its
+// extension point: a new BaseType is added here when its
 // CollectionDefinition lands.
-var registered = map[StorageType]bool{
+var registered = map[BaseType]bool{
 	Filesystem: true,
 }
 
-// Known reports whether a StorageType has an implementation. The project loader
+// Known reports whether a BaseType has an implementation. The project loader
 // carries the type as a plain string and leaves this validation to the storage
 // layer, so the storage registry remains the source of truth for backend kinds.
-func Known(t StorageType) bool { return registered[t] }
+func Known(t BaseType) bool { return registered[t] }
 
-// Granularity records the scope at which a backend's matched units attach to
-// the domain model. It is a property of the StorageType, not user
+// Scope records the scope at which a backend's matched units attach to
+// the domain model. It is a property of the BaseType, not user
 // configuration: a markdown filesystem makes each file an Item, while a tabular
 // backend would make each table a Collection and each row an Item.
-type Granularity int
+type Scope int
 
 const (
 	// FileIsItem: one file is one Item; a directory of files is a Collection.
-	FileIsItem Granularity = iota
+	FileIsItem Scope = iota
 	// UnitIsCollection: one store unit (a table/file) is a Collection; its
 	// rows are Items. Reserved for future tabular backends.
 	UnitIsCollection

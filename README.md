@@ -49,7 +49,7 @@ As your content evolves, Katalyst gives you tools to navigate change.
 
 - *Add or change checks*
 - *Change the structure of your content*
-- *Change your storage layer*
+- *Change your base*
 
 ## Design principles
 

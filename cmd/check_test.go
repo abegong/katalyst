@@ -14,9 +14,9 @@ func setupNotesRepo(t *testing.T, notesCollection string) string {
 	t.Helper()
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"config.yaml":        schemaFormatJSON,
-		"schemas/book.json":  bookSchemaFixture,
-		"storage/local.yaml": storageLocal(map[string]string{"notes": notesCollection}),
+		"config.yaml":       schemaFormatJSON,
+		"schemas/book.json": bookSchemaFixture,
+		"bases/local.yaml":  baseLocal(map[string]string{"notes": notesCollection}),
 	})
 	chdir(t, dir)
 	return dir
@@ -167,7 +167,7 @@ func setupVariantRepo(t *testing.T, pagesBody string) string {
 		"schemas/page.yaml":    "type: object\nrequired: [title]\nproperties:\n  title: {type: string}\n",
 		"schemas/section.yaml": "type: object\n",
 		"schemas/content.yaml": "type: object\nrequired: [weight]\nproperties:\n  weight: {type: integer}\n",
-		"storage/local.yaml":   storageLocal(map[string]string{"pages": pagesBody}),
+		"bases/local.yaml":     baseLocal(map[string]string{"pages": pagesBody}),
 	})
 	chdir(t, dir)
 	return dir
@@ -335,7 +335,7 @@ func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 		"config.yaml":              schemaFormatJSON,
 		"schemas/book.json":        bookSchemaFixture,
 		"schemas/strict-book.json": strictBookSchemaFixture,
-		"storage/local.yaml":       storageLocal(map[string]string{"notes": "path: notes\nschema: book\n"}),
+		"bases/local.yaml":         baseLocal(map[string]string{"notes": "path: notes\nschema: book\n"}),
 	})
 	chdir(t, dir)
 
@@ -356,7 +356,7 @@ func TestCheck_inlineSchemaKeyTakesPrecedence(t *testing.T) {
 func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n"}),
+		"bases/local.yaml": baseLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/dune.md"), "---\ntitle: Dune\n---\n# Children of Dune\n")
@@ -376,7 +376,7 @@ func TestCheck_markdownAndFilesystemChecks(t *testing.T) {
 func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n"}),
+		"bases/local.yaml": baseLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/a.md"), "---\nslug: dune\n---\n# A\n")
@@ -395,7 +395,7 @@ func TestCheck_collectionScoped_rescanFullCollectionForSingleItemSelector(t *tes
 func TestCheck_writingTells_warnButPass(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
-		"storage/local.yaml": storageLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
+		"bases/local.yaml": baseLocal(map[string]string{"notes": "path: notes\nchecks:\n  - kind: markdown_writing_tells\n"}),
 	})
 	chdir(t, dir)
 	mustWrite(t, filepath.Join(dir, "notes/x.md"),
