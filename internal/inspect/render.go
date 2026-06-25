@@ -88,7 +88,7 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 	dirCount := asInt(data["dir_count"])
 	maxDepth := asInt(data["max_depth"])
 	extensions := anyMap(data["extensions"])
-	lines := []string{"summary:"}
+	lines := []string{sectionDivider, "summary:"}
 	lines = append(lines, alignRows([][]string{
 		{"files", fmt.Sprintf("%d", fileCount)},
 		{"directories", fmt.Sprintf("%d", dirCount)},
@@ -183,8 +183,10 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 }
 
 func appendSection(lines []string, label string) []string {
-	return append(lines, "", "----------------------------------------", label)
+	return append(lines, "", sectionDivider, label)
 }
+
+const sectionDivider = "----------------------------------------"
 
 func dominantExtensionSummary(fileCount int, exts map[string]any) string {
 	if ext, n := dominantAnyExtension(exts); ext != "" && fileCount > 0 && n >= 3 && n*100 >= fileCount*60 {

@@ -24,6 +24,7 @@ _Cluster files into candidate collections by a composite fingerprint of frontmat
 
 _Map files, directories, extensions, regions, and filename conventions, opening no files._
 
+----------------------------------------
 summary:
   files        : 2
   directories  : 2
