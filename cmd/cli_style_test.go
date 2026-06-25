@@ -30,6 +30,7 @@ func TestCLIStyle_rootHelpOrderStaysIntentional(t *testing.T) {
 		"collection",
 		"item",
 		"schema",
+		"skills",
 		"check-types",
 		"inspectors",
 	}
@@ -122,6 +123,7 @@ func TestCLIStyle_noArgCommandsUseStandardArityError(t *testing.T) {
 		{path: []string{"init"}, usage: "init"},
 		{path: []string{"collection", "list"}, usage: "collection list"},
 		{path: []string{"schema", "list"}, usage: "schema list"},
+		{path: []string{"skills", "list"}, usage: "skills list"},
 		{path: []string{"check-types", "list"}, usage: "check-types list"},
 		{path: []string{"inspectors", "list"}, usage: "inspectors list"},
 	}

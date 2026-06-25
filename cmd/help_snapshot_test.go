@@ -15,6 +15,7 @@ func TestTopLevelHelpSnapshots(t *testing.T) {
 		{name: "collection help", fixture: "help/collection.txt", args: []string{"collection", "--help"}},
 		{name: "item help", fixture: "help/item.txt", args: []string{"item", "--help"}},
 		{name: "schema help", fixture: "help/schema.txt", args: []string{"schema", "--help"}},
+		{name: "skills help", fixture: "help/skills.txt", args: []string{"skills", "--help"}},
 		{name: "check-types help", fixture: "help/check-types.txt", args: []string{"check-types", "--help"}},
 		{name: "inspectors help", fixture: "help/inspectors.txt", args: []string{"inspectors", "--help"}},
 	}

@@ -42,3 +42,36 @@
 .book-toc :is(.book-toc-note, .book-toc-warning) a {
   display: inline;
 }
+
+pre.book-code-block {
+  position: relative;
+}
+
+.book-code-copy {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--gray-400);
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, var(--body-background) 88%, var(--gray-200) 12%);
+  color: var(--body-font-color);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-in-out;
+}
+
+.book-code-block:hover .book-code-copy,
+.book-code-block:focus-within .book-code-copy,
+.book-code-copy.is-copied {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.book-code-copy.is-copied {
+  border-color: var(--color-link);
+  color: var(--color-link);
+}
