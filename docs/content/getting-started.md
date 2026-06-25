@@ -4,13 +4,14 @@ weight = 20
 +++
 
 > [!NOTE]
-> **Primary onboarding path: delegate setup to your agent.** Copy this into your
-> agent client:
+> **Primary onboarding path: delegate setup to your agent.**
+> 
+> Copy this into your agent client:
 >
 > ```text
 > You are setting up Katalyst for this workspace.
 >
-> 1. Install the latest Katalyst CLI from the release binary for this machine:
+> 1. Install the latest Katalyst CLI from the release binary:
 >    curl -fsSL https://raw.githubusercontent.com/abegong/katalyst/main/scripts/install.sh | sh
 >
 > 2. Verify the CLI works:
@@ -58,7 +59,7 @@ cd katalyst
 make build
 ```
 
-## Quickstart
+## Create an empty project
 
 ```bash
 mkdir my-notes && cd my-notes

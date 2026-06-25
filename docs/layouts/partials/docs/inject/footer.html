@@ -1,0 +1,62 @@
+<script>
+  (function () {
+    function copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+
+      return new Promise(function (resolve, reject) {
+        try {
+          var textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "absolute";
+          textarea.style.left = "-9999px";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    document.querySelectorAll("pre code").forEach(function (codeEl) {
+      var pre = codeEl.parentElement;
+      if (!pre || pre.dataset.copyButtonAttached === "true") {
+        return;
+      }
+      pre.dataset.copyButtonAttached = "true";
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "book-code-copy";
+      button.setAttribute("aria-label", "Copy code");
+      button.textContent = "Copy";
+
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var originalLabel = button.textContent;
+        copyText(codeEl.innerText).then(function () {
+          button.textContent = "Copied";
+          button.classList.add("is-copied");
+          window.setTimeout(function () {
+            button.textContent = originalLabel;
+            button.classList.remove("is-copied");
+          }, 1400);
+        }).catch(function () {
+          button.textContent = "Failed";
+          window.setTimeout(function () {
+            button.textContent = originalLabel;
+          }, 1400);
+        });
+      });
+
+      pre.classList.add("book-code-block");
+      pre.appendChild(button);
+    });
+  })();
+</script>
