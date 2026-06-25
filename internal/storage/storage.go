@@ -18,10 +18,10 @@ var registered = map[StorageType]bool{
 // layer, so the storage registry remains the source of truth for backend kinds.
 func Known(t StorageType) bool { return registered[t] }
 
-// Granularity is the level at which a backend's matched units attach to the
-// domain model. It is a property of the StorageType, not user configuration: a
-// markdown filesystem makes each file an Item, while a tabular backend would
-// make each table a Collection and each row an Item.
+// Granularity records the scope at which a backend's matched units attach to
+// the domain model. It is a property of the StorageType, not user
+// configuration: a markdown filesystem makes each file an Item, while a tabular
+// backend would make each table a Collection and each row an Item.
 type Granularity int
 
 const (

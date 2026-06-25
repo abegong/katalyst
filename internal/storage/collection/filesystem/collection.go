@@ -35,7 +35,7 @@ func New(root string, collections []collection.Collection) *Definition {
 	return &Definition{root: root, collections: collections}
 }
 
-// Granularity is FileIsItem for the markdown filesystem.
+// Granularity reports item scope for the markdown filesystem.
 func (f *Definition) Granularity() storage.Granularity { return storage.FileIsItem }
 
 // Collections returns the collections this definition maps.

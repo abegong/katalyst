@@ -4,7 +4,7 @@ The check engine: the check types Katalyst ships, the libraries that run them,
 and the violations they produce.
 
 **Architecture and design rationale** - the model (check type vs. instance,
-family vs. library, granularity), check libraries, how a check runs, and the
+family vs. library, scope), check libraries, how a check runs, and the
 trade-offs - live in the
 [How checks work](../../docs/content/deep-dives/checks.md) deep-dive, which is
 the source of truth. The per-type catalog is the generated

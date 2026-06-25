@@ -20,7 +20,7 @@ realization of the general **storage** concept from
 [core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
 The first real stress test will be **SQLite**, because it is the first backend
-that forces the granularity question below.
+that forces the scope question below.
 
 ## Three concepts
 
@@ -45,17 +45,9 @@ checks and inspectors consume. The markdown filesystem reader uses
 `internal/codec/markdownbodytext` for frontmatter/body parsing; codecs are
 shared content adapters, not storage backends.
 
-## Lineage: GX legacy DataConnectors
+## The heart: a two-way mapping
 
-The design is adapted from Great Expectations' V3 `DataConnector` layer
-(recovered for reference *outside this repo*; originally GX commit
-`6cd804579`, removed in `27eb8d28b`). A GX `DataConnector` defined a
-`regex + group_names` naming convention that mapped each file/key in a store
-to a `BatchDefinition`, plus the inverse mapping back to a path. GX's
-`Datasource` (the store) versus `DataConnector` (the mapping) split is exactly
-the StorageInstance versus CollectionDefinition split here.
-
-### The heart: a two-way mapping
+Storage mapping has two directions:
 
 - **Forward (discovery):** `path → match pattern → captured groups` become
   the unit's *coordinates*.
@@ -66,41 +58,26 @@ The reverse direction is **not optional**. Katalyst needs it the moment
 path-reconstruction problem. Today it is the degenerate, stem-only case
 (`Reference(c, id) → <dir>/<id>.md`); it grows with the layout.
 
-## Concept mapping: GX → Katalyst
-
-| GX (legacy V3) | Katalyst |
-|----------------|----------|
-| Datasource | **StorageInstance** (+ its StorageType) |
-| **DataConnector** | **CollectionDefinition** |
-| DataAsset (`data_asset_name`) | **Collection** |
-| **Batch / BatchDefinition** | **Item** *(markdown)* / Collection *(tabular)*, see granularity |
-| PartitionDefinition (`group_names` → values) | the item's **coordinates** (today: the stem) |
-| BatchRequest / PartitionQuery | a **selector** (the [addressing] grammar) |
-| BatchSpec | the resolved fetch instruction (a `Reference`, the file path) |
-| Configured vs. Inferred | `check` (declared) vs. `infer` / `profile` (discovered) |
-
-### The granularity principle (locked)
+## The scope principle
 
 **"What does one matched store unit become?" has no global answer, it is a
 property each StorageType declares for its backend.**
 
 - **Markdown filesystem:** one file = one **Item**; a directory of files =
-  a **Collection** (`Granularity` is `FileIsItem`).
+  a **Collection**.
 - **Tabular (CSV / SQL):** one file/table = one **Collection**; its rows =
-  **Items** (`UnitIsCollection`).
+  **Items**.
 
-This is why a GX *Batch* maps to a Katalyst *Item* in the markdown world but
-to a *Collection* in the tabular world, and both are correct. The definition
-absorbs that impedance: alongside the path↔coordinates mapping, it declares the
-**level** at which a store's units attach to the collection/item hierarchy.
+Both mappings are correct because item and collection are domain roles, not
+file counts. The definition absorbs that difference: alongside the
+path↔coordinates mapping, it declares the **scope** at which a store's units
+attach to the collection/item hierarchy.
 
 Implication: **Item and Collection are roles, not file counts.** A backend that
 packs many items into one physical unit (rows in a table) and one that spreads a
 single item across a whole unit (a markdown file) are both valid.
 
 ## Two modes: Configured vs Inferred
-
-GX shipped both, and they map cleanly onto Katalyst verbs:
 
 - **Configured:** collections and their patterns are declared explicitly (the
   instance's `collections:` block). This is the `check` path: known structure,
@@ -111,11 +88,14 @@ GX shipped both, and they map cleanly onto Katalyst verbs:
 
 ## Unmatched references are first-class
 
-GX tracked files that matched no pattern (`get_unmatched_data_references`)
-rather than silently dropping them. Katalyst already treats unmatched as an
-error. GX's `self_check`, "here are your
-collections, some examples, and the files that matched nothing", is the
-template for a future `doctor` / `explain` that diagnoses a definition's mapping.
+Katalyst treats unmatched references as errors rather than silently dropping
+them. A file inside a configured collection's scope that matches no pattern is
+usually a signal of config drift: the pattern is wrong, the file is misplaced,
+or the project has gained a new shape that has not been modeled yet.
+
+The same evidence can power a future `doctor` / `explain` command: list the
+collections, show representative examples, and surface the backend references
+that matched nothing.
 
 ## Variants route checks, not membership
 
@@ -130,39 +110,37 @@ condition; it is deferred precisely to keep the seam closed for now.
 
 ## Coordinates are the selector
 
-GX's `group_names` *are* the addressing grammar: a batch is addressed by its
-asset plus its captured coordinates (`{year, letter, …}`). In Katalyst, the
-flat `stem` identity is the degenerate one-coordinate case; richer layouts
-(`notes/2020/dune`) grow into multiple coordinates parsed from the path. The
-selector grammar and the definition's pattern are two views of the same thing.
+In Katalyst, the flat `stem` identity is the degenerate one-coordinate case:
+`notes/dune.md` becomes the item id `dune`. Richer layouts (`notes/2020/dune`)
+grow into multiple coordinates parsed from the path. The selector grammar and
+the definition's pattern are two views of the same thing.
 
-## Design lessons (carried + corrected)
+## Design lessons
 
-Reuse as-is:
-
-- The contract is **two-way**, not one-way (discovery *and* reconstruction).
-- **Configured / Inferred ≙ `check` / `infer`:** same axis, already planned.
-- **Surface unmatched**, don't swallow it.
-- **Coordinates = selector:** design them as one concept.
-
-Do better than GX did (straight from its own TODOs in the recovered code):
-
+- **The contract is two-way, not one-way.** Discovery and reconstruction are
+  both core storage operations.
+- **Configured and inferred modes are the same axis.** `check` uses declared
+  structure; `infer` / `profile` discovers structure from the data.
+- **Surface unmatched references.** Silent skips hide drift between the
+  backend's real contents and the configured model.
+- **Coordinates and selectors are one concept.** The fields captured from a
+  backend reference should be the same fields users and agents use to address
+  the item.
 - **Prefer an inherently two-way template** (`{name}_{year}.md`) over inverting
-  an arbitrary regex. GX inverted a capture-group regex into a `str.format`
-  template and the author flagged it as *"almost certainly still brittle"*, a
-  template is bidirectional by construction; a regex is not.
+  an arbitrary regex. A template is bidirectional by construction; a regex is
+  not.
 - **The pattern must own the file extension**, or reconstruction is ambiguous
-  when several extensions are allowed (a GX limitation noted in `util.py`).
+  when several extensions are allowed.
 - **Keep collection identity separate from within-collection coordinates.**
-  GX leaked `data_asset_name` into the coordinate map and regretted it; keep
-  them distinct fields.
+  Collection names and item coordinates answer different questions and should
+  stay distinct.
 
 ## What is built, and the seam left open
 
 - **Built:** the `internal/storage` seam (`StorageType`, `StorageInstance`,
-  `CollectionDefinition`, `Granularity`, `Reference`), the
+  `CollectionDefinition`, `Reference`), the
   `FilesystemCollectionDefinition` (collection = directory, item = each `*.md`
-  file, id = stem, granularity = *file-is-item*), and the config model where an
+  file, id = stem, item scope), and the config model where an
   instance declares its collections.
 - **Open seam:** anything that turns a path into an item identity (or back)
   passes through `CollectionDefinition`, so a second backend (SQLite) can be
@@ -179,7 +157,7 @@ Do better than GX did (straight from its own TODOs in the recovered code):
 | **CollectionDefinition** | The backend↔domain two-way mapping; yields one or more collections. |
 | **Data reference** | A backend-native locator (file path, S3 key, table name). |
 | **Coordinates** | The captured fields that identify a unit within its collection. |
-| **Granularity** | The level (item vs. collection) at which a StorageType attaches a store's units to the domain model. |
+| **Scope** | The domain level, item or collection, at which a StorageType attaches a store's units to the model. |
 
 [addressing]: {{< relref "core-concepts.md" >}}
 </content>

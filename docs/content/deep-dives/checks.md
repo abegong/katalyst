@@ -43,13 +43,13 @@ orthogonal, and a single family spans libraries: `structuredObject` holds both
 structured-object library). Family answers *what data*; library answers *who
 runs the engine*.
 
-**Granularity.** Most checks run once per item, implementing `Run(Context)
+**Scope.** Most checks run once per item, implementing `Run(Context)
 []Violation`. A few reason across an entire collection (uniqueness, a required
 index file) and implement `RunCollection(CollectionContext) []Violation`: they
 run once per collection, after the per-item pass, so even a single-item selector
 re-scans every sibling (a uniqueness verdict is only correct against the whole
-set). Granularity is independent of family: `unique_field` is collection-scoped
-and `structuredObject`; `unique_filename` is collection-scoped and `fileSystem`.
+set). Scope is independent of family: `unique_field` is collection-scoped and
+`structuredObject`; `unique_filename` is collection-scoped and `fileSystem`.
 
 A check also carries a **severity**. The default is `error`, which fails the
 run; `warning` is advisory and never changes the exit code. Warnings exist for

@@ -40,9 +40,9 @@ type Descriptor struct {
 	// is provenance, orthogonal to Family (source-data kind).
 	Library string `json:"library,omitempty"`
 	// Family groups the check type by source-data kind: "structuredObject",
-	// "markdownBodyText", "fileSystem", or "plainText". Family and granularity
-	// are orthogonal, a collection-scoped check is grouped by the data it
-	// reads, not by its scope (e.g. unique_field is structuredObject).
+	// "markdownBodyText", "fileSystem", or "plainText". Family and scope are
+	// orthogonal, a collection-scoped check is grouped by the data it reads,
+	// not by its scope (e.g. unique_field is structuredObject).
 	Family string `json:"family"`
 	// Slug is the page basename under the family directory.
 	Slug string `json:"slug"`

@@ -20,19 +20,10 @@
 // filename stem) and Reference is Join(dir, id+ext); richer layouts grow into
 // multi-coordinate templates.
 //
-// # Granularity
+// # Scope
 //
 // Whether a matched store unit becomes an Item or a Collection is a property of
-// the StorageType (Granularity), not user configuration. A markdown file is an
-// Item (FileIsItem); a SQL table would be a Collection (UnitIsCollection). Item
-// and Collection are therefore roles, not file counts.
-//
-// # Lineage
-//
-// The design adapts Great Expectations' V3 DataConnector layer: its Datasource
-// vs. DataConnector split is this package's StorageInstance vs.
-// CollectionDefinition split. Corrections carried from GX's own TODOs: prefer a
-// two-way template over inverting a regex, let the pattern own the file
-// extension, and keep collection identity separate from within-collection
-// coordinates. See docs/content/deep-dives/storage.md.
+// the StorageType, not user configuration. A markdown file is an Item; a SQL
+// table would be a Collection. Item and Collection are therefore roles, not file
+// counts. See docs/content/deep-dives/storage.md.
 package storage

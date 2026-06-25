@@ -159,7 +159,7 @@ you add a fixture.
   descriptor is malformed, so a new check type ships with a complete descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
   contract for `katalyst check-types list --json`; keep them stable.
 - A check type's **family** groups it by source-data kind, and is orthogonal to
-  its granularity: a collection-scoped check is filed by the data it reads
+  its scope: a collection-scoped check is filed by the data it reads
   (`unique_field` → `structuredObject`, `unique_filename` → `fileSystem`). The
   `kind` id is the wire contract and never changes, even when the family does.
 - A **CheckLibrary** (`internal/checks`, `CheckLibrary`/`SchemaLibrary`) is the
