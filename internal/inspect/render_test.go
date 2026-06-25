@@ -12,7 +12,17 @@ import (
 // so the renderer is exercised without depending on any inspector's internals.
 func renderInput() []inspect.Evidence {
 	return []inspect.Evidence{
-		{Inspector: "document_shape", Scope: "books", N: 3, Data: map[string]any{"classes": []any{}, "outliers": []any{}}},
+		{Inspector: "file_tree", Scope: "books", N: 3, Data: map[string]any{
+			"file_count":           3,
+			"dir_count":            1,
+			"max_depth":            1,
+			"extensions":           map[string]any{".md": 3},
+			"tree_entries":         []any{},
+			"top_level_regions":    []any{},
+			"directory_summaries":  []any{},
+			"representative_paths": []any{},
+			"naming":               map[string]any{},
+		}},
 		{Inspector: "object_fields", Scope: "books", N: 3, Data: map[string]any{"title": map[string]any{"present": 3}}},
 	}
 }
@@ -20,8 +30,8 @@ func renderInput() []inspect.Evidence {
 func TestRenderMarkdown_groupsByFamilyWithCounts(t *testing.T) {
 	md := inspect.RenderMarkdown(renderInput(), 0)
 	for _, want := range []string{
-		"## Structural",
-		"### document_shape (n=3)",
+		"## Filesystem",
+		"### file_tree (n=3)",
 		"## Object",
 		"### object_fields (n=3)",
 		"- present: 3",
@@ -149,11 +159,11 @@ func TestRenderJSON_roundTrips(t *testing.T) {
 			t.Errorf("record missing %q: %v", key, first)
 		}
 	}
-	if first["inspector"] != "document_shape" {
-		t.Errorf("inspector = %v, want document_shape", first["inspector"])
+	if first["inspector"] != "file_tree" {
+		t.Errorf("inspector = %v, want file_tree", first["inspector"])
 	}
-	if first["description"] != inspect.Summary("document_shape") {
-		t.Errorf("description = %v, want %q", first["description"], inspect.Summary("document_shape"))
+	if first["description"] != inspect.Summary("file_tree") {
+		t.Errorf("description = %v, want %q", first["description"], inspect.Summary("file_tree"))
 	}
 }
 

@@ -234,12 +234,12 @@ func All() []Example {
 		},
 		{
 			ID:      "inspect-source-shape",
-			Title:   "Cluster a raw directory by shape",
-			Summary: "The raw-source document_shape inspector groups files into candidate collections.",
-			Doc:     "Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `document_shape` clusters files by a composite fingerprint, so a shared convention shows up as one class and the stragglers as outliers.",
+			Title:   "Profile selected raw files by content shape",
+			Summary: "The raw-source file_content_shape inspector profiles a selected slice of files.",
+			Doc:     "Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.",
 			Weight:  60,
 			Files:   wikiCorpus,
-			Args:    []string{"inspect", "./wiki", "--inspector", "document_shape"},
+			Args:    []string{"inspect", "./wiki", "--inspector", "file_content_shape", "--select", `ext = ".md"`},
 		},
 		{
 			ID:      "inspect-collection-fields",

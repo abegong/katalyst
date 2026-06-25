@@ -16,9 +16,6 @@ func newInspectCmd() *cobra.Command {
 		inspectors []string
 		maxLines   int
 		verbose    bool
-		detail     string
-		similarity float64
-		maxClasses int
 		selectExpr string
 	)
 
@@ -37,10 +34,7 @@ Inspectors describe; they never recommend. inspect writes no schema and mutates
 nothing. Output is Markdown by default; --json emits the same evidence as JSON.`,
 		Args: exactArgs(1, "inspect <path-or-collection>"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			params, err := inspect.ParseParams(detail, similarity, maxClasses)
-			if err != nil {
-				return usageErr(err.Error())
-			}
+			params := inspect.Params{}
 			if selectExpr != "" {
 				if len(inspectors) != 1 || inspectors[0] != "file_content_shape" {
 					return usageErr("--select requires exactly one source inspector: --inspector file_content_shape")
@@ -81,12 +75,6 @@ nothing. Output is Markdown by default; --json emits the same evidence as JSON.`
 		"Truncate each inspector's Markdown output to N lines (0 = no limit).")
 	c.Flags().BoolVarP(&verbose, "verbose", "v", false,
 		"Show full output; do not truncate (same as --max-lines 0).")
-	c.Flags().StringVar(&detail, "detail", "",
-		"Summarizer detail level: exact, grouped, or coarse (default grouped).")
-	c.Flags().Float64Var(&similarity, "similarity", -1,
-		"Summarizer similarity threshold (0–1). Mutually exclusive with --detail/--max-classes.")
-	c.Flags().IntVar(&maxClasses, "max-classes", 0,
-		"Cap the number of summarized classes. Mutually exclusive with --detail/--similarity.")
 	c.Flags().StringVar(&selectExpr, "select", "",
 		"Select files for file_content_shape: directory, glob, ext = \".csv\", or path under \"docs\".")
 	return c

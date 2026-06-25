@@ -89,14 +89,6 @@ func Descriptors() []Descriptor {
 			Summary: "Profile selected files by text, tabular, and tree content structure.",
 		},
 		{
-			Name:    "document_shape",
-			Layer:   "source",
-			Family:  "structural",
-			Slug:    "document-shape",
-			Title:   "Document shape",
-			Summary: "Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.",
-		},
-		{
 			Name:    "object_fields",
 			Layer:   "collection",
 			Family:  "object",
@@ -120,7 +112,6 @@ func SourceInspectors() []SourceInspector {
 	return []SourceInspector{
 		FileTree{},
 		FileContentShape{},
-		DocumentShape{},
 	}
 }
 

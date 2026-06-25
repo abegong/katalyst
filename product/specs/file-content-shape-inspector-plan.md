@@ -9,16 +9,13 @@
   configured collection runs collection inspectors; a filesystem directory runs
   source inspectors. `--inspector` already narrows by registry name.
 - `internal/inspect/params.go` carries source and collection inspector
-  parameters for summarizer detail. Inspectors that do not need a parameter
-  ignore it.
+  parameters. After retiring grouping, it carries only selected-file state.
 - `internal/inspect/source.go` walks non-hidden filesystem paths into
-  `SourceView.files`, and lazily parses all `.md` files through
-  `SourceView.markdown`.
+  `SourceView.files`, and content inspectors read selected files explicitly.
 - `file_tree` now owns the path-only store map. The old content inspector parsed
   Markdown per directory and rendered generic `classes` / `outliers`.
-- `document_shape` still clusters Markdown files by composite fingerprint. The
-  new spec keeps clustering as a follow-up path, not the primary content-shape
-  workflow.
+- `document_shape` and the summarizer-backed grouping path were retired after
+  review; explicit selections are the content-shape workflow.
 - `internal/inspect/render.go` has a custom Markdown renderer for `file_tree`;
   all other inspectors use generic key/value rendering.
 
@@ -45,8 +42,7 @@ invalid combinations fail before files are opened.
 
 1. **File:** `internal/inspect/params.go`.
    Add a `Selection` value on `Params`, with `Label`, `Mode`, and `Pattern`.
-   Extend `ParseParams` or add a small wrapper so existing summarizer tests stay
-   focused and selection validation remains in `cmd/inspect.go`.
+   Keep selection validation in `cmd/inspect.go`.
 2. **File:** `cmd/inspect.go`.
    Add `--select string`. It is valid only when the target resolves to the
    source layer, exactly one `--inspector` is supplied, and that inspector is
@@ -168,7 +164,7 @@ suite verifies behavior.
 | File | Role |
 |---|---|
 | `cmd/inspect.go` | adds and validates `--select`; passes selection through params |
-| `internal/inspect/params.go` | carries selection alongside summarizer parameters |
+| `internal/inspect/params.go` | carries selected-file state |
 | `internal/inspect/selection.go` | path-derived selection resolver |
 | `internal/inspect/source.go` | selected file helpers and relative file reads |
 | `internal/inspect/filecontentshape.go` | summary builder and Markdown/CSV/JSON parsers |
@@ -188,7 +184,7 @@ suite verifies behavior.
 | Parser scope | Markdown, CSV, JSON only | enough to prove text/tabular/tree views without dependency drift |
 | Selection timing | path-only before content reads | deterministic, cheap, and matches the spec boundary |
 | Output model | complete JSON, capped Markdown | machines get full evidence; humans get a short report |
-| Clustering | deferred | explicit selections are the primary workflow for now |
+| Clustering | retired | explicit selections are the primary workflow |
 
 ## Documentation updates
 
@@ -202,5 +198,6 @@ suite verifies behavior.
 - HTML, XML, YAML, TOML, code AST, Markdown table, or JSON array-to-table
   parsers.
 - Content predicates in selection syntax.
-- Automatic selection suggestions or clustering.
+- Automatic selection suggestions.
+- Automatic grouping or clustering.
 - Alias compatibility for `file_tree_content`; add deliberately later if needed.

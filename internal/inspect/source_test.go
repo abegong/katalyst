@@ -25,8 +25,7 @@ func TestFileTree_opensNothingAndReportsFilesystemMap(t *testing.T) {
 		t.Error("file_tree should not apply to a non-filesystem type")
 	}
 
-	p, _ := inspect.ParseParams("exact", -1, 0)
-	ev := ft.Inspect(view, p)
+	ev := ft.Inspect(view, inspect.Params{})
 	if view.ParseCount() != 0 {
 		t.Errorf("file_tree opened %d files, want 0", view.ParseCount())
 	}
@@ -81,33 +80,5 @@ func TestFileContentShape_profilesSelectedMarkdown(t *testing.T) {
 	md := ev.Data["markdown"].(map[string]any)
 	if got := md["files"].(int); got != 1 {
 		t.Errorf("markdown.files = %d, want 1", got)
-	}
-}
-
-func TestDocumentShape_clustersOnCompositeFingerprint(t *testing.T) {
-	dir := t.TempDir()
-	// Identical across all dimensions → one class.
-	writeFile(t, dir, "books/dune.md", "---\ntitle: Dune\nrating: 5\n---\n# Dune\n\n## Review\n")
-	writeFile(t, dir, "books/messiah.md", "---\ntitle: Messiah\nrating: 4\n---\n# Messiah\n\n## Review\n")
-	// Same frontmatter keys, different body skeleton (Summary, not Review) →
-	// a different class, proving clustering is not on frontmatter alone.
-	writeFile(t, dir, "books/notes.md", "---\ntitle: Notes\nrating: 3\n---\n# Notes\n\n## Summary\n")
-
-	view, err := inspect.NewSourceView(dir)
-	if err != nil {
-		t.Fatalf("NewSourceView: %v", err)
-	}
-	p, _ := inspect.ParseParams("exact", -1, 0)
-	ev := inspect.DocumentShape{}.Inspect(view, p)
-
-	classes := ev.Data["classes"].([]any)
-	if len(classes) != 1 {
-		t.Fatalf("classes = %d, want 1 (dune+messiah)", len(classes))
-	}
-	if classes[0].(map[string]any)["size"].(int) != 2 {
-		t.Errorf("class size = %v, want 2", classes[0].(map[string]any)["size"])
-	}
-	if outliers := ev.Data["outliers"].([]any); len(outliers) != 1 {
-		t.Errorf("outliers = %d, want 1 (notes, distinct body)", len(outliers))
 	}
 }

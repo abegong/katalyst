@@ -56,14 +56,6 @@ tree:
 read/parse issues:
   none
 
-### document_shape (n=2)
-
-_Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming._
-
-- classes:
-  - class=P1 features=[ext:.md, casing:kebab, fmkey:status, fmkey:title, sec:Review] members=[books/dune.md, books/it.md] size=2
-- outliers:
-
 ## Filesystem
 
 ### file_tree (n=2)

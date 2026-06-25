@@ -34,23 +34,18 @@ The loop is explicit:
   `--inspector` flag. That is the natural user-facing hook for
   `file_content_shape`; adding an inspector-specific subcommand would create a
   second invocation grammar for the same registry.
-- `internal/inspect/params.go` carries inspector parameters (`--detail`,
-  `--similarity`, `--max-classes`) through `inspect.Params`. Inspectors that do
-  not use a parameter ignore it. Selection can follow that pattern if validation
-  keeps it scoped to `file_content_shape`.
+- `internal/inspect/params.go` carries selected-file state through
+  `inspect.Params`. Validation keeps `--select` scoped to `file_content_shape`.
 - `internal/inspect/source.go` builds `SourceView.files` from path metadata and
-  lazily parses only `.md` files through `SourceView.markdown`.
-- `internal/inspect/inspectors_source.go` implements `FileTreeContent.Inspect`
-  by grouping parsed Markdown documents per directory, reducing each directory
-  to feature tokens (`parsed`, `frontmatter`, `fmkey:<name>`), and passing them
-  to `summarize`.
-- `internal/inspect/registry.go` describes `file_tree_content` as Markdown-only:
-  "Parse markdown and profile each directory's content shape."
-- `internal/inspect/render.go` renders every inspector through the same generic
-  key/value Markdown renderer. The output exposes `classes` and `outliers`
-  instead of a readable report.
-- `docs/content/deep-dives/inspectors.md` describes `file_tree` and
-  `document_shape` as summarizing inspectors that collapse profiles into classes.
+  lets content inspectors read selected files explicitly.
+- `internal/inspect/inspectors_source.go` keeps `file_tree` as the path-only
+  raw-source inspector.
+- `internal/inspect/registry.go` exposes `file_content_shape` as the selected
+  content profiler.
+- `internal/inspect/render.go` has dedicated Markdown projections for
+  `file_tree` and `file_content_shape`.
+- `docs/content/deep-dives/inspectors.md` describes raw-source inspection as
+  store map plus selected content shape.
 
 That model is too narrow. Markdown is one content source, not the boundary of the
 second raw-source inspector. Profiling the entire directory by default also mixes
@@ -68,9 +63,8 @@ The raw-source layer has two primary inspection levels:
    performs light parsing. It reports shared content views, common structure,
    variation, and read or parse issues.
 
-The earlier `document_shape` clustering idea is deferred from the primary path.
-Katalyst can add suggestion and clustering features later, but the core CLI
-should first let the reader test explicit selections.
+The earlier `document_shape` clustering path is retired. The core CLI lets the
+reader test explicit selections instead of proposing groups.
 
 ### Command surface
 
@@ -305,12 +299,10 @@ Variation reports meaningful differences:
 These sections use counts and denominators. They do not recommend a schema or
 collection.
 
-### Relationship to `document_shape`
+### Relationship to grouping
 
-`document_shape` should not be the primary automatic clustering path for this
-workflow. A future clustering or suggestion command can propose likely
-selections, but `file_content_shape` should profile an explicit selection and
-report evidence.
+Automatic grouping is intentionally out of scope for this workflow.
+`file_content_shape` profiles an explicit selection and reports evidence.
 
 This keeps Katalyst's primary raw-source flow deterministic and explainable:
 
@@ -334,6 +326,7 @@ Examples of acceptable deferrals:
 - YAML parsing
 - a full query language
 - automatic selection suggestions
+- automatic grouping or clustering
 
 ## Open Questions
 
@@ -345,8 +338,7 @@ name.
 ## Documentation updates
 
 - `docs/content/deep-dives/inspectors.md`: update the raw-source model from
-  profile clustering to store map plus content shape. Note that clustering and
-  suggestions are follow-up features, not the primary flow.
+  profile clustering to store map plus selected content shape.
 - `internal/inspect/doc.go`: align the package summary if it names Markdown-only
   or clustering-specific behavior.
 - `docs/content/reference/inspectors/`: regenerate with `make docs-gen` if the
