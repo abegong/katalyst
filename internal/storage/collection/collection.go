@@ -29,7 +29,7 @@ type Item struct {
 // (Collections, Items, Unmatched); the reverse direction reconstructs a backend
 // locator from an item identity (Reference). Both directions are mandatory.
 type CollectionDefinition interface {
-	// Granularity reports how this backend's units attach to the model.
+	// Granularity reports the scope where this backend's units attach to the model.
 	Granularity() storage.Granularity
 
 	// Collections returns the collections this definition maps. One definition

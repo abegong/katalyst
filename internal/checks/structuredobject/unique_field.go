@@ -14,8 +14,8 @@ type uniqueFieldArgs struct {
 
 // UniqueField requires that no two items share a value for Field. It is
 // collection-scoped (it reasons across siblings) but belongs to the
-// structuredObject family because it reads a frontmatter field, granularity
-// and family are orthogonal. Its kind keeps the historical filesystem_ prefix.
+// structuredObject family because it reads a frontmatter field; scope and
+// family are orthogonal. Its kind keeps the historical filesystem_ prefix.
 type UniqueField struct {
 	Field string
 }

@@ -30,7 +30,6 @@ how each term maps onto today's code is documented in the per-package
 | **Evidence** | The structured result of one inspector: counts and distributions with the unit count `n` as denominator. Never a recommendation or verdict. |
 | **Field** | A key in an item's structured object (its frontmatter map). A field is an **Attribute**; a filename is an attribute but not a field. The term used wherever object or frontmatter keys are meant (`object_field_type`, `name_matches_field`). |
 | **Frontmatter** | The on-disk metadata block at the top of a markdown file, in YAML (`---`), TOML (`+++`), or JSON (`{ … }`). |
-| **Granularity** | The level, item vs. collection, at which a StorageType attaches a store's units to the domain model (a markdown file is an item; a SQL table is a collection). |
 | **Inspector** | A read-only operation that measures content and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. Inspectors come in two layers. |
 | **Item** | The unit of data in a collection, addressed by a selector and operated on by `check`, `fix`, and the `item` subcommands. In the filesystem backend an item is one file matching the collection's pattern, its id the filename stem; its markdown file-form is a **Document**. |
 | **Measurement primitive** | A reusable building block the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
@@ -43,6 +42,7 @@ how each term maps onto today's code is documented in the per-package
 | **Schema** | The definition of a collection's shape, expressed in a CheckLibrary's format (JSON Schema today; a Vale style config later). Named in `schemas:`; located by path. The katalyst concept, not the JSON Schema document specifically. |
 | **Schema directive** | The inline `schema:` key inside a document's frontmatter, opting it into a named schema. |
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |
+| **Scope** | The level an operation or backend mapping applies to: item, collection, project, or across collections. In the storage layer, scope answers whether one matched backend unit becomes an item or a collection. |
 | **Span** | The slice of body text a text rule is evaluated against, chosen by its `target`: the whole `body`, each `line`, the `first-line`, or `matched-lines` (lines matching a `select` regex). |
 | **StorageInstance** | A configured instance of a StorageType plus how to reach it (for `filesystem`, a root directory). Declared under `.katalyst/storage/`; it embeds the collections it maps. |
 | **StorageType** | A known backend kind capable of holding collections and items (`filesystem` today; `sqlite`, `postgresql`, `mongodb` later). |

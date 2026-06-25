@@ -16,7 +16,7 @@ read stack has its own local guide in
   configured storage types. `filesystem` and `sqlite` are implemented.
 - `Reference` is opaque. Treat it as a backend-native locator, not always a
   filesystem path; filesystem interpretation belongs in `collection/filesystem`.
-- Granularity is a property of the storage type, not user configuration. Keep
-  that decision in code so collection/item roles stay portable across backends.
+- Scope is a property of the storage type, not user configuration. Keep that
+  decision in code so collection/item roles stay portable across backends.
 - Keep this package small and dependency-light. Backend-specific parsing,
   discovery, IO, and persistence belong under `collection/<backend>/`.
