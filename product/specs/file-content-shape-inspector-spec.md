@@ -19,8 +19,9 @@ the shared evidence for that candidate set.
 The loop is explicit:
 
 1. Run `katalyst inspect .` to see the store map.
-2. Run `katalyst inspect file_content_shape` with a candidate selection such as
-   `content/books/*.md`, `data/*.csv`, or `path under docs/reference`.
+2. Run `katalyst inspect . --inspector file_content_shape --select ...` with a
+   candidate selection such as `content/books/*.md`, `data/*.csv`, or
+   `path under docs/reference`.
 3. Read common structure and variation.
 4. Refine the selection or draft a collection from the evidence.
 
@@ -29,6 +30,14 @@ The loop is explicit:
 - `cmd/inspect.go` accepts one `<path-or-collection>` argument. A configured
   collection name runs collection inspectors; a filesystem path runs every
   raw-source inspector over the whole directory.
+- `cmd/inspect.go` already supports inspector narrowing through the repeatable
+  `--inspector` flag. That is the natural user-facing hook for
+  `file_content_shape`; adding an inspector-specific subcommand would create a
+  second invocation grammar for the same registry.
+- `internal/inspect/params.go` carries inspector parameters (`--detail`,
+  `--similarity`, `--max-classes`) through `inspect.Params`. Inspectors that do
+  not use a parameter ignore it. Selection can follow that pattern if validation
+  keeps it scoped to `file_content_shape`.
 - `internal/inspect/source.go` builds `SourceView.files` from path metadata and
   lazily parses only `.md` files through `SourceView.markdown`.
 - `internal/inspect/inspectors_source.go` implements `FileTreeContent.Inspect`
@@ -65,24 +74,37 @@ should first let the reader test explicit selections.
 
 ### Command surface
 
-`file_content_shape` is addressed as an inspector subcommand, not as a flag on
-the root `inspect` command. The user-facing form keeps the inspector name
-visible:
+`file_content_shape` is a regular source inspector registered in
+`internal/inspect/registry.go`, not a Cobra subcommand. The existing `inspect`
+shape stays intact: the positional argument selects the root, `--inspector`
+selects the inspector, and a new `--select` parameter narrows the file set that
+`file_content_shape` profiles.
 
 ```sh
-katalyst inspect file_content_shape <path> <selection>
+katalyst inspect <path> --inspector file_content_shape --select <selection>
 ```
 
-The command supports path-query selections:
+Examples:
 
 ```sh
-katalyst inspect file_content_shape . 'ext = ".csv"'
-katalyst inspect file_content_shape . 'path under "docs/reference"'
+katalyst inspect . --inspector file_content_shape --select 'content/books/*.md'
+katalyst inspect . --inspector file_content_shape --select 'ext = ".csv"'
+katalyst inspect . --inspector file_content_shape --select 'path under "docs/reference"'
 ```
 
-The old `file_tree_content` name should not be the long-term user-facing name.
-If compatibility matters, keep it as an alias during the transition and render
-the report as `file_content_shape`.
+The first cut should treat `--select` as a parameter owned by
+`file_content_shape`: it is valid only when exactly one source inspector is
+selected and that inspector is `file_content_shape`. Passing `--select` with a
+collection-layer target, with no `--inspector`, with multiple `--inspector`
+flags, or with another inspector is a usage error. This keeps the existing
+inspect pipeline predictable and avoids making every inspector define selection
+semantics.
+
+The old `file_tree_content` name should not remain the long-term user-facing
+name. For the first cut, replace it in the registry with `file_content_shape`
+rather than shipping two public names. If callers need compatibility later, add
+an alias deliberately with tests that prove JSON and Markdown render the
+canonical `file_content_shape` name.
 
 ### Selection
 
@@ -103,6 +125,12 @@ require content reads before selection.
 The profile output always prints the resolved selector label, file count,
 directory count, extension mix, and skipped/unsupported count before reporting
 content facts.
+
+Selection is resolved after the `SourceView` walk and before any content parser
+runs, so it is path-derived and opens no files. The resolved selection can be
+stored on `inspect.Params` as a small value object (for example `Selection{
+Label, Mode, Pattern}`) and applied by `FileContentShape.Inspect`. Other
+inspectors should not see selected subsets in the first cut.
 
 ### Content views
 
@@ -151,7 +179,7 @@ For a coherent Markdown selection:
 ```markdown
 ### file_content_shape
 
-Selection: `content/books/*.md`
+selector: content/books/*.md
 
 24 files selected from `content/books/`. All 24 are readable Markdown files.
 Katalyst extracted text and tree views from every file, plus tabular views from
@@ -188,7 +216,7 @@ For a CSV selection:
 ```markdown
 ### file_content_shape
 
-Selection: `data/*.csv`
+selector: data/*.csv
 
 12 files selected from `data/`. All 12 parse as CSV.
 
@@ -211,7 +239,7 @@ For a JSON selection:
 ```markdown
 ### file_content_shape
 
-Selection: `ext = ".json"`
+selector: ext = ".json"
 
 9 files selected across 3 directories. All 9 parse as JSON tree views.
 
@@ -235,7 +263,7 @@ For a broad selection:
 ```markdown
 ### file_content_shape
 
-Selection: `docs/**`
+selector: docs/**
 
 142 files selected across 18 directories. Katalyst extracted content views from
 106 files and skipped 36 assets or unsupported files.
@@ -309,9 +337,10 @@ Examples of acceptable deferrals:
 
 ## Open Questions
 
-_None._ The first cut is intentionally small: inspector subcommand,
-directory/glob/path-query selections, Markdown/JSON/CSV parsers, and the
-`file_content_shape` user-facing name.
+_None._ The first cut is intentionally small: regular inspector registry
+addition, `--select` as a scoped inspect parameter, directory/glob/path-query
+selections, Markdown/JSON/CSV parsers, and the `file_content_shape` user-facing
+name.
 
 ## Documentation updates
 
@@ -322,8 +351,9 @@ directory/glob/path-query selections, Markdown/JSON/CSV parsers, and the
   or clustering-specific behavior.
 - `docs/content/reference/inspectors/`: regenerate with `make docs-gen` if the
   registry descriptor changes from `file_tree_content` to `file_content_shape`.
-- `docs/content/reference/cli.md`: document the `inspect file_content_shape`
-  subcommand and its selection syntax.
+- `docs/content/reference/cli.md`: document
+  `katalyst inspect <path> --inspector file_content_shape --select ...` and the
+  supported selection syntax.
 - `docs/content/reference/glossary.md`: add `content view` and
   `file_content_shape` if those terms survive implementation.
 
@@ -331,6 +361,9 @@ directory/glob/path-query selections, Markdown/JSON/CSV parsers, and the
 
 - Selection summary reports selector label, file count, directory count,
   extension mix, readable count, and unsupported/skipped count.
+- `--select` is accepted only with
+  `--inspector file_content_shape` on a source-layer target; invalid combinations
+  return usage errors.
 - Markdown files produce text and tree views without making Markdown the
   top-level output category.
 - JSON files produce tree-view common keys.
@@ -342,4 +375,3 @@ directory/glob/path-query selections, Markdown/JSON/CSV parsers, and the
 - JSON output remains complete and parseable.
 - Default Markdown is capped; verbose output expands examples and frequency
   tables.
-
