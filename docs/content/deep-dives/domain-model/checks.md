@@ -11,9 +11,9 @@ verdict on each item: it resolves the checks that apply, runs them, and
 collects their violations. This page explains the model the engine is built on,
 how check libraries supply and run checks, and why the pieces are shaped the way
 they are. For the per-type catalog see the [check types
-reference]({{< relref "../reference/check-types/_index.md" >}}); for the
+reference]({{< relref "../../reference/check-types/_index.md" >}}); for the
 end-to-end data flow of one `check` invocation see the [domain
-model]({{< relref "domain-model.md" >}}).
+model]({{< relref "_index.md" >}}).
 
 ## The model
 
@@ -106,11 +106,11 @@ item, the simplest correct path.
 Per item, the engine resolves which checks apply, then runs them.
 
 Resolution starts from the collection's configured checks and adds the checks of
-the first [variant]({{< relref "../reference/configuration.md" >}}) whose `when`
+the first [variant]({{< relref "../../reference/configuration.md" >}}) whose `when`
 predicates the item's metadata satisfies. The object schema is selected by a
 precedence the JSON Schema library owns (a forced `--schema`, then an inline
 `schema:` directive, then the collection's object checks); see the [domain
-model]({{< relref "domain-model.md" >}}) for the precedence table and the
+model]({{< relref "_index.md" >}}) for the precedence table and the
 full per-item lifecycle. Before any schema compiles, the engine confirms the
 owning libraries are available.
 
@@ -169,11 +169,11 @@ real out-of-process library exists.
 
 ## See also
 
-- The [check types reference]({{< relref "../reference/check-types/_index.md" >}})
+- The [check types reference]({{< relref "../../reference/check-types/_index.md" >}})
   for the precise per-type surface, generated from the registry.
-- The [domain model]({{< relref "domain-model.md" >}}) for the per-`check`
+- The [domain model]({{< relref "_index.md" >}}) for the per-`check`
   lifecycle, the schema resolver, and the validation result.
-- The [glossary]({{< relref "../reference/glossary.md" >}}) for the canonical
+- The [glossary]({{< relref "../../reference/glossary.md" >}}) for the canonical
   terms (check type, check instance, CheckLibrary, schema, violation).
 - The [storage layer]({{< relref "storage.md" >}}) for the collection and item
   identities checks run against, and the inspector that is a check's descriptive

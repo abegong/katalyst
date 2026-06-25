@@ -3,8 +3,8 @@
 // enumeration, and reverse id→path resolution on top of it. The path↔item-
 // identity mapping itself lives behind the internal/storage seam; this package
 // selects the right CollectionDefinition and orchestrates it. See
-// docs/content/deep-dives/domain-model.md (selectors, collections, items) and
-// docs/content/deep-dives/storage.md (the seam).
+// docs/content/deep-dives/domain-model/_index.md (selectors, collections, items)
+// and docs/content/deep-dives/domain-model/storage.md (the seam).
 package project
 
 import (

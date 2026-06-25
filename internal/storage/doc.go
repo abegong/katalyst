@@ -25,5 +25,5 @@
 // Whether a matched store unit becomes an Item or a Collection is a property of
 // the StorageType, not user configuration. A markdown file is an Item; a SQL
 // table would be a Collection. Item and Collection are therefore roles, not file
-// counts. See docs/content/deep-dives/storage.md.
+// counts. See docs/content/deep-dives/domain-model/storage.md.
 package storage

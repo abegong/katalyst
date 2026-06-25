@@ -217,17 +217,17 @@ Goal: Update callers and docs to the new names.
    Rename the `query` section to `listing`, show `listing:` examples, and note
    that `query:` has been replaced.
 
-   **File:** `docs/content/deep-dives/collections.md`
+   **File:** `docs/content/deep-dives/domain-model/collections.md`
 
    Replace references to the query package with the metadata predicate grammar.
 
-   **File:** `docs/content/deep-dives/domain-model.md`
+   **File:** `docs/content/deep-dives/domain-model/_index.md`
 
    Replace the "Query" out-of-scope note with the explicit split: listing
    filters and sort keys are shipped for one collection; first-class Query is
    planned.
 
-   **File:** `docs/content/deep-dives/core-concepts.md`
+   **File:** `docs/content/deep-dives/domain-model/_index.md`
 
    Mark **Query** as planned rather than shipped. Keep listing filters out of the
    operation list unless they are named as part of Listing.
@@ -300,9 +300,9 @@ Goal: Verify the rename is complete and behavior stayed stable.
 | `cmd/engine.go` | Variant predicate evaluation |
 | `internal/storage/collection/AGENTS.md` | Package conventions |
 | `docs/content/reference/configuration.md` | User-facing config reference |
-| `docs/content/deep-dives/collections.md` | Variant terminology |
-| `docs/content/deep-dives/domain-model.md` | Query/listing vocabulary |
-| `docs/content/deep-dives/core-concepts.md` | Query operation vocabulary |
+| `docs/content/deep-dives/domain-model/collections.md` | Variant terminology |
+| `docs/content/deep-dives/domain-model/_index.md` | Query/listing vocabulary |
+| `docs/content/deep-dives/domain-model/_index.md` | Query operation vocabulary |
 | `product/specs/domain-model-terminology-matrix.md` | Naming matrix |
 | GitHub issue #76 | Terminology contradiction this plan resolves |
 
@@ -326,11 +326,11 @@ Documentation ships in Phase 4.
 - `internal/storage/collection/listing/doc.go`: add listing package docs.
 - `docs/content/reference/configuration.md`: rename the `query` section to
   `listing` and document the migration error.
-- `docs/content/deep-dives/collections.md`: describe variants as using metadata
+- `docs/content/deep-dives/domain-model/collections.md`: describe variants as using metadata
   predicates.
-- `docs/content/deep-dives/domain-model.md`: distinguish shipped listing filters
+- `docs/content/deep-dives/domain-model/_index.md`: distinguish shipped listing filters
   from planned Query.
-- `docs/content/deep-dives/core-concepts.md`: mark Query as planned.
+- `docs/content/deep-dives/domain-model/_index.md`: mark Query as planned.
 - `product/specs/domain-model-terminology-matrix.md`: update the Query/filter
   row.
 

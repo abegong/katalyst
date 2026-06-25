@@ -265,12 +265,12 @@ Resolved:
   item-list pipeline.
 - `docs/content/reference/configuration.md`: rename the `query:` section to
   `listing:` and document the config migration.
-- `docs/content/deep-dives/collections.md`: update variants to say they use the
+- `docs/content/deep-dives/domain-model/collections.md`: update variants to say they use the
   metadata predicate grammar, not the query package.
-- `docs/content/deep-dives/domain-model.md`: replace the current "Query" out-of-
+- `docs/content/deep-dives/domain-model/_index.md`: replace the current "Query" out-of-
   scope note with a precise distinction: listing filters are shipped; a
   first-class Query operation is planned.
-- `docs/content/deep-dives/core-concepts.md`: mark **Query** as a planned
+- `docs/content/deep-dives/domain-model/_index.md`: mark **Query** as a planned
   operation, not a currently shipped one.
 - GitHub issue #76: close once the docs and code use the new terminology.
 - `product/specs/domain-model-terminology-matrix.md`: update the Query/filter

@@ -7,7 +7,7 @@ weight = 50
 
 The canonical vocabulary for Katalyst. Use these terms consistently in code,
 docs, and user-facing copy. The general, backend-agnostic vocabulary is
-introduced in [core concepts]({{< relref "../deep-dives/core-concepts.md" >}});
+introduced in the [domain model]({{< relref "../deep-dives/domain-model/_index.md" >}});
 how each term maps onto today's code is documented in the per-package
 `AGENTS.md` files under `internal/`. This page is the quick lookup.
 
@@ -23,7 +23,7 @@ how each term maps onto today's code is documented in the per-package
 | **Collection** | A named entry in `collections:`: a directory, a filename `pattern`, and the checks its items must pass. |
 | **Collection layer** | Inspectors that profile a configured collection's items, addressed by domain identity (collection + item id) and probing through the same substrate the checks use. |
 | **Collection-scoped check** | A check type that runs once per collection over all its items (e.g. `filesystem_unique_filename`), rather than per item. It re-scans the full collection even under a single-item selector. |
-| **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. Yields one or more collections; the filesystem is the only backend today. See [storage layer]({{< relref "../deep-dives/storage.md" >}}). |
+| **CollectionDefinition** | The two-way mapping from a StorageInstance's contents to collections and items. Yields one or more collections; the filesystem is the only backend today. See [storage layer]({{< relref "../deep-dives/domain-model/storage.md" >}}). |
 | **Config** | A **Project**'s configuration: the schemas, storage instances, and collection definitions that declare what the project contains and how its items are checked. Katalyst's config is the `.katalyst/` directory; it is loaded by the `project` package's loader (`internal/project/loader.go`). Each object type owns the parse of its own config — the storage registry validates a declared `type`, and a collection parses its own block in `storage/collection`. |
 | **Discriminator** | The `when` predicate that selects a variant: a list of `item list --filter` expressions over an item's metadata, ANDed together. |
 | **Document** | The markdown file-form of an **Item**: a parsed markdown file (frontmatter metadata + body + a line map). Use it where parsing or the on-disk file is the subject; elsewhere prefer **Item**. |

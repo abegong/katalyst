@@ -5,9 +5,9 @@ instances, exposes collections, resolves selectors, and enumerates concrete
 items for the CLI.
 
 Architecture and rationale live in the
-[domain model](../../docs/content/deep-dives/domain-model.md),
+[domain model](../../docs/content/deep-dives/domain-model/_index.md),
 [configuration](../../docs/content/reference/configuration.md), and
-[storage](../../docs/content/deep-dives/storage.md) docs. This file keeps only
+[storage](../../docs/content/deep-dives/domain-model/storage.md) docs. This file keeps only
 local code conventions.
 
 ## Conventions

@@ -17,7 +17,7 @@ The **storage layer** is the two-way mapping between a backend store and the
 Katalyst domain model. It answers: *what collections and items does this store
 contain, and where does each one live?*, in both directions. It is Katalyst's
 realization of the general **storage** concept from
-[core concepts]({{< relref "core-concepts.md" >}}): the filesystem is one
+[domain model]({{< relref "_index.md" >}}): the filesystem is one
 backend; SQLite, directories of CSVs, S3 buckets, and hosted APIs are others.
 The first real stress test will be **SQLite**, because it is the first backend
 that forces the scope question below.
@@ -36,7 +36,7 @@ and *how does its content map to the model*, so it was split:
 
 In config, a StorageInstance declares the collections it maps, the instance
 file *is* where the CollectionDefinition lives (see
-[Configuration]({{< relref "../reference/configuration.md" >}})). In code, the
+[Configuration]({{< relref "../../reference/configuration.md" >}})). In code, the
 seam is `internal/storage/collection.CollectionDefinition`; `internal/project` consumes it
 rather than implementing the filesystem mapping inline.
 
@@ -100,7 +100,7 @@ that matched nothing.
 ## Variants route checks, not membership
 
 A collection may run different checks on different items via
-[variants]({{< relref "../reference/configuration.md" >}}#variants), but that is
+[variants]({{< relref "../../reference/configuration.md" >}}#variants), but that is
 a *check-engine* concern, not a storage one. A variant's discriminator is a
 predicate over an item's **metadata**: portable across every StorageType, since
 each yields a metadata map (frontmatter for a file, columns for a row). It never
@@ -159,5 +159,4 @@ the definition's pattern are two views of the same thing.
 | **Coordinates** | The captured fields that identify a unit within its collection. |
 | **Scope** | The domain level, item or collection, at which a StorageType attaches a store's units to the model. |
 
-[addressing]: {{< relref "core-concepts.md" >}}
-</content>
+[addressing]: {{< relref "_index.md" >}}

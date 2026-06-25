@@ -5,7 +5,7 @@ small registry of implemented backends; `collection/` holds the mapping from a
 backend store to Katalyst collections and items.
 
 Architecture and rationale live in the
-[storage deep-dive](../../docs/content/deep-dives/storage.md). The collection
+[storage deep-dive](../../docs/content/deep-dives/domain-model/storage.md). The collection
 read stack has its own local guide in
 [`collection/AGENTS.md`](collection/AGENTS.md).
 
