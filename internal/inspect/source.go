@@ -93,6 +93,13 @@ func (v SourceView) N() int { return len(v.files) }
 // nothing.
 func (v SourceView) ParseCount() int { return v.md.count }
 
+// readFile opens one discovered file by relative path and records the read as
+// content inspection work.
+func (v SourceView) readFile(rel string) ([]byte, error) {
+	v.md.count++
+	return os.ReadFile(filepath.Join(v.root, filepath.FromSlash(rel)))
+}
+
 // refsByDir groups every file's relative path by its directory.
 func (v SourceView) refsByDir() map[string][]string {
 	out := map[string][]string{}

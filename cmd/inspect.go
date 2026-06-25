@@ -19,6 +19,7 @@ func newInspectCmd() *cobra.Command {
 		detail     string
 		similarity float64
 		maxClasses int
+		selectExpr string
 	)
 
 	c := &cobra.Command{
@@ -39,6 +40,12 @@ nothing. Output is Markdown by default; --json emits the same evidence as JSON.`
 			params, err := inspect.ParseParams(detail, similarity, maxClasses)
 			if err != nil {
 				return usageErr(err.Error())
+			}
+			if selectExpr != "" {
+				if len(inspectors) != 1 || inspectors[0] != "file_content_shape" {
+					return usageErr("--select requires exactly one source inspector: --inspector file_content_shape")
+				}
+				params = params.WithSelection(inspect.ParseSelection(selectExpr))
 			}
 
 			evidence, err := runInspect(args[0], inspectors, params)
@@ -80,6 +87,8 @@ nothing. Output is Markdown by default; --json emits the same evidence as JSON.`
 		"Summarizer similarity threshold (0–1). Mutually exclusive with --detail/--max-classes.")
 	c.Flags().IntVar(&maxClasses, "max-classes", 0,
 		"Cap the number of summarized classes. Mutually exclusive with --detail/--similarity.")
+	c.Flags().StringVar(&selectExpr, "select", "",
+		"Select files for file_content_shape: directory, glob, ext = \".csv\", or path under \"docs\".")
 	return c
 }
 
@@ -116,6 +125,9 @@ func resolveCollection(arg string) (*project.Project, project.Collection, bool) 
 }
 
 func runCollectionLayer(proj *project.Project, c project.Collection, names []string, params inspect.Params) ([]inspect.Evidence, error) {
+	if params.Selection.Mode != "" {
+		return nil, usageErr("--select requires a source path target")
+	}
 	selected, err := selectCollectionInspectors(names)
 	if err != nil {
 		return nil, err

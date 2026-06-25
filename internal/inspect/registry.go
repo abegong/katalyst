@@ -81,12 +81,12 @@ func Descriptors() []Descriptor {
 			Summary: "Map files, directories, extensions, regions, and filename conventions, opening no files.",
 		},
 		{
-			Name:    "file_tree_content",
+			Name:    "file_content_shape",
 			Layer:   "source",
 			Family:  "structural",
-			Slug:    "file-tree-content",
-			Title:   "File tree (deep)",
-			Summary: "Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.",
+			Slug:    "file-content-shape",
+			Title:   "File content shape",
+			Summary: "Profile selected files by text, tabular, and tree content structure.",
 		},
 		{
 			Name:    "document_shape",
@@ -119,7 +119,7 @@ func Descriptors() []Descriptor {
 func SourceInspectors() []SourceInspector {
 	return []SourceInspector{
 		FileTree{},
-		FileTreeContent{},
+		FileContentShape{},
 		DocumentShape{},
 	}
 }

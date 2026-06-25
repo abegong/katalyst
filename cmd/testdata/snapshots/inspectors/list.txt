@@ -2,8 +2,8 @@ Raw-source inspectors (3)
 -------------------------
 - file_tree
   Map files, directories, extensions, regions, and filename conventions, opening no files.
-- file_tree_content
-  Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
+- file_content_shape
+  Profile selected files by text, tabular, and tree content structure.
 - document_shape
   Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
 

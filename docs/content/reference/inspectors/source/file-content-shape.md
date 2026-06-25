@@ -1,5 +1,5 @@
 +++
-title = "File tree (deep)"
+title = "File content shape"
 weight = 20
 +++
 
@@ -7,7 +7,7 @@ weight = 20
 
 ## Inspector ID
 
-`file_tree_content`
+`file_content_shape`
 
 ## Layer
 
@@ -15,12 +15,12 @@ source
 
 ## Purpose
 
-Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
+Profile selected files by text, tabular, and tree content structure.
 
 ## Usage
 
 Inspectors emit evidence: counts and distributions, for the reader to judge. Run this one with:
 
 ```
-katalyst inspect <target> --inspector file_tree_content
+katalyst inspect <target> --inspector file_content_shape
 ```

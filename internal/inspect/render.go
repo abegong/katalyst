@@ -63,6 +63,13 @@ func RenderMarkdown(evs []Evidence, maxLines int) string {
 				}
 				continue
 			}
+			if ev.Inspector == "file_content_shape" {
+				for _, ln := range fileContentShapeMarkdownLines(ev.Data, maxLines <= 0) {
+					b.WriteString(ln)
+					b.WriteByte('\n')
+				}
+				continue
+			}
 			lines := dataLines(ev.Data)
 			if maxLines > 0 && len(lines) > maxLines {
 				hidden := len(lines) - maxLines
@@ -178,6 +185,171 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 		if len(paths) > limit {
 			lines = append(lines, fmt.Sprintf("  ... %d more representative paths hidden; pass -v to show all", len(paths)-limit))
 		}
+	}
+	return lines
+}
+
+func fileContentShapeMarkdownLines(data map[string]any, expanded bool) []string {
+	selector, _ := data["selector"].(string)
+	fileCount := asInt(data["file_count"])
+	dirCount := asInt(data["dir_count"])
+	readable := asInt(data["readable_count"])
+	unsupported := asInt(data["unsupported_count"])
+	parseFailures := asInt(data["parse_failure_count"])
+	coherence, _ := data["coherence"].(string)
+	lines := []string{sectionDivider, "selection:"}
+	lines = append(lines, alignRows([][]string{
+		{"expression", selector},
+		{"files", fmt.Sprintf("%d", fileCount)},
+		{"directories", fmt.Sprintf("%d", dirCount)},
+		{"readable", fmt.Sprintf("%d", readable)},
+		{"unsupported", fmt.Sprintf("%d", unsupported)},
+		{"parse failures", fmt.Sprintf("%d", parseFailures)},
+	}, "  ", ": ")...)
+
+	exts := anyMap(data["extensions"])
+	if len(exts) > 0 {
+		limit := 5
+		if expanded {
+			limit = len(exts)
+		}
+		lines = appendSection(lines, "file types:")
+		lines = append(lines, histogramTableLines(exts, limit, "TYPE", "FILES")...)
+		if len(exts) > limit {
+			lines = append(lines, fmt.Sprintf("  ... %d more extensions hidden; pass -v to show all", len(exts)-limit))
+		}
+	}
+
+	lines = appendSection(lines, "coherence:")
+	lines = append(lines, alignRows([][]string{{"status", coherence}}, "  ", ": ")...)
+
+	lines = appendContentBulletSection(lines, "common structure:", stringSlice(data["common_structure"]), expanded)
+	lines = appendContentBulletSection(lines, "variation:", stringSlice(data["variation"]), expanded)
+
+	lines = appendSection(lines, "text:")
+	lines = append(lines, markdownShapeLines(anyMap(data["markdown"]), expanded)...)
+	lines = appendSection(lines, "tabular:")
+	lines = append(lines, csvShapeLines(anyMap(data["csv"]))...)
+	lines = appendSection(lines, "tree:")
+	lines = append(lines, jsonShapeLines(anyMap(data["json"]), expanded)...)
+	lines = appendSection(lines, "read/parse issues:")
+	lines = append(lines, issueLines(anySlice(data["issues"]), expanded)...)
+	return lines
+}
+
+func appendContentBulletSection(lines []string, label string, items []string, expanded bool) []string {
+	lines = appendSection(lines, label)
+	if len(items) == 0 {
+		return append(lines, "  none")
+	}
+	limit := len(items)
+	if !expanded && limit > 5 {
+		limit = 5
+	}
+	for _, item := range items[:limit] {
+		lines = append(lines, fmt.Sprintf("  - %s", item))
+	}
+	if len(items) > limit {
+		lines = append(lines, fmt.Sprintf("  ... %d more item(s) hidden; pass -v to show all", len(items)-limit))
+	}
+	return lines
+}
+
+func markdownShapeLines(md map[string]any, expanded bool) []string {
+	files := asInt(md["files"])
+	if files == 0 {
+		return []string{"  no Markdown files selected"}
+	}
+	lines := alignRows([][]string{
+		{"files", fmt.Sprintf("%d", files)},
+		{"with H1", fmt.Sprintf("%d", asInt(md["h1"]))},
+	}, "  ", ": ")
+	keys := anyMap(md["frontmatter_keys"])
+	if len(keys) > 0 {
+		lines = append(lines, "  frontmatter keys:")
+		limit := 5
+		if expanded {
+			limit = len(keys)
+		}
+		lines = append(lines, histogramTableLines(keys, limit, "KEY", "FILES")...)
+		if len(keys) > limit {
+			lines = append(lines, fmt.Sprintf("  ... %d more keys hidden; pass -v to show all", len(keys)-limit))
+		}
+	}
+	sections := anyMap(md["sections"])
+	if len(sections) > 0 && expanded {
+		lines = append(lines, "  sections:")
+		lines = append(lines, histogramTableLines(sections, len(sections), "SECTION", "FILES")...)
+	}
+	return lines
+}
+
+func csvShapeLines(csv map[string]any) []string {
+	files := asInt(csv["files"])
+	if files == 0 {
+		return []string{"  no CSV files selected"}
+	}
+	stats := anyMap(csv["row_counts"])
+	lines := alignRows([][]string{
+		{"files", fmt.Sprintf("%d", files)},
+		{"rows", fmt.Sprintf("%d-%d (median %d)", asInt(stats["min"]), asInt(stats["max"]), asInt(stats["median"]))},
+	}, "  ", ": ")
+	cols := anyMap(csv["columns"])
+	if len(cols) > 0 {
+		lines = append(lines, "  columns:")
+		lines = append(lines, histogramTableLines(cols, len(cols), "COLUMN", "FILES")...)
+	}
+	return lines
+}
+
+func jsonShapeLines(js map[string]any, expanded bool) []string {
+	files := asInt(js["files"])
+	if files == 0 {
+		return []string{"  no JSON files selected"}
+	}
+	lines := alignRows([][]string{
+		{"files", fmt.Sprintf("%d", files)},
+		{"object files", fmt.Sprintf("%d", asInt(js["object_files"]))},
+	}, "  ", ": ")
+	shapes := anyMap(js["top_level_shapes"])
+	if len(shapes) > 0 {
+		lines = append(lines, "  top-level shapes:")
+		lines = append(lines, histogramTableLines(shapes, len(shapes), "SHAPE", "FILES")...)
+	}
+	keys := anyMap(js["common_object_keys"])
+	if len(keys) > 0 {
+		lines = append(lines, "  object keys:")
+		limit := 5
+		if expanded {
+			limit = len(keys)
+		}
+		lines = append(lines, histogramTableLines(keys, limit, "KEY", "FILES")...)
+		if len(keys) > limit {
+			lines = append(lines, fmt.Sprintf("  ... %d more keys hidden; pass -v to show all", len(keys)-limit))
+		}
+	}
+	return lines
+}
+
+func issueLines(issues []any, expanded bool) []string {
+	if len(issues) == 0 {
+		return []string{"  none"}
+	}
+	limit := len(issues)
+	if !expanded && limit > 5 {
+		limit = 5
+	}
+	rows := [][]string{{"KIND", "PATH", "DETAIL"}}
+	for _, item := range issues[:limit] {
+		m := anyMap(item)
+		kind, _ := m["kind"].(string)
+		path, _ := m["path"].(string)
+		detail, _ := m["detail"].(string)
+		rows = append(rows, []string{kind, path, detail})
+	}
+	lines := alignTable(rows, "  ")
+	if len(issues) > limit {
+		lines = append(lines, fmt.Sprintf("  ... %d more issue(s) hidden; pass -v to show all", len(issues)-limit))
 	}
 	return lines
 }

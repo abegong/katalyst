@@ -20,28 +20,6 @@ func (FileTree) Inspect(v SourceView, p Params) Evidence {
 	return Evidence{Inspector: "file_tree", Scope: v.root, N: v.N(), Data: buildFileTreeSummary(v)}
 }
 
-// FileTreeContent is the deep raw-source inspector: it parses markdown and
-// profiles each directory by content shape (frontmatter key union, parse /
-// frontmatter presence), summarized into classes. Subsumes the former
-// walk_parse. Filesystem-specific.
-type FileTreeContent struct{}
-
-func (FileTreeContent) Name() string { return "file_tree_content" }
-
-func (FileTreeContent) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
-
-func (FileTreeContent) Inspect(v SourceView, p Params) Evidence {
-	byDir := map[string][]sourceDoc{}
-	for _, sd := range v.markdown() {
-		byDir[sd.dir] = append(byDir[sd.dir], sd)
-	}
-	profiles := make([]Profile, 0, len(byDir))
-	for _, dir := range sortedKeys(byDir) {
-		profiles = append(profiles, Profile{Label: dir, Features: contentFeatures(byDir[dir])})
-	}
-	return Evidence{Inspector: "file_tree_content", Scope: v.root, N: v.N(), Data: summarize(profiles, p)}
-}
-
 // DocumentShape clusters markdown files into candidate collections on a
 // composite fingerprint: frontmatter keys, body section skeleton, and file
 // type/naming, so a class agrees on metadata AND structure AND convention, not
@@ -72,36 +50,6 @@ func dirFeatures(refs []string) []string {
 	feats = append(feats, "casing:"+dominant(meta["casing"].(map[string]any)))
 	if meta["with_spaces"].(int) > 0 {
 		feats = append(feats, "spaces")
-	}
-	return feats
-}
-
-// contentFeatures fingerprints a directory by markdown content shape: the union
-// of frontmatter keys plus parse/frontmatter presence markers.
-func contentFeatures(docs []sourceDoc) []string {
-	keys := map[string]bool{}
-	parsed, withFM := 0, 0
-	for _, sd := range docs {
-		if sd.doc == nil {
-			continue
-		}
-		parsed++
-		if sd.doc.HasFrontmatter {
-			withFM++
-			for k := range sd.doc.Meta {
-				keys[k] = true
-			}
-		}
-	}
-	var feats []string
-	for _, k := range sortedKeys(keys) {
-		feats = append(feats, "fmkey:"+k)
-	}
-	if parsed > 0 {
-		feats = append(feats, "parsed")
-	}
-	if withFM > 0 {
-		feats = append(feats, "frontmatter")
 	}
 	return feats
 }

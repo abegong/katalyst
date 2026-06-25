@@ -21,7 +21,7 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 - **The raw-source layer** (`SourceInspector` over a `SourceView`) measures a
   backend store directly, before any collection configuration, addressed by
   backend-native reference (a relative path today). It answers "what is in this
-  store?" - the onboarding case. `file_tree`, `file_tree_content`, and
+  store?" - the onboarding case. `file_tree`, `file_content_shape`, and
   `document_shape` live here.
 - **The collection layer** (`CollectionInspector` over a `CollectionView`)
   measures a configured collection's items, addressed by domain identity
@@ -79,14 +79,15 @@ call to the reader.
 
 ## Keeping output small
 
-`file_tree` keeps Markdown output small with deterministic caps: small trees get
-an actual tree, while larger trees show top-level regions, dominant extensions,
-naming patterns, and representative paths with `-v` for expanded evidence.
-Clustering inspectors such as `document_shape` still collapse near-identical
-profiles into named classes, so output is proportional to the number of
-*distinct* profiles rather than the number of files. The collapse tolerance is
-the first inspector parameter, in three mutually-exclusive forms: a named detail
-level, a similarity proportion, or a max-classes budget.
+`file_tree` and `file_content_shape` keep Markdown output small with
+deterministic caps: small trees get an actual tree; content-shape reports show
+the selected file set, dominant structures, and compact text/tabular/tree
+facets, with `-v` for expanded evidence. Clustering inspectors such as
+`document_shape` still collapse near-identical profiles into named classes, so
+output is proportional to the number of *distinct* profiles rather than the
+number of files. The collapse tolerance is the first inspector parameter, in
+three mutually-exclusive forms: a named detail level, a similarity proportion,
+or a max-classes budget.
 
 ## Output
 

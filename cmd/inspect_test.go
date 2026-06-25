@@ -126,6 +126,65 @@ func TestInspect_inspectorFlagNarrows(t *testing.T) {
 	}
 }
 
+func TestInspect_selectRunsFileContentShape(t *testing.T) {
+	dir := inspectRepo(t)
+	writeFile(t, dir, "data/books.csv", "title,rating\nDune,5\n")
+	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "file_content_shape", "--select", `ext = ".csv"`, dir)
+	if err != nil {
+		t.Fatalf("inspect --select: %v", err)
+	}
+	var records []map[string]any
+	if err := json.Unmarshal([]byte(stdout), &records); err != nil {
+		t.Fatalf("bad json: %v", err)
+	}
+	if len(records) != 1 || records[0]["inspector"] != "file_content_shape" {
+		t.Fatalf("expected only file_content_shape, got %v", records)
+	}
+	ev := records[0]["evidence"].(map[string]any)
+	if got := ev["file_count"].(float64); got != 1 {
+		t.Errorf("file_count = %v, want 1 selected CSV file", got)
+	}
+	if got := ev["selector"].(string); got != `ext = ".csv"` {
+		t.Errorf("selector = %q", got)
+	}
+}
+
+func TestInspect_selectRejectsInvalidCombinations(t *testing.T) {
+	dir := inspectRepo(t)
+	tests := [][]string{
+		{"inspect", "--select", "books", dir},
+		{"inspect", "--inspector", "file_tree", "--select", "books", dir},
+		{"inspect", "--inspector", "file_content_shape", "--inspector", "document_shape", "--select", "books", dir},
+	}
+	for _, args := range tests {
+		_, _, err := runRoot(t, args...)
+		var coded interface{ Code() int }
+		if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+			t.Errorf("%v: expected exit 2, got %v", args, err)
+		}
+	}
+}
+
+func TestInspect_selectRejectsCollectionTarget(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`)
+	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
+	chdir(t, dir)
+
+	_, _, err := runRoot(t, "inspect", "--inspector", "file_content_shape", "--select", "notes", "notes")
+	var coded interface{ Code() int }
+	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit 2 for --select with collection target, got %v", err)
+	}
+}
+
 func TestInspect_writesNothingUnderScope(t *testing.T) {
 	dir := inspectRepo(t)
 	before := countFiles(t, dir)

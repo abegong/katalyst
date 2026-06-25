@@ -12,4 +12,4 @@ Raw-source inspectors profile a backend store directly, before any collection co
 Other raw-source inspectors (2)
 -------------------------------
 - file_tree
-- file_tree_content
+- file_content_shape

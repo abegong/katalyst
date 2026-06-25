@@ -59,17 +59,28 @@ func TestFileTree_opensNothingAndReportsFilesystemMap(t *testing.T) {
 	}
 }
 
-func TestFileTreeContent_parsesMarkdown(t *testing.T) {
+func TestFileContentShape_profilesSelectedMarkdown(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
+	writeFile(t, dir, "data/books.csv", "title,rating\nDune,5\n")
 
 	view, err := inspect.NewSourceView(dir)
 	if err != nil {
 		t.Fatalf("NewSourceView: %v", err)
 	}
-	_ = inspect.FileTreeContent{}.Inspect(view, inspect.Params{})
+	ev := inspect.FileContentShape{}.Inspect(view, inspect.Params{}.WithSelection(inspect.ParseSelection(`ext = ".md"`)))
 	if view.ParseCount() == 0 {
-		t.Error("file_tree_content should parse markdown (ParseCount > 0)")
+		t.Error("file_content_shape should open selected files (ParseCount > 0)")
+	}
+	if ev.Inspector != "file_content_shape" {
+		t.Errorf("inspector = %q, want file_content_shape", ev.Inspector)
+	}
+	if got := ev.Data["file_count"].(int); got != 1 {
+		t.Errorf("file_count = %d, want selected markdown file only", got)
+	}
+	md := ev.Data["markdown"].(map[string]any)
+	if got := md["files"].(int); got != 1 {
+		t.Errorf("markdown.files = %d, want 1", got)
 	}
 }
 

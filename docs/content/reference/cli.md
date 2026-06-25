@@ -42,6 +42,22 @@ This applies to human-facing read output such as `list`, detail `show`, and summ
 `get` output. It does not apply to machine-oriented contracts such as `check`
 diagnostics, `fix --check` path lists, or `--json` output.
 
+## Inspect selections
+
+`katalyst inspect <path> --inspector file_content_shape --select <selection>`
+profiles only the selected source files. The first cut scopes `--select` to
+`file_content_shape`; using it with collection targets, with no inspector, with
+multiple inspectors, or with any other inspector is a usage error.
+
+Supported selections:
+
+| Form | Meaning |
+|---|---|
+| `content/books/` | files under a directory prefix |
+| `content/books/*.md` | files matching a doublestar-style glob |
+| `ext = ".csv"` | files with the given extension |
+| `path under "docs/reference"` | files under the quoted path prefix |
+
 ## Exit codes
 
 Shared across the validating commands (`check`, `fix --check`):
