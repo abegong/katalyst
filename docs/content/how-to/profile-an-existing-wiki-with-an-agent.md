@@ -26,8 +26,9 @@ denominator:
 katalyst inspect ./wiki --json
 ```
 
-With no project this runs the **raw-source** layer: `file_tree` maps the store
-and `file_content_shape` summarizes selected-file content structure. Feed the
+With no project this runs the **raw base** layer. The key record is
+`document_shape`, which clusters files into candidate collections by a composite
+fingerprint (frontmatter keys, body section skeleton, file naming). Feed the
 output to the agent. Tell it the contract: every record is *evidence*, not a
 recommendation; it must choose its own thresholds and justify them.
 

@@ -21,7 +21,7 @@ import (
 //
 // It assumes doc.HasFrontmatter; the no-frontmatter passthrough is the caller's
 // policy (see internal/fix). Why this canonical form is intentionally inflexible
-// is documented in the formatting deep-dive.
+// is documented in the fix deep-dive.
 func Encode(doc *Document) ([]byte, error) {
 	open, block, closeFence, err := marshalBlock(doc.Format, doc.Meta)
 	if err != nil {

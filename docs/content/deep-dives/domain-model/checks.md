@@ -175,7 +175,7 @@ real out-of-process library exists.
   lifecycle, the schema resolver, and the validation result.
 - The [glossary]({{< relref "../../reference/glossary.md" >}}) for the canonical
   terms (check type, check instance, CheckLibrary, schema, violation).
-- The [Bases]({{< relref "storage.md" >}}) for the collection and item
+- The [base]({{< relref "base.md" >}}) for the collection and item
   identities checks run against, and the inspector that is a check's descriptive
   dual.
 - `go doc ./internal/checks` for the code-level engine contract.

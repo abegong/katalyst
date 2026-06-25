@@ -81,7 +81,7 @@ Collection names are unique across the whole project (selectors are
 SQLite instances use one table per collection. Each row is one item:
 
 ```yaml
-# .katalyst/storage/db.yaml
+# .katalyst/bases/db.yaml
 type: sqlite
 path: content.sqlite
 collections:
@@ -297,8 +297,8 @@ variant), even when `--schema` is used.
 ## See also
 
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
-- [Bases]({{< relref "../deep-dives/domain-model/storage.md" >}}), the base /
-  collection-definition model and its lineage.
+- [Bases]({{< relref "../deep-dives/domain-model/base.md" >}}), the base /
+  collection-mapping model and its lineage.
 - [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.

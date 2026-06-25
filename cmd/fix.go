@@ -23,7 +23,7 @@ top-level keys sorted alphabetically, yaml.v3 default block style, and
 exactly one trailing newline. The body is preserved verbatim.
 
 fix never invents semantic values: it will not inject placeholders for
-missing required keys. See docs/content/deep-dives/domain-model/formatting.md for why.
+missing required keys. See docs/content/deep-dives/domain-model/fix.md for why.
 
 Selectors follow the same grammar as 'check'. With no selector, every
 item in the project is considered.

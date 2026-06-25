@@ -213,10 +213,11 @@ _None._ Both prior questions are resolved:
   shape and `internal/fix`; remove the `internal/frontmatter` and
   `internal/project/collection` lines.
 - **`internal/frontmatter/AGENTS.md`** — deleted; new `AGENTS.md` files for
-  `storage/collection/` and `internal/fix` pointing at the formatting deep-dive's
-  document and fix sections.
-- **`docs/content/deep-dives/domain-model/formatting.md`** ("Frontmatter and fix") — update
-  the "parsing and formatting live in `internal/frontmatter`" line to the
+  `storage/collection/` and `internal/fix` pointing at the frontmatter and fix
+  deep dives.
+- **`docs/content/deep-dives/domain-model/frontmatter.md`** and
+  **`docs/content/deep-dives/domain-model/fix.md`** — update the "parsing and
+  formatting live in `internal/frontmatter`" line to the
   `collection/document` + `internal/fix` split.
 - **`docs/content/deep-dives/domain-model/storage.md`, `collections.md`** — align to the new
   module homes (storage = backend registry; collection = read stack).

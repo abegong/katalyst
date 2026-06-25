@@ -58,7 +58,7 @@ It prints one line per non-canonical item and exits 1, writing nothing. Here
 
 The `check` step enforces schema and structural checks; the `fix --check`
 step enforces canonical frontmatter without modifying files. See
-[Frontmatter and fix]({{< relref "../deep-dives/domain-model/formatting.md" >}}) for why
+[Fix]({{< relref "../deep-dives/domain-model/fix.md" >}}) for why
 `fix` is opinionated and non-destructive in this mode.
 
 ## See also

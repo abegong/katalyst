@@ -1,57 +1,15 @@
 +++
-title = "Frontmatter and fix"
-weight = 60
+title = "Fix"
+weight = 62
 +++
 
-# Frontmatter and fix
+# Fix
 
-How Katalyst parses a markdown file's frontmatter, the in-memory document that
-produces, and why [`fix`]({{< relref "../../reference/cli.md" >}}) rewrites
-that frontmatter the opinionated way it does. The codec (parse and encode) lives
-in `internal/codec/markdownbodytext`; the `fix` transform that drives the
-canonical form, and the backend write that persists it, live in `internal/fix`
-and `internal/storage/collection/filesystem` respectively.
-
-## The markdown document
-
-The unit of work is a file on disk with two optional regions:
-
-- A **frontmatter** block at the very top of the file, in one of three formats
-  detected by the opening fence:
-
-  | Format | Fence | Example openers |
-  |--------|-------|-----------------|
-  | YAML   | `---` | Jekyll, Obsidian, Hugo |
-  | TOML   | `+++` | Hugo, Obsidian, Jekyll |
-  | JSON   | `{` ... `}` | Hugo |
-
-  These are the three formats Hugo, Obsidian, and Jekyll emit. Whatever the
-  source format, the parsed `Meta` is a plain `map[string]any`, so checks and
-  inspectors never branch on format. `Document.Format` records the detected
-  syntax so `fix` can re-emit a file in its own format rather than rewriting,
-  say, TOML as YAML.
-- A **body**, everything after the closing fence.
-
-A document *may* have no frontmatter, in which case `check` reports it as an
-error (the file claimed no metadata, so we couldn't check anything).
-
-When parsed, a markdown document becomes a `markdownbodytext.Document`:
-
-| Field            | Meaning |
-|------------------|---------|
-| `HasFrontmatter` | Did the file open with a recognized fence? |
-| `Format`         | Detected syntax: `KindYAML`, `KindTOML`, or `KindJSON` |
-| `Meta`           | Parsed frontmatter, normalized to `map[string]any` |
-| `Body`           | Bytes after the closing fence, **never modified** except by `fix` |
-| `Lines`          | JSON-pointer-path to 1-indexed source line |
-
-The `Lines` index is what makes error messages locatable. It accounts for the
-opening fence offset, so `Lines["/title"] = 2` means the `title` key is on line
-2 of the original file.
-
-**Line tracking is full for YAML only.** For TOML and JSON, `Lines` is empty
-today; checks degrade gracefully (they emit the error without a line number).
-Richer line tracking for the other formats is a planned follow-up.
+Why [`katalyst fix`]({{< relref "../../reference/cli.md" >}}) rewrites
+frontmatter the opinionated way it does. The parser and encoder live in
+`internal/codec/markdownbodytext`; the transform that drives the canonical
+form, and the backend write that persists it, live in `internal/fix` and
+`internal/storage/collection/filesystem` respectively.
 
 ## Why fix is deliberately opinionated
 
@@ -123,8 +81,13 @@ For each item:
 1. **Body bytes are sacred.** No command except `fix` modifies them. Even `fix`
    only normalizes trailing whitespace and the leading separator; interior body
    bytes round-trip exactly.
-2. **Line numbers are file-relative and 1-indexed.** The opening fence is line
-   1, so the first key is typically line 2. (Populated for YAML today; see the
-   line-tracking note above.)
-3. **Format is preserved.** `fix` re-emits each file in its own frontmatter
+2. **Format is preserved.** `fix` re-emits each file in its own frontmatter
    syntax and never converts between YAML, TOML, and JSON.
+3. **No semantic values are invented.** `fix` only normalizes existing
+   frontmatter and configured text fixes; it does not create missing metadata.
+
+## See also
+
+- [Frontmatter]({{< relref "frontmatter.md" >}}) for how markdown documents
+  parse before `fix` rewrites them.
+- `go doc ./internal/fix` for the code-level transform contract.

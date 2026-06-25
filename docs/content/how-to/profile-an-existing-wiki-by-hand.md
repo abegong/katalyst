@@ -18,10 +18,10 @@ runs in **two layers**: point it at a **directory** to profile a raw store
 (no project needed), or at a configured **collection** to profile its items.
 The onboarding loop uses both.
 
-## 1. Survey the directory (raw-source layer)
+## 1. Survey the directory (source layer)
 
 Point `inspect` at the directory. With no `.katalyst/` project it runs the
-raw-source inspectors:
+source inspectors:
 
 ```bash
 katalyst inspect ./wiki

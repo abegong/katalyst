@@ -3,12 +3,13 @@
 //
 // # Three concepts
 //
-//   - BaseType: a known backend kind (filesystem today; sqlite, postgresql,
+//   - BaseType: a known backend kind (filesystem and sqlite today; postgresql,
 //     mongodb later). The registry here is the extension point.
 //   - BaseInstance (assembled by the internal/project loader): one configured
 //     store of a type plus how to reach it, embedding the collections it maps.
 //   - CollectionDefinition: the two-way mapping from a store's contents to
-//     collections and items. FilesystemCollectionDefinition is the first.
+//     collections and items. Filesystem and SQLite definitions are implemented
+//     today.
 //
 // # The two-way contract
 //
@@ -24,6 +25,6 @@
 //
 // Whether a matched store unit becomes an Item or a Collection is a property of
 // the BaseType, not user configuration. A markdown file is an Item; a SQL
-// table would be a Collection. Item and Collection are therefore roles, not file
+// table is a Collection. Item and Collection are therefore roles, not file
 // counts. See docs/content/deep-dives/domain-model/storage.md.
 package storage

@@ -7,10 +7,11 @@ weight = 42
 
 The `internal/project` loader (`loader.go`) is the orchestration hub: it loads a
 project's `.katalyst/` directory, resolves named schemas, and assembles bases
-and their collections (each object type parses its own config — the storage
+and their collections. Each object type parses its own config: the base
 registry validates a declared `type`, and a collection parses its own block in
-`storage/collection`). It decides which schema applies to a given item,
-and the `check` lifecycle is driven from here.
+`storage/collection`. It decides which schema applies to a given item, and the
+`check` lifecycle is driven from here.
+
 This page is the model and the *why*; for the key-by-key surface see the
 [configuration reference]({{< relref "../../reference/configuration.md" >}}).
 
@@ -22,69 +23,45 @@ ancestor becomes the repo root for all path resolution.
 
 The directory holds an optional `config.yaml`, one schema file per definition
 under `schemas/`, and one base file per definition under `bases/`. A directory
-(rather than one big file) keeps each schema and base in its own
-reviewable file and lets the name fall out of the filename by convention. A
-nearest-ancestor lookup mirrors `.git`, `.editorconfig`, and `go.mod`: familiar
-and predictable. Discovery resolves symlinks on both the root and the input
-path, because on macOS `$TMPDIR` lives behind `/var` to `/private/var` and
-relative-path resolution would otherwise produce garbage.
+rather than one big file keeps each schema and base in its own reviewable file
+and lets the name fall out of the filename by convention. A nearest-ancestor
+lookup mirrors `.git`, `.editorconfig`, and `go.mod`: familiar and predictable.
+Discovery resolves symlinks on both the root and the input path, because on
+macOS `$TMPDIR` lives behind `/var` to `/private/var` and relative-path
+resolution would otherwise produce garbage.
 
 `config.yaml` is YAML; schema and base files default to YAML/JSON and the
-accepted format is set per kind there. Default discovery is **convention** (one
-file per definition); a kind can be switched to **explicit** to list its
+accepted format is set per kind there. Default discovery is **convention**: one
+file per definition. A kind can be switched to **explicit** to list its
 definitions inline in `config.yaml` instead.
 
-Collections are declared *inside* a [base]({{< relref "storage.md" >}}),
-which owns the backend-to-collection mapping. This page covers the collection
-model and schema resolution; the base layer covers how a base maps a
-backend onto those collections.
+Collections are declared *inside* a [base]({{< relref "base.md" >}}), which owns
+the base-to-collection mapping. This page covers the collection model and
+schema resolution; the base page covers how a base maps a backend source onto
+those collections.
 
-## The model
+## Terms
 
-- **Collection** - a named group of items backed by a directory; the unit you
-  select on the command line and the unit that owns a set of checks. `path`
-  defaults to the collection name; `pattern` defaults to `*.md`. Collection
-  names are unique project-wide, since a selector carries no base qualifier.
-
-  ```yaml
-  # inside .katalyst/bases/local.yaml
-  collections:
-    books:
-      path: notes/books   # directory, relative to the repo root
-      pattern: "*.md"      # filename glob; default "*.md"
-      schema: book         # shorthand for a single leading object check
-      checks:              # any additional checks
-        - kind: markdown_title_matches_h1
-  ```
-
-- **Item** - a single member of a collection: one file matching the
-  collection's `pattern`. Its **id** is the filename stem (`notes/books/dune.md`
-  gives `dune`).
-- **Selector** - how commands (`check`, `fix`, the `item` subcommands) name what
-  to operate on, broad to narrow: *(none)* is the whole project, `<collection>`
-  is one collection, `<collection>/<item>` is a single item.
-- **Schema** - a JSON Schema (draft 2020-12 by default) describing the legal
-  shape of an item's parsed `Meta`. A schema has two identities: a **path** on
-  disk and a **name** (its filename stem under `.katalyst/schemas/`). The name
-  is the stable public handle; paths can change. `--schema <path>` bypasses the
-  name layer entirely.
-- **Schema directive** (`schema:` in frontmatter) - a per-document opt-in to a
-  specific schema. It is **metadata about katalyst, not user data**: the
-  resolver reads it to choose a schema, then strips it from `Meta` before
-  validating, so a schema with `additionalProperties: false` is not tripped by
-  katalyst's own key.
+| Term | Meaning |
+|---|---|
+| **Collection** | A group of items that share structure: a directory of similar files, a relational table, a Mongo collection, or a family of API resources. Collections are the unit that owns checks and that users address by name. |
+| **Item** | One unit of data in a collection: a markdown file, a table row, a Mongo document, or one API resource. In the filesystem base, an item is one file matching the collection's `pattern`; its **id** is the filename stem (`notes/books/dune.md` gives `dune`). |
+| **Attribute** | A named characteristic of an item: a column, a frontmatter key, a response field, its filename, its path, or another backend-derived property. A key in a structured object specifically is a **field**. |
+| **Selector** | How commands (`check`, `fix`, the `item` subcommands) name what to operate on, broad to narrow: *(none)* is the whole project, `<collection>` is one collection, `<collection>/<item>` is a single item. |
+| **Schema** | A JSON Schema (draft 2020-12 by default) describing the legal shape of an item's parsed `Meta`. A schema has two identities: a **path** on disk and a **name** (its filename stem under `.katalyst/schemas/`). The name is the stable public handle; paths can change. `--schema <path>` bypasses the name layer entirely. |
+| **Schema directive** | A per-document `schema:` frontmatter key that opts the document into a specific schema. It is **metadata about katalyst, not user data**: the resolver reads it to choose a schema, then strips it from `Meta` before validating, so a schema with `additionalProperties: false` is not tripped by katalyst's own key. |
 
 The `config.Config` loaded from disk is the single source of truth for "what
 schemas exist and what each collection checks." It is validated at load: every
 collection's object schema must reference a known schema, and a collection must
-configure at least one check (via the `schema:` shorthand or an explicit
-`checks:` list).
+configure at least one check via the `schema:` shorthand or an explicit
+`checks:` list.
 
 ## Collections across backends
 
 The collection model is intentionally broader than "a directory of markdown
 files." A collection is the named group Katalyst can list, select, inspect, and
-check, even when the backing storage has a different native vocabulary.
+check, even when the backing base has a different native vocabulary.
 
 | System               | Base          | Collection      | Item       | Attribute        |
 |----------------------|---------------|-----------------|------------|------------------|
@@ -95,8 +72,8 @@ check, even when the backing storage has a different native vocabulary.
 | An S3 bucket of JSON | The bucket    | A key prefix    | An object  | A JSON key       |
 
 An operation defined against this vocabulary, such as checking an attribute or
-aggregating over a collection, applies to every backend that can support it.
-The backend still decides the mechanics: a filesystem may list files and parse
+aggregating over a collection, applies to every base that can support it. The
+base still decides the mechanics: a filesystem may list files and parse
 frontmatter in memory, while a database may push filtering and aggregation into
 queries. The collection name stays the user's handle either way.
 
@@ -136,9 +113,9 @@ compiles base and variant through one path.
 The discriminator is metadata, not a glob, on purpose: metadata is the one
 property every item yields on every backend (frontmatter for a file, columns for
 a future row), so routing stays portable and the engine never depends on the
-storage type. Selecting by *path* is a storage-type-scoped condition, deferred.
-(The base layer covers [how variants route checks rather than
-membership]({{< relref "storage.md" >}}).)
+base type. Selecting by *path* is a base-type-scoped condition, deferred. The
+base page covers [how variants route checks rather than
+membership]({{< relref "base.md" >}}).
 
 ## Why a file inside a collection must match
 
@@ -146,8 +123,8 @@ A file that sits inside a collection's directory but does not match its
 `pattern` is reported as an **error**, not silently skipped. Silent skips hide
 config drift: a typo'd pattern or a misfiled document would simply disappear
 from validation. Opt-outs (`--allow-unmatched` and a config knob) are deferred
-until real usage shows the need. The base layer frames the same decision as
-[unmatched references being first-class]({{< relref "storage.md" >}}).
+until real usage shows the need. The base page frames the same decision as
+[unmatched references being first-class]({{< relref "base.md" >}}).
 
 ## Why named collections replaced the old `rules:` list
 
@@ -207,7 +184,7 @@ The data flow per item, end to end:
 
 - The [configuration reference]({{< relref "../../reference/configuration.md" >}})
   for the precise `.katalyst/` surface.
-- The [base layer]({{< relref "storage.md" >}}) for how a backend maps onto
+- The [base]({{< relref "base.md" >}}) for how a backend source maps onto
   collections, and the base model.
 - The [domain model]({{< relref "_index.md" >}}) for the cross-subsystem
   entity map and invariants.

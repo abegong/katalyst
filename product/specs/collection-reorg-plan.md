@@ -73,7 +73,8 @@ temporarily, for Phase 5 to claim. **Green check.**
 ### Phase 6 — Docs and final sweep
 
 Root `AGENTS.md` layout tree; new `AGENTS.md` for `storage/collection` and
-`internal/fix`; delete `frontmatter/AGENTS.md`; update `formatting.md`,
+`internal/fix`; delete `frontmatter/AGENTS.md`; update `frontmatter.md`,
+`fix.md`,
 `storage.md`, `collections.md`; refresh the terminology matrix's Internal-code
 column. Confirm `make all` + `make docs-gen-check`. (Glossary needs no new terms.)
 

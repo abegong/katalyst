@@ -18,11 +18,11 @@ model and the rationale behind it.
 
 Inspectors come in two layers, distinguished by *how they reference the data*:
 
-- **The raw-source layer** (`SourceInspector` over a `SourceView`) measures a
-  backend store directly, before any collection configuration, addressed by
-  backend-native reference (a relative path today). It answers "what is in this
-  store?" - the onboarding case. `file_tree` and `file_content_shape` live
-  here.
+- **The raw base layer** (`SourceInspector` over a `SourceView`) measures a
+  base directly, before any collection configuration, addressed by
+  base-native reference (a relative path today). It answers "what is in this
+  base?" - the onboarding case. `file_tree`, `file_tree_content`, and
+  `document_shape` live here.
 - **The collection layer** (`CollectionInspector` over a `CollectionView`)
   measures a configured collection's items, addressed by domain identity
   (collection + item id) and reached through the project's
@@ -31,7 +31,7 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 
 The two are **distinct interfaces, not one type at two scopes**, precisely
 because they reference the data through different machinery. This mirrors the
-seam in the [Bases]({{< relref "storage.md" >}}).
+seam in the [base]({{< relref "base.md" >}}).
 
 ## Built from primitives
 
@@ -48,7 +48,7 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   shape (types, naming, depth, regions, directory density) over references,
   opening no files.
 
-The same small primitives are reused where the layer makes sense, but raw-source
+The same small primitives are reused where the layer makes sense, but raw base
 inspectors avoid proposing collections. They report store and content facts; a
 human or agent decides what collection boundaries those facts imply.
 
