@@ -16,10 +16,10 @@ Today, Katalyst exposes four data surfaces:
 
 | Surface | Meaning |
 |---|---|
-| [Markdown body text]({{< relref "markdown-body-text.md" >}}) | A parsed markdown document with optional frontmatter metadata, body bytes, source format, and source-line lookup. |
-| [Plain text]({{< relref "plain-text.md" >}}) | Body content read as raw text, independent of markdown structure. |
-| [Structured object]({{< relref "structured-object.md" >}}) | Metadata normalized to a `map[string]any`, used by object and schema-backed checks. |
 | [File metadata]({{< relref "file-metadata.md" >}}) | Filename, extension, parent directory, path depth, and other attributes derived from the item's reference. |
+| [Plain text]({{< relref "plain-text.md" >}}) | Body content read as raw text, independent of markdown structure. |
+| [Markdown body text]({{< relref "markdown-body-text.md" >}}) | A parsed markdown document with optional frontmatter metadata, body bytes, source format, and source-line lookup. |
+| [Structured object]({{< relref "structured-object.md" >}}) | Metadata normalized to a `map[string]any`, used by object and schema-backed checks. |
 
 Only Markdown body text is backed by a dedicated codec package today. The other
 surfaces are projections over parsed data or derived references.

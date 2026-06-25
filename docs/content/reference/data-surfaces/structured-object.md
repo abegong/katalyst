@@ -1,6 +1,6 @@
 +++
 title = "Structured object"
-weight = 30
+weight = 40
 +++
 
 # Structured object

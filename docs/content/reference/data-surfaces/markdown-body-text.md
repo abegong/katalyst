@@ -1,6 +1,6 @@
 +++
 title = "Markdown body text"
-weight = 10
+weight = 30
 +++
 
 # Markdown body text

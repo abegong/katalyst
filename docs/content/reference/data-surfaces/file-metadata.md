@@ -1,6 +1,6 @@
 +++
 title = "File metadata"
-weight = 40
+weight = 10
 +++
 
 # File metadata
