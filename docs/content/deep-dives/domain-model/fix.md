@@ -11,7 +11,18 @@ frontmatter the opinionated way it does. The parser and encoder live in
 form, and the backend write that persists it, live in `internal/fix` and
 `internal/storage/collection/filesystem` respectively.
 
-## Why fix is deliberately opinionated
+## Terms
+
+| Term | Meaning |
+|---|---|
+| **Fix** | A command that rewrites existing content into Katalyst's canonical form when a check can supply a safe transformation. |
+| **Canonical form** | The deterministic output format `fix` writes: preserved frontmatter syntax, sorted top-level keys, native encoder style, preserved body bytes, and one trailing newline. |
+| **Report-only check** | A check that can report violations but cannot safely rewrite content. |
+| **Check mode** | The `--check` form of `fix`: print what would change, write nothing, and exit 1 if any item is non-canonical. |
+
+## Design rationale
+
+**Fix is deliberately opinionated.**
 
 `katalyst fix` rewrites frontmatter in one canonical form **in the file's own
 format**: TOML stays TOML, JSON stays JSON, YAML stays YAML. `fix` never
@@ -42,11 +53,7 @@ if it hurts in practice.
 `--check` makes `fix` non-destructive: it writes nothing, prints the items that
 *would* change, and exits 1. That is the CI form.
 
-## Worked example
-
-{{< katalyst-example-full "fix-normalize-frontmatter" >}}
-
-## Why fix never injects missing values
+**Fix never injects missing values.**
 
 An earlier idea had a mode that would add "sentinel" placeholder values for
 missing required keys. It was dropped, and the safe-mutation story moved to a
@@ -59,6 +66,10 @@ that. A safer design, interactive or constrained to filling a schema's declared
 `default:`, deserves its own command and explicit per-field opt-in. Until then,
 `fix` only ever normalizes what is already there; it never creates structure (a
 frontmatter-less file is returned untouched).
+
+## Worked example
+
+{{< katalyst-example-full "fix-normalize-frontmatter" >}}
 
 ## Lifecycle of fix
 

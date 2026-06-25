@@ -10,7 +10,16 @@ that produces. The codec lives in `internal/codec/markdownbodytext`; it turns a
 markdown file into structured metadata plus body bytes that checks, inspectors,
 and [`fix`]({{< relref "fix.md" >}}) can share.
 
-## The markdown document
+## Terms
+
+| Term | Meaning |
+|---|---|
+| **Frontmatter** | The structured metadata block at the top of a markdown file, in YAML, TOML, or JSON. |
+| **Body** | Everything after the closing frontmatter fence. |
+| **Document** | The parsed markdown file-form: detected frontmatter format, normalized metadata, body bytes, and source line lookup. |
+| **Metadata** | The parsed in-memory frontmatter shape, normalized to `map[string]any` for checks and inspectors. |
+
+## Model
 
 The unit of work is a file on disk with two optional regions:
 

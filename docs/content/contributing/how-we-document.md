@@ -95,13 +95,14 @@ feature. They are tests that double as documentation; see
 
 ## Templates
 
-New reference and explanation pages start from a template under
-`templates/`. Each carries the Diátaxis "this page IS X, is NOT Y"
-guardrail. The templates are marked `draft = true` so the public build
+New reference, explanation, and domain-model deep-dive pages start from a
+template under `templates/`. Each carries the Diátaxis "this page IS X, is NOT
+Y" guardrail. The templates are marked `draft = true` so the public build
 excludes them; they are in-repo for contributors only.
 
 - [Reference template](templates/reference.md)
 - [Explanation template](templates/explanation.md)
+- [Domain model deep-dive template](templates/domain-model-deep-dive.md)
 
 Tutorial and how-to templates are derived from the first real page of each
 type rather than guessed up front.

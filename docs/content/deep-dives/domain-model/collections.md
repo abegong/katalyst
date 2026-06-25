@@ -57,7 +57,9 @@ base still decides the mechanics: a filesystem may list files and parse
 frontmatter in memory, while a database may push filtering and aggregation into
 queries. The collection name stays the user's handle either way.
 
-## Why schema resolution has three tiers
+## Design rationale
+
+**Schema resolution has three tiers.**
 
 When `check` validates an item against an object schema, it resolves which
 schema, highest precedence first:
@@ -81,7 +83,7 @@ Resolution runs through a per-invocation **resolver** that owns this policy and 
 compiled-schema cache keyed by absolute path, so "check 10,000 files against the
 same schema" costs one compile.
 
-## Why variants discriminate by metadata, not path
+**Variants discriminate by metadata, not path.**
 
 A collection's `variants:` run extra checks on a subset of items, chosen by the
 item's metadata. The discriminator (`when`) reuses the `item list --filter`
@@ -94,10 +96,9 @@ The discriminator is metadata, not a glob, on purpose: metadata is the one
 property every item yields on every backend (frontmatter for a file, columns for
 a future row), so routing stays portable and the engine never depends on the
 base type. Selecting by *path* is a base-type-scoped condition, deferred. The
-base page covers [how variants route checks rather than
-membership]({{< relref "base.md" >}}).
+base page covers [how variants route checks rather than membership]({{< relref "base.md" >}}).
 
-## Why a file inside a collection must match
+**Files inside a collection must match.**
 
 A file that sits inside a collection's directory but does not match its
 `pattern` is reported as an **error**, not silently skipped. Silent skips hide

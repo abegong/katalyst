@@ -14,7 +14,18 @@ command. For the per-inspector catalog see the [inspectors
 reference]({{< relref "../../reference/inspectors/_index.md" >}}); this page is the
 model and the rationale behind it.
 
-## Two layers
+## Terms
+
+| Term | Meaning |
+|---|---|
+| **Inspector** | A read-only operation that profiles content and returns evidence. |
+| **Evidence** | The measured counts, distributions, classes, or summaries an inspector reports. Evidence is not a recommendation or verdict. |
+| **Raw base layer** | Inspectors that measure a base directly before collection configuration. |
+| **Collection layer** | Inspectors that measure configured collection items by domain identity. |
+| **Measurement primitive** | A reusable profiler such as `objectFields`, `markdownBody`, or `fileMetadata` that inspectors point at a specific input. |
+| **Profile class** | A group of near-identical profiles collapsed together so output scales with distinct shapes rather than total files. |
+
+## Model
 
 Inspectors come in two layers, distinguished by *how they reference the data*:
 
@@ -33,7 +44,7 @@ The two are **distinct interfaces, not one type at two scopes**, precisely
 because they reference the data through different machinery. This mirrors the
 seam in the [base]({{< relref "base.md" >}}).
 
-## Built from primitives
+**Measurement is built from primitives.**
 
 Most measurement lives in three reusable, layer-agnostic primitives, so the
 inspectors themselves are thin wrappers that point a primitive at an input:
@@ -48,11 +59,16 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   shape (types, naming, depth, regions, directory density) over references,
   opening no files.
 
-The same small primitives are reused where the layer makes sense, but raw base
-inspectors avoid proposing collections. They report store and content facts; a
+The same small primitives are reused where the layer makes sense. `objectFields`
+runs over a collection's items in the collection layer and over loose-file
+frontmatter inside the `document_shape` fingerprint in the raw base layer, so
+the two layers share one engine rather than re-deriving it. Raw base inspectors
+still avoid proposing collections: they report store and content facts, and a
 human or agent decides what collection boundaries those facts imply.
 
-## Evidence, not recommendations
+## Design rationale
+
+**Evidence, not recommendations.**
 
 An inspector reports that a field appears in 94% of items; it does **not** say
 "make it required." The threshold that turns 94% into a required field, or a
@@ -65,7 +81,7 @@ become something to second-guess rather than trust. Reporting only counts, with
 the unit count `n` as denominator, keeps the evidence trustable: the reader sees
 why a conclusion holds and decides.
 
-## The determinism dividing line
+**The determinism dividing line.**
 
 Deterministic measurement is an inspector's job; threshold-picking and
 structure-proposing are not. Counting field presence, histogramming types,
@@ -74,12 +90,12 @@ all deterministic, all inspectors. Deciding that 94% is "required", that a
 directory should be a collection, or what to name a schema are all judgment,
 none of it here.
 
-## Keeping output small
+**Keep output small.**
 
-`file_tree` and `file_content_shape` keep Markdown output small with
-deterministic caps: small trees get an actual tree; content-shape reports show
-the selected file set, dominant structures, and compact text/tabular/tree
-facets, with `-v` for expanded evidence.
+`file_tree`, `file_tree_content`, and `document_shape` keep Markdown output
+small with deterministic caps: small trees get an actual tree; content-shape
+reports show the selected file set, dominant structures, and compact
+text/tabular/tree facets, with `-v` for expanded evidence.
 
 ## Output
 
@@ -93,6 +109,15 @@ Katalyst provides the instruments; a human or an agent is the profiler. The
 intended workflow is a loop - inspect, draft a schema, check, fix the holdouts -
 but the forming, drafting, and threshold-choosing live with whoever drives the
 tool, not in the engine.
+
+## Invariants
+
+1. **Inspectors do not mutate content.** They report evidence and write no
+   schemas, checks, or files.
+2. **Evidence stays separate from recommendations.** Threshold choices and
+   schema proposals belong to the human or agent driving the workflow.
+3. **Layer boundaries stay explicit.** Raw base inspectors use base-native
+   references; collection-layer inspectors use collection and item identity.
 
 ## See also
 

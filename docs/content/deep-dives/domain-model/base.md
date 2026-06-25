@@ -85,7 +85,7 @@ In Katalyst, the flat `stem` identity is the degenerate one-coordinate case:
 grow into multiple coordinates parsed from the path. The selector grammar and
 the definition's pattern are two views of the same thing.
 
-## Design lessons
+## Design rationale
 
 - **The contract is two-way, not one-way.** Discovery and reconstruction are
   both core base operations.
@@ -106,7 +106,7 @@ the definition's pattern are two views of the same thing.
   Collection names and item coordinates answer different questions and should
   stay distinct.
 
-## Seam and extension points
+## Extension points
 
 - **Core seam:** `internal/storage` defines `BaseType`, `Scope`, and
   `Reference`; `internal/project` assembles `BaseInstance` values, and
@@ -120,4 +120,11 @@ the definition's pattern are two views of the same thing.
   Multi-coordinate templates, inferred mode, and additional non-filesystem
   types slot in there.
 
-[addressing]: {{< relref "_index.md" >}}
+## See also
+
+- [Domain model]({{< relref "_index.md" >}}) for the cross-subsystem entity map.
+- [Collections]({{< relref "collections.md" >}}) for the collection and item
+  hierarchy bases expose.
+- [Configuration]({{< relref "../../reference/configuration.md" >}}) for the
+  precise `.katalyst/bases/` surface.
+- `go doc ./internal/storage` for the code-level base contracts.

@@ -150,6 +150,15 @@ into one invocation is the optimization, deferred to
 [#68](https://github.com/abegong/katalyst/issues/68) rather than built before a
 real out-of-process library exists.
 
+## Invariants
+
+1. **The registry is authoritative.** Every runnable check type has a
+   descriptor, and generated docs read the same registry as the engine.
+2. **Family and library stay separate.** Family describes the data a check
+   reads; library describes the provider that runs it.
+3. **Collection-scoped checks see the whole collection.** A selector may narrow
+   output, but a collection-level verdict still needs the full sibling set.
+
 ## See also
 
 - The [check types reference]({{< relref "../../reference/check-types/_index.md" >}})
