@@ -14,7 +14,7 @@ func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 		t.Fatalf("inspectors list: %v", err)
 	}
 
-	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+	for _, want := range []string{"file_tree", "file_content_shape", "object_fields", "markdown_body"} {
 		if !strings.Contains(stdout, want) {
 			t.Errorf("expected inspector %q in output", want)
 		}
@@ -125,7 +125,7 @@ func TestInspectorsList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 			t.Errorf("entry %d (%s): empty layer/summary", i, d.Name)
 		}
 	}
-	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+	for _, want := range []string{"file_tree", "file_content_shape", "object_fields", "markdown_body"} {
 		if !seen[want] {
 			t.Errorf("expected inspector %q in JSON output", want)
 		}

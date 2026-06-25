@@ -1,5 +1,5 @@
 Raw-source inspectors › File content shape
--------------------------------------------
+--------------------------------------------
 - inspector: file_content_shape
 - layer: source
 - family: structural

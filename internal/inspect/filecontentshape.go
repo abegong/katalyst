@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/storage"
-	"github.com/abegong/katalyst/internal/storage/collection/document"
 )
 
 type contentIssue struct {
@@ -70,7 +70,7 @@ func buildFileContentShape(v SourceView, sel Selection) map[string]any {
 		switch f.ext {
 		case ".md":
 			mdFiles++
-			doc, err := document.Parse(src)
+			doc, err := markdownbodytext.Parse(src)
 			if err != nil {
 				issues = append(issues, contentIssue{Path: f.rel, Kind: "parse_failed", Detail: err.Error()})
 				continue
