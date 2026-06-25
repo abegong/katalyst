@@ -25,10 +25,10 @@ func TestCheckTypes_listsEveryTypeGroupedByFamily(t *testing.T) {
 	// Family titles appear in Families() order.
 	last := -1
 	for _, title := range []string{
-		"Structured object check types",
-		"Markdown body text check types",
-		"File system check types",
-		"Plain text check types",
+		"Structured object",
+		"Markdown body text",
+		"File system",
+		"Plain text",
 	} {
 		i := strings.Index(stdout, title)
 		if i < 0 {

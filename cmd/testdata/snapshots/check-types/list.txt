@@ -1,5 +1,5 @@
-Structured object check types (8)
----------------------------------
+Structured object (8)
+---------------------
 - object_field_enum
   purpose: Require that a field is one of a fixed set of values.
   required: field, values
@@ -33,8 +33,8 @@ Structured object check types (8)
   required: schema
   optional: -
 
-Markdown body text check types (7)
-----------------------------------
+Markdown body text (7)
+----------------------
 - markdown_code_fence_language_required
   purpose: Require that opening fenced code blocks include a language tag.
   required: -
@@ -64,8 +64,8 @@ Markdown body text check types (7)
   required: -
   optional: -
 
-File system check types (13)
-----------------------------
+File system (13)
+----------------
 - filesystem_extension_in
   purpose: Allow only specific file extensions.
   required: values
@@ -119,8 +119,8 @@ File system check types (13)
   required: -
   optional: -
 
-Plain text check types (4)
---------------------------
+Plain text (4)
+--------------
 - text_denylist
   purpose: Forbid any of a list of literal substrings in the body text.
   required: values

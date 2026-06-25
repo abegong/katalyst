@@ -1,5 +1,5 @@
 +++
-title = "Markdown body text check types"
+title = "Markdown body text"
 weight = 20
 bookCollapseSection = true
 aliases = ["/reference/rules/markdown-body-text/"]

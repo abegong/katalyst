@@ -1,5 +1,5 @@
-Markdown body text check types (7)
-----------------------------------
+Markdown body text (7)
+----------------------
 - markdown_code_fence_language_required
   purpose: Require that opening fenced code blocks include a language tag.
   required: -

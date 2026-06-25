@@ -1,5 +1,5 @@
 +++
-title = "File system check types"
+title = "File system"
 weight = 30
 bookCollapseSection = true
 aliases = ["/reference/rules/file-system/"]
