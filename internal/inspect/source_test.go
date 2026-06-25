@@ -6,7 +6,7 @@ import (
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
-func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
+func TestFileTree_opensNothingAndReportsFilesystemMap(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n\n## Review\n")
 	writeFile(t, dir, "notes/messiah.md", "---\ntitle: Messiah\n---\n# Messiah\n\n## Review\n")
@@ -25,65 +25,60 @@ func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
 		t.Error("file_tree should not apply to a non-filesystem type")
 	}
 
-	p, _ := inspect.ParseParams("exact", -1, 0)
-	ev := ft.Inspect(view, p)
+	ev := ft.Inspect(view, inspect.Params{})
 	if view.ParseCount() != 0 {
 		t.Errorf("file_tree opened %d files, want 0", view.ParseCount())
 	}
 	if ev.Inspector != "file_tree" || ev.Scope != dir {
 		t.Errorf("file_tree evidence = %+v", ev)
 	}
-	// notes (.md, kebab) and assets (.png) are distinct directory profiles.
-	if got := classTotal(t, ev); got != 2 {
-		t.Errorf("distinct directory classes = %d, want 2", got)
+	if got := ev.Data["file_count"].(int); got != 3 {
+		t.Errorf("file_count = %d, want 3", got)
+	}
+	if got := ev.Data["dir_count"].(int); got != 3 {
+		t.Errorf("dir_count = %d, want 3", got)
+	}
+	if got := ev.Data["max_depth"].(int); got != 2 {
+		t.Errorf("max_depth = %d, want 2", got)
+	}
+	extensions := ev.Data["extensions"].(map[string]any)
+	if extensions[".md"].(int) != 2 || extensions[".png"].(int) != 1 {
+		t.Errorf("extensions = %v, want .md=2 .png=1", extensions)
+	}
+	regions := ev.Data["top_level_regions"].([]any)
+	if len(regions) != 2 {
+		t.Fatalf("regions = %d, want 2", len(regions))
+	}
+	first := regions[0].(map[string]any)
+	if first["path"] != "notes/" || first["file_count"].(int) != 2 {
+		t.Errorf("first region = %v, want notes/ with 2 files", first)
+	}
+	if len(ev.Data["tree_entries"].([]any)) == 0 {
+		t.Errorf("small file tree should include tree_entries")
 	}
 }
 
-func TestFileTreeContent_parsesMarkdown(t *testing.T) {
+func TestFileContentShape_profilesSelectedMarkdown(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
+	writeFile(t, dir, "data/books.csv", "title,rating\nDune,5\n")
 
 	view, err := inspect.NewSourceView(dir)
 	if err != nil {
 		t.Fatalf("NewSourceView: %v", err)
 	}
-	_ = inspect.FileTreeContent{}.Inspect(view, inspect.Params{})
+	ev := inspect.FileContentShape{}.Inspect(view, inspect.Params{}.WithSelection(inspect.ParseSelection(`ext = ".md"`)))
 	if view.ParseCount() == 0 {
-		t.Error("file_tree_content should parse markdown (ParseCount > 0)")
+		t.Error("file_content_shape should open selected files (ParseCount > 0)")
 	}
-}
-
-func TestDocumentShape_clustersOnCompositeFingerprint(t *testing.T) {
-	dir := t.TempDir()
-	// Identical across all dimensions → one class.
-	writeFile(t, dir, "books/dune.md", "---\ntitle: Dune\nrating: 5\n---\n# Dune\n\n## Review\n")
-	writeFile(t, dir, "books/messiah.md", "---\ntitle: Messiah\nrating: 4\n---\n# Messiah\n\n## Review\n")
-	// Same frontmatter keys, different body skeleton (Summary, not Review) →
-	// a different class, proving clustering is not on frontmatter alone.
-	writeFile(t, dir, "books/notes.md", "---\ntitle: Notes\nrating: 3\n---\n# Notes\n\n## Summary\n")
-
-	view, err := inspect.NewSourceView(dir)
-	if err != nil {
-		t.Fatalf("NewSourceView: %v", err)
+	if ev.Inspector != "file_content_shape" {
+		t.Errorf("inspector = %q, want file_content_shape", ev.Inspector)
 	}
-	p, _ := inspect.ParseParams("exact", -1, 0)
-	ev := inspect.DocumentShape{}.Inspect(view, p)
-
-	classes := ev.Data["classes"].([]any)
-	if len(classes) != 1 {
-		t.Fatalf("classes = %d, want 1 (dune+messiah)", len(classes))
+	if got := ev.Data["file_count"].(int); got != 1 {
+		t.Errorf("file_count = %d, want selected markdown file only", got)
 	}
-	if classes[0].(map[string]any)["size"].(int) != 2 {
-		t.Errorf("class size = %v, want 2", classes[0].(map[string]any)["size"])
+	md := ev.Data["markdown"].(map[string]any)
+	if got := md["files"].(int); got != 1 {
+		t.Errorf("markdown.files = %d, want 1", got)
 	}
-	if outliers := ev.Data["outliers"].([]any); len(outliers) != 1 {
-		t.Errorf("outliers = %d, want 1 (notes, distinct body)", len(outliers))
-	}
-}
-
-// classTotal counts distinct classes (non-singleton classes plus singleton
-// outliers) in a summarized evidence payload.
-func classTotal(t *testing.T, ev inspect.Evidence) int {
-	t.Helper()
-	return len(ev.Data["classes"].([]any)) + len(ev.Data["outliers"].([]any))
 }

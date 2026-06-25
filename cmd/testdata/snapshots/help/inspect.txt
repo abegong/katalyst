@@ -13,12 +13,10 @@ Usage:
   katalyst inspect <path-or-collection> [flags]
 
 Flags:
-      --detail string           Summarizer detail level: exact, grouped, or coarse (default grouped).
   -h, --help                    help for inspect
       --inspector stringArray   Run only the named inspector(s); repeatable. Default: all in the selected layer.
       --json                    Emit evidence as JSON instead of Markdown.
-      --max-classes int         Cap the number of summarized classes. Mutually exclusive with --detail/--similarity.
       --max-lines int           Truncate each inspector's Markdown output to N lines (0 = no limit). (default 20)
   -o, --output string           Write the report to a file instead of stdout.
-      --similarity float        Summarizer similarity threshold (0–1). Mutually exclusive with --detail/--max-classes. (default -1)
+      --select string           Select files for file_content_shape: directory, glob, ext = ".csv", or path under "docs".
   -v, --verbose                 Show full output; do not truncate (same as --max-lines 0).

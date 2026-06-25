@@ -2,28 +2,86 @@
 
 ## Structural
 
-### file_tree_content (n=2)
+### file_content_shape (n=2)
 
-_Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets._
+_Profile selected files by text, tabular, and tree content structure._
 
-- classes:
-- outliers:
-  - features=[fmkey:status, fmkey:title, parsed, frontmatter] label=books
+----------------------------------------
+selection:
+  expression    : all files
+  files         : 2
+  directories   : 1
+  readable      : 2
+  unsupported   : 0
+  parse failures: 0
 
-### document_shape (n=2)
+----------------------------------------
+file types:
+  TYPE  FILES
+  .md   2
 
-_Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming._
+----------------------------------------
+coherence:
+  status: coherent
 
-- classes:
-  - class=P1 features=[ext:.md, casing:kebab, fmkey:status, fmkey:title, sec:Review] members=[books/dune.md, books/it.md] size=2
-- outliers:
+----------------------------------------
+common structure:
+  - 2/2 Markdown files have an H1
+  - 2/2 Markdown files have frontmatter key status
+  - 2/2 Markdown files have frontmatter key title
+  - 2/2 Markdown files have section Review
+
+----------------------------------------
+variation:
+  none
+
+----------------------------------------
+text:
+  files  : 2
+  with H1: 2
+  frontmatter keys:
+  KEY     FILES
+  status  2
+  title   2
+
+----------------------------------------
+tabular:
+  no CSV files selected
+
+----------------------------------------
+tree:
+  no JSON files selected
+
+----------------------------------------
+read/parse issues:
+  none
 
 ## Filesystem
 
 ### file_tree (n=2)
 
-_Profile each directory's file types, naming, and depth, opening no files._
+_Map files, directories, extensions, regions, and filename conventions, opening no files._
 
-- classes:
-- outliers:
-  - features=[ext:.md, casing:kebab] label=books
+----------------------------------------
+summary:
+  files        : 2
+  directories  : 2
+  max depth    : 2
+  dominant type: -
+
+----------------------------------------
+tree:
+.
+└── books/
+    ├── dune.md
+    └── it.md
+
+----------------------------------------
+file types:
+  TYPE  FILES
+  .md   2
+
+----------------------------------------
+representative paths:
+  books/dune.md
+  books/it.md

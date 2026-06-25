@@ -113,7 +113,7 @@ func TestInspect_outputFileMatchesStdout(t *testing.T) {
 
 func TestInspect_inspectorFlagNarrows(t *testing.T) {
 	dir := inspectRepo(t)
-	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "document_shape", dir)
+	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "file_tree", dir)
 	if err != nil {
 		t.Fatalf("inspect --inspector: %v", err)
 	}
@@ -121,8 +121,67 @@ func TestInspect_inspectorFlagNarrows(t *testing.T) {
 	if err := json.Unmarshal([]byte(stdout), &records); err != nil {
 		t.Fatalf("bad json: %v", err)
 	}
-	if len(records) != 1 || records[0]["inspector"] != "document_shape" {
-		t.Errorf("expected only document_shape, got %v", records)
+	if len(records) != 1 || records[0]["inspector"] != "file_tree" {
+		t.Errorf("expected only file_tree, got %v", records)
+	}
+}
+
+func TestInspect_selectRunsFileContentShape(t *testing.T) {
+	dir := inspectRepo(t)
+	writeFile(t, dir, "data/books.csv", "title,rating\nDune,5\n")
+	stdout, _, err := runRoot(t, "inspect", "--json", "--inspector", "file_content_shape", "--select", `ext = ".csv"`, dir)
+	if err != nil {
+		t.Fatalf("inspect --select: %v", err)
+	}
+	var records []map[string]any
+	if err := json.Unmarshal([]byte(stdout), &records); err != nil {
+		t.Fatalf("bad json: %v", err)
+	}
+	if len(records) != 1 || records[0]["inspector"] != "file_content_shape" {
+		t.Fatalf("expected only file_content_shape, got %v", records)
+	}
+	ev := records[0]["evidence"].(map[string]any)
+	if got := ev["file_count"].(float64); got != 1 {
+		t.Errorf("file_count = %v, want 1 selected CSV file", got)
+	}
+	if got := ev["selector"].(string); got != `ext = ".csv"` {
+		t.Errorf("selector = %q", got)
+	}
+}
+
+func TestInspect_selectRejectsInvalidCombinations(t *testing.T) {
+	dir := inspectRepo(t)
+	tests := [][]string{
+		{"inspect", "--select", "books", dir},
+		{"inspect", "--inspector", "file_tree", "--select", "books", dir},
+		{"inspect", "--inspector", "file_content_shape", "--inspector", "file_tree", "--select", "books", dir},
+	}
+	for _, args := range tests {
+		_, _, err := runRoot(t, args...)
+		var coded interface{ Code() int }
+		if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+			t.Errorf("%v: expected exit 2, got %v", args, err)
+		}
+	}
+}
+
+func TestInspect_selectRejectsCollectionTarget(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`)
+	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n")
+	chdir(t, dir)
+
+	_, _, err := runRoot(t, "inspect", "--inspector", "file_content_shape", "--select", "notes", "notes")
+	var coded interface{ Code() int }
+	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
+		t.Errorf("expected exit 2 for --select with collection target, got %v", err)
 	}
 }
 
@@ -159,35 +218,33 @@ func TestInspect_unknownInspectorIsUsageError(t *testing.T) {
 	}
 }
 
-func TestInspect_collapseParamsMutuallyExclusive(t *testing.T) {
-	dir := inspectRepo(t)
-	_, _, err := runRoot(t, "inspect", "--detail", "coarse", "--max-classes", "2", dir)
-	var coded interface{ Code() int }
-	if err == nil || !errors.As(err, &coded) || coded.Code() != 2 {
-		t.Errorf("expected exit 2 for mutually-exclusive collapse flags, got: %v", err)
-	}
-}
-
 func TestInspect_outputIncludesDescriptions(t *testing.T) {
 	stdout, _, err := runRoot(t, "inspect", inspectRepo(t))
 	if err != nil {
 		t.Fatalf("inspect: %v", err)
 	}
-	if !strings.Contains(stdout, "Cluster files into candidate collections") {
+	if !strings.Contains(stdout, "Profile selected files by text") {
 		t.Errorf("output missing inspector description\n%s", stdout)
 	}
 }
 
 func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
 	dir := t.TempDir()
-	// Ten files with disjoint frontmatter keys + sections → ten singleton
-	// document_shape classes, enough lines to exceed a small --max-lines.
+	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
+root: .
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`)
 	for i := 0; i < 10; i++ {
-		writeFile(t, dir, fmt.Sprintf("docs/f%02d.md", i),
-			fmt.Sprintf("---\nk%02d: v\n---\n# H\n\n## S%02d\n", i, i))
+		writeFile(t, dir, fmt.Sprintf("notes/f%02d.md", i),
+			fmt.Sprintf("---\nk%02d: v\n---\n# H\n", i))
 	}
+	chdir(t, dir)
 
-	truncated, _, err := runRoot(t, "inspect", "--inspector", "document_shape", "--max-lines", "5", dir)
+	truncated, _, err := runRoot(t, "inspect", "--inspector", "object_fields", "--max-lines", "5", "notes")
 	if err != nil {
 		t.Fatalf("inspect --max-lines: %v", err)
 	}
@@ -195,15 +252,15 @@ func TestInspect_truncatesLongOutputAndVerboseShowsAll(t *testing.T) {
 		t.Errorf("expected a truncation notice with --max-lines 5\n%s", truncated)
 	}
 
-	full, _, err := runRoot(t, "inspect", "--inspector", "document_shape", "-v", dir)
+	full, _, err := runRoot(t, "inspect", "--inspector", "object_fields", "-v", "notes")
 	if err != nil {
 		t.Fatalf("inspect -v: %v", err)
 	}
 	if strings.Contains(full, "truncated") {
 		t.Errorf("-v should not truncate\n%s", full)
 	}
-	if got := strings.Count(full, "label=docs/f"); got != 10 {
-		t.Errorf("-v rendered %d outliers, want 10\n%s", got, full)
+	if !strings.Contains(full, "k09") {
+		t.Errorf("-v should render all object field evidence\n%s", full)
 	}
 }
 

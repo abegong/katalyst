@@ -8,12 +8,12 @@ weight = 6
 The [by-hand guide]({{< relref "profile-an-existing-wiki-by-hand.md" >}}) has
 you read inspector evidence and decide the schema. This guide hands that
 judgment to an agent: `inspect` supplies the measurements, the agent supplies
-the thresholds, the clustering, and the draft. Katalyst is the instrument; the
-agent is the profiler.
+the thresholds, collection-boundary decisions, and the draft. Katalyst is the
+instrument; the agent is the profiler.
 
 The split is deliberate. Inspectors are deterministic and never recommend;
-deciding that a field present in 94% of files should be `required`, or that two
-similar directories are one collection, is the agent's call. Keep that division
+deciding that a field present in 94% of files should be `required`, or that a
+directory should be a collection, is the agent's call. Keep that division
 and the loop stays debuggable.
 
 ## 1. Give the agent the raw-store evidence
@@ -26,9 +26,8 @@ denominator:
 katalyst inspect ./wiki --json
 ```
 
-With no project this runs the **raw-source** layer. The key record is
-`document_shape`, which clusters files into candidate collections by a composite
-fingerprint (frontmatter keys, body section skeleton, file naming). Feed the
+With no project this runs the **raw-source** layer: `file_tree` maps the store
+and `file_content_shape` summarizes selected-file content structure. Feed the
 output to the agent. Tell it the contract: every record is *evidence*, not a
 recommendation; it must choose its own thresholds and justify them.
 
@@ -36,10 +35,10 @@ recommendation; it must choose its own thresholds and justify them.
 
 A capable agent then:
 
-1. **Clusters** the `document_shape` classes into candidate collections.
-   `inspect` groups files with *matching* fingerprints; the agent decides when
-   two near-but-distinct classes are really one collection, and names them. It
-   drafts `.katalyst/storage/*` pointing each collection at its directory.
+1. **Chooses collection boundaries** from the raw-source evidence. `file_tree`
+   shows the directory and naming map; `file_content_shape` shows whether an
+   explicit slice shares frontmatter and body conventions. The agent names the
+   collection and drafts `.katalyst/storage/*` pointing it at the chosen path.
 2. **Profiles the fields** by inspecting each new collection, `katalyst inspect
    <collection> --json` runs the collection layer, whose `object_fields` record
    is the per-field data dictionary (presence, types, values).

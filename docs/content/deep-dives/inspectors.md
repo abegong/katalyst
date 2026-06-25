@@ -21,8 +21,8 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 - **The raw-source layer** (`SourceInspector` over a `SourceView`) measures a
   backend store directly, before any collection configuration, addressed by
   backend-native reference (a relative path today). It answers "what is in this
-  store?" - the onboarding case. `file_tree`, `file_tree_content`, and
-  `document_shape` live here.
+  store?" - the onboarding case. `file_tree` and `file_content_shape` live
+  here.
 - **The collection layer** (`CollectionInspector` over a `CollectionView`)
   measures a configured collection's items, addressed by domain identity
   (collection + item id) and reached through the project's
@@ -44,12 +44,13 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   are typed but not yet characterized.
 - **`markdownBody`** - heading-shape and recurring-section facets over a set of
   bodies.
-- **`fileMetadata`** - path-level conventions (type, naming, depth) over a set
-  of references, opening no files.
+- **`fileMetadata` and `fileTree`** - path-level conventions and filesystem
+  shape (types, naming, depth, regions, directory density) over references,
+  opening no files.
 
-The same `objectFields` primitive runs over a collection's items (collection
-layer) and over loose-file frontmatter (the `document_shape` fingerprint, raw
-layer), so the two layers share one engine rather than re-deriving it.
+The same small primitives are reused where the layer makes sense, but raw-source
+inspectors avoid proposing collections. They report store and content facts; a
+human or agent decides what collection boundaries those facts imply.
 
 ## Evidence, not recommendations
 
@@ -67,22 +68,18 @@ why a conclusion holds and decides.
 ## The determinism dividing line
 
 Deterministic measurement is an inspector's job; threshold-picking and
-structure-proposing are not. Counting field presence, histogramming types, and
-clustering files by a composite fingerprint are all deterministic, all
-inspectors. Deciding that 94% is "required", that two near-but-distinct clusters
-are one collection, or what to name a schema are all judgment, none of it here.
-`document_shape` sits on the seam: it groups files with matching fingerprints
-(deterministic) but leaves the fuzzy "these two classes are the same collection"
-call to the reader.
+structure-proposing are not. Counting field presence, histogramming types,
+mapping filesystem regions, and summarizing selected-file content structure are
+all deterministic, all inspectors. Deciding that 94% is "required", that a
+directory should be a collection, or what to name a schema are all judgment,
+none of it here.
 
 ## Keeping output small
 
-The summarizing inspectors (`file_tree`, `document_shape`) collapse
-near-identical profiles into named classes, so output is proportional to the
-number of *distinct* profiles, not the number of directories or files; the rest
-are reported as outliers. The collapse tolerance is the first inspector
-parameter, in three mutually-exclusive forms: a named detail level, a similarity
-proportion, or a max-classes budget.
+`file_tree` and `file_content_shape` keep Markdown output small with
+deterministic caps: small trees get an actual tree; content-shape reports show
+the selected file set, dominant structures, and compact text/tabular/tree
+facets, with `-v` for expanded evidence.
 
 ## Output
 

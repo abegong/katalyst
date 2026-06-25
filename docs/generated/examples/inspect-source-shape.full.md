@@ -1,4 +1,4 @@
-Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `document_shape` clusters files by a composite fingerprint, so a shared convention shows up as one class and the stragglers as outliers.
+Pointed at a bare directory (no project), `inspect` runs the raw-source inspectors. `file_content_shape` opens a selected slice and reports the common text, tabular, or tree structure without proposing collections.
 
 ### Input
 
@@ -68,18 +68,65 @@ status: read
 ### Command
 
 ```console
-$ katalyst inspect ./wiki --inspector document_shape
+$ katalyst inspect ./wiki --inspector file_content_shape --select "ext = \".md\""
 # Inspection report: ./wiki
 
 ## Structural
 
-### document_shape (n=5)
+### file_content_shape (n=5)
 
-_Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming._
+_Profile selected files by text, tabular, and tree content structure._
 
-- classes:
-  - class=P1 features=[ext:.md, casing:kebab, fmkey:author, fmkey:status, fmkey:title, sec:Review] members=[dune.md, foundation.md, neuromancer.md, snow-crash.md] size=4
-- outliers:
-  - features=[ext:.md, casing:other, fmkey:status, fmkey:title] label=Dune Messiah.md
+----------------------------------------
+selection:
+  expression    : ext = ".md"
+  files         : 5
+  directories   : 1
+  readable      : 5
+  unsupported   : 0
+  parse failures: 0
+
+----------------------------------------
+file types:
+  TYPE  FILES
+  .md   5
+
+----------------------------------------
+coherence:
+  status: coherent
+
+----------------------------------------
+common structure:
+  - 5/5 Markdown files have an H1
+  - 4/5 Markdown files have frontmatter key author
+  - 5/5 Markdown files have frontmatter key status
+  - 5/5 Markdown files have frontmatter key title
+  - 4/5 Markdown files have section Review
+
+----------------------------------------
+variation:
+  - frontmatter key author appears in 4/5 Markdown files
+
+----------------------------------------
+text:
+  files  : 5
+  with H1: 5
+  frontmatter keys:
+  KEY     FILES
+  status  5
+  title   5
+  author  4
+
+----------------------------------------
+tabular:
+  no CSV files selected
+
+----------------------------------------
+tree:
+  no JSON files selected
+
+----------------------------------------
+read/parse issues:
+  none
 ```
 

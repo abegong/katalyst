@@ -78,23 +78,15 @@ func Descriptors() []Descriptor {
 			Family:  "filesystem",
 			Slug:    "file-tree",
 			Title:   "File tree",
-			Summary: "Profile each directory's file types, naming, and depth, opening no files.",
+			Summary: "Map files, directories, extensions, regions, and filename conventions, opening no files.",
 		},
 		{
-			Name:    "file_tree_content",
+			Name:    "file_content_shape",
 			Layer:   "source",
 			Family:  "structural",
-			Slug:    "file-tree-content",
-			Title:   "File tree (deep)",
-			Summary: "Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.",
-		},
-		{
-			Name:    "document_shape",
-			Layer:   "source",
-			Family:  "structural",
-			Slug:    "document-shape",
-			Title:   "Document shape",
-			Summary: "Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.",
+			Slug:    "file-content-shape",
+			Title:   "File content shape",
+			Summary: "Profile selected files by text, tabular, and tree content structure.",
 		},
 		{
 			Name:    "object_fields",
@@ -119,8 +111,7 @@ func Descriptors() []Descriptor {
 func SourceInspectors() []SourceInspector {
 	return []SourceInspector{
 		FileTree{},
-		FileTreeContent{},
-		DocumentShape{},
+		FileContentShape{},
 	}
 }
 

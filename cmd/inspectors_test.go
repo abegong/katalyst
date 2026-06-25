@@ -14,7 +14,7 @@ func TestInspectors_listsEveryInspectorGroupedByLayer(t *testing.T) {
 		t.Fatalf("inspectors list: %v", err)
 	}
 
-	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+	for _, want := range []string{"file_tree", "file_content_shape", "object_fields", "markdown_body"} {
 		if !strings.Contains(stdout, want) {
 			t.Errorf("expected inspector %q in output", want)
 		}
@@ -55,15 +55,15 @@ func TestInspectorsShow_showsDetail(t *testing.T) {
 	snapshot(t, "inspectors/show-object_fields.txt", stdout)
 }
 
-func TestInspectorsShow_showsLayerContextAndSiblings(t *testing.T) {
+func TestInspectorsShow_showsSourceLayerContextAndSiblings(t *testing.T) {
 	chdir(t, t.TempDir())
-	stdout, _, err := runRoot(t, "inspectors", "show", "document_shape")
+	stdout, _, err := runRoot(t, "inspectors", "show", "file_content_shape")
 	if err != nil {
-		t.Fatalf("inspectors show document_shape: %v", err)
+		t.Fatalf("inspectors show file_content_shape: %v", err)
 	}
 	// The fixture pins the breadcrumb header, the layer intro, and the sibling
 	// list.
-	snapshot(t, "inspectors/show-document_shape.txt", stdout)
+	snapshot(t, "inspectors/show-file_content_shape.txt", stdout)
 }
 
 func TestInspectorsShow_unknown_exit2(t *testing.T) {
@@ -125,7 +125,7 @@ func TestInspectorsList_jsonArrayCoversEveryDescriptor(t *testing.T) {
 			t.Errorf("entry %d (%s): empty layer/summary", i, d.Name)
 		}
 	}
-	for _, want := range []string{"file_tree", "document_shape", "object_fields", "markdown_body"} {
+	for _, want := range []string{"file_tree", "file_content_shape", "object_fields", "markdown_body"} {
 		if !seen[want] {
 			t.Errorf("expected inspector %q in JSON output", want)
 		}

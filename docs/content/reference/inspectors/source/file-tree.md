@@ -15,7 +15,7 @@ source
 
 ## Purpose
 
-Profile each directory's file types, naming, and depth, opening no files.
+Map files, directories, extensions, regions, and filename conventions, opening no files.
 
 ## Usage
 

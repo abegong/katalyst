@@ -14,9 +14,8 @@ Inspectors describe the shape of content and return evidence: counts and distrib
 
 Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.
 
-- [File tree]({{< relref "source/file-tree.md" >}}): Profile each directory's file types, naming, and depth, opening no files.
-- [File tree (deep)]({{< relref "source/file-tree-content.md" >}}): Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
-- [Document shape]({{< relref "source/document-shape.md" >}}): Cluster files into candidate collections by a composite fingerprint of frontmatter, body structure, and file naming.
+- [File tree]({{< relref "source/file-tree.md" >}}): Map files, directories, extensions, regions, and filename conventions, opening no files.
+- [File content shape]({{< relref "source/file-content-shape.md" >}}): Profile selected files by text, tabular, and tree content structure.
 
 ## Collection inspectors
 

@@ -1,0 +1,14 @@
+Raw-source inspectors › File content shape
+--------------------------------------------
+- inspector: file_content_shape
+- layer: source
+- family: structural
+- purpose: Profile selected files by text, tabular, and tree content structure.
+
+Layer context
+-------------
+Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.
+
+Other raw-source inspectors (1)
+-------------------------------
+- file_tree

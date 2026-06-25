@@ -27,15 +27,16 @@ raw-source inspectors:
 katalyst inspect ./wiki
 ```
 
-`document_shape` clusters files into **candidate collections** by a composite
-fingerprint (frontmatter keys, body section skeleton, and file naming) so you
-can see what natural groups exist:
+`file_tree` reports the file types and naming conventions per directory. Use it
+to decide which directory or prefix you want to inspect more closely. Then run
+`file_content_shape` over that explicit slice:
 
 {{< katalyst-example "inspect-source-shape" >}}
 
-`file_tree` reports the file types and naming conventions per directory. Use
-this layer to decide **which directories are collections**: here the files
-share one shape, so `./wiki` is a single `books` collection with one outlier.
+This layer reports store and content facts, not candidate collections. Here the
+Markdown files share enough structure that you can reasonably treat `./wiki` as
+a single `books` collection and keep the file with the missing `author` in mind
+as cleanup work.
 
 ## 2. Configure the collection
 
@@ -83,10 +84,11 @@ judgment, not the tool's:
 | `markdown_body` heading shape | single-H1, H1-matches-title | `markdown_single_h1`, `markdown_title_matches_h1` |
 | `markdown_body` sections | recurring section headings | a `markdown_required_section` |
 | `file_tree` naming (step 1) | casing, spaces, extensions | `filesystem_name_case` (`style: kebab`), `filesystem_path_charset` (`deny: [" "]`) |
+| `file_content_shape` common structure (step 1) | shared frontmatter keys and sections in the selected slice | confidence that the slice is coherent enough to configure as one collection |
 
 The denominator `n` is always reported, so you decide what "nearly every item"
-means. The one item missing `author`, which is also the `document_shape`
-outlier with spaces in its name, is exactly the kind of file a schema will flag.
+means. The one item missing `author`, which also has spaces in its name, is
+exactly the kind of file a schema will flag.
 
 ## 5. Draft a schema and check
 
