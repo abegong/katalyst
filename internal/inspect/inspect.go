@@ -30,11 +30,11 @@ type CollectionInspector interface {
 // SourceInspector measures a raw backend store before any collection
 // configuration, addressed by backend-native reference (a path today) through a
 // SourceView. AppliesTo gates backend-specific inspectors: one returns false for
-// a StorageType it cannot describe, so it is simply absent there. It is the
+// a BaseType it cannot describe, so it is simply absent there. It is the
 // raw-source half of the two-layer model; the collection half is
 // CollectionInspector.
 type SourceInspector interface {
 	Name() string
-	AppliesTo(storage.StorageType) bool
+	AppliesTo(storage.BaseType) bool
 	Inspect(SourceView, Params) Evidence
 }

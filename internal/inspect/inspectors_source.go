@@ -2,14 +2,14 @@ package inspect
 
 import "github.com/abegong/katalyst/internal/storage"
 
-// FileTree is the shallow, cheap raw-source inspector: a deterministic
+// FileTree is the shallow, cheap raw base inspector: a deterministic
 // filesystem map from path metadata. It opens no files. Filesystem-specific.
 // Subsumes the former filesystem_naming.
 type FileTree struct{}
 
 func (FileTree) Name() string { return "file_tree" }
 
-func (FileTree) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
+func (FileTree) AppliesTo(t storage.BaseType) bool { return t == storage.Filesystem }
 
 func (FileTree) Inspect(v SourceView, p Params) Evidence {
 	return Evidence{Inspector: "file_tree", Scope: v.root, N: v.N(), Data: buildFileTreeSummary(v)}

@@ -12,7 +12,7 @@ import (
 func TestCollectionView_objectFieldsAndMarkdownBody(t *testing.T) {
 	dir := t.TempDir()
 	projecttest.WriteProject(t, dir, map[string]string{
-		"storage/local.yaml": projecttest.LocalStorage(map[string]string{
+		"bases/local.yaml": projecttest.LocalBase(map[string]string{
 			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
 		}),
 	})

@@ -41,9 +41,9 @@ type Collection struct {
 	// ListingDefaults holds the resolved `item list` behavior for this
 	// collection (collection config over project config over defaults).
 	ListingDefaults ListingDefaults
-	// Storage is the name of the storage instance that declares this
+	// Base is the name of the base that declares this
 	// collection.
-	Storage string
+	Base string
 	// Variants are discriminated check groups: an item runs the first
 	// variant (in order) whose Where predicates it all satisfies, in
 	// addition to the base Checks. Empty for a collection without variants.
@@ -132,7 +132,7 @@ const (
 )
 
 // RawCollection mirrors one collection definition in YAML. The loader
-// unmarshals it (inline under a storage instance, or one file per collection)
+// unmarshals it (inline under a base, or one file per collection)
 // and hands it to Build.
 type RawCollection struct {
 	Path                  string                      `yaml:"path"`
@@ -269,21 +269,21 @@ func (rc *RawCheck) UnmarshalYAML(value *yaml.Node) error {
 }
 
 // BuildInput carries everything Build needs to validate and resolve one
-// collection: its raw definition and name, the owning storage instance's root
+// collection: its raw definition and name, the owning base's root
 // and name, the project-level listing defaults, and a predicate that reports
 // whether a schema name is defined (schema resolution belongs to the loader).
 type BuildInput struct {
 	Name           string
 	Raw            RawCollection
-	InstRoot       string
-	InstName       string
 	StorageType    string
+	BaseRoot       string
+	BaseName       string
 	ProjectListing *RawListingDefaults
 	SchemaKnown    func(string) bool
 }
 
 // Build turns one raw collection definition into a validated Collection,
-// resolving its directory against the owning instance's root. The name comes
+// resolving its directory against the owning base's root. The name comes
 // from the source (map key), never the file body.
 func Build(in BuildInput) (Collection, error) {
 	storageType := in.StorageType
@@ -355,7 +355,7 @@ func Build(in BuildInput) (Collection, error) {
 	return Collection{
 		Name:                  in.Name,
 		Path:                  dirRel,
-		Dir:                   resolveDir(in.InstRoot, dirRel),
+		Dir:                   resolveDir(in.BaseRoot, dirRel),
 		StorageType:           storageType,
 		Table:                 in.Raw.Table,
 		IDColumn:              in.Raw.ID,
@@ -366,7 +366,7 @@ func Build(in BuildInput) (Collection, error) {
 		Schema:                schemaName,
 		Checks:                cks,
 		ListingDefaults:       ld,
-		Storage:               in.InstName,
+		Base:                  in.BaseName,
 		Variants:              variants,
 		UseExhaustiveVariants: in.Raw.UseExhaustiveVariants,
 	}, nil

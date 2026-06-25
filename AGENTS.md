@@ -26,8 +26,8 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + storage instances, which embed their collections), the whole workspace, selectors, item enumeration
-internal/storage      backend-kind registry: StorageType, Known, Granularity, Reference
+internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + bases, which embed their collections), the whole workspace, selectors, item enumeration
+internal/storage      backend-kind registry: BaseType, Known, Scope, Reference
 internal/storage/collection            the read stack: CollectionDefinition + the thin Item
 internal/storage/collection/listing    item list filter/grep/sort/skip/limit pipeline
 internal/storage/collection/predicate  metadata predicate grammar (item list --filter, collection variants)
@@ -64,8 +64,8 @@ reconstruction), implemented per backend under `storage/collection/<backend>`
 (filesystem today). Don't inline filesystem assumptions (globbing, stem-as-id,
 path joins) elsewhere, a second backend (SQLite) attaches by implementing that
 interface. The `internal/project` loader (`loader.go`) owns the `.katalyst/`
-*vocabulary*: it reads the workspace, resolves schemas, and assembles storage
-instances. Each object type owns the parse of its own config — the storage
+*vocabulary*: it reads the workspace, resolves schemas, and assembles bases.
+Each object type owns the parse of its own config — the storage
 registry validates a declared `type` (`storage.Known`), and a collection parses
 its own block, including variant predicates, in `storage/collection` (which
 imports the sibling `predicate` grammar intra-subtree). The loader depends on

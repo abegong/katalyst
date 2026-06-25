@@ -65,7 +65,7 @@ status: read
 # Dune Messiah
 ```
 
-`.katalyst/storage/my_directory.yaml`
+`.katalyst/bases/my_directory.yaml`
 
 ```yaml
 type: filesystem

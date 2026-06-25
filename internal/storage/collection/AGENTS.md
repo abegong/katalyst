@@ -12,7 +12,7 @@ decode and encode with; `predicate` is the attribute/object predicate grammar;
 
 Architecture and rationale — why a collection owns the read, why items are thin,
 and how a backend attaches — live in the
-[storage layer](../../../docs/content/deep-dives/domain-model/storage.md) and
+[Bases](../../../docs/content/deep-dives/domain-model/storage.md) and
 [collections](../../../docs/content/deep-dives/domain-model/collections.md) deep-dives.
 
 ## Conventions

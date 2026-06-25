@@ -44,7 +44,7 @@ Point a collection at the directory so the field-level layer can run. Minimal
 config:
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -105,7 +105,7 @@ properties:
 ```
 
 ```yaml
-# .katalyst/storage/local.yaml  (extend the collection from step 2)
+# .katalyst/bases/local.yaml  (extend the collection from step 2)
 type: filesystem
 root: .
 collections:

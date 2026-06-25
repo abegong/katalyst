@@ -35,10 +35,10 @@ recommendation; it must choose its own thresholds and justify them.
 
 A capable agent then:
 
-1. **Chooses collection boundaries** from the raw-source evidence. `file_tree`
-   shows the directory and naming map; `file_content_shape` shows whether an
-   explicit slice shares frontmatter and body conventions. The agent names the
-   collection and drafts `.katalyst/storage/*` pointing it at the chosen path.
+1. **Clusters** the `document_shape` classes into candidate collections.
+   `inspect` groups files with *matching* fingerprints; the agent decides when
+   two near-but-distinct classes are really one collection, and names them. It
+   drafts `.katalyst/bases/*` pointing each collection at its directory.
 2. **Profiles the fields** by inspecting each new collection, `katalyst inspect
    <collection> --json` runs the collection layer, whose `object_fields` record
    is the per-field data dictionary (presence, types, values).

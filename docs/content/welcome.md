@@ -65,7 +65,7 @@ Common updates include:
 
 - *Rules*: add or change checks.
 - *Content shape*: change the structure of your content.
-- *Storage*: change your storage layer.
+- *Bases*: change where content lives.
 
 ## Design principles
 

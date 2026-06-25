@@ -11,8 +11,8 @@ Understanding-oriented discussion of the *why* behind Katalyst: the
 [domain model]({{< relref "domain-model/_index.md" >}}) the tool is built on,
 and the deeper design discussions that no single page or package owns: how
 [checks work]({{< relref "domain-model/checks.md" >}}) and the libraries that
-run them, how the [storage layer]({{< relref "domain-model/storage.md" >}})
-maps stores onto the model, and how operations grow richer as a backend's
+run them, how [bases]({{< relref "domain-model/storage.md" >}}) map stores onto
+the model, and how operations grow richer as a backend's
 capabilities increase. For the short version, start with
 [Welcome]({{< relref "../welcome.md" >}}).
 

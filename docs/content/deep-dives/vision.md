@@ -7,8 +7,8 @@ weight = 10
 
 Traditional data management often forces teams into binary choices:
 structured or unstructured, rigid or chaotic. Katalyst is an experimental
-framework aimed at enabling fast, low-risk evolution through progressive
-typing in the storage layer.
+framework aimed at enabling fast, low-risk evolution through progressive typing
+across bases and operations.
 
 ## Database management is risky and rigid
 

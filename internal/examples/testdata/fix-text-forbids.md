@@ -12,7 +12,7 @@ t: 1
 keep this.
 ```
 
-`.katalyst/storage/my_directory.yaml`
+`.katalyst/bases/my_directory.yaml`
 
 ```yaml
 type: filesystem

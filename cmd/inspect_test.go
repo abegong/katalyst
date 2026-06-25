@@ -35,7 +35,7 @@ func TestInspect_rawPathRunsSourceLayer(t *testing.T) {
 
 func TestInspect_collectionLayerWhenConfigured(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, dir, ".katalyst/storage/local.yaml", `type: filesystem
+	writeFile(t, dir, ".katalyst/bases/local.yaml", `type: filesystem
 root: .
 collections:
   notes:

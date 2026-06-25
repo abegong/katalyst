@@ -32,9 +32,9 @@ func WriteProject(t *testing.T, dir string, files map[string]string) {
 	}
 }
 
-// LocalStorage builds a .katalyst/storage/local.yaml body with a filesystem
-// instance rooted at the project and the given collection YAML bodies.
-func LocalStorage(collections map[string]string) string {
+// LocalBase builds a .katalyst/bases/local.yaml body with a filesystem base
+// rooted at the project and the given collection YAML bodies.
+func LocalBase(collections map[string]string) string {
 	var b strings.Builder
 	b.WriteString("type: filesystem\nroot: .\ncollections:\n")
 	names := make([]string, 0, len(collections))
