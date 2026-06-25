@@ -1,14 +1,10 @@
 # Plan — skill distribution
 
-> **Status: implementing.** Implements
-> [`skill-distribution-spec.md`](skill-distribution-spec.md). Phases 1–5 landed
-> (scaffold + all seven shipping skills authored, packaging, bootstrap, release
-> wiring, local symlink); Phase 6 folded into Phase 1 (see Deviations); Phase 7
-> (cut a tag, graduate docs) is the remaining owner action.
+> **Status: planning.** Implements
+> [`skill-distribution-spec.md`](skill-distribution-spec.md). No phases started.
 
-Branch: `claude/charming-clarke-s2nx1d` (rebased onto `main` after the repo
-moved to `github.com/abegong/katalyst` and a GoReleaser release pipeline
-landed — see [Deviations](#deviations)).
+Branch: `claude/practical-mayer-uuo45q` (PR
+[#20](https://github.com/katabase-ai/katalyst/pull/20)).
 
 ## Strategy
 
@@ -82,59 +78,47 @@ tracks the latest Release.
 ### Phase 3 — Shared bootstrap (fetch the CLI)
 
 1. Implement the bootstrap so the skill installs/locates the CLI by **fetching
-   and unpacking the CLI archive from the latest GitHub Release**, falling back
-   to `go install github.com/abegong/katalyst@latest`.
-2. Detect OS/arch and pick the matching release **archive** — GoReleaser ships
-   `katalyst_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows), so the bootstrap
-   downloads that archive and extracts the `katalyst` binary, rather than
-   fetching a bare binary. (`checksums.txt` is published alongside for optional
-   verification.)
+   the binary from the latest GitHub Release**, falling back to `go install
+   github.com/katabase-ai/katalyst@latest`.
+2. Detect OS/arch and pick the matching release asset name (must agree with the
+   naming Phase 4 produces).
 3. Make it idempotent: reuse an already-installed binary; only download when
    missing. No version pin (out of scope) — track latest.
 4. Decide and implement how the bootstrap ships inside each `.skill` (single
    shared source copied in at package time, so there is one bootstrap to
    maintain).
 
-### Phase 4 — Attach skills to the existing GoReleaser release
+### Phase 4 — Release workflow
 
-The tag-triggered workflow this phase originally proposed **already exists** on
-`main`: `.github/workflows/release.yml` fires on `v*` tags with
-`permissions: contents: write` and runs GoReleaser (`.goreleaser.yml`), which
-builds the cross-platform CLI matrix and publishes the Release. So this phase
-shrinks to **extending** that release to also carry the `.skill` artifacts —
-the binary matrix, the tag trigger, and the token permission are all done.
-
-1. Package the skills during the release. GoReleaser supports a `before.hooks`
-   entry — add `make skills` there (or as a dedicated hook) so the `.skill`
-   files exist before the release step runs.
-2. Attach every shippable `.skill` to the Release via GoReleaser's
-   `release.extra_files`, so they land beside the binary archives and
-   `checksums.txt` in one run. (Placeholders never produce a `.skill`, per
-   Phase 2, so nothing extra is needed to exclude them.)
-3. Optionally add a `workflow_dispatch` trigger to `release.yml` so the job can
+1. Add a tag-triggered workflow (`on: push: tags: ['v*']`), separate from the
+   `test` job in `ci.yml`. Also add a `workflow_dispatch` trigger so the job can
    be **dry-run** from the Actions tab without cutting a tag.
-4. Leave per-PR CI (`ci.yml`) unchanged.
-
-> **Already settled on `main` (was Phase 4 work):** the GOOS/GOARCH matrix
-> (GoReleaser builds linux/darwin/windows × amd64/arm64), `permissions:
-> contents: write` on the release job, and the `v*` tag trigger. The asset
-> *names* are now GoReleaser's archive template, not free to choose — Phase 3's
-> bootstrap must match them.
+2. Grant the job `permissions: contents: write` so the built-in `GITHUB_TOKEN`
+   can create the Release and upload assets — **no PAT or repo secret required.**
+   (Caveat: if the org/repo default caps `GITHUB_TOKEN` to read-only and the
+   explicit block is overridden by policy, the upload step 403s; the fix is a
+   repo-admin toggle at Settings → Actions → General → Workflow permissions →
+   "Read and write." Not changeable from here.)
+3. Build cross-platform CLI binaries via a GOOS/GOARCH matrix (the current
+   `go build -o bin/katalyst .` is host-only), naming each asset to match what
+   the Phase 3 bootstrap fetches (e.g. `katalyst_<os>_<arch>`).
+4. Run `make skills` in the job.
+5. Upload the binaries **and** every `.skill` as assets on the Release for that
+   tag, in one workflow run.
+6. Leave per-PR CI unchanged.
 
 > **Owner action.** Cutting a real release means pushing a `v*` tag — a
 > deliberate act outside this branch's scope, so it stays with the repo owner
 > (or is done with explicit go-ahead). Everything else in this phase is just the
-> edited `.goreleaser.yml` / workflow file.
+> committed workflow file.
 
 ### Phase 5 — Local dev symlink
 
 1. Add a `make` target that symlinks each `skills/{name}/` into
    `.claude/skills/` so they auto-load in a working copy, modeled on
    `sync_skill_links_from_cursor` in `scripts/agent-link-utils.sh`.
-2. No `.gitignore` change is needed: `main` already ignores **all** of
-   `.claude/` (and `.codex/`), so the symlinks stay uncommitted. Decide whether
-   to also mirror into `.codex/skills/` (a `setup-codex-skills.sh` now exists
-   for the contributor skills) or keep product skills Claude-only for now.
+2. Add `.claude/skills/` to `.gitignore` (the specific path, not all of
+   `.claude/`) so the symlinks stay uncommitted.
 
 ### Phase 6 — Author the remaining skills
 
@@ -166,70 +150,20 @@ the binary matrix, the tag trigger, and the token permission are all done.
 
 Mirrors the spec's test checklist; these assertions prove the change.
 
-- [x] `make skills` produces one `{name}.skill` per **shippable** directory
+- [ ] `make skills` produces one `{name}.skill` per **shippable** directory
       under `skills/`, each unzipping with `SKILL.md` at the archive root, and
-      emits no artifact for `status: placeholder` skills. *(Verified: 7 skills
-      packaged, both `katalyst-migrate-*` placeholders excluded; covered by
-      `internal/skillpack` tests.)*
-- [x] `make skill SKILL=<name>` packages a single skill. *(Verified, including
-      the missing-`SKILL` guard.)*
-- [x] `make clean` removes the `.skill` artifacts. *(They live in `bin/`, which
-      `clean` already `rm -rf`s.)*
-- [x] The local-dev target symlinks each `skills/{name}/` into `.claude/skills/`;
-      the symlinks are git-ignored. *(`make skills-link`; placeholders skipped.)*
+      emits no artifact for `status: placeholder` skills.
+- [ ] `make skill SKILL=<name>` packages a single skill.
+- [ ] `make clean` removes the `.skill` artifacts.
+- [ ] The local-dev target symlinks each `skills/{name}/` into `.claude/skills/`;
+      the symlinks are git-ignored.
 - [ ] On a tag, the release workflow uploads the cross-platform binaries and
-      every `.skill` as assets on that Release. *(Wired in `.goreleaser.yaml` +
-      `release.yml`; needs a real tag or `workflow_dispatch` dry-run to confirm —
-      owner action, Phase 7.)*
+      every `.skill` as assets on that Release.
 - [ ] A `.skill` downloaded from a Release installs via "Save skill" with no
       repo clone, and its bootstrap fetches the matching CLI binary from the
-      latest Release (with `go install` fallback). *(Manual, Phase 7.)*
-- [x] `make all` (vet + test + build) still green; per-PR CI unchanged.
+      latest Release (with `go install` fallback).
+- [ ] `make all` (vet + test + build) still green; per-PR CI unchanged.
 
 ## Deviations
 
-Recorded when the branch was rebased onto `main`, after `main` moved well past
-the merge base this spec was first written against:
-
-- **Repo/module renamed `katabase-ai/katalyst` → `abegong/katalyst`.** All
-  `go install` references and the bootstrap fallback now use
-  `github.com/abegong/katalyst@latest`.
-- **The release pipeline already exists (GoReleaser).** What was a from-scratch
-  Phase 4 (tag trigger, GOOS/GOARCH matrix, `contents: write`) is already on
-  `main` in `.github/workflows/release.yml` + `.goreleaser.yml`. Phase 4 now
-  only *extends* that release to package and attach the `.skill` files.
-- **Release assets are GoReleaser archives, not raw binaries.** The bootstrap
-  (Phase 3) downloads and unpacks `katalyst_<version>_<os>_<arch>.tar.gz`
-  (`.zip` on Windows) instead of fetching a bare binary; asset names follow
-  GoReleaser's template rather than a name this plan chooses.
-- **`.gitignore` already ignores all of `.claude/`/`.codex/`.** Phase 5 no
-  longer needs a per-path ignore entry; only the symlink target is new.
-- **Lifecycle framing moved.** The "Why Katalyst" framing now lives in
-  `docs/content/welcome.md` and names **Catalog / Define / Reshape** as headline
-  features (no standalone **Enforce** stage). The deploy cluster is kept as-is
-  and reframed as the setup that installs day-to-day enforcement, not a named
-  lifecycle stage. Phase 7 graduation should fold rationale into
-  `welcome.md`/deep-dives accordingly.
-
-Recorded during implementation (Phases 1–5):
-
-- **Phase 6 folded into Phase 1.** Rather than leave `katalyst-overview`,
-  `katalyst-catalog`, `katalyst-identify-collections`, and
-  `katalyst-define-schemas` as empty front-matter stubs (which `make skills`
-  would package as empty `.skill`s), all seven shipping skills were authored with
-  real content up front. The two reshape skills remain true placeholders.
-- **Packaging is a Go tool, not shell.** `internal/skillpack` (logic, with an
-  external-package test scaffolding a temp skills tree) plus a thin
-  `cmd/skillpack` wrapper, run by `make skills` — mirrors the `cmd/gendocs`
-  precedent and gives placeholder-skipping robust YAML front-matter parsing and
-  real test coverage, which a shell `zip` loop would not.
-- **`.skill` artifacts output to `bin/`.** Already git-ignored and already removed
-  by `make clean`, so no new ignore entry or clean rule was needed; GoReleaser's
-  `release.extra_files` globs `./bin/*.skill`.
-- **Bootstrap written now (Phase 3), not deferred.** `skills/bootstrap.sh` is the
-  single source; `cmd/skillpack` copies it into each `.skill` at the archive root.
-- **Local symlink targets `.claude/skills/` only.** `make skills-link` (via
-  `scripts/link-product-skills.sh`, which skips placeholders). Codex mirroring is
-  deferred — easy to add later by pointing the script at `.codex/skills/` too.
-- **Dry-run trigger added.** `release.yml` gained a `workflow_dispatch` with a
-  `dry_run` input that runs GoReleaser `--snapshot --skip=publish`.
+_None yet._
