@@ -99,6 +99,6 @@ For each item:
 
 ## See also
 
-- [Frontmatter]({{< relref "frontmatter.md" >}}) for how markdown documents
-  parse before `fix` rewrites them.
+- [Markdown body text]({{< relref "../../reference/item-views/markdown-body-text.md" >}})
+  for how markdown documents parse before `fix` rewrites them.
 - `go doc ./internal/fix` for the code-level transform contract.

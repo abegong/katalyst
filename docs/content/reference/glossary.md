@@ -35,6 +35,7 @@ how each term maps onto today's code is documented in the per-package
 | **Frontmatter** | The on-disk metadata block at the top of a markdown file, in YAML (`---`), TOML (`+++`), or JSON (`{ … }`). |
 | **Inspector** | A read-only operation that measures content and returns evidence. The descriptive dual of a check: a check asserts a predicate, an inspector reports the distribution. Inspectors come in two layers. |
 | **Item** | The unit of data in a collection, addressed by a selector and operated on by `check`, `fix`, and the `item` subcommands. In the filesystem backend an item is one file matching the collection's pattern, its id the filename stem; its markdown file-form is a **Document**. |
+| **Item view** | A representation Katalyst exposes for checks, inspectors, or `fix` to read from an item: markdown body text, plain text, structured object, or file metadata. See [Item views]({{< relref "item-views/_index.md" >}}). |
 | **Measurement primitive** | A reusable building block the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
 | **Metadata** | The parsed, in-memory structure of the frontmatter (a `map[string]any`). |
 | **Operation** | Something a base lets you do with its data: read, list, query, aggregate, write. Each has a scope (item, collection, across collections) and structural requirements the backend must satisfy. See [progressive operations]({{< relref "../deep-dives/progressive-operations.md" >}}). |
