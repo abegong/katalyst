@@ -23,6 +23,14 @@
   margin-inline-start: 1.25rem;
 }
 
+.markdown.book-article img.diagram--domain-model {
+  display: block;
+  margin: 1rem auto;
+  width: auto;
+  max-width: 600px;
+  height: auto;
+}
+
 // Global status note rendered under the TOC.
 .book-toc :is(.book-toc-note, .book-toc-warning) {
   margin-top: 0.9rem;
