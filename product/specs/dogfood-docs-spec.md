@@ -91,10 +91,10 @@ A survey of `docs/content/` found:
   `docs/content/explanation/general-model.md` and `.../technical-spec.md`,
   neither of which exists.
 - **domain-model vs core-concepts overlap.** `explanation/domain-model.md`
-  (katalyst-specific architecture) and `deep-dives/core-concepts.md` (general
+  (katalyst-specific architecture) and `deep-dives/domain-model/_index.md` (general
   theory, marked *work in progress*) cover adjacent ground; #29 calls for one
   canonical home per topic.
-- **WIP / future pages shipping unmarked-as-draft.** `deep-dives/core-concepts.md`
+- **WIP / future pages shipping unmarked-as-draft.** `deep-dives/domain-model/_index.md`
   ("work in progress") and `deep-dives/connectors.md` ("future — not shipped")
   ship in the build with status only in body prose.
 

@@ -240,12 +240,12 @@ Update package comments to describe the codec role, not storage placement.
   lives under collection; point readers to `internal/codec/markdownbodytext`.
 - `internal/checks/AGENTS.md`: note that check contexts use codec-owned content
   shapes.
-- `docs/content/deep-dives/formatting.md`: update package references from
+- `docs/content/deep-dives/domain-model/formatting.md`: update package references from
   `internal/storage/collection/document` to
   `internal/codec/markdownbodytext`.
-- `docs/content/deep-dives/storage.md`: mention that storage readers use codecs
+- `docs/content/deep-dives/domain-model/storage.md`: mention that storage readers use codecs
   for content decoding, but codecs are not storage backends.
-- `docs/content/deep-dives/collections.md`: update any reference that treats the
+- `docs/content/deep-dives/domain-model/collections.md`: update any reference that treats the
   markdown codec as a collection subpackage.
 - `product/specs/collection-reorg-spec.md`: add a short supersession note or
   leave it as historical context and reference this spec from the implementation

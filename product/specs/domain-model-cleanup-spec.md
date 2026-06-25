@@ -29,9 +29,9 @@ from reappearing.
 Three docs define overlapping vocabulary at different altitudes, and neither the
 code nor the CLI fully agrees with them:
 
-- `docs/content/deep-dives/core-concepts.md` is the tool-agnostic model
+- `docs/content/deep-dives/domain-model/_index.md` is the tool-agnostic model
   (data interface, item, collection, attribute, operation, check, inspector).
-- `docs/content/deep-dives/domain-model.md` is the katalyst-specific model
+- `docs/content/deep-dives/domain-model/_index.md` is the katalyst-specific model
   (markdown document, schema, config, resolver, the check families, invariants).
 - `docs/content/reference/glossary.md` is meant to be the quick-lookup source of
   truth, but it omits some core-concepts terms (*attribute*, *operation*,
@@ -120,12 +120,12 @@ The glossary is canonical; the deep-dives narrate.
   term defined exactly once, here, including the specialization links (document =
   markdown item; field = object attribute). Both deep-dives link to it for
   definitions instead of restating them.
-- **Core concepts** (`deep-dives/core-concepts.md`) is the general,
+- **Core concepts** (`deep-dives/domain-model/_index.md`) is the general,
   backend-neutral model, written entirely in general terms (item, attribute,
   collection, storage, operation, check, inspector). It explains *why* the
   abstractions exist and what they would mean for Postgres or Mongo. It narrates
   and links to the glossary; it does not define terms.
-- **Domain model** (`deep-dives/domain-model.md`) is katalyst's concrete
+- **Domain model** (`deep-dives/domain-model/_index.md`) is katalyst's concrete
   instantiation: the filesystem backend, markdown documents, object fields, JSON
   Schema, the Go types, the `check`/`fix` lifecycles, and the invariants. It uses
   general terms by default and the specific terms where the concrete form is the
@@ -177,7 +177,7 @@ terminology-align the new pages.
   the specialization link), *operation*, *aggregate*, and *validation result*;
   keep *family* defined in the CheckLibrary row and checks.md, not its own entry; apply the storage / source / item-document
   decisions.
-- **`docs/content/deep-dives/core-concepts.md`** — the primary doc target now:
+- **`docs/content/deep-dives/domain-model/_index.md`** — the primary doc target now:
   slim from the encyclopedic definitions into a general-altitude hub mirroring
   `domain-model.md`. Define each general term in a line, link to the glossary for
   the definition and to where the general idea is discussed (e.g. *operation* →
@@ -190,13 +190,13 @@ terminology-align the new pages.
 - **`docs/content/deep-dives/progressive-operations.md`** — gains the
   operations-thesis sentence relocated from core-concepts' Implications as its
   lead, since the page already demonstrates the claim tier by tier.
-- **`docs/content/deep-dives/domain-model.md`** — **kept** as the katalyst hub
+- **`docs/content/deep-dives/domain-model/_index.md`** — **kept** as the katalyst hub
   #73 built. No structural change; terminology-align it (item/document, raw-source consistency) and sharpen its one-line statement of how it differs from
   core-concepts.
-- **`docs/content/deep-dives/collections.md`, `inspectors.md`** — new in #73 and
+- **`docs/content/deep-dives/domain-model/collections.md`, `inspectors.md`** — new in #73 and
   the homes for the former domain-model detail (resolver table, `check`
   lifecycle, invariants, inspector layers). Apply the item/document decisions here; keep "raw-source" consistent.
-- **`docs/content/deep-dives/storage.md`** — confirm wording now that "data
+- **`docs/content/deep-dives/domain-model/storage.md`** — confirm wording now that "data
   interface" is deprecated in favor of the storage vocabulary.
 - **Deep-dive titles** — rename to match the key terms, not "How X work":
   `collections.md` → "Collections", `checks.md` → "Checks", `inspectors.md` →

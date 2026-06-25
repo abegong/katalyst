@@ -198,7 +198,7 @@ loader in Phase 6 rather than moving twice.
    a check is a kind constant plus one family file (args + parse + build +
    Descriptor + registration), no central-config step. Its getting shorter is the
    proof the change worked.
-4. **Files:** `docs/content/deep-dives/collections.md` +
+4. **Files:** `docs/content/deep-dives/domain-model/collections.md` +
    `docs/content/reference/glossary.md`. Updated to "the project loader" and the
    object-owns-its-config model.
 5. **File:** `product/specs/domain-model-terminology-matrix.md`. Updated the

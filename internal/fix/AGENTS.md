@@ -7,7 +7,7 @@ job (`storage/collection/filesystem.Write`).
 
 Why the canonical form is deliberately inflexible, and why `fix` never injects
 missing values, lives in the
-[Frontmatter and fix](../../docs/content/deep-dives/formatting.md) deep-dive.
+[Frontmatter and fix](../../docs/content/deep-dives/domain-model/formatting.md) deep-dive.
 
 ## Conventions
 

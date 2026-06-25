@@ -1,9 +1,10 @@
 +++
-title = "Core concepts"
+title = "Domain model"
 weight = 30
+bookCollapseSection = true
 +++
 
-# Core concepts
+# Domain model
 
 Katalyst reasons in a small vocabulary that is general enough to describe a
 Postgres table, a directory of markdown files, a MongoDB collection, and a
@@ -12,9 +13,7 @@ inspectors, selectors, and future backends fit the same model instead of
 becoming one-off adapters.
 
 This page introduces the concepts and how they fit. Each term's canonical
-definition lives in the [glossary]({{< relref "../reference/glossary.md" >}});
-for the katalyst-specific implementation map, see the
-[domain model]({{< relref "domain-model.md" >}}).
+definition lives in the [glossary]({{< relref "../../reference/glossary.md" >}}).
 
 ## The concepts
 
@@ -39,13 +38,13 @@ for the katalyst-specific implementation map, see the
 - An **operation** is something a backend lets you do with data: read, list,
   aggregate, write, and eventually query. Which operations a backend supports,
   and what structural commitments those operations require, is the subject of
-  [progressive operations]({{< relref "progressive-operations.md" >}}).
+  [progressive operations]({{< relref "../progressive-operations.md" >}}).
 - A **check** asserts a condition on an item, an attribute, or a whole
   collection and reports a violation when the condition fails. See
   [Checks]({{< relref "checks.md" >}}).
 - An **inspector** is the descriptive dual of a check: it measures a
   distribution and returns evidence, never a verdict. See
-  [Inspectors]({{< relref "inspectors.md" >}}).
+  [Inspectors]({{< relref "../inspectors.md" >}}).
 
 ## How the concepts fit
 
@@ -136,5 +135,5 @@ today.
 This is the through-line for the deeper pages: [storage]({{< relref "storage.md" >}})
 explains how backends attach to the model, [collections]({{< relref "collections.md" >}})
 explains how config names and routes items, [checks]({{< relref "checks.md" >}})
-explains enforcement, and [inspectors]({{< relref "inspectors.md" >}})
+explains enforcement, and [inspectors]({{< relref "../inspectors.md" >}})
 explains evidence.

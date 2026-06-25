@@ -34,7 +34,7 @@ The durable home for everything a user needs, organized by
 - **`reference/`:** information-oriented lookup: configuration, the
   generated check-type reference, the glossary, the command surface.
 - **`deep-dives/`:** understanding-oriented "why" (the Diátaxis *explanation*
-  quadrant): the vision and scope, the core concepts, the storage layer,
+  quadrant): the vision and scope, the domain model, the storage layer,
   progressive operations, and **design rationale at the behavioral altitude** -
   any *why* a user can observe, whatever subsystem it touches. A short **Why
   Katalyst?** orientation page sits at the top level. The narrower *why* that

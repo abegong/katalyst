@@ -10,7 +10,7 @@ current working directory to the nearest ancestor that contains one. That
 ancestor is the repo root; all relative paths resolve against it.
 
 For *why* the config is shaped this way, see [How collections
-work]({{< relref "../deep-dives/collections.md" >}}). To set one up step by
+work]({{< relref "../deep-dives/domain-model/collections.md" >}}). To set one up step by
 step, see [Configure checks for a
 collection]({{< relref "../how-to/configure-rules.md" >}}).
 
@@ -242,7 +242,7 @@ failure (`matches no variant`), so every item is provably accounted for.
 Discrimination is by metadata only; selecting items by path or filename is not
 supported yet (a page type distinguishable only by location needs a frontmatter
 marker). `pattern` still governs collection **membership** and which files are
-reported as [unmatched]({{< relref "../deep-dives/domain-model.md" >}}#invariants);
+reported as [unmatched]({{< relref "../deep-dives/domain-model/_index.md" >}}#invariants);
 variants only route checks.
 
 ## `listing`
@@ -293,8 +293,8 @@ variant), even when `--schema` is used.
 ## See also
 
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
-- [Storage layer]({{< relref "../deep-dives/storage.md" >}}), the storage
+- [Storage layer]({{< relref "../deep-dives/domain-model/storage.md" >}}), the storage
   instance / collection-definition model and its lineage.
-- [Collections]({{< relref "../deep-dives/collections.md" >}}), the
+- [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.

@@ -12,7 +12,7 @@ storage registry validates a declared `type`, and a collection parses its own
 block in `storage/collection`). It decides which schema applies to a given item,
 and the `check` lifecycle is driven from here.
 This page is the model and the *why*; for the key-by-key surface see the
-[configuration reference]({{< relref "../reference/configuration.md" >}}).
+[configuration reference]({{< relref "../../reference/configuration.md" >}}).
 
 ## The `.katalyst/` directory
 
@@ -185,10 +185,10 @@ The data flow per item, end to end:
 
 ## See also
 
-- The [configuration reference]({{< relref "../reference/configuration.md" >}})
+- The [configuration reference]({{< relref "../../reference/configuration.md" >}})
   for the precise `.katalyst/` surface.
 - The [storage layer]({{< relref "storage.md" >}}) for how a backend maps onto
   collections, and the instance model.
-- The [domain model]({{< relref "domain-model.md" >}}) for the cross-subsystem
+- The [domain model]({{< relref "_index.md" >}}) for the cross-subsystem
   entity map and invariants.
 - `go doc ./internal/project` for the code-level contract.
