@@ -44,8 +44,9 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   are typed but not yet characterized.
 - **`markdownBody`** - heading-shape and recurring-section facets over a set of
   bodies.
-- **`fileMetadata`** - path-level conventions (type, naming, depth) over a set
-  of references, opening no files.
+- **`fileMetadata` and `fileTree`** - path-level conventions and filesystem
+  shape (types, naming, depth, regions, directory density) over references,
+  opening no files.
 
 The same `objectFields` primitive runs over a collection's items (collection
 layer) and over loose-file frontmatter (the `document_shape` fingerprint, raw
@@ -67,22 +68,25 @@ why a conclusion holds and decides.
 ## The determinism dividing line
 
 Deterministic measurement is an inspector's job; threshold-picking and
-structure-proposing are not. Counting field presence, histogramming types, and
-clustering files by a composite fingerprint are all deterministic, all
-inspectors. Deciding that 94% is "required", that two near-but-distinct clusters
-are one collection, or what to name a schema are all judgment, none of it here.
+structure-proposing are not. Counting field presence, histogramming types,
+mapping filesystem regions, and clustering files by a composite fingerprint are
+all deterministic, all inspectors. Deciding that 94% is "required", that two
+near-but-distinct clusters are one collection, or what to name a schema are all
+judgment, none of it here.
 `document_shape` sits on the seam: it groups files with matching fingerprints
 (deterministic) but leaves the fuzzy "these two classes are the same collection"
 call to the reader.
 
 ## Keeping output small
 
-The summarizing inspectors (`file_tree`, `document_shape`) collapse
-near-identical profiles into named classes, so output is proportional to the
-number of *distinct* profiles, not the number of directories or files; the rest
-are reported as outliers. The collapse tolerance is the first inspector
-parameter, in three mutually-exclusive forms: a named detail level, a similarity
-proportion, or a max-classes budget.
+`file_tree` keeps Markdown output small with deterministic caps: small trees get
+an actual tree, while larger trees show top-level regions, dominant extensions,
+naming patterns, and representative paths with `-v` for expanded evidence.
+Clustering inspectors such as `document_shape` still collapse near-identical
+profiles into named classes, so output is proportional to the number of
+*distinct* profiles rather than the number of files. The collapse tolerance is
+the first inspector parameter, in three mutually-exclusive forms: a named detail
+level, a similarity proportion, or a max-classes budget.
 
 ## Output
 

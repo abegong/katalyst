@@ -1,7 +1,7 @@
 Raw-source inspectors (3)
 -------------------------
 - file_tree
-  Profile each directory's file types, naming, and depth, opening no files.
+  Map files, directories, extensions, regions, and filename conventions, opening no files.
 - file_tree_content
   Parse markdown and profile each directory's content shape: parse rate, frontmatter, key-sets.
 - document_shape

@@ -6,7 +6,7 @@ import (
 	"github.com/abegong/katalyst/internal/inspect"
 )
 
-func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
+func TestFileTree_opensNothingAndReportsFilesystemMap(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "notes/dune.md", "---\ntitle: Dune\n---\n# Dune\n\n## Review\n")
 	writeFile(t, dir, "notes/messiah.md", "---\ntitle: Messiah\n---\n# Messiah\n\n## Review\n")
@@ -33,9 +33,29 @@ func TestFileTree_opensNothingAndProfilesDirs(t *testing.T) {
 	if ev.Inspector != "file_tree" || ev.Scope != dir {
 		t.Errorf("file_tree evidence = %+v", ev)
 	}
-	// notes (.md, kebab) and assets (.png) are distinct directory profiles.
-	if got := classTotal(t, ev); got != 2 {
-		t.Errorf("distinct directory classes = %d, want 2", got)
+	if got := ev.Data["file_count"].(int); got != 3 {
+		t.Errorf("file_count = %d, want 3", got)
+	}
+	if got := ev.Data["dir_count"].(int); got != 3 {
+		t.Errorf("dir_count = %d, want 3", got)
+	}
+	if got := ev.Data["max_depth"].(int); got != 2 {
+		t.Errorf("max_depth = %d, want 2", got)
+	}
+	extensions := ev.Data["extensions"].(map[string]any)
+	if extensions[".md"].(int) != 2 || extensions[".png"].(int) != 1 {
+		t.Errorf("extensions = %v, want .md=2 .png=1", extensions)
+	}
+	regions := ev.Data["top_level_regions"].([]any)
+	if len(regions) != 2 {
+		t.Fatalf("regions = %d, want 2", len(regions))
+	}
+	first := regions[0].(map[string]any)
+	if first["path"] != "notes/" || first["file_count"].(int) != 2 {
+		t.Errorf("first region = %v, want notes/ with 2 files", first)
+	}
+	if len(ev.Data["tree_entries"].([]any)) == 0 {
+		t.Errorf("small file tree should include tree_entries")
 	}
 }
 
@@ -79,11 +99,4 @@ func TestDocumentShape_clustersOnCompositeFingerprint(t *testing.T) {
 	if outliers := ev.Data["outliers"].([]any); len(outliers) != 1 {
 		t.Errorf("outliers = %d, want 1 (notes, distinct body)", len(outliers))
 	}
-}
-
-// classTotal counts distinct classes (non-singleton classes plus singleton
-// outliers) in a summarized evidence payload.
-func classTotal(t *testing.T, ev inspect.Evidence) int {
-	t.Helper()
-	return len(ev.Data["classes"].([]any)) + len(ev.Data["outliers"].([]any))
 }

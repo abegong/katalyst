@@ -7,9 +7,9 @@ import (
 	"github.com/abegong/katalyst/internal/storage"
 )
 
-// FileTree is the shallow, cheap raw-source inspector: a per-directory
-// path-level profile (file types, naming, depth) summarized into classes. It
-// opens no files. Filesystem-specific. Subsumes the former filesystem_naming.
+// FileTree is the shallow, cheap raw-source inspector: a deterministic
+// filesystem map from path metadata. It opens no files. Filesystem-specific.
+// Subsumes the former filesystem_naming.
 type FileTree struct{}
 
 func (FileTree) Name() string { return "file_tree" }
@@ -17,12 +17,7 @@ func (FileTree) Name() string { return "file_tree" }
 func (FileTree) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
 
 func (FileTree) Inspect(v SourceView, p Params) Evidence {
-	byDir := v.refsByDir()
-	profiles := make([]Profile, 0, len(byDir))
-	for _, dir := range sortedKeys(byDir) {
-		profiles = append(profiles, Profile{Label: dir, Features: dirFeatures(byDir[dir])})
-	}
-	return Evidence{Inspector: "file_tree", Scope: v.root, N: v.N(), Data: summarize(profiles, p)}
+	return Evidence{Inspector: "file_tree", Scope: v.root, N: v.N(), Data: buildFileTreeSummary(v)}
 }
 
 // FileTreeContent is the deep raw-source inspector: it parses markdown and

@@ -78,7 +78,7 @@ func Descriptors() []Descriptor {
 			Family:  "filesystem",
 			Slug:    "file-tree",
 			Title:   "File tree",
-			Summary: "Profile each directory's file types, naming, and depth, opening no files.",
+			Summary: "Map files, directories, extensions, regions, and filename conventions, opening no files.",
 		},
 		{
 			Name:    "file_tree_content",

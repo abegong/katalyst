@@ -22,8 +22,24 @@ _Cluster files into candidate collections by a composite fingerprint of frontmat
 
 ### file_tree (n=2)
 
-_Profile each directory's file types, naming, and depth, opening no files._
+_Map files, directories, extensions, regions, and filename conventions, opening no files._
 
-- classes:
-- outliers:
-  - features=[ext:.md, casing:kebab] label=books
+summary:
+  files        : 2
+  directories  : 2
+  max depth    : 2
+  dominant type: -
+
+tree:
+.
++-- books/
+    +-- dune.md
+    +-- it.md
+
+file types:
+  TYPE  FILES
+  .md   2
+
+representative paths:
+  books/dune.md
+  books/it.md
