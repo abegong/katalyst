@@ -13,7 +13,7 @@ literal denylist entries.
 
 | Term | Meaning |
 |---|---|
-| **Plain text** | The body view interpreted as raw text. |
+| **Plain text** | The body surface interpreted as raw text. |
 | **Body** | The content being searched. For markdown files, this excludes frontmatter. |
 | **Span** | The slice of body text a text check evaluates: the whole body, each line, the first line, or matched lines. |
 | **Target** | The configured span selector for a text check. |
@@ -24,7 +24,7 @@ Plain-text checks run against body text, not structured metadata and not
 markdown syntax trees. For markdown items, the body comes from the
 [Markdown body text]({{< relref "markdown-body-text.md" >}}) view after
 frontmatter has been separated. For plain-text items, the whole item body is the
-text view.
+text surface.
 
 This view backs the `text_requires`, `text_forbids`, and `text_denylist` check
 types. Those checks answer content questions such as "must contain this
@@ -46,4 +46,3 @@ literal strings."
 - [Markdown body text]({{< relref "markdown-body-text.md" >}})
 - [Configuration]({{< relref "../configuration.md#text-rules" >}}) for text
   rule configuration.
-

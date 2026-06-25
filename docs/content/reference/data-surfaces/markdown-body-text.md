@@ -5,7 +5,7 @@ weight = 10
 
 # Markdown body text
 
-Markdown body text is the item view produced from a markdown-like file with
+Markdown body text is the data surface produced from a markdown-like file with
 optional structured frontmatter. The codec lives in
 `internal/codec/markdownbodytext`; it turns bytes on disk into structured
 metadata plus body bytes that checks, inspectors, and
@@ -15,7 +15,7 @@ metadata plus body bytes that checks, inspectors, and
 
 | Term | Meaning |
 |---|---|
-| **Markdown body text** | The parsed markdown file-form: optional structured frontmatter, body bytes, source format, and source-line lookup. |
+| **Markdown body text** | The parsed markdown file-form exposed as a data surface: optional structured frontmatter, body bytes, source format, and source-line lookup. |
 | **Frontmatter** | The structured metadata block at the top of a markdown file, in YAML, TOML, or JSON. |
 | **Body** | Everything after the closing frontmatter fence. If there is no frontmatter, the whole file is the body. |
 | **Document** | The in-memory representation returned by `markdownbodytext.Parse`. |
@@ -79,9 +79,8 @@ checks degrade gracefully by emitting the violation without a line number.
 ## See also
 
 - [Markdown body text check types]({{< relref "../check-types/markdown-body-text/_index.md" >}})
-- [Plain text]({{< relref "plain-text.md" >}}), the raw body-text view over
+- [Plain text]({{< relref "plain-text.md" >}}), the raw body-text surface over
   the same body bytes.
 - [Fix]({{< relref "../../deep-dives/domain-model/fix.md" >}}), which consumes
   parsed documents when it rewrites frontmatter.
 - `go doc ./internal/codec/markdownbodytext` for the code-level codec contract.
-

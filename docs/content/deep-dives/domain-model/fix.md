@@ -99,6 +99,6 @@ For each item:
 
 ## See also
 
-- [Markdown body text]({{< relref "../../reference/item-views/markdown-body-text.md" >}})
+- [Markdown body text]({{< relref "../../reference/data-surfaces/markdown-body-text.md" >}})
   for how markdown documents parse before `fix` rewrites them.
 - `go doc ./internal/fix` for the code-level transform contract.

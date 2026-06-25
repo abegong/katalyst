@@ -5,7 +5,7 @@ weight = 30
 
 # Structured object
 
-Structured object is the item view that exposes named fields and values. Today,
+Structured object is the data surface that exposes named fields and values. Today,
 for filesystem markdown collections, it comes from parsed frontmatter metadata.
 The domain-model term is broader on purpose: future bases may provide rows,
 documents, or API resources directly as structured objects.
@@ -21,7 +21,7 @@ documents, or API resources directly as structured objects.
 
 ## Model
 
-In the current filesystem backend, the structured-object view is
+In the current filesystem backend, the structured-object surface is
 `Document.Meta` from [Markdown body text]({{< relref "markdown-body-text.md" >}}).
 It is normalized to `map[string]any` no matter whether the source frontmatter
 was YAML, TOML, or JSON.
@@ -49,4 +49,3 @@ the item and is removed before the item is validated against that schema.
 - [Markdown body text]({{< relref "markdown-body-text.md" >}})
 - [Configuration]({{< relref "../configuration.md#object-schema-resolution-precedence" >}})
 - [Collections]({{< relref "../../deep-dives/domain-model/collections.md" >}})
-

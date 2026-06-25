@@ -1,20 +1,20 @@
 +++
-title = "Item views"
+title = "Data surfaces"
 weight = 35
 bookCollapseSection = true
 +++
 
-# Item views
+# Data surfaces
 
-Item views are the data surfaces Katalyst exposes for each item. Checks,
-inspectors, and `fix` do not all need the same representation: one check may
-read structured metadata, another may scan body text, and another may inspect
-the item's path. Naming those surfaces keeps the reference precise without
-turning every representation into a codec.
+Data surfaces are the representations Katalyst operations read from content.
+Checks, inspectors, and `fix` do not all need the same surface: one check may
+read structured metadata, another may scan body text, and another may inspect a
+path. Naming those surfaces keeps the reference precise without turning every
+representation into a codec.
 
-Today, Katalyst exposes four item views:
+Today, Katalyst exposes four data surfaces:
 
-| View | Meaning |
+| Surface | Meaning |
 |---|---|
 | [Markdown body text]({{< relref "markdown-body-text.md" >}}) | A parsed markdown document with optional frontmatter metadata, body bytes, source format, and source-line lookup. |
 | [Plain text]({{< relref "plain-text.md" >}}) | Body content read as raw text, independent of markdown structure. |
@@ -22,5 +22,4 @@ Today, Katalyst exposes four item views:
 | [File metadata]({{< relref "file-metadata.md" >}}) | Filename, extension, parent directory, path depth, and other attributes derived from the item's reference. |
 
 Only Markdown body text is backed by a dedicated codec package today. The other
-views are projections over parsed item data or derived item references.
-
+surfaces are projections over parsed data or derived references.

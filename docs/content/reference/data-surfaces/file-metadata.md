@@ -5,7 +5,7 @@ weight = 40
 
 # File metadata
 
-File metadata is the item view derived from an item's filesystem reference. It
+File metadata is the data surface derived from an item's filesystem reference. It
 does not parse item content; it reads names, extensions, parent directories,
 path segments, and path depth from where the item lives.
 
@@ -39,7 +39,7 @@ to address the item.
    parsing the item body.
 2. **Path targets are explicit.** Checks choose the path slice they inspect:
    filename, filename with extension, parent directory, or path segments.
-3. **It is still an item view.** Checks and inspectors can reason about path
+3. **It is still a data surface.** Checks and inspectors can reason about path
    attributes alongside structured fields and body text.
 
 ## See also
@@ -47,4 +47,3 @@ to address the item.
 - [File system check types]({{< relref "../check-types/file-system/_index.md" >}})
 - [File tree inspector]({{< relref "../inspectors/source/file-tree.md" >}})
 - [Document shape inspector]({{< relref "../inspectors/source/document-shape.md" >}})
-
