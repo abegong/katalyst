@@ -80,6 +80,26 @@ collection's object schema must reference a known schema, and a collection must
 configure at least one check (via the `schema:` shorthand or an explicit
 `checks:` list).
 
+## Collections across backends
+
+The collection model is intentionally broader than "a directory of markdown
+files." A collection is the named group Katalyst can list, select, inspect, and
+check, even when the backing storage has a different native vocabulary.
+
+| System               | Storage       | Collection      | Item       | Attribute        |
+|----------------------|---------------|-----------------|------------|------------------|
+| Postgres             | The database  | A table         | A row      | A column         |
+| MongoDB              | The database  | A collection    | A document | A field          |
+| A directory of CSVs  | The directory | A CSV file      | A row      | A column         |
+| A REST API           | The API       | A resource type | A resource | A response field |
+| An S3 bucket of JSON | The bucket    | A key prefix    | An object  | A JSON key       |
+
+An operation defined against this vocabulary, such as checking an attribute or
+aggregating over a collection, applies to every backend that can support it.
+The backend still decides the mechanics: a filesystem may list files and parse
+frontmatter in memory, while a database may push filtering and aggregation into
+queries. The collection name stays the user's handle either way.
+
 ## Why schema resolution has three tiers
 
 When `check` validates an item against an object schema, it resolves which

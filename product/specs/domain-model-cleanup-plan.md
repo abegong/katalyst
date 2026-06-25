@@ -106,7 +106,7 @@ the operations thesis moves to where it is demonstrated.
    concept" to name the deprecation explicitly or drop it; the storage
    vocabulary stands on its own.
 3. **File:** `docs/content/deep-dives/domain-model/collections.md`,
-   `docs/content/deep-dives/inspectors.md` — apply item/document where the form
+   `docs/content/deep-dives/domain-model/inspectors.md` — apply item/document where the form
    is the subject; keep "raw-source layer" (consistency check only).
 
 ### Phase 4 — Retitle pages, relocate command-organization
@@ -115,7 +115,7 @@ the operations thesis moves to where it is demonstrated.
 
 1. **File:** `docs/content/deep-dives/domain-model/collections.md` → title "Collections";
    `docs/content/deep-dives/domain-model/checks.md` → "Checks";
-   `docs/content/deep-dives/inspectors.md` → "Inspectors". Title-only;
+   `docs/content/deep-dives/domain-model/inspectors.md` → "Inspectors". Title-only;
    filenames and `relref` links are unchanged.
 2. **File:** `cmd/organization.md` (new) — move the body of
    `command-organization.md` here as plain markdown: strip the Hugo `+++`
@@ -150,7 +150,7 @@ reference is unchanged.
 | `docs/content/deep-dives/domain-model/storage.md` | Drops the "data interface" framing. |
 | `docs/content/deep-dives/domain-model/collections.md` | Retitled "Collections"; item/document aligned. |
 | `docs/content/deep-dives/domain-model/checks.md` | Retitled "Checks". |
-| `docs/content/deep-dives/inspectors.md` | Retitled "Inspectors"; item/document aligned. |
+| `docs/content/deep-dives/domain-model/inspectors.md` | Retitled "Inspectors"; item/document aligned. |
 | `docs/content/deep-dives/_index.md` | Drops the command-organization clause. |
 | `cmd/organization.md` (new) | CLI command-grammar rationale, moved from the deep-dive. |
 | `docs/content/deep-dives/command-organization.md` | Deleted. |

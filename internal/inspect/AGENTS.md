@@ -5,7 +5,7 @@ descriptive dual of `internal/checks`.
 
 **Architecture and design rationale** - the two layers, the measurement
 primitives, evidence-not-recommendations, the determinism dividing line - live
-in the [How inspectors work](../../docs/content/deep-dives/inspectors.md)
+in the [How inspectors work](../../docs/content/deep-dives/domain-model/inspectors.md)
 deep-dive (also summarized in `go doc ./internal/inspect`), which is the source
 of truth. This file keeps only the local code conventions.
 
