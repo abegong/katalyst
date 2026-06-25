@@ -83,6 +83,7 @@ func TestRenderMarkdown_fileTreeSmallTree(t *testing.T) {
 		"summary:",
 		"  files        : 3",
 		"  dominant type: .md (3 of 3 files)",
+		"----------------------------------------",
 		"tree:",
 		"└── books/",
 		"file types:",

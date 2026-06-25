@@ -98,16 +98,15 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 
 	tree := stringSlice(data["tree_entries"])
 	if len(tree) > 0 {
-		lines = append(lines, "", "tree:")
+		lines = appendSection(lines, "tree:")
 		lines = append(lines, tree...)
-		lines = append(lines, "")
 	} else {
 		regions := anySlice(data["top_level_regions"])
 		limit := 5
 		if expanded {
 			limit = len(regions)
 		}
-		lines = append(lines, "", "top-level regions:")
+		lines = appendSection(lines, "top-level regions:")
 		rows := [][]string{{"REGION", "FILES", "TYPES"}}
 		for i, region := range regions {
 			if i >= limit {
@@ -123,28 +122,25 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 		if len(regions) > limit {
 			lines = append(lines, fmt.Sprintf("  ... %d more top-level entries hidden; pass -v to show all", len(regions)-limit))
 		}
-		lines = append(lines, "")
 	}
 
 	extLimit := 5
 	if expanded {
 		extLimit = len(extensions)
 	}
-	lines = append(lines, "file types:")
+	lines = appendSection(lines, "file types:")
 	lines = append(lines, histogramTableLines(extensions, extLimit, "TYPE", "FILES")...)
 	if len(extensions) > extLimit {
 		lines = append(lines, fmt.Sprintf("  ... %d more extensions hidden; pass -v to show all", len(extensions)-extLimit))
 	}
 
 	if naming := namingLines(anyMap(data["naming"]), expanded); len(naming) > 0 {
-		lines = append(lines, "")
-		lines = append(lines, "naming:")
+		lines = appendSection(lines, "naming:")
 		lines = append(lines, naming...)
 	}
 
 	if expanded {
-		lines = append(lines, "")
-		lines = append(lines, "directory density:")
+		lines = appendSection(lines, "directory density:")
 		rows := [][]string{{"DIRECTORY", "FILES", "DIRECT", "NOTES"}}
 		for _, item := range anySlice(data["directory_summaries"]) {
 			dir := item.(map[string]any)
@@ -159,8 +155,7 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 		}
 		lines = append(lines, alignTable(rows, "  ")...)
 		if deep := stringSlice(data["deep_paths"]); len(deep) > 0 {
-			lines = append(lines, "")
-			lines = append(lines, "deep paths:")
+			lines = appendSection(lines, "deep paths:")
 			for _, rel := range deep {
 				lines = append(lines, fmt.Sprintf("  %s", rel))
 			}
@@ -173,8 +168,7 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 		if expanded {
 			limit = len(paths)
 		}
-		lines = append(lines, "")
-		lines = append(lines, "representative paths:")
+		lines = appendSection(lines, "representative paths:")
 		for i, rel := range paths {
 			if i >= limit {
 				break
@@ -186,6 +180,10 @@ func fileTreeMarkdownLines(data map[string]any, expanded bool) []string {
 		}
 	}
 	return lines
+}
+
+func appendSection(lines []string, label string) []string {
+	return append(lines, "", "----------------------------------------", label)
 }
 
 func dominantExtensionSummary(fileCount int, exts map[string]any) string {

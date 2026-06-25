@@ -30,16 +30,19 @@ summary:
   max depth    : 2
   dominant type: -
 
+----------------------------------------
 tree:
 .
 └── books/
     ├── dune.md
     └── it.md
 
+----------------------------------------
 file types:
   TYPE  FILES
   .md   2
 
+----------------------------------------
 representative paths:
   books/dune.md
   books/it.md
