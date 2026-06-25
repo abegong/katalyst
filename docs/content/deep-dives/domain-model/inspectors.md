@@ -7,11 +7,11 @@ weight = 46
 
 An **inspector** profiles content and returns *evidence*: counts and
 distributions, never recommendations. Inspectors are the descriptive dual of
-[checks]({{< relref "domain-model/checks.md" >}}) - a check asserts a predicate and reports
+[checks]({{< relref "checks.md" >}}) - a check asserts a predicate and reports
 violations; an inspector reports the distribution that predicate would be tested
-against. They drive the [`inspect`]({{< relref "../reference/cli.md" >}})
+against. They drive the [`inspect`]({{< relref "../../reference/cli.md" >}})
 command. For the per-inspector catalog see the [inspectors
-reference]({{< relref "../reference/inspectors/_index.md" >}}); this page is the
+reference]({{< relref "../../reference/inspectors/_index.md" >}}); this page is the
 model and the rationale behind it.
 
 ## Two layers
@@ -31,7 +31,7 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 
 The two are **distinct interfaces, not one type at two scopes**, precisely
 because they reference the data through different machinery. This mirrors the
-seam in the [storage layer]({{< relref "domain-model/storage.md" >}}).
+seam in the [storage layer]({{< relref "storage.md" >}}).
 
 ## Built from primitives
 
@@ -96,10 +96,10 @@ tool, not in the engine.
 
 ## See also
 
-- The [inspectors reference]({{< relref "../reference/inspectors/_index.md" >}})
+- The [inspectors reference]({{< relref "../../reference/inspectors/_index.md" >}})
   for the per-inspector surface, generated from the registry.
-- [Checks]({{< relref "domain-model/checks.md" >}}) - the prescriptive dual; an
+- [Checks]({{< relref "checks.md" >}}) - the prescriptive dual; an
   inspector measures the distribution a check would assert against.
-- [Domain model]({{< relref "domain-model/_index.md" >}}) for where profiling sits in
+- [Domain model]({{< relref "_index.md" >}}) for where profiling sits in
   the catalog-define-enforce loop.
 - `go doc ./internal/inspect` for the code-level engine contract.

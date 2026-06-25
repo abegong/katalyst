@@ -44,34 +44,13 @@ definition lives in the [glossary]({{< relref "../../reference/glossary.md" >}})
   [Checks]({{< relref "checks.md" >}}).
 - An **inspector** is the descriptive dual of a check: it measures a
   distribution and returns evidence, never a verdict. See
-  [Inspectors]({{< relref "../inspectors.md" >}}).
+  [Inspectors]({{< relref "inspectors.md" >}}).
 
 ## How the concepts fit
 
 The hierarchy is intentionally small:
 
-```mermaid
-flowchart TD
-    P["Project"]
-    S["Storage"]
-    C["Collection"]
-    I["Item"]
-    A["Attribute"]
-    O["Operations"]
-    K["Checks"]
-    N["Inspectors"]
-
-    P --> S
-    S --> C
-    C --> I
-    I --> A
-    S --> O
-    K --> I
-    K --> A
-    K --> C
-    N --> C
-    N --> A
-```
+![Domain model diagram showing project containing storage, collection, item, and attribute, with checks and inspectors operating on the data model.](../../images/domain-model-core-concepts.png)
 
 Storage locates data, collections group it, items are the units commands act
 on, and attributes are the named things checks and inspectors can read.
@@ -83,57 +62,3 @@ That separation is why katalyst can start with markdown files but leave room
 for richer stores. The check engine does not need to know whether an item came
 from a file or a row if the storage layer can present the item, its attributes,
 and the operations available on them.
-
-## The workflow
-
-The concepts also explain Katalyst's intended loop:
-
-1. **Catalog** a source with inspectors. Start from evidence: what files,
-   fields, headings, paths, and recurring shapes actually exist?
-2. **Define** collections, schemas, and checks. Turn the discovered structure
-   into a project config that names the collections and their expected shape.
-3. **Enforce** the rules with checks. Run the same assertions locally, in CI,
-   or through an agent workflow.
-4. **Reshape** the content as the project changes. Use fixes, migrations, and
-   storage-aware operations to keep the data aligned with the model.
-
-The important boundary is between evidence and enforcement. Inspectors report
-that 94% of items have a field; they do not decide that the field is required.
-That threshold belongs in a check, chosen by a human or an agent using the
-evidence.
-
-## The same vocabulary across backends
-
-| System               | Storage       | Collection      | Item       | Attribute        |
-|----------------------|---------------|-----------------|------------|------------------|
-| Postgres             | The database  | A table         | A row      | A column         |
-| MongoDB              | The database  | A collection    | A document | A field          |
-| A directory of CSVs  | The directory | A CSV file      | A row      | A column         |
-| A REST API           | The API       | A resource type | A resource | A response field |
-| An S3 bucket of JSON | The bucket    | A key prefix    | An object  | A JSON key       |
-
-An operation defined once in this vocabulary, such as checking an attribute or
-aggregating over a collection, applies to every backend that can support it.
-The backend still decides the mechanics: a filesystem may list files and parse
-frontmatter in memory, while a database may push filtering and aggregation into
-queries. The domain vocabulary stays the same.
-
-## Why this vocabulary matters
-
-The point is not taxonomy for its own sake. The vocabulary keeps Katalyst from
-hard-coding "markdown file" everywhere while still making markdown useful
-today.
-
-- **Portable checks.** `object_required_field` can mean "frontmatter key" for
-  markdown, "column" for a table, or "field" for a document store.
-- **Storage-aware growth.** A backend can start with read and list operations,
-  then add query, aggregate, or write support as it becomes more structured.
-- **Agent-friendly structure.** A project exposes the same nouns everywhere:
-  collections to inspect, items to check, attributes to reason about, and
-  violations to fix.
-
-This is the through-line for the deeper pages: [storage]({{< relref "storage.md" >}})
-explains how backends attach to the model, [collections]({{< relref "collections.md" >}})
-explains how config names and routes items, [checks]({{< relref "checks.md" >}})
-explains enforcement, and [inspectors]({{< relref "../inspectors.md" >}})
-explains evidence.

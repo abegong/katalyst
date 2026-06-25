@@ -7,5 +7,6 @@
 //
 // The full architecture and design rationale (the two layers, the primitives,
 // evidence-not-recommendations, and the determinism dividing line) live in the
-// "How inspectors work" deep-dive at docs/content/deep-dives/inspectors.md.
+// "How inspectors work" deep-dive at
+// docs/content/deep-dives/domain-model/inspectors.md.
 package inspect
