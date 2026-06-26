@@ -1,59 +1,28 @@
 +++
-title = "Frontmatter and fix"
-weight = 60
+title = "Fix"
+weight = 62
 +++
 
-# Frontmatter and fix
+# Fix
 
-How Katalyst parses a markdown file's frontmatter, the in-memory document that
-produces, and why [`fix`]({{< relref "../reference/cli.md" >}}) rewrites
-that frontmatter the opinionated way it does. The codec (parse and encode) lives
-in `internal/codec/markdownbodytext`; the `fix` transform that drives the
-canonical form, and the backend write that persists it, live in `internal/fix`
-and `internal/storage/collection/filesystem` respectively.
+Why [`katalyst fix`]({{< relref "../../reference/cli.md" >}}) rewrites
+frontmatter the opinionated way it does. The parser and encoder live in
+`internal/codec/markdownbodytext`; the transform that drives the canonical
+form, and the backend write that persists it, live in `internal/fix` and
+`internal/storage/collection/filesystem` respectively.
 
-## The markdown document
+## Terms
 
-The unit of work is a file on disk with two optional regions:
+| Term | Meaning |
+|---|---|
+| **Fix** | A command that rewrites existing content into Katalyst's canonical form when a check can supply a safe transformation. |
+| **Canonical form** | The deterministic output format `fix` writes: preserved frontmatter syntax, sorted top-level keys, native encoder style, preserved body bytes, and one trailing newline. |
+| **Report-only check** | A check that can report violations but cannot safely rewrite content. |
+| **Check mode** | The `--check` form of `fix`: print what would change, write nothing, and exit 1 if any item is non-canonical. |
 
-- A **frontmatter** block at the very top of the file, in one of three formats
-  detected by the opening fence:
+## Design rationale
 
-  | Format | Fence | Example openers |
-  |--------|-------|-----------------|
-  | YAML   | `---` | Jekyll, Obsidian, Hugo |
-  | TOML   | `+++` | Hugo, Obsidian, Jekyll |
-  | JSON   | `{` ... `}` | Hugo |
-
-  These are the three formats Hugo, Obsidian, and Jekyll emit. Whatever the
-  source format, the parsed `Meta` is a plain `map[string]any`, so checks and
-  inspectors never branch on format. `Document.Format` records the detected
-  syntax so `fix` can re-emit a file in its own format rather than rewriting,
-  say, TOML as YAML.
-- A **body**, everything after the closing fence.
-
-A document *may* have no frontmatter, in which case `check` reports it as an
-error (the file claimed no metadata, so we couldn't check anything).
-
-When parsed, a markdown document becomes a `markdownbodytext.Document`:
-
-| Field            | Meaning |
-|------------------|---------|
-| `HasFrontmatter` | Did the file open with a recognized fence? |
-| `Format`         | Detected syntax: `KindYAML`, `KindTOML`, or `KindJSON` |
-| `Meta`           | Parsed frontmatter, normalized to `map[string]any` |
-| `Body`           | Bytes after the closing fence, **never modified** except by `fix` |
-| `Lines`          | JSON-pointer-path to 1-indexed source line |
-
-The `Lines` index is what makes error messages locatable. It accounts for the
-opening fence offset, so `Lines["/title"] = 2` means the `title` key is on line
-2 of the original file.
-
-**Line tracking is full for YAML only.** For TOML and JSON, `Lines` is empty
-today; checks degrade gracefully (they emit the error without a line number).
-Richer line tracking for the other formats is a planned follow-up.
-
-## Why fix is deliberately opinionated
+**Fix is deliberately opinionated.**
 
 `katalyst fix` rewrites frontmatter in one canonical form **in the file's own
 format**: TOML stays TOML, JSON stays JSON, YAML stays YAML. `fix` never
@@ -84,11 +53,7 @@ if it hurts in practice.
 `--check` makes `fix` non-destructive: it writes nothing, prints the items that
 *would* change, and exits 1. That is the CI form.
 
-## Worked example
-
-{{< katalyst-example-full "fix-normalize-frontmatter" >}}
-
-## Why fix never injects missing values
+**Fix never injects missing values.**
 
 An earlier idea had a mode that would add "sentinel" placeholder values for
 missing required keys. It was dropped, and the safe-mutation story moved to a
@@ -101,6 +66,10 @@ that. A safer design, interactive or constrained to filling a schema's declared
 `default:`, deserves its own command and explicit per-field opt-in. Until then,
 `fix` only ever normalizes what is already there; it never creates structure (a
 frontmatter-less file is returned untouched).
+
+## Worked example
+
+{{< katalyst-example-full "fix-normalize-frontmatter" >}}
 
 ## Lifecycle of fix
 
@@ -123,8 +92,13 @@ For each item:
 1. **Body bytes are sacred.** No command except `fix` modifies them. Even `fix`
    only normalizes trailing whitespace and the leading separator; interior body
    bytes round-trip exactly.
-2. **Line numbers are file-relative and 1-indexed.** The opening fence is line
-   1, so the first key is typically line 2. (Populated for YAML today; see the
-   line-tracking note above.)
-3. **Format is preserved.** `fix` re-emits each file in its own frontmatter
+2. **Format is preserved.** `fix` re-emits each file in its own frontmatter
    syntax and never converts between YAML, TOML, and JSON.
+3. **No semantic values are invented.** `fix` only normalizes existing
+   frontmatter and configured text fixes; it does not create missing metadata.
+
+## See also
+
+- [Markdown body text]({{< relref "../../reference/data-surfaces/markdown-body-text.md" >}})
+  for how markdown documents parse before `fix` rewrites them.
+- `go doc ./internal/fix` for the code-level transform contract.

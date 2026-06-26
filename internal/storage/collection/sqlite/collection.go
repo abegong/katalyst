@@ -32,8 +32,8 @@ func New(path string, collections []collection.Collection) *Definition {
 	return &Definition{path: path, collections: collections}
 }
 
-// Granularity is UnitIsCollection: one table is a collection and rows are items.
-func (d *Definition) Granularity() storage.Granularity { return storage.UnitIsCollection }
+// Scope reports collection scope for SQLite tables.
+func (d *Definition) Scope() storage.Scope { return storage.UnitIsCollection }
 
 // Collections returns the collections this definition maps.
 func (d *Definition) Collections() []collection.Collection { return d.collections }

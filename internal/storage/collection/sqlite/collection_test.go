@@ -193,9 +193,9 @@ func TestDefinition_Read_validatesConfiguredColumns(t *testing.T) {
 	}
 }
 
-func TestDefinition_Granularity_unitIsCollection(t *testing.T) {
-	if g := sqlitestore.New("", nil).Granularity(); g != storage.UnitIsCollection {
-		t.Fatalf("Granularity = %v, want UnitIsCollection", g)
+func TestDefinition_Scope_unitIsCollection(t *testing.T) {
+	if g := sqlitestore.New("", nil).Scope(); g != storage.UnitIsCollection {
+		t.Fatalf("Scope = %v, want UnitIsCollection", g)
 	}
 }
 

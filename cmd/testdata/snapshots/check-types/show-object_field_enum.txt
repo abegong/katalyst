@@ -1,5 +1,5 @@
-Structured object check types › Field enum
---------------------------------------------
+Structured object › Field enum
+--------------------------------
 - kind: object_field_enum
 - family: structuredObject
 - scope: item
@@ -31,8 +31,8 @@ Example
           field: status
           values: [draft, published, archived]
 
-Other structured object check types (7)
----------------------------------------
+Other structured object (7)
+---------------------------
 - object_field_type
 - object_number_range
 - object_required_field

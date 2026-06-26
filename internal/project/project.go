@@ -3,8 +3,8 @@
 // enumeration, and reverse id→path resolution on top of it. The path↔item-
 // identity mapping itself lives behind the internal/storage seam; this package
 // selects the right CollectionDefinition and orchestrates it. See
-// docs/content/deep-dives/domain-model.md (selectors, collections, items) and
-// docs/content/deep-dives/storage.md (the seam).
+// docs/content/deep-dives/domain-model/_index.md (selectors, collections, items)
+// and docs/content/deep-dives/domain-model/storage.md (the seam).
 package project
 
 import (
@@ -40,27 +40,27 @@ type ItemContent struct {
 	Doc *markdownbodytext.Document
 }
 
-func (p *Project) storageInstance(name string) (StorageInstance, bool) {
-	for _, inst := range p.cfg.Storage {
+func (p *Project) baseInstance(name string) (BaseInstance, bool) {
+	for _, inst := range p.cfg.Bases {
 		if inst.Name == name {
 			return inst, true
 		}
 	}
-	return StorageInstance{}, false
+	return BaseInstance{}, false
 }
 
 func (p *Project) def(c Collection) (collection.CollectionDefinition, error) {
-	inst, ok := p.storageInstance(c.Storage)
+	inst, ok := p.baseInstance(c.Base)
 	if !ok {
-		return nil, fmt.Errorf("collection %q: unknown storage instance %q", c.Name, c.Storage)
+		return nil, fmt.Errorf("collection %q: unknown base %q", c.Name, c.Base)
 	}
-	switch storage.StorageType(inst.Type) {
+	switch storage.BaseType(inst.Type) {
 	case storage.Filesystem:
 		return filesystem.New(inst.Root, inst.Collections), nil
 	case storage.SQLite:
 		return sqlitestore.New(inst.Root, inst.Collections), nil
 	default:
-		return nil, fmt.Errorf("collection %q: unsupported storage type %q", c.Name, inst.Type)
+		return nil, fmt.Errorf("collection %q: unsupported base type %q", c.Name, inst.Type)
 	}
 }
 
@@ -162,7 +162,7 @@ func (p *Project) Reference(c Collection, id string) (string, error) {
 
 // ReadItem reads and decodes an item through its storage backend.
 func (p *Project) ReadItem(item Item) (ItemContent, error) {
-	switch storage.StorageType(item.Collection.StorageType) {
+	switch storage.BaseType(item.Collection.StorageType) {
 	case storage.SQLite:
 		def, err := p.def(item.Collection)
 		if err != nil {
@@ -185,7 +185,7 @@ func (p *Project) ReadItem(item Item) (ItemContent, error) {
 
 // ItemExists reports whether id already exists in c.
 func (p *Project) ItemExists(c Collection, id string) (bool, error) {
-	switch storage.StorageType(c.StorageType) {
+	switch storage.BaseType(c.StorageType) {
 	case storage.SQLite:
 		def, err := p.def(c)
 		if err != nil {
@@ -204,7 +204,7 @@ func (p *Project) ItemExists(c Collection, id string) (bool, error) {
 
 // AddItem creates a new item in c.
 func (p *Project) AddItem(c Collection, id string, meta map[string]any, body []byte) error {
-	switch storage.StorageType(c.StorageType) {
+	switch storage.BaseType(c.StorageType) {
 	case storage.SQLite:
 		def, err := p.def(c)
 		if err != nil {
@@ -218,7 +218,7 @@ func (p *Project) AddItem(c Collection, id string, meta map[string]any, body []b
 
 // UpdateItem updates an existing item in c.
 func (p *Project) UpdateItem(c Collection, id string, meta map[string]any, body []byte) error {
-	switch storage.StorageType(c.StorageType) {
+	switch storage.BaseType(c.StorageType) {
 	case storage.SQLite:
 		def, err := p.def(c)
 		if err != nil {
@@ -232,7 +232,7 @@ func (p *Project) UpdateItem(c Collection, id string, meta map[string]any, body 
 
 // DeleteItem deletes an existing item.
 func (p *Project) DeleteItem(item Item) error {
-	switch storage.StorageType(item.Collection.StorageType) {
+	switch storage.BaseType(item.Collection.StorageType) {
 	case storage.SQLite:
 		def, err := p.def(item.Collection)
 		if err != nil {

@@ -1,5 +1,5 @@
-Markdown body text check types › Single H1
---------------------------------------------
+Markdown body text › Single H1
+--------------------------------
 - kind: markdown_single_h1
 - family: markdownBodyText
 - scope: item
@@ -22,8 +22,8 @@ Example
       checks:
         - kind: markdown_single_h1
 
-Other markdown body text check types (6)
-----------------------------------------
+Other markdown body text (6)
+----------------------------
 - markdown_code_fence_language_required
 - markdown_no_heading_level_jumps
 - markdown_required_section

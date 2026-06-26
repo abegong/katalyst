@@ -9,20 +9,29 @@ An **inspector** profiles content and returns *evidence*: counts and
 distributions, never recommendations. Inspectors are the descriptive dual of
 [checks]({{< relref "checks.md" >}}) - a check asserts a predicate and reports
 violations; an inspector reports the distribution that predicate would be tested
-against. They drive the [`inspect`]({{< relref "../reference/cli.md" >}})
+against. They drive the [`inspect`]({{< relref "../../reference/cli.md" >}})
 command. For the per-inspector catalog see the [inspectors
-reference]({{< relref "../reference/inspectors/_index.md" >}}); this page is the
+reference]({{< relref "../../reference/inspectors/_index.md" >}}); this page is the
 model and the rationale behind it.
 
-## Two layers
+## Terms
+
+| Term | Meaning |
+|---|---|
+| **Inspector** | A read-only operation that profiles content and returns evidence. |
+| **Evidence** | The measured counts, distributions, classes, or summaries an inspector reports. Evidence is not a recommendation or verdict. |
+| **Raw base layer** | Inspectors that measure a base directly before collection configuration. |
+| **Collection layer** | Inspectors that measure configured collection items by domain identity. |
+| **Measurement primitive** | A reusable profiler such as `objectFields`, `markdownBody`, `fileMetadata`, or content-shape parsing that inspectors point at a specific input. |
+
+## Model
 
 Inspectors come in two layers, distinguished by *how they reference the data*:
 
-- **The raw-source layer** (`SourceInspector` over a `SourceView`) measures a
-  backend store directly, before any collection configuration, addressed by
-  backend-native reference (a relative path today). It answers "what is in this
-  store?" - the onboarding case. `file_tree` and `file_content_shape` live
-  here.
+- **The raw base layer** (`SourceInspector` over a `SourceView`) measures a
+  base directly, before any collection configuration, addressed by
+  base-native reference (a relative path today). It answers "what is in this
+  base?" - the onboarding case. `file_tree` and `file_content_shape` live here.
 - **The collection layer** (`CollectionInspector` over a `CollectionView`)
   measures a configured collection's items, addressed by domain identity
   (collection + item id) and reached through the project's
@@ -31,9 +40,9 @@ Inspectors come in two layers, distinguished by *how they reference the data*:
 
 The two are **distinct interfaces, not one type at two scopes**, precisely
 because they reference the data through different machinery. This mirrors the
-seam in the [storage layer]({{< relref "storage.md" >}}).
+seam in the [base]({{< relref "base.md" >}}).
 
-## Built from primitives
+**Measurement is built from primitives.**
 
 Most measurement lives in three reusable, layer-agnostic primitives, so the
 inspectors themselves are thin wrappers that point a primitive at an input:
@@ -48,11 +57,16 @@ inspectors themselves are thin wrappers that point a primitive at an input:
   shape (types, naming, depth, regions, directory density) over references,
   opening no files.
 
-The same small primitives are reused where the layer makes sense, but raw-source
-inspectors avoid proposing collections. They report store and content facts; a
-human or agent decides what collection boundaries those facts imply.
+The same small primitives are reused where the layer makes sense.
+`file_content_shape` opens selected raw files and reports their frontmatter keys
+and body structure; once those files belong to a collection, `object_fields`
+measures item frontmatter by domain identity. Raw base inspectors still avoid
+proposing collections: they report store and content facts, and a human or agent
+decides what collection boundaries those facts imply.
 
-## Evidence, not recommendations
+## Design rationale
+
+**Evidence, not recommendations.**
 
 An inspector reports that a field appears in 94% of items; it does **not** say
 "make it required." The threshold that turns 94% into a required field, or a
@@ -65,7 +79,7 @@ become something to second-guess rather than trust. Reporting only counts, with
 the unit count `n` as denominator, keeps the evidence trustable: the reader sees
 why a conclusion holds and decides.
 
-## The determinism dividing line
+**The determinism dividing line.**
 
 Deterministic measurement is an inspector's job; threshold-picking and
 structure-proposing are not. Counting field presence, histogramming types,
@@ -74,7 +88,7 @@ all deterministic, all inspectors. Deciding that 94% is "required", that a
 directory should be a collection, or what to name a schema are all judgment,
 none of it here.
 
-## Keeping output small
+**Keep output small.**
 
 `file_tree` and `file_content_shape` keep Markdown output small with
 deterministic caps: small trees get an actual tree; content-shape reports show
@@ -94,12 +108,21 @@ intended workflow is a loop - inspect, draft a schema, check, fix the holdouts -
 but the forming, drafting, and threshold-choosing live with whoever drives the
 tool, not in the engine.
 
+## Invariants
+
+1. **Inspectors do not mutate content.** They report evidence and write no
+   schemas, checks, or files.
+2. **Evidence stays separate from recommendations.** Threshold choices and
+   schema proposals belong to the human or agent driving the workflow.
+3. **Layer boundaries stay explicit.** Raw base inspectors use base-native
+   references; collection-layer inspectors use collection and item identity.
+
 ## See also
 
-- The [inspectors reference]({{< relref "../reference/inspectors/_index.md" >}})
+- The [inspectors reference]({{< relref "../../reference/inspectors/_index.md" >}})
   for the per-inspector surface, generated from the registry.
 - [Checks]({{< relref "checks.md" >}}) - the prescriptive dual; an
   inspector measures the distribution a check would assert against.
-- [Core concepts]({{< relref "core-concepts.md" >}}) for where profiling sits in
+- [Domain model]({{< relref "_index.md" >}}) for where profiling sits in
   the catalog-define-enforce loop.
 - `go doc ./internal/inspect` for the code-level engine contract.

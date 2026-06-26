@@ -76,7 +76,7 @@ document]({{< relref "how-we-document.md" >}}) for what belongs where:
 - **`docs/reference/glossary.md`:** new vocabulary.
 - **`README.md`:** pointer/overview updates.
 
-Evergreen deep-dive docs (the storage layer, progressive operations) and the
+Evergreen deep-dive docs (bases, progressive operations) and the
 per-package `AGENTS.md` files are *not* specs and don't get retired: they're
 updated in place.
 

@@ -14,14 +14,14 @@ agent]({{< relref "profile-an-existing-wiki-with-an-agent.md" >}}).
 
 `inspect` reports **evidence**, counts and distributions, never
 recommendations. Reading the evidence and deciding the schema is your call. It
-runs in **two layers**: point it at a **directory** to profile a raw store
+runs in **two layers**: point it at a **directory** to profile a raw base
 (no project needed), or at a configured **collection** to profile its items.
 The onboarding loop uses both.
 
-## 1. Survey the directory (raw-source layer)
+## 1. Survey the directory (raw base layer)
 
 Point `inspect` at the directory. With no `.katalyst/` project it runs the
-raw-source inspectors:
+raw base inspectors:
 
 ```bash
 katalyst inspect ./wiki
@@ -44,7 +44,7 @@ Point a collection at the directory so the field-level layer can run. Minimal
 config:
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -105,7 +105,7 @@ properties:
 ```
 
 ```yaml
-# .katalyst/storage/local.yaml  (extend the collection from step 2)
+# .katalyst/bases/local.yaml  (extend the collection from step 2)
 type: filesystem
 root: .
 collections:

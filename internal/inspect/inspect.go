@@ -20,21 +20,21 @@ type Evidence struct {
 // CollectionInspector measures a configured collection, addressed by domain
 // identity (Collection + Item.ID) through a CollectionView rather than by raw
 // path. It is the collection-layer half of the two-layer inspector model; the
-// raw-source half is SourceInspector. Params carries the collapse tolerance for
+// raw base half is SourceInspector. Params carries the collapse tolerance for
 // summarizing inspectors and is ignored by those that don't summarize.
 type CollectionInspector interface {
 	Name() string
 	Inspect(CollectionView, Params) Evidence
 }
 
-// SourceInspector measures a raw backend store before any collection
+// SourceInspector measures a raw base before any collection
 // configuration, addressed by backend-native reference (a path today) through a
 // SourceView. AppliesTo gates backend-specific inspectors: one returns false for
-// a StorageType it cannot describe, so it is simply absent there. It is the
-// raw-source half of the two-layer model; the collection half is
+// a BaseType it cannot describe, so it is simply absent there. It is the
+// raw base half of the two-layer model; the collection half is
 // CollectionInspector.
 type SourceInspector interface {
 	Name() string
-	AppliesTo(storage.StorageType) bool
+	AppliesTo(storage.BaseType) bool
 	Inspect(SourceView, Params) Evidence
 }

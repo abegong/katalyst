@@ -1,5 +1,5 @@
-Structured object check types › Required field
-------------------------------------------------
+Structured object › Required field
+------------------------------------
 - kind: object_required_field
 - family: structuredObject
 - scope: item
@@ -26,8 +26,8 @@ Example
         - kind: object_required_field
           field: year
 
-Other structured object check types (7)
----------------------------------------
+Other structured object (7)
+---------------------------
 - object_field_enum
 - object_field_type
 - object_number_range

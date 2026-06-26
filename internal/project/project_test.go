@@ -28,7 +28,7 @@ func setup(t *testing.T) *project.Project {
 	}
 
 	projecttest.WriteProject(t, dir, map[string]string{
-		"storage/local.yaml": projecttest.LocalStorage(map[string]string{
+		"bases/local.yaml": projecttest.LocalBase(map[string]string{
 			"notes":  "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
 			"people": "path: people\nchecks:\n  - kind: markdown_requires_h1\n",
 		}),

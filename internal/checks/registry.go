@@ -40,9 +40,9 @@ type Descriptor struct {
 	// is provenance, orthogonal to Family (source-data kind).
 	Library string `json:"library,omitempty"`
 	// Family groups the check type by source-data kind: "structuredObject",
-	// "markdownBodyText", "fileSystem", or "plainText". Family and granularity
-	// are orthogonal, a collection-scoped check is grouped by the data it
-	// reads, not by its scope (e.g. unique_field is structuredObject).
+	// "markdownBodyText", "fileSystem", or "plainText". Family and scope are
+	// orthogonal, a collection-scoped check is grouped by the data it reads,
+	// not by its scope (e.g. unique_field is structuredObject).
 	Family string `json:"family"`
 	// Slug is the page basename under the family directory.
 	Slug string `json:"slug"`
@@ -81,25 +81,25 @@ func Families() []Family {
 		{
 			ID:    "structuredObject",
 			Slug:  "structured-object",
-			Title: "Structured object check types",
+			Title: "Structured object",
 			Intro: "Structured-object check types validate structured frontmatter fields using schema-backed checks.",
 		},
 		{
 			ID:    "markdownBodyText",
 			Slug:  "markdown-body-text",
-			Title: "Markdown body text check types",
+			Title: "Markdown body text",
 			Intro: "Markdown body-text check types validate relationships between frontmatter metadata and markdown body content.",
 		},
 		{
 			ID:    "fileSystem",
 			Slug:  "file-system",
-			Title: "File system check types",
+			Title: "File system",
 			Intro: "File-system check types validate filename and path conventions for items.",
 		},
 		{
 			ID:    "plainText",
 			Slug:  "plain-text",
-			Title: "Plain text check types",
+			Title: "Plain text",
 			Intro: "Plain-text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.",
 		},
 	}

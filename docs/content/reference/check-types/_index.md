@@ -11,7 +11,7 @@ aliases = ["/reference/rules/"]
 
 The check types `katalyst` runs against each item, grouped by family. These pages are generated from the checks registry, so they always match the shipped binary.
 
-## Structured object check types
+## Structured object
 
 Structured-object check types validate structured frontmatter fields using schema-backed checks.
 
@@ -24,7 +24,7 @@ Structured-object check types validate structured frontmatter fields using schem
 - [Unique field]({{< relref "structured-object/unique-field.md" >}}): Require that no two items share a value for a frontmatter field.
 - [Object validation]({{< relref "structured-object/object.md" >}}): Validate frontmatter metadata against a named JSON Schema from schemas:.
 
-## Markdown body text check types
+## Markdown body text
 
 Markdown body-text check types validate relationships between frontmatter metadata and markdown body content.
 
@@ -36,7 +36,7 @@ Markdown body-text check types validate relationships between frontmatter metada
 - [Title matches H1]({{< relref "markdown-body-text/title-matches-h1.md" >}}): Require a frontmatter field to match the first H1 heading in the body.
 - [Writing tells]({{< relref "markdown-body-text/writing-tells.md" >}}): Warn on likely AI-writing tells (em dashes, decorative emoji, overused words, stock phrases) for human review.
 
-## File system check types
+## File system
 
 File-system check types validate filename and path conventions for items.
 
@@ -54,7 +54,7 @@ File-system check types validate filename and path conventions for items.
 - [Referenced files exist]({{< relref "file-system/referenced-files-exist.md" >}}): Require path-valued frontmatter fields to resolve to real files.
 - [Unique filename]({{< relref "file-system/unique-filename.md" >}}): Require that no two items in the collection share a basename.
 
-## Plain text check types
+## Plain text
 
 Plain-text check types validate body content as raw text, independent of markdown structure. They apply to plain-text items as well as markdown bodies.
 

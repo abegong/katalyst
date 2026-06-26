@@ -7,8 +7,8 @@ weight = 10
 
 Traditional data management often forces teams into binary choices:
 structured or unstructured, rigid or chaotic. Katalyst is an experimental
-framework aimed at enabling fast, low-risk evolution through progressive
-typing in the storage layer.
+framework aimed at enabling fast, low-risk evolution through progressive typing
+across bases and operations.
 
 ## Database management is risky and rigid
 
@@ -88,7 +88,7 @@ These form factors share one core idea: schemas and linters are closely
 related and should compose across storage boundaries. The conceptual basis,
 why each backend tier unlocks new operations, is in
 [Progressive operations]({{< relref "progressive-operations.md" >}}) and the
-[core concepts]({{< relref "core-concepts.md" >}}).
+[domain model]({{< relref "domain-model/_index.md" >}}).
 
 ## Current implementation status
 

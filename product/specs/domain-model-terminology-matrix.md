@@ -16,8 +16,8 @@ hand when the code or docs move.
 |---|---|
 | **Internal code** | Package names and exported Go identifiers under `internal/`. |
 | **CLI** | Command/subcommand names and the user-facing nouns in their help text (`cmd/`). |
-| **Domain model** | Terms as used in `docs/content/deep-dives/domain-model.md` (katalyst-specific). |
-| **Core concepts** | Terms as used in `docs/content/deep-dives/core-concepts.md` (tool-agnostic). |
+| **Domain model** | Terms as used in `docs/content/deep-dives/domain-model/_index.md` (katalyst-specific). |
+| **Core concepts** | Terms as used in `docs/content/deep-dives/domain-model/_index.md` (tool-agnostic). |
 | **Glossary** | Entries in `docs/content/reference/glossary.md` (the intended single source of truth). |
 
 `—` means the source has no term for that concept. **Bold** marks a term that

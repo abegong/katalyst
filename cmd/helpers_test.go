@@ -61,20 +61,20 @@ func chdir(t *testing.T, dir string) {
 const schemaFormatJSON = "schemas:\n  format: json\n"
 
 // writeProject scaffolds a .katalyst/ tree. Keys are paths relative to the
-// .katalyst/ directory (e.g. "schemas/book.json", "storage/local.yaml",
+// .katalyst/ directory (e.g. "schemas/book.json", "bases/local.yaml",
 // "config.yaml"); values are file contents.
 func writeProject(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
 	projecttest.WriteProject(t, dir, files)
 }
 
-// storageLocal builds a .katalyst/storage/local.yaml body: a filesystem
-// instance rooted at the project, declaring the given collections. Each value
+// baseLocal builds a .katalyst/bases/local.yaml body: a filesystem base rooted
+// at the project, declaring the given collections. Each value
 // is the collection's YAML body, re-indented under its name. Collections now
-// live inside their storage instance, so tests scaffold them this way instead
+// live inside their base, so tests scaffold them this way instead
 // of one file per collection.
-func storageLocal(collections map[string]string) string {
-	return projecttest.LocalStorage(collections)
+func baseLocal(collections map[string]string) string {
+	return projecttest.LocalBase(collections)
 }
 
 // writeConfigDir writes the two-schema book-and-person project (book and
@@ -87,7 +87,7 @@ func writeConfigDir(t *testing.T) string {
 		"config.yaml":         schemaFormatJSON,
 		"schemas/book.json":   bookSchemaFixture,
 		"schemas/person.json": personSchemaFixture,
-		"storage/local.yaml": storageLocal(map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
 			"books":  "path: notes/books\nschema: book\n",
 			"people": "path: notes/people\nschema: person\n",
 		}),

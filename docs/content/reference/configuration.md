@@ -8,9 +8,12 @@ weight = 10
 Katalyst reads a `.katalyst/` directory, found by walking upward from the
 current working directory to the nearest ancestor that contains one. That
 ancestor is the repo root; all relative paths resolve against it.
+Discovery resolves symlinks on both the root and the input path, because on
+macOS `$TMPDIR` lives behind `/var` to `/private/var` and relative-path
+resolution would otherwise produce garbage.
 
 For *why* the config is shaped this way, see [How collections
-work]({{< relref "../deep-dives/collections.md" >}}). To set one up step by
+work]({{< relref "../deep-dives/domain-model/collections.md" >}}). To set one up step by
 step, see [Configure checks for a
 collection]({{< relref "../how-to/configure-rules.md" >}}).
 
@@ -21,19 +24,26 @@ collection]({{< relref "../how-to/configure-rules.md" >}}).
   config.yaml          # optional: listing defaults and discovery settings
   schemas/             # one JSON Schema file per named schema
     book.json
-  storage/             # one file per storage instance
-    local.yaml         # an instance + the collections it declares
+  bases/               # one file per base
+    local.yaml         # a base + the collections it declares
     local/             # optional: one file per collection (escape hatch)
       books.yaml
 ```
 
-By default, schemas and storage instances are discovered by **convention**:
+By default, schemas and bases are discovered by **convention**:
 every file under `schemas/` is a schema whose name is its filename stem
-(`book.json` → `book`), and every file under `storage/` is a
-[storage instance](#storage-instances) named for its filename stem
-(`local.yaml` → `local`). `config.yaml` is optional; it carries `listing:`
+(`book.json` → `book`), and every file under `bases/` is a
+[base](#bases) named for its filename stem (`local.yaml` → `local`).
+`config.yaml` is optional; it carries `listing:`
 defaults and can switch a kind to **explicit** discovery, listing definitions
 inline instead of as files.
+
+`config.yaml` is YAML; schema and base files default to YAML/JSON, and the
+accepted format is set per kind there.
+
+Legacy projects that still use `storage:` in `config.yaml` or
+`.katalyst/storage/` continue to load. Do not mix legacy and new forms in the
+same project; move legacy base files to `.katalyst/bases/` when you edit them.
 
 ## Schemas
 
@@ -45,22 +55,22 @@ collection's `schema:` shorthand. The path can move; the name should not.
 Schemas are stored flat; the check library that compiles a schema is determined
 by the referencing check type's `kind` (the `object` check uses JSON Schema).
 
-## Storage instances
+## Bases
 
-A **storage instance** is one configured backend store, plus the collections it
-maps onto the domain model. Each file under
-`.katalyst/storage/` is one instance, named for its filename stem. There is no
-implicit instance; `katalyst init` writes a default `local` one.
+A **base** is one configured backend store, plus the collections it maps onto
+the domain model. Each file under
+`.katalyst/bases/` is one base, named for its filename stem. There is no
+implicit base; `katalyst init` writes a default `local` one.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
 | `type` | no | `filesystem` | Backend kind: `filesystem` or `sqlite`. |
-| `root` | no | `.` | Filesystem instance root directory, relative to the repo root. Collection paths resolve against it. |
-| `path` | for `sqlite` | - | SQLite database path, relative to the repo root. Alias for `root` on SQLite instances. |
+| `root` | no | `.` | Base root directory, relative to the repo root. Collection paths resolve against it. |
+| `path` | for `sqlite` | - | SQLite database path, relative to the repo root. Alias for `root` on SQLite bases. |
 | `collections` | no | - | Map of collection name → definition (see below). |
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -72,12 +82,12 @@ collections:
 ```
 
 Collection names are unique across the whole project (selectors are
-`<collection>/<item>`, with no instance qualifier).
+`<collection>/<item>`, with no base qualifier).
 
 SQLite instances use one table per collection. Each row is one item:
 
 ```yaml
-# .katalyst/storage/db.yaml
+# .katalyst/bases/db.yaml
 type: sqlite
 path: content.sqlite
 collections:
@@ -102,11 +112,11 @@ collections:
 ## Collections
 
 A **collection** is a directory of items plus the checks every item must pass.
-Collections are declared inside their storage instance, under `collections:`.
+Collections are declared inside their base, under `collections:`.
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
-| `path` | no | the collection name | Directory, relative to the instance `root`. |
+| `path` | no | the collection name | Directory, relative to the base `root`. |
 | `pattern` | no | `*.md` | Filename glob selecting items in the directory. |
 | `table` | for `sqlite` | - | SQLite table backing the collection. |
 | `id` | for `sqlite` | - | SQLite column that provides item identity. |
@@ -141,13 +151,13 @@ inside the `author` attribute object.
 
 ### Per-collection files
 
-An instance whose `collections:` block grows unwieldy may split collections into
-one file each under `.katalyst/storage/<instance>/<collection>.yaml`, named for
+A base whose `collections:` block grows unwieldy may split collections into
+one file each under `.katalyst/bases/<base>/<collection>.yaml`, named for
 its filename stem. Inline and per-file collections coexist; a name declared both
 inline and in a file is an error.
 
 ```yaml
-# .katalyst/storage/local/books.yaml
+# .katalyst/bases/local/books.yaml
 path: notes/books
 schema: book
 ```
@@ -242,7 +252,7 @@ failure (`matches no variant`), so every item is provably accounted for.
 Discrimination is by metadata only; selecting items by path or filename is not
 supported yet (a page type distinguishable only by location needs a frontmatter
 marker). `pattern` still governs collection **membership** and which files are
-reported as [unmatched]({{< relref "../deep-dives/domain-model.md" >}}#invariants);
+reported as [unmatched]({{< relref "../deep-dives/domain-model/_index.md" >}}#invariants);
 variants only route checks.
 
 ## `listing`
@@ -264,7 +274,7 @@ listing:
 ```
 
 ```yaml
-# under a storage instance's collections: — override for one collection
+# under a base's collections: override for one collection
 books:
   path: notes/books
   schema: book
@@ -293,8 +303,8 @@ variant), even when `--schema` is used.
 ## See also
 
 - [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
-- [Storage layer]({{< relref "../deep-dives/storage.md" >}}), the storage
-  instance / collection-definition model and its lineage.
-- [Collections]({{< relref "../deep-dives/collections.md" >}}), the
+- [Bases]({{< relref "../deep-dives/domain-model/base.md" >}}), the base /
+  collection-mapping model and its lineage.
+- [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.

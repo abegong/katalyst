@@ -10,13 +10,13 @@ them. This guide adds a collection and attaches checks to it.
 
 ## 1. Point a collection at the directory
 
-Collections are declared inside a storage instance. In a fresh project that is
-`.katalyst/storage/local.yaml` (the default filesystem instance). Add the
+Collections are declared inside a base. In a fresh project that is
+`.katalyst/bases/local.yaml` (the default filesystem base). Add the
 collection under `collections:`, keyed by its name; `path` is the directory
-relative to the instance root:
+relative to the base root:
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -34,7 +34,7 @@ the [check types reference]({{< relref "../reference/check-types/_index.md" >}})
 for every check type:
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:

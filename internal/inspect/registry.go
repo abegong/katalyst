@@ -6,9 +6,9 @@ package inspect
 // parity per layer. A new inspector cannot ship undocumented, mirroring the
 // checks registry (internal/checks/registry.go).
 
-// Layer groups inspectors by the data they measure: a raw backend store
-// (source) or a configured collection (collection). It is the primary grouping
-// for display and docs. Order is significant.
+// Layer groups inspectors by the data they measure: a raw base (source) or a
+// configured collection (collection). It is the primary grouping for display
+// and docs. Order is significant.
 type Layer struct {
 	ID    string
 	Title string
@@ -20,8 +20,8 @@ func Layers() []Layer {
 	return []Layer{
 		{
 			ID:    "source",
-			Title: "Raw-source inspectors",
-			Intro: "Raw-source inspectors profile a backend store directly, before any collection configuration: what files are present, how they parse, and how they are named.",
+			Title: "Raw base inspectors",
+			Intro: "Raw base inspectors profile a base directly, before any collection configuration: what files are present, how they parse, and how they are named.",
 		},
 		{
 			ID:    "collection",
@@ -107,7 +107,7 @@ func Descriptors() []Descriptor {
 	}
 }
 
-// SourceInspectors returns every raw-source inspector instance in display order.
+// SourceInspectors returns every raw base inspector instance in display order.
 func SourceInspectors() []SourceInspector {
 	return []SourceInspector{
 		FileTree{},

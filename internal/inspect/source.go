@@ -22,11 +22,11 @@ type readCounter struct {
 	count int
 }
 
-// SourceView is the raw-source layer's addressing surface: a filesystem tree
+// SourceView is the raw base layer's addressing surface: a filesystem tree
 // walked once into per-file metadata, addressed by backend-native reference
 // (the relative path). Path-level inspectors (file_tree) read only this
-// metadata and open no files; content inspectors read selected files explicitly.
-// Filesystem-only for now; generalizing the walk into the storage layer is
+// metadata and open no files; content inspectors trigger a one-time markdown
+// parse. Filesystem-only for now; generalizing the walk across base types is
 // future work.
 type SourceView struct {
 	root  string

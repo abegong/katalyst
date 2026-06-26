@@ -12,7 +12,7 @@ year: 1965
 # Dune
 ```
 
-`.katalyst/storage/my_directory.yaml`
+`.katalyst/bases/my_directory.yaml`
 
 ```yaml
 type: filesystem

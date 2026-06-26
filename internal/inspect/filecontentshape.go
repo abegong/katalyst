@@ -23,7 +23,7 @@ type FileContentShape struct{}
 
 func (FileContentShape) Name() string { return "file_content_shape" }
 
-func (FileContentShape) AppliesTo(t storage.StorageType) bool { return t == storage.Filesystem }
+func (FileContentShape) AppliesTo(t storage.BaseType) bool { return t == storage.Filesystem }
 
 func (FileContentShape) Inspect(v SourceView, p Params) Evidence {
 	data := buildFileContentShape(v, p.Selection)

@@ -1,5 +1,5 @@
 +++
-title = "Structured object check types"
+title = "Structured object"
 weight = 10
 bookCollapseSection = true
 aliases = ["/reference/rules/structured-object/"]

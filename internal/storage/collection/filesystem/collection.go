@@ -19,12 +19,12 @@ import (
 
 // Definition maps a directory tree onto collections of markdown files: one file
 // is one item, its id is the filename stem. It is the CollectionDefinition for
-// StorageType filesystem.
+// BaseType filesystem.
 //
 // The per-collection methods operate on the absolute Dir already resolved on
 // each collection.Collection, so root is unused today; it is retained because a
-// filesystem instance is identified by its root and Phase 2's BuildInstance
-// resolves collection directories against it.
+// filesystem base is identified by its root and the project loader resolves
+// collection directories against it.
 type Definition struct {
 	root        string
 	collections []collection.Collection
@@ -35,8 +35,8 @@ func New(root string, collections []collection.Collection) *Definition {
 	return &Definition{root: root, collections: collections}
 }
 
-// Granularity is FileIsItem for the markdown filesystem.
-func (f *Definition) Granularity() storage.Granularity { return storage.FileIsItem }
+// Scope reports item scope for the markdown filesystem.
+func (f *Definition) Scope() storage.Scope { return storage.FileIsItem }
 
 // Collections returns the collections this definition maps.
 func (f *Definition) Collections() []collection.Collection { return f.collections }

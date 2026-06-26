@@ -14,5 +14,6 @@ matching section and fill it in. Each template names what its page **is** and
 
 - [Reference page template](reference.md)
 - [Explanation page template](explanation.md)
+- [Domain model deep-dive template](domain-model-deep-dive.md)
 - [Tutorial page template](tutorial.md)
 - [How-to page template](how-to.md)

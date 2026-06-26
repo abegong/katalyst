@@ -89,9 +89,9 @@ func TestFilesystem_Reference_reverseResolution(t *testing.T) {
 	}
 }
 
-func TestFilesystem_Granularity_fileIsItem(t *testing.T) {
-	if g := filesystem.New("", nil).Granularity(); g != storage.FileIsItem {
-		t.Fatalf("Granularity = %v, want FileIsItem", g)
+func TestFilesystem_Scope_fileIsItem(t *testing.T) {
+	if g := filesystem.New("", nil).Scope(); g != storage.FileIsItem {
+		t.Fatalf("Scope = %v, want FileIsItem", g)
 	}
 }
 

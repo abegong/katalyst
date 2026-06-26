@@ -39,7 +39,7 @@ The shortest way is the `schema:` shorthand, which adds a single `object`
 check:
 
 ```yaml
-# .katalyst/storage/local.yaml
+# .katalyst/bases/local.yaml
 type: filesystem
 root: .
 collections:
@@ -52,7 +52,7 @@ Equivalently, add an explicit object check to `checks`, useful when you mix
 it with markdown or filesystem checks:
 
 ```yaml
-# .katalyst/storage/local.yaml — under collections: books:
+# .katalyst/bases/local.yaml — under collections: books:
 path: notes/books
 checks:
   - kind: object
@@ -88,7 +88,7 @@ katalyst check books --schema ./schemas/strict-book.json
 The precedence is `--schema` > inline `schema:` key > the collection's object
 check. See the [configuration
 reference]({{< relref "../reference/configuration.md" >}}) for the key surface,
-or [Collections]({{< relref "../deep-dives/collections.md" >}}) for why.
+or [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}) for why.
 
 ## See also
 

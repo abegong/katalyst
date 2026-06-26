@@ -12,17 +12,17 @@ code already matches the settled terms (`frontmatter.Document`, `field`,
 - `docs/content/reference/glossary.md` — meant to be canonical but missing
   *attribute*, *field*, *operation*, *aggregate*, *validation result*, and a
   uses "Raw-source layer." Family is intentionally not a standalone term.
-- `docs/content/deep-dives/core-concepts.md` (170 lines) — encyclopedic: a "Data
+- `docs/content/deep-dives/domain-model/_index.md` (170 lines) — encyclopedic: a "Data
   interface" concept, a structured/unstructured "Goal," full definitions of
   item/collection/attribute/check/inspector, and an "Implications" section that
   states the operations thesis. Weight `20`.
 - `docs/content/deep-dives/progressive-operations.md` — the tiered model; lede
   "How data interfaces evolve." Weight `30`.
-- `docs/content/deep-dives/domain-model.md` (112 lines) — the katalyst hub #73
+- `docs/content/deep-dives/domain-model/_index.md` (112 lines) — the katalyst hub #73
   built; indexes the subsystem pages. Uses "Markdown document."
-- `docs/content/deep-dives/collections.md`, `inspectors.md` — new in #73; own the
+- `docs/content/deep-dives/domain-model/collections.md`, `inspectors.md` — new in #73; own the
   detail. `inspectors.md` uses "raw-source layer."
-- `docs/content/deep-dives/storage.md` — calls itself the realization of "the
+- `docs/content/deep-dives/domain-model/storage.md` — calls itself the realization of "the
   data interface concept."
 - `docs/content/deep-dives/command-organization.md` ("How the core commands are
   organized") — referenced only from `cmd/AGENTS.md:9` and
@@ -75,15 +75,15 @@ pairs and their relationship explicit.
 **Goal:** core-concepts becomes a general-altitude hub mirroring domain-model;
 the operations thesis moves to where it is demonstrated.
 
-1. **File:** `docs/content/deep-dives/core-concepts.md` — delete the "Goal"
+1. **File:** `docs/content/deep-dives/domain-model/_index.md` — delete the "Goal"
    structured/unstructured dichotomy (duplicates `vision.md`); keep one sentence
    motivating a shared cross-backend vocabulary.
-2. **File:** `docs/content/deep-dives/core-concepts.md` — collapse each concept
+2. **File:** `docs/content/deep-dives/domain-model/_index.md` — collapse each concept
    (item, collection, attribute, operation, check, inspector) to a one-line
    intro that links to the glossary (definition) and to its discussion page;
    rename the "Data interface" concept to **Storage** and drop "data interface"
    from the prose and the examples table header.
-3. **File:** `docs/content/deep-dives/core-concepts.md` — fix the attribute/field
+3. **File:** `docs/content/deep-dives/domain-model/_index.md` — fix the attribute/field
    synonym line (currently "a named characteristic or field") to state the
    specialization instead; remove the "Implications" section, leaving a one-line
    pointer to progressive-operations.
@@ -92,30 +92,30 @@ the operations thesis moves to where it is demonstrated.
    supported; checks are the means) as the page's opening thesis; reword the
    "data interfaces evolve" lede to "storage backends."
 5. **File:** `docs/content/deep-dives/progressive-operations.md` — set
-   `weight = 20`. **File:** `docs/content/deep-dives/core-concepts.md` — set
+   `weight = 20`. **File:** `docs/content/deep-dives/domain-model/_index.md` — set
    `weight = 30`. Order becomes vision → progressive operations → core concepts.
 
 ### Phase 3 — Align the hub and subsystem pages
 
 **Goal:** the katalyst-altitude pages use the settled terms consistently.
 
-1. **File:** `docs/content/deep-dives/domain-model.md` — sharpen the one-line
+1. **File:** `docs/content/deep-dives/domain-model/_index.md` — sharpen the one-line
    statement of how it differs from core-concepts (specific map vs general map);
    apply item/document usage; confirm "raw-source" wording matches the glossary.
-2. **File:** `docs/content/deep-dives/storage.md` — reword "the data interface
+2. **File:** `docs/content/deep-dives/domain-model/storage.md` — reword "the data interface
    concept" to name the deprecation explicitly or drop it; the storage
    vocabulary stands on its own.
-3. **File:** `docs/content/deep-dives/collections.md`,
-   `docs/content/deep-dives/inspectors.md` — apply item/document where the form
+3. **File:** `docs/content/deep-dives/domain-model/collections.md`,
+   `docs/content/deep-dives/domain-model/inspectors.md` — apply item/document where the form
    is the subject; keep "raw-source layer" (consistency check only).
 
 ### Phase 4 — Retitle pages, relocate command-organization
 
 **Goal:** plain key-term titles, and CLI-org rationale lives next to `cmd/`.
 
-1. **File:** `docs/content/deep-dives/collections.md` → title "Collections";
-   `docs/content/deep-dives/checks.md` → "Checks";
-   `docs/content/deep-dives/inspectors.md` → "Inspectors". Title-only;
+1. **File:** `docs/content/deep-dives/domain-model/collections.md` → title "Collections";
+   `docs/content/deep-dives/domain-model/checks.md` → "Checks";
+   `docs/content/deep-dives/domain-model/inspectors.md` → "Inspectors". Title-only;
    filenames and `relref` links are unchanged.
 2. **File:** `cmd/organization.md` (new) — move the body of
    `command-organization.md` here as plain markdown: strip the Hugo `+++`
@@ -144,13 +144,13 @@ reference is unchanged.
 | File | Role |
 |---|---|
 | `docs/content/reference/glossary.md` | Canonical definitions; gains attribute/field/operation/aggregate/validation-result/family + the general/specific rule. |
-| `docs/content/deep-dives/core-concepts.md` | Slimmed general hub; loses Goal + Implications; reweighted `30`. |
+| `docs/content/deep-dives/domain-model/_index.md` | Slimmed general hub; loses Goal + Implications; reweighted `30`. |
 | `docs/content/deep-dives/progressive-operations.md` | Gains the operations thesis; reweighted `20`. |
-| `docs/content/deep-dives/domain-model.md` | Katalyst hub; terminology-aligned. |
-| `docs/content/deep-dives/storage.md` | Drops the "data interface" framing. |
-| `docs/content/deep-dives/collections.md` | Retitled "Collections"; item/document aligned. |
-| `docs/content/deep-dives/checks.md` | Retitled "Checks". |
-| `docs/content/deep-dives/inspectors.md` | Retitled "Inspectors"; item/document aligned. |
+| `docs/content/deep-dives/domain-model/_index.md` | Katalyst hub; terminology-aligned. |
+| `docs/content/deep-dives/domain-model/storage.md` | Drops the "data interface" framing. |
+| `docs/content/deep-dives/domain-model/collections.md` | Retitled "Collections"; item/document aligned. |
+| `docs/content/deep-dives/domain-model/checks.md` | Retitled "Checks". |
+| `docs/content/deep-dives/domain-model/inspectors.md` | Retitled "Inspectors"; item/document aligned. |
 | `docs/content/deep-dives/_index.md` | Drops the command-organization clause. |
 | `cmd/organization.md` (new) | CLI command-grammar rationale, moved from the deep-dive. |
 | `docs/content/deep-dives/command-organization.md` | Deleted. |

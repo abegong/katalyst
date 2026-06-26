@@ -11,50 +11,33 @@ verdict on each item: it resolves the checks that apply, runs them, and
 collects their violations. This page explains the model the engine is built on,
 how check libraries supply and run checks, and why the pieces are shaped the way
 they are. For the per-type catalog see the [check types
-reference]({{< relref "../reference/check-types/_index.md" >}}); for the
+reference]({{< relref "../../reference/check-types/_index.md" >}}); for the
 end-to-end data flow of one `check` invocation see the [domain
-model]({{< relref "domain-model.md" >}}).
+model]({{< relref "_index.md" >}}).
 
-## The model
+## Terms
 
-Four distinctions carry the whole engine. Keep them separate and the rest
-follows.
+| Term | Meaning |
+|---|---|
+| **Check** | Shorthand for a check instance when context is unambiguous. A check asserts one condition and reports a violation when the condition fails. |
+| **Check type** | The reusable definition of a constraint: `object_required_field`, `markdown_single_h1`, and so on. A check type is selected by its `kind:` id and appears in the generated check types reference. |
+| **Check instance** | One configured check attached to a collection: a check type plus its arguments, written as one YAML object under `checks:`. The type is the rule; the instance is the rule applied here. |
+| **Family** | The kind of source data a check type reads: `structuredObject` (frontmatter), `markdownBodyText` (the body), `fileSystem` (names and paths), or `plainText` (raw body text). |
+| **Check library** | The provider that supplies and runs a check type. Native libraries wrap hand-written checks; schema-backed libraries delegate to an external validation engine. |
+| **Scope** | The level where a check runs. Most checks are item-scoped; a few are collection-scoped and reason across every item in the collection. |
+| **Severity** | The consequence of a violation. `error` fails the run; `warning` is advisory and does not change the exit code. |
+| **Violation** | One failed check result, with a message, source location, JSON pointer when applicable, severity, and sometimes a sibling file for collection-scoped findings. |
 
-**Check type vs. check instance.** A *check type* is the reusable definition of
-a constraint (`object_required_field`, `markdown_single_h1`), selected by its
-`kind:` id. A *check instance* is one check type configured on a collection: a
-`kind` plus its arguments, one entry under `checks:`. The type is the rule; the
-instance is the rule applied here.
+Family and library are separate axes. Family answers *what data does this check
+read?* Library answers *who runs it?* A single family can span libraries:
+`structuredObject` includes both `object` from the JSON Schema library and
+`object_required_field` from the native structured-object library.
 
-**The registry is the single source of truth.** Each check type lives in its own
-file and self-registers a `Descriptor` (its id, family, docs metadata) and a
-constructor from an `init()`. `cmd/engine` builds the runnable list by registry
-lookup; the docs generator and `katalyst check-types list` read the same
-descriptors. A parity test fails if a configured kind has no descriptor, so a
-check type cannot ship undocumented. Adding one touches a single file, not a
-central switch.
-
-**Family vs. library.** A check type's *family* is the kind of source data it
-reads: `structuredObject` (frontmatter), `markdownBodyText` (the body),
-`fileSystem` (names and paths), `plainText` (raw body text). A check type's
-*library* is the provider that supplies and runs it (below). The two are
-orthogonal, and a single family spans libraries: `structuredObject` holds both
-`object` (the JSON Schema library) and `object_required_field` (the native
-structured-object library). Family answers *what data*; library answers *who
-runs the engine*.
-
-**Granularity.** Most checks run once per item, implementing `Run(Context)
-[]Violation`. A few reason across an entire collection (uniqueness, a required
-index file) and implement `RunCollection(CollectionContext) []Violation`: they
-run once per collection, after the per-item pass, so even a single-item selector
-re-scans every sibling (a uniqueness verdict is only correct against the whole
-set). Granularity is independent of family: `unique_field` is collection-scoped
-and `structuredObject`; `unique_filename` is collection-scoped and `fileSystem`.
-
-A check also carries a **severity**. The default is `error`, which fails the
-run; `warning` is advisory and never changes the exit code. Warnings exist for
-judgment-call checks (prose tells, style nits) where a human decides per
-instance.
+The registry is the single source of truth for check types. Each check type
+self-registers a `Descriptor` (its id, family, docs metadata) and a constructor.
+`cmd/engine` builds the runnable list by registry lookup; the docs generator and
+`katalyst check-types list` read the same descriptors. A parity test fails if a
+configured kind has no descriptor, so a check type cannot ship undocumented.
 
 ## Check libraries
 
@@ -106,11 +89,11 @@ item, the simplest correct path.
 Per item, the engine resolves which checks apply, then runs them.
 
 Resolution starts from the collection's configured checks and adds the checks of
-the first [variant]({{< relref "../reference/configuration.md" >}}) whose `when`
+the first [variant]({{< relref "../../reference/configuration.md" >}}) whose `when`
 predicates the item's metadata satisfies. The object schema is selected by a
 precedence the JSON Schema library owns (a forced `--schema`, then an inline
 `schema:` directive, then the collection's object checks); see the [domain
-model]({{< relref "domain-model.md" >}}) for the precedence table and the
+model]({{< relref "_index.md" >}}) for the precedence table and the
 full per-item lifecycle. Before any schema compiles, the engine confirms the
 owning libraries are available.
 
@@ -167,15 +150,24 @@ into one invocation is the optimization, deferred to
 [#68](https://github.com/abegong/katalyst/issues/68) rather than built before a
 real out-of-process library exists.
 
+## Invariants
+
+1. **The registry is authoritative.** Every runnable check type has a
+   descriptor, and generated docs read the same registry as the engine.
+2. **Family and library stay separate.** Family describes the data a check
+   reads; library describes the provider that runs it.
+3. **Collection-scoped checks see the whole collection.** A selector may narrow
+   output, but a collection-level verdict still needs the full sibling set.
+
 ## See also
 
-- The [check types reference]({{< relref "../reference/check-types/_index.md" >}})
+- The [check types reference]({{< relref "../../reference/check-types/_index.md" >}})
   for the precise per-type surface, generated from the registry.
-- The [domain model]({{< relref "domain-model.md" >}}) for the per-`check`
+- The [domain model]({{< relref "_index.md" >}}) for the per-`check`
   lifecycle, the schema resolver, and the validation result.
-- The [glossary]({{< relref "../reference/glossary.md" >}}) for the canonical
+- The [glossary]({{< relref "../../reference/glossary.md" >}}) for the canonical
   terms (check type, check instance, CheckLibrary, schema, violation).
-- The [storage layer]({{< relref "storage.md" >}}) for the collection and item
+- The [base]({{< relref "base.md" >}}) for the collection and item
   identities checks run against, and the inspector that is a check's descriptive
   dual.
 - `go doc ./internal/checks` for the code-level engine contract.

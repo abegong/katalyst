@@ -4,7 +4,7 @@ finds as evidence: counts and distributions, never recommendations.
 The layer is inferred from the argument. Inside a katalyst project, a
 configured collection name (e.g. notes) runs the collection inspectors over
 that collection's items. Otherwise the argument is a filesystem path and the
-raw-source inspectors profile the tree (the onboarding case: "what's here?").
+raw base inspectors profile the tree (the onboarding case: "what's here?").
 
 Inspectors describe; they never recommend. inspect writes no schema and mutates
 nothing. Output is Markdown by default; --json emits the same evidence as JSON.

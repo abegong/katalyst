@@ -1,5 +1,5 @@
-Raw-source inspectors (2)
--------------------------
+Raw base inspectors (2)
+-----------------------
 - file_tree
   Map files, directories, extensions, regions, and filename conventions, opening no files.
 - file_content_shape

@@ -26,8 +26,8 @@ Tests should always pass on `main`. Run `make test` before sending a PR.
 
 ```
 cmd/                  cobra commands (root, init, check, fix, inspect, collection, item, schema, rules)
-internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + storage instances, which embed their collections), the whole workspace, selectors, item enumeration
-internal/storage      backend-kind registry: StorageType, Known, Granularity, Reference
+internal/project      project domain layer: the .katalyst/ loader (loader.go: schemas + bases, which embed their collections), the whole workspace, selectors, item enumeration
+internal/storage      backend-kind registry: BaseType, Known, Scope, Reference
 internal/storage/collection            the read stack: CollectionDefinition + the thin Item
 internal/storage/collection/listing    item list filter/grep/sort/skip/limit pipeline
 internal/storage/collection/predicate  metadata predicate grammar (item list --filter, collection variants)
@@ -64,8 +64,8 @@ reconstruction), implemented per backend under `storage/collection/<backend>`
 (filesystem today). Don't inline filesystem assumptions (globbing, stem-as-id,
 path joins) elsewhere, a second backend (SQLite) attaches by implementing that
 interface. The `internal/project` loader (`loader.go`) owns the `.katalyst/`
-*vocabulary*: it reads the workspace, resolves schemas, and assembles storage
-instances. Each object type owns the parse of its own config — the storage
+*vocabulary*: it reads the workspace, resolves schemas, and assembles bases.
+Each object type owns the parse of its own config — the storage
 registry validates a declared `type` (`storage.Known`), and a collection parses
 its own block, including variant predicates, in `storage/collection` (which
 imports the sibling `predicate` grammar intra-subtree). The loader depends on
@@ -159,7 +159,7 @@ you add a fixture.
   descriptor is malformed, so a new check type ships with a complete descriptor. The `json:` tags on `Descriptor`/`Field` are the published wire
   contract for `katalyst check-types list --json`; keep them stable.
 - A check type's **family** groups it by source-data kind, and is orthogonal to
-  its granularity: a collection-scoped check is filed by the data it reads
+  its scope: a collection-scoped check is filed by the data it reads
   (`unique_field` → `structuredObject`, `unique_filename` → `fileSystem`). The
   `kind` id is the wire contract and never changes, even when the family does.
 - A **CheckLibrary** (`internal/checks`, `CheckLibrary`/`SchemaLibrary`) is the

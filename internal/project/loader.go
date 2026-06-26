@@ -2,16 +2,16 @@
 // and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
-//  2. Which storage instances exist, what collections does each declare, and
+//  2. Which bases exist, what collections does each declare, and
 //     what checks does each collection run?
 //
 // A project is the nearest ancestor directory that contains a .katalyst/
 // subdirectory. Schemas are defined one named file per definition under
-// .katalyst/schemas/; storage instances one named file per instance under
-// .katalyst/storage/ (discovery: convention, the default), or listed
-// explicitly in .katalyst/config.yaml (discovery: explicit). A storage
-// instance embeds the collections it maps. The file format (yaml, json, or
-// both) is set per kind in config.yaml. See
+// .katalyst/schemas/; bases are defined one named file per definition under
+// .katalyst/bases/ (discovery: convention, the default), or listed explicitly
+// in .katalyst/config.yaml (discovery: explicit). A base embeds the collections
+// it maps. Legacy projects may still use storage: and .katalyst/storage/. The
+// file format (yaml, json, or both) is set per kind in config.yaml. See
 // docs/content/reference/configuration.md.
 package project
 
@@ -38,6 +38,7 @@ const configFile = "config.yaml"
 // Subdirectories of Dir holding one named file per definition.
 const (
 	schemasSubdir = "schemas"
+	basesSubdir   = "bases"
 	storageSubdir = "storage"
 )
 
@@ -62,28 +63,28 @@ type Config struct {
 	Root string
 	// Schemas is name → absolute path.
 	Schemas map[string]string
-	// Storage holds the configured storage instances, in name order. Each
-	// instance declares its own collections.
-	Storage []StorageInstance
-	// Collections is the flattened view across all instances, in name order.
-	// Collection names are unique project-wide (selectors carry no instance
+	// Bases holds the configured bases, in name order. Each base declares its
+	// own collections.
+	Bases []BaseInstance
+	// Collections is the flattened view across all bases, in name order.
+	// Collection names are unique project-wide (selectors carry no base
 	// qualifier), so this is the canonical lookup most callers use.
 	Collections []Collection
 }
 
-// StorageInstance is one configured backend store plus the collections it maps
-// onto the domain model. For StorageType filesystem, Root is a directory.
-type StorageInstance struct {
-	// Name is the public handle (filename stem under .katalyst/storage/, or
-	// the key in the inline `storage.defs` map).
+// BaseInstance is one configured backend store plus the collections it maps
+// onto the domain model. For BaseType filesystem, Root is a directory.
+type BaseInstance struct {
+	// Name is the public handle (filename stem under .katalyst/bases/, or
+	// the key in the inline `bases.defs` map).
 	Name string
 	// Type is the backend kind, validated against the storage registry
 	// (storage.Known).
 	Type string
-	// Root is the absolute, resolved instance root. Relative roots in the
+	// Root is the absolute, resolved base root. Relative roots in the
 	// source resolve against the repo Root.
 	Root string
-	// Collections this instance declares, in name order.
+	// Collections this base declares, in name order.
 	Collections []Collection
 }
 
@@ -103,7 +104,8 @@ type (
 // default YAML format.
 type rawConfig struct {
 	Schemas rawSchemaKind                  `yaml:"schemas"`
-	Storage rawStorageKind                 `yaml:"storage"`
+	Bases   *rawBaseKind                   `yaml:"bases"`
+	Storage *rawBaseKind                   `yaml:"storage"`
 	Listing *collection.RawListingDefaults `yaml:"listing"`
 	Query   *collection.RawListingDefaults `yaml:"query"`
 }
@@ -116,18 +118,18 @@ type rawSchemaKind struct {
 	Defs      map[string]string `yaml:"defs"`
 }
 
-// rawStorageKind configures how storage instances are discovered. Defs is
-// consulted only when Discovery is "explicit" (name → instance).
-type rawStorageKind struct {
-	Discovery string                        `yaml:"discovery"`
-	Format    string                        `yaml:"format"`
-	Defs      map[string]rawStorageInstance `yaml:"defs"`
+// rawBaseKind configures how bases are discovered. Defs is consulted only when
+// Discovery is "explicit" (name → base).
+type rawBaseKind struct {
+	Discovery string                     `yaml:"discovery"`
+	Format    string                     `yaml:"format"`
+	Defs      map[string]rawBaseInstance `yaml:"defs"`
 }
 
-// rawStorageInstance mirrors one storage instance: its backend type, its root,
-// and the collections it declares (name → definition). The collection mirror
-// lives with the Collection type in internal/storage/collection.
-type rawStorageInstance struct {
+// rawBaseInstance mirrors one base: its backend type, its root, and the
+// collections it declares (name → definition). The collection mirror lives with
+// the Collection type in internal/storage/collection.
+type rawBaseInstance struct {
 	Type        string                              `yaml:"type"`
 	Root        string                              `yaml:"root"`
 	Path        string                              `yaml:"path"`
@@ -162,7 +164,7 @@ func Load(start string) (*Config, error) {
 	if raw.Query != nil {
 		return nil, errors.New("config: query is no longer a config block; use listing")
 	}
-	if err := cfg.loadStorage(raw.Storage, raw.Listing); err != nil {
+	if err := cfg.loadBases(raw.Bases, raw.Storage, raw.Listing); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -216,39 +218,57 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 	return nil
 }
 
-// loadStorage populates c.Storage and the flattened c.Collections (both sorted
-// by name) from either the storage directory (convention: one file per
-// instance) or an explicit defs map in config.yaml. Collection names are
-// validated unique across every instance.
-func (c *Config) loadStorage(k rawStorageKind, projectListing *collection.RawListingDefaults) error {
+// loadBases populates c.Bases and the flattened c.Collections (both sorted by
+// name) from either the bases directory (convention: one file per base) or an
+// explicit defs map in config.yaml. Collection names are validated unique
+// across every base. The legacy storage block and directory stay readable, but
+// cannot be mixed with the new bases form.
+func (c *Config) loadBases(bases, legacy *rawBaseKind, projectListing *collection.RawListingDefaults) error {
+	if bases != nil && legacy != nil {
+		return errors.New("config: use bases, not both bases and storage")
+	}
+	label := "bases"
+	k := rawBaseKind{}
+	if bases != nil {
+		k = *bases
+	} else if legacy != nil {
+		k = *legacy
+		label = "storage"
+	}
+
 	discovery, err := normDiscovery(k.Discovery)
 	if err != nil {
-		return fmt.Errorf("storage: %w", err)
+		return fmt.Errorf("%s: %w", label, err)
 	}
 	exts, err := formatExts(k.Format)
 	if err != nil {
-		return fmt.Errorf("storage: %w", err)
+		return fmt.Errorf("%s: %w", label, err)
 	}
 
-	defs := map[string]rawStorageInstance{}
+	baseSubdir, err := c.baseSubdir(label)
+	if err != nil {
+		return err
+	}
+
+	defs := map[string]rawBaseInstance{}
 	if discovery == discoveryExplicit {
 		if len(k.Defs) == 0 {
-			return errors.New(`storage: discovery "explicit" requires a non-empty "defs" map`)
+			return fmt.Errorf(`%s: discovery "explicit" requires a non-empty "defs" map`, label)
 		}
 		defs = k.Defs
 	} else {
-		found, err := scanKindDir(filepath.Join(c.Root, Dir, storageSubdir), exts)
+		found, err := scanKindDir(filepath.Join(c.Root, Dir, baseSubdir), exts)
 		if err != nil {
-			return fmt.Errorf("storage: %w", err)
+			return fmt.Errorf("%s: %w", label, err)
 		}
 		for name, path := range found {
 			src, err := os.ReadFile(path)
 			if err != nil {
-				return fmt.Errorf("storage %q: %w", name, err)
+				return fmt.Errorf("%s %q: %w", label, name, err)
 			}
-			var ri rawStorageInstance
+			var ri rawBaseInstance
 			if err := yaml.Unmarshal(src, &ri); err != nil {
-				return fmt.Errorf("storage %q: %w", name, err)
+				return fmt.Errorf("%s %q: %w", label, name, err)
 			}
 			defs[name] = ri
 		}
@@ -260,22 +280,22 @@ func (c *Config) loadStorage(k rawStorageKind, projectListing *collection.RawLis
 	}
 	sort.Strings(names)
 
-	// instanceOf records which instance first claimed a collection name, so a
-	// collision across instances is reported with both sides.
-	instanceOf := map[string]string{}
+	// baseOf records which base first claimed a collection name, so a collision
+	// across bases is reported with both sides.
+	baseOf := map[string]string{}
 	for _, name := range names {
-		inst, err := c.buildInstance(name, defs[name], exts, projectListing)
+		inst, err := c.buildInstance(name, defs[name], exts, projectListing, baseSubdir, label)
 		if err != nil {
 			return err
 		}
 		for _, col := range inst.Collections {
-			if prev, dup := instanceOf[col.Name]; dup {
-				return fmt.Errorf("collection %q is declared by two storage instances (%q and %q); collection names must be unique across the project", col.Name, prev, name)
+			if prev, dup := baseOf[col.Name]; dup {
+				return fmt.Errorf("collection %q is declared by two bases (%q and %q); collection names must be unique across the project", col.Name, prev, name)
 			}
-			instanceOf[col.Name] = name
+			baseOf[col.Name] = name
 			c.Collections = append(c.Collections, col)
 		}
-		c.Storage = append(c.Storage, inst)
+		c.Bases = append(c.Bases, inst)
 	}
 	sort.Slice(c.Collections, func(i, j int) bool {
 		return c.Collections[i].Name < c.Collections[j].Name
@@ -283,20 +303,46 @@ func (c *Config) loadStorage(k rawStorageKind, projectListing *collection.RawLis
 	return nil
 }
 
-// buildInstance turns one raw storage instance into a validated
-// StorageInstance, building each of its collections against the instance root.
-// Collections come from the instance's inline `collections:` block and, as an
-// escape hatch for instances that outgrow inline, from one file per collection
-// under .katalyst/storage/<name>/. A name declared in both places is an error.
-// The instance name comes from the source (filename stem or map key), never the
-// body.
-func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string, projectListing *collection.RawListingDefaults) (StorageInstance, error) {
+// baseSubdir chooses the directory that holds base definition files. New config
+// uses .katalyst/bases/. Legacy .katalyst/storage/ remains readable, but the
+// two directories cannot be mixed.
+func (c *Config) baseSubdir(label string) (string, error) {
+	hasBases, err := dirExists(filepath.Join(c.Root, Dir, basesSubdir))
+	if err != nil {
+		return "", fmt.Errorf("bases: %w", err)
+	}
+	hasStorage, err := dirExists(filepath.Join(c.Root, Dir, storageSubdir))
+	if err != nil {
+		return "", fmt.Errorf("storage: %w", err)
+	}
+	if hasBases && hasStorage {
+		return "", errors.New("config: use .katalyst/bases, not both .katalyst/bases and .katalyst/storage")
+	}
+	if hasBases {
+		return basesSubdir, nil
+	}
+	if hasStorage {
+		return storageSubdir, nil
+	}
+	if label == "storage" {
+		return storageSubdir, nil
+	}
+	return basesSubdir, nil
+}
+
+// buildInstance turns one raw base into a validated
+// BaseInstance, building each of its collections against the base root.
+// Collections come from the base's inline `collections:` block and, as an
+// escape hatch for bases that outgrow inline, from one file per collection
+// under .katalyst/bases/<name>/. A name declared in both places is an error.
+// The base name comes from the source (filename stem or map key), never the body.
+func (c *Config) buildInstance(name string, ri rawBaseInstance, exts []string, projectListing *collection.RawListingDefaults, baseSubdir, label string) (BaseInstance, error) {
 	typ := ri.Type
 	if typ == "" {
 		typ = string(storage.Filesystem)
 	}
-	if !storage.Known(storage.StorageType(typ)) {
-		return StorageInstance{}, fmt.Errorf("storage %q: unknown type %q", name, ri.Type)
+	if !storage.Known(storage.BaseType(typ)) {
+		return BaseInstance{}, fmt.Errorf("%s %q: unknown type %q", label, name, ri.Type)
 	}
 
 	rootRel := ri.Root
@@ -313,22 +359,22 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 	for cn, rc := range ri.Collections {
 		raws[cn] = rc
 	}
-	instDir := filepath.Join(c.Root, Dir, storageSubdir, name)
+	instDir := filepath.Join(c.Root, Dir, baseSubdir, name)
 	found, err := scanKindDir(instDir, exts)
 	if err != nil {
-		return StorageInstance{}, fmt.Errorf("storage %q: %w", name, err)
+		return BaseInstance{}, fmt.Errorf("%s %q: %w", label, name, err)
 	}
 	for cn, path := range found {
 		if _, dup := raws[cn]; dup {
-			return StorageInstance{}, fmt.Errorf("storage %q: collection %q is declared both inline and in a file", name, cn)
+			return BaseInstance{}, fmt.Errorf("%s %q: collection %q is declared both inline and in a file", label, name, cn)
 		}
 		src, err := os.ReadFile(path)
 		if err != nil {
-			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+			return BaseInstance{}, fmt.Errorf("%s %q: collection %q: %w", label, name, cn, err)
 		}
 		var rc collection.RawCollection
 		if err := yaml.Unmarshal(src, &rc); err != nil {
-			return StorageInstance{}, fmt.Errorf("storage %q: collection %q: %w", name, cn, err)
+			return BaseInstance{}, fmt.Errorf("%s %q: collection %q: %w", label, name, cn, err)
 		}
 		raws[cn] = rc
 	}
@@ -344,18 +390,29 @@ func (c *Config) buildInstance(name string, ri rawStorageInstance, exts []string
 		col, err := collection.Build(collection.BuildInput{
 			Name:           cn,
 			Raw:            raws[cn],
-			InstRoot:       instRoot,
-			InstName:       name,
 			StorageType:    typ,
+			BaseRoot:       instRoot,
+			BaseName:       name,
 			ProjectListing: projectListing,
 			SchemaKnown:    c.schemaKnown,
 		})
 		if err != nil {
-			return StorageInstance{}, err
+			return BaseInstance{}, err
 		}
 		cols = append(cols, col)
 	}
-	return StorageInstance{Name: name, Type: typ, Root: instRoot, Collections: cols}, nil
+	return BaseInstance{Name: name, Type: typ, Root: instRoot, Collections: cols}, nil
+}
+
+func dirExists(dir string) (bool, error) {
+	info, err := os.Stat(dir)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return info.IsDir(), nil
 }
 
 // schemaKnown reports whether a schema name is defined. The collection builder

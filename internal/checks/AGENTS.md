@@ -4,9 +4,9 @@ The check engine: the check types Katalyst ships, the libraries that run them,
 and the violations they produce.
 
 **Architecture and design rationale** - the model (check type vs. instance,
-family vs. library, granularity), check libraries, how a check runs, and the
+family vs. library, scope), check libraries, how a check runs, and the
 trade-offs - live in the
-[How checks work](../../docs/content/deep-dives/checks.md) deep-dive, which is
+[How checks work](../../docs/content/deep-dives/domain-model/checks.md) deep-dive, which is
 the source of truth. The per-type catalog is the generated
 [check-types reference](../../docs/content/reference/check-types/), and the
 code-level contract is `go doc ./internal/checks`. This file keeps only the

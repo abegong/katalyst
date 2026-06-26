@@ -7,9 +7,11 @@ bookCollapseSection = true
 # Reference
 
 Information-oriented descriptions of installation methods, the configuration
-surface, check types, and the project vocabulary. Reference pages describe
-*what is*, not *how to:* they are looked up, not read front to back. Check-type
-pages under
+surface, data surfaces, check types, and the project vocabulary. Reference pages
+describe *what is*, not *how to:* they are looked up, not read front to back.
+
+[Data surfaces]({{< relref "data-surfaces/_index.md" >}}) describe the
+representations checks and inspectors read from content. Check-type pages under
 [Check types]({{< relref "check-types/_index.md" >}}) are generated from the
 checks registry, so they never drift from the code. Many of these pages carry a
 **Worked example**: a small input corpus, a real `katalyst` command, and its
