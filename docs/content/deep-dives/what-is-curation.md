@@ -76,11 +76,39 @@ This document focuses on three:
 <!-- Explain why they're universal --> 
 These properties are powerful because they create a trustworthy substrate for logical reasoning: answering questions, making decisions, and drawing valid conclusions.
 
+When an information system has all three of these properties, it becomes something stronger than a pile of information.
 They are *universal* because they can support valid reasoning regardless of subject matter. Even without knowing what a body of content contains or how it will be used, it is still a safe bet that well-curated content should have these properties.
 
-As we'll see, these universal properties also impose enough structure to sketch useful technical requirements for AI systems built to curate content. Let's take them one at a time.
+## Defining "knowledge base"
+
+<!-- Introduce the concept of a knowledge base, so that we can use the term with precision through the rest of the doc -->
+
+It will be useful to have a name for an information system that satisfies all three criteria at once. The closest ordinary term is "knowledge base," but that term is often used loosely. Here, I want to give it a stricter meaning:
+
+> A **knowledge base** is a body of information curated so that it is internally consistent, complete within a useful domain, and up to date.
+
+As we'll see, this definition imposes enough structure to sketch useful technical requirements for AI knowledge bases. Let's take them one at a time.
 
 ## Internal consistency
+
+<!-- Introduce the definition -->
+
+Internal consistency means being free from internal contradiction. On its surface, this seems simple: the knowledge base can't say "A is true" in once place and "A is false" in another.
+
+<!-- Distinguish between content claims and structural claims -->
+
+However, there's some subtlety here. Imagine a folder containing customer feedback interviews. In one transcript, customer A says, "this product is amazing!" In another, customer B says "the product is terrible." Those statements are in direct contradiction, but is the knowledge base inconsistent?
+
+I'd argue no. The knowledge base isn't claiming that both customer opinions are true descriptions of the product. It is claiming that both interviews happened and that both customers said what the transcripts record. Imagine adding a README in the folder: "This folder contains interview transcripts from many customers. Customers may disagree among themselves."
+
+The README is amking *structural claims* about 
+
+<!-- Explain the need for a content interpreter -->
+
+A knowledge base needs a *content interpreter*: some set of rules, conventions, or schemas that tells a reader how to distinguish structural claims from ordinary content, and therefore which contradictions count.
+
+In the customer feedback example,  That rule changes how the content should be read. Disagreement between transcripts is allowed, but a transcript with the wrong customer ID, source date, or interview format may still violate the structure of the collection.
+
 
 ## Completeness
 
@@ -91,9 +119,3 @@ Up-to-dateness is the guarantee of external consistency: the state of the conten
 That makes up-to-dateness different from the other two criteria. It cannot be guaranteed from inside the content alone. It requires contact with an external source of truth: an event stream, a periodic refresh, a source-system query, a human review, or some other verification process. A curated system can record timestamps, sources, freshness windows, and update rules, but the guarantee comes from the process that reconnects the content to the world.
 
 Because curation takes work, there's always some lag between {...}. As a general rule, less lag is better. Information doesn't need to be perfectly up-to-date in order to be valuable. The important questions are whether the content makes a truthful claim about when it corresponded to the world, and whether the content is updated quickly enough to support valuable decisions.
-
-## Curated knowledge bases
-
-<!-- Define the concept of a knowledge base -->
-
-> A knowledge base is a body of information curated so that it is internally consistent, complete within a useful domain, and up to date.
