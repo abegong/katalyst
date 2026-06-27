@@ -53,7 +53,7 @@ Beyond the information itself, curation can also involve the presentation of the
 - exposing affordances for agents, such as stable identifiers, structured metadata, machine-readable links, and clear boundaries between source material and interpretation
 
 <!-- Start to transition from specific to general -->
-Curating information to this level of detail is valuable because it saves the reader from reconstructing context at the moment they need it. It is also costly. Someone has to know the audience, anticipate the question, gather the source material, and shape it for that use. Part of the promise of AI curation is that it should make more of that work possible.
+Curating information to this level of detail is valuable because it saves the reader from reconstructing context at the moment they need it. It is also costly. To do this effectively, the curator must know the audience, anticipate their needs, gather the source material, and shape it for that use. Part of the promise of AI curation is that it should make more of that work possible.
 
 ## Universal properties for good curation
 
@@ -74,11 +74,11 @@ This document focuses on three:
 * *Up-to-dateness*: accurately reflects the state of the real world at some point in time
 
 <!-- Explain why they're universal --> 
-These properties are powerful because they create a trustworthy substrate for logical reasoning. They make content usable as premises for answering questions, making decisions, and drawing valid conclusions.
+These properties are powerful because they create a trustworthy substrate for logical reasoning: answering questions, making decisions, and drawing valid conclusions.
 
-These are *universal* properties for good curation because we almost always want them to be true. Even without knowing what a body of content contains or how it will be used, it is still a safe bet that well-curated content should have these properties.
+They are *universal* because they can support valid reasoning regardless of subject matter. Even without knowing what a body of content contains or how it will be used, it is still a safe bet that well-curated content should have these properties.
 
-As we'll see, they also impose enough structure to sketch useful technical requirements for AI systems built to curate content. Let's take them one at a time.
+As we'll see, these universal properties also impose enough structure to sketch useful technical requirements for AI systems built to curate content. Let's take them one at a time.
 
 ## Internal consistency
 

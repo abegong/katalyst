@@ -5,9 +5,9 @@ weight = 10
 
 # Why Katalyst?
 
-In order for agents to become capable real work, the next frontier seems to revolve around two things:
+In order for agents to become capable of real work, the next frontier seems to revolve around two things:
 
-1. Making organizational context more legible to agents.
+1. Making operational context more legible to agents.
 2. Enabling agents to curate their own memory—individual or shared—in a way that's robust, durable, and efficient.
 
 These problems have several things in common:
