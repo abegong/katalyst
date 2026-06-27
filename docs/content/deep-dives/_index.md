@@ -7,7 +7,7 @@ bookCollapseSection = true
 # Deep dives
 
 Understanding-oriented discussion of the *why* behind Katalyst: the
-[vision and scope]({{< relref "vision.md" >}}), the
+[vision and scope]({{< relref "why-katalyst.md" >}}), the
 [domain model]({{< relref "domain-model/_index.md" >}}) the tool is built on,
 and the deeper design discussions that no single page or package owns: how
 [checks work]({{< relref "domain-model/checks.md" >}}) and the libraries that

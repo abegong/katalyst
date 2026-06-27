@@ -109,7 +109,7 @@ What if structure were light: easy to add, easy to maintain, easy to change?
 
 In a world of unbounded creative collaboration with agents, the limiting factor isn't generating new ideas or gathering more information: it's having a shared language and structure to organize what we've learned, and to act on it together.
 
-For more on these ideas, see [Deep dives]({{< relref "deep-dives/_index.md" >}}), especially [Vision and scope]({{< relref "deep-dives/vision.md" >}}).
+For more on these ideas, see [Deep dives]({{< relref "deep-dives/_index.md" >}}), especially [Vision and scope]({{< relref "deep-dives/why-katalyst.md" >}}).
 
 ## No, really, you should try it out
 
