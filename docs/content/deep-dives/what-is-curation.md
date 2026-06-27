@@ -45,7 +45,12 @@ Here are some other examples of information curated for specific needs:
 
 Beyond the information itself, curation can also involve the presentation of the information.
 
-{Provide examples: document formatting, searchability, UI conventions to; information density; affordances for agents}
+- formatting a document so the most important information is visible before the supporting detail
+- adding headings, summaries, and tables of contents so readers can scan before reading
+- making content searchable through clear titles, stable terminology, tags, and aliases
+- choosing UI conventions that match the task, such as filters for comparison, status badges for freshness, or callouts for warnings
+- managing information density so a page gives enough context without burying the answer
+- exposing affordances for agents, such as stable identifiers, structured metadata, machine-readable links, and clear boundaries between source material and interpretation
 
 <!-- Start to transition from specific to general -->
 Curating information to this level of detail is valuable because it saves the reader from reconstructing context at the moment they need it. It is also costly. Someone has to know the audience, anticipate the question, gather the source material, and shape it for that use. Part of the promise of AI curation is that it should make more of that work possible.
@@ -80,6 +85,12 @@ As we'll see, they also impose enough structure to sketch useful technical requi
 ## Completeness
 
 ## Up-to-dateness
+
+Up-to-dateness is the guarantee of external consistency: the state of the content accurately reflects the state of the real world at some point in time. A knowledge base can be internally consistent and complete within its stated scope while still being wrong, because the world changed since the content was last updated.
+
+That makes up-to-dateness different from the other two criteria. It cannot be guaranteed from inside the content alone. It requires contact with an external source of truth: an event stream, a periodic refresh, a source-system query, a human review, or some other verification process. A curated system can record timestamps, sources, freshness windows, and update rules, but the guarantee comes from the process that reconnects the content to the world.
+
+Because curation takes work, there's always some lag between {...}. As a general rule, less lag is better. Information doesn't need to be perfectly up-to-date in order to be valuable. The important questions are whether the content makes a truthful claim about when it corresponded to the world, and whether the content is updated quickly enough to support valuable decisions.
 
 ## Curated knowledge bases
 
