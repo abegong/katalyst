@@ -47,5 +47,5 @@ the item and is removed before the item is validated against that schema.
 
 - [Structured object check types]({{< relref "../check-types/structured-object/_index.md" >}})
 - [Markdown body text]({{< relref "markdown-body-text.md" >}})
-- [Configs]({{< relref "../configs/_index.md#object-schema-resolution-precedence" >}})
+- [Configs]({{< relref "../configs/checks.md#object-schema-resolution-precedence" >}})
 - [Collections]({{< relref "../../deep-dives/domain-model/collections.md" >}})

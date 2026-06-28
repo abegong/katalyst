@@ -137,4 +137,4 @@ supported yet.
 - [Add a schema]({{< relref "add-a-schema.md" >}}) to validate frontmatter
   shape.
 - [Configs reference]({{< relref "../reference/configs/_index.md" >}})
-  for every key, including [`variants`]({{< relref "../reference/configs/_index.md" >}}#variants).
+  for every key, including [`variants`]({{< relref "../reference/configs/variants.md" >}}).

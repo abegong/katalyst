@@ -70,7 +70,7 @@ The same evidence can power a future `doctor` / `explain` command: list the coll
 ## Variants route checks, not membership
 
 A collection may run different checks on different items via
-[variants]({{< relref "../../reference/configs/_index.md" >}}#variants), but that is
+[variants]({{< relref "../../reference/configs/variants.md" >}}), but that is
 a *check-engine* concern, not a base one. A variant's discriminator is a
 predicate over an item's **metadata**: portable across every base type, since
 each yields a metadata map (frontmatter for a file, columns for a row). It never
