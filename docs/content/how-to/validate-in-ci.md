@@ -64,4 +64,4 @@ step enforces canonical frontmatter without modifying files. See
 ## See also
 
 - [Configure checks for a collection]({{< relref "configure-rules.md" >}})
-- [Configuration reference]({{< relref "../reference/configuration.md" >}})
+- [Configs reference]({{< relref "../reference/configs/_index.md" >}})

@@ -89,7 +89,7 @@ item, the simplest correct path.
 Per item, the engine resolves which checks apply, then runs them.
 
 Resolution starts from the collection's configured checks and adds the checks of
-the first [variant]({{< relref "../../reference/configuration.md" >}}) whose `when`
+the first [variant]({{< relref "../../reference/configs/_index.md" >}}) whose `when`
 predicates the item's metadata satisfies. The object schema is selected by a
 precedence the JSON Schema library owns (a forced `--schema`, then an inline
 `schema:` directive, then the collection's object checks); see the [domain

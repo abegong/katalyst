@@ -1,9 +1,11 @@
 +++
-title = "Configuration"
-weight = 10
+title = "Configs"
+weight = 30
+bookCollapseSection = true
+aliases = ["/reference/configuration/"]
 +++
 
-# Configuration
+# Configs
 
 Katalyst reads a `.katalyst/` directory, found by walking upward from the
 current working directory to the nearest ancestor that contains one. That
@@ -13,9 +15,9 @@ macOS `$TMPDIR` lives behind `/var` to `/private/var` and relative-path
 resolution would otherwise produce garbage.
 
 For *why* the config is shaped this way, see [How collections
-work]({{< relref "../deep-dives/domain-model/collections.md" >}}). To set one up step by
+work]({{< relref "../../deep-dives/domain-model/collections.md" >}}). To set one up step by
 step, see [Configure checks for a
-collection]({{< relref "../how-to/configure-rules.md" >}}).
+collection]({{< relref "../../how-to/configure-rules.md" >}}).
 
 ## Layout
 
@@ -165,7 +167,7 @@ schema: book
 ## `checks`
 
 Each entry has a `kind` and the keys that check type requires. Every check
-type is documented one per page in the [check types reference]({{< relref "check-types/_index.md" >}}):
+type is documented one per page in the [check types reference]({{< relref "../check-types/_index.md" >}}):
 
 ```yaml
 checks:
@@ -227,7 +229,7 @@ pages:
   useExhaustiveVariants: false   # default
 ```
 
-**`when`** is a list of [`item list --filter`]({{< relref "cli.md#filter-predicates" >}})
+**`when`** is a list of [`item list --filter`]({{< relref "../cli.md#filter-predicates" >}})
 predicates (`field=value`, `field>=n`, `field=~regex`, `!field`, ...), evaluated
 against the item's frontmatter. All entries must hold (AND). Three shapes are
 accepted, the first two desugaring to the third:
@@ -252,7 +254,7 @@ failure (`matches no variant`), so every item is provably accounted for.
 Discrimination is by metadata only; selecting items by path or filename is not
 supported yet (a page type distinguishable only by location needs a frontmatter
 marker). `pattern` still governs collection **membership** and which files are
-reported as [unmatched]({{< relref "../deep-dives/domain-model/_index.md" >}}#invariants);
+reported as [unmatched]({{< relref "../../deep-dives/domain-model/_index.md" >}}#invariants);
 variants only route checks.
 
 ## `listing`
@@ -302,9 +304,9 @@ variant), even when `--schema` is used.
 
 ## See also
 
-- [Check types reference]({{< relref "check-types/_index.md" >}}), every check type.
-- [Bases]({{< relref "../deep-dives/domain-model/base.md" >}}), the base /
+- [Check types reference]({{< relref "../check-types/_index.md" >}}), every check type.
+- [Bases]({{< relref "../../deep-dives/domain-model/base.md" >}}), the base /
   collection-mapping model and its lineage.
-- [Collections]({{< relref "../deep-dives/domain-model/collections.md" >}}), the
+- [Collections]({{< relref "../../deep-dives/domain-model/collections.md" >}}), the
   config/collection model and rationale: schema resolution, variants,
   unmatched-as-error.

@@ -67,5 +67,5 @@ declare a collection inside `.katalyst/bases/local.yaml`, then run
 `katalyst check`.
 
 Next:
-- [Configuration]({{< relref "reference/configuration.md" >}})
+- [Configs]({{< relref "reference/configs/_index.md" >}})
 - [Check types reference]({{< relref "reference/check-types/_index.md" >}})

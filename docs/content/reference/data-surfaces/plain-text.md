@@ -44,5 +44,5 @@ literal strings."
 
 - [Plain text check types]({{< relref "../check-types/plain-text/_index.md" >}})
 - [Markdown body text]({{< relref "markdown-body-text.md" >}})
-- [Configuration]({{< relref "../configuration.md#text-rules" >}}) for text
+- [Configs]({{< relref "../configs/_index.md#text-rules" >}}) for text
   rule configuration.
