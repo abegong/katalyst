@@ -89,10 +89,10 @@ func Build(in BuildInput) (Scope, error) {
 		name = filepath.ToSlash(scopePath)
 	}
 	cks, err := checks.BuildConfigured(checks.BuildConfiguredInput{
-		ErrorContext: label,
-		Raw:          raw.Checks,
-		Target:       checks.TargetFilesystem,
-		AllowObject:  false,
+		ErrorContext:   label,
+		Raw:            raw.Checks,
+		ConfigurableIn: checks.ConfigFilesystem,
+		AllowObject:    false,
 	})
 	if err != nil {
 		return Scope{}, err

@@ -59,12 +59,12 @@ type nameCaseArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemNameCase,
-		Family:    "fileSystem",
-		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
-		Slug:      "name-case",
-		Title:     "Name case",
-		Summary:   "Require a name (or path segments) to follow a case style.",
+		CheckType:      checks.CheckFilesystemNameCase,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "name-case",
+		Title:          "Name case",
+		Summary:        "Require a name (or path segments) to follow a case style.",
 		Fields: []checks.Field{
 			{Name: "style", Required: true, Desc: "One of `kebab`, `snake`, `screaming-snake`, `camel`, `pascal`, `point`, `lower`."},
 			{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},

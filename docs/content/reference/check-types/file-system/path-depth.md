@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/path-depth/"]
 
 `kind: filesystem_path_depth`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

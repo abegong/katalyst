@@ -376,12 +376,12 @@ func rejectUnsupportedSQLiteChecks(name string, base []checks.ConfiguredCheck, v
 // `collection "books"` or `collection "books": variants[0]`).
 func buildChecks(errCtx, schema string, raws []checks.RawCheck, schemaKnown func(string) bool) ([]checks.ConfiguredCheck, error) {
 	return checks.BuildConfigured(checks.BuildConfiguredInput{
-		ErrorContext: errCtx,
-		Schema:       schema,
-		Raw:          raws,
-		SchemaKnown:  schemaKnown,
-		Target:       checks.TargetCollection,
-		AllowObject:  true,
+		ErrorContext:   errCtx,
+		Schema:         schema,
+		Raw:            raws,
+		SchemaKnown:    schemaKnown,
+		ConfigurableIn: checks.ConfigCollection,
+		AllowObject:    true,
 	})
 }
 

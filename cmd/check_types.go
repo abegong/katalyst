@@ -119,7 +119,7 @@ func runCheckTypesDetail(cmd *cobra.Command, checkType string, asJSON bool) erro
 	printSectionHeader(out, fmt.Sprintf("%s › %s", fam.Title, d.Title))
 	fmt.Fprintf(out, "- kind: %s\n", d.CheckType)
 	fmt.Fprintf(out, "- family: %s\n", d.Family)
-	fmt.Fprintf(out, "- targets: %s\n", strings.Join(checks.DescriptorTargets(d), ", "))
+	fmt.Fprintf(out, "- configurableIn: %s\n", strings.Join(checks.DescriptorConfigurableIn(d), ", "))
 	scope := d.Scope
 	if scope == "" {
 		scope = "item"
@@ -257,7 +257,7 @@ func jsonDescriptor(d checks.Descriptor) checks.Descriptor {
 	if d.Fields == nil {
 		d.Fields = []checks.Field{}
 	}
-	d.Targets = checks.DescriptorTargets(d)
+	d.ConfigurableIn = checks.DescriptorConfigurableIn(d)
 	return d
 }
 

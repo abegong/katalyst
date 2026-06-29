@@ -2,7 +2,7 @@ Structured object › Field enum
 --------------------------------
 - kind: object_field_enum
 - family: structuredObject
-- targets: collection
+- configurableIn: collection
 - scope: item
 - severity: error
 - purpose: Require that a field is one of a fixed set of values.

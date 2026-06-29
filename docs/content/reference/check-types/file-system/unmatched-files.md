@@ -12,7 +12,7 @@ aliases = ["/reference/rules/file-system/unmatched-files/"]
 
 **Scope:** collection, runs once per collection over all its items.
 
-**Targets:** filesystem.
+**Can be configured in:** filesystem checks.
 
 ## Purpose
 

@@ -2,7 +2,7 @@ Markdown body text › Single H1
 --------------------------------
 - kind: markdown_single_h1
 - family: markdownBodyText
-- targets: collection
+- configurableIn: collection
 - scope: item
 - severity: error
 - purpose: Require that the markdown body contains at most one H1 heading.

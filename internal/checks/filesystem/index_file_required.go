@@ -49,13 +49,13 @@ type indexFileArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemIndexFileRequired,
-		Family:    "fileSystem",
-		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
-		Slug:      "index-file-required",
-		Title:     "Index file required",
-		Summary:   "Require that every directory containing items has an index file.",
-		Scope:     "collection",
+		CheckType:      checks.CheckFilesystemIndexFileRequired,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "index-file-required",
+		Title:          "Index file required",
+		Summary:        "Require that every directory containing items has an index file.",
+		Scope:          "collection",
 		Fields: []checks.Field{
 			{Name: "name", Required: false, Default: "_index.md", Desc: "Index filename that must be present in each item directory."},
 		},

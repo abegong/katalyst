@@ -29,7 +29,7 @@ model]({{< relref "_index.md" >}}).
 | **Severity** | The consequence of a violation. `error` fails the run; `warning` is advisory and does not change the exit code. |
 | **Violation** | One failed check result, with a message, source location, JSON pointer when applicable, severity, and sometimes a sibling file for collection-scoped findings. |
 
-Family, library, attachment target, and runtime granularity are separate axes.
+Family, library, configuration site, and runtime granularity are separate axes.
 Family answers *what data does this check read?* Library answers *who runs it?*
 Attachment target answers *where can a user configure it?* Runtime granularity
 answers *does it run once per file or once per selected file set?* A single
@@ -38,13 +38,13 @@ family can span libraries:
 `object_required_field` from the native structured-object library.
 
 The registry is the single source of truth for check types. Each check type
-self-registers a `Descriptor` (its id, family, targets, docs metadata) and a
+self-registers a `Descriptor` (its id, family, `configurableIn`, docs metadata) and a
 constructor. `cmd/engine` builds the runnable list by registry lookup; the docs
 generator and `katalyst check-types list` read the same descriptors. A parity
 test fails if a configured kind has no descriptor, so a check type cannot ship
 undocumented.
 
-## Attachment targets
+## Configuration Sites
 
 Collection-attached checks live under a collection's `checks:` list. They run
 after selector resolution and can use schema precedence, variants, and the
@@ -57,9 +57,9 @@ no-selector `katalyst check` runs filesystem scopes before collection checks,
 so a project can enforce path policy before any collection exists. Explicit
 collection selectors stay collection-only.
 
-The descriptor's `Targets` list controls where a check type may be configured.
+The descriptor's `ConfigurableIn` list controls where a check type may be configured.
 During migration, an empty list means `collection`. File-system-family checks
-that only read paths can usually support both targets. Checks that read
+that only read paths can usually support both configuration sites. Checks that read
 frontmatter or body text declare that they need a parsed document so filesystem
 scopes parse lazily and path-only scopes avoid unnecessary document work.
 

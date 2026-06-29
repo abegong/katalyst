@@ -10,8 +10,6 @@ aliases = ["/reference/rules/plain-text/requires/"]
 
 `kind: text_requires`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require a regular expression to appear in the body text.

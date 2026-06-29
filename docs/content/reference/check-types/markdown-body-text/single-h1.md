@@ -10,8 +10,6 @@ aliases = ["/reference/rules/markdown-body-text/single-h1/"]
 
 `kind: markdown_single_h1`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require that the markdown body contains at most one H1 heading.

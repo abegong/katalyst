@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/parent-dir-matches-field/"]
 
 `kind: filesystem_parent_dir_matches_field`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

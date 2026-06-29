@@ -10,8 +10,6 @@ aliases = ["/reference/rules/plain-text/forbids/"]
 
 `kind: text_forbids`
 
-**Targets:** collection.
-
 ## Purpose
 
 Forbid a regular expression from appearing in the body text.

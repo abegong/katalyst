@@ -10,8 +10,6 @@ aliases = ["/reference/rules/structured-object/required-field/"]
 
 `kind: object_required_field`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require that a frontmatter field exists.

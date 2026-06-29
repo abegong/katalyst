@@ -10,8 +10,6 @@ aliases = ["/reference/rules/markdown-body-text/no-heading-level-jumps/"]
 
 `kind: markdown_no_heading_level_jumps`
 
-**Targets:** collection.
-
 ## Purpose
 
 Disallow jumps larger than one heading level (for example `H1 -> H3`).

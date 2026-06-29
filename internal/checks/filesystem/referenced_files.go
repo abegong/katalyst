@@ -76,13 +76,13 @@ type referencedFilesArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType:     checks.CheckFilesystemReferencedFiles,
-		Family:        "fileSystem",
-		Targets:       []string{checks.TargetCollection, checks.TargetFilesystem},
-		NeedsDocument: true,
-		Slug:          "referenced-files-exist",
-		Title:         "Referenced files exist",
-		Summary:       "Require path-valued frontmatter fields to resolve to real files.",
+		CheckType:      checks.CheckFilesystemReferencedFiles,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		NeedsDocument:  true,
+		Slug:           "referenced-files-exist",
+		Title:          "Referenced files exist",
+		Summary:        "Require path-valued frontmatter fields to resolve to real files.",
 		Fields: []checks.Field{
 			{Name: "fields", Required: true, Desc: "Frontmatter keys holding a path (string) or list of paths, resolved relative to the item."},
 		},

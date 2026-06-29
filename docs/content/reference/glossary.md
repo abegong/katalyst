@@ -21,7 +21,7 @@ how each term maps onto today's code is documented in the per-package
 | **Body** | Everything after the closing frontmatter fence. Preserved verbatim except by `fix`. |
 | **Check** | Shorthand for a check instance when context is unambiguous. |
 | **Check instance** | One configured check: a check type plus its arguments. It is attached either to a collection under `checks:` or to a filesystem scope under `filesystemChecks[].checks`. |
-| **Check type** | The reusable definition of a constraint: one entry in katalyst's check registry (`object_required_field`, `markdown_single_h1`, ...), selected by its `kind:` id. `katalyst check-types list` lists them, including their supported attachment targets. |
+| **Check type** | The reusable definition of a constraint: one entry in katalyst's check registry (`object_required_field`, `markdown_single_h1`, ...), selected by its `kind:` id. `katalyst check-types list` lists them, including where they can be configured. |
 | **CheckLibrary** | The provider behind a check type. Native libraries (`filesystem`, `plaintext`, `markdownbodytext`, `structuredobject`) wrap hand-written checks; schema-backed libraries (`json-schema`, Vale next) compile a named schema and run items against it, and report their own availability. A library is provenance, orthogonal to the source-data family (`structuredObject`, `markdownBodyText`, `fileSystem`, `plainText`) the check reads. |
 | **Collection** | A group of items that share structure: a directory of similar files, a relational table, a Mongo collection, or a family of API resources. Collections own checks and are addressed by name. |
 | **CollectionCheck** | A check instance attached to a collection definition. CollectionChecks can run per item or once over the collection's full item set. |
@@ -53,7 +53,7 @@ how each term maps onto today's code is documented in the per-package
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |
 | **Scope** | The level an operation or backend mapping applies to: item, collection, project, or across collections. In a base, scope answers whether one matched source unit becomes an item or a collection. |
 | **Span** | The slice of body text a text rule is evaluated against, chosen by its `target`: the whole `body`, each `line`, the `first-line`, or `matched-lines` (lines matching a `select` regex). |
-| **Target** | Either an attachment target (`collection` or `filesystem`) in check descriptors, or the slice a rule tests in a specific family. For a filesystem name/path check, `target` can be `filename`, `filename-ext`, `parent-dir`, or `path-segments`; for a text rule, see Span. |
+| **Target** | The slice a rule tests in a specific family. For a filesystem name/path check, `target` can be `filename`, `filename-ext`, `parent-dir`, or `path-segments`; for a text rule, see Span. |
 | **Text rule** | A `text_*` check (`text_requires`, `text_forbids`, `text_denylist`) that tests the body as raw text, a regex or a literal denylist, independent of markdown structure. Applies to plain-text items too. |
 | **Validation result** | The product of running an item's checks: either `path: OK`, or a flat list of violations. |
 | **Variant** | A discriminated check group inside a collection (one entry of `variants:`): a `when` discriminator plus the schema/checks added for items that match it. An item runs the base checks plus the first matching variant's. |
@@ -62,7 +62,7 @@ how each term maps onto today's code is documented in the per-package
 ## Usage notes
 
 - A **check type** is the definition; a **check instance** is that check type
-  configured at an attachment target, and a **violation** is a check that
+  configured at a configuration site, and a **violation** is a check that
   failed. The [check types
   reference]({{< relref "check-types/_index.md" >}}) and `katalyst check-types
   list` enumerate check types.

@@ -10,8 +10,6 @@ aliases = ["/reference/rules/structured-object/number-range/"]
 
 `kind: object_number_range`
 
-**Targets:** collection.
-
 ## Purpose
 
 Constrain a numeric field to a minimum and/or maximum value.

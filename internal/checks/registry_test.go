@@ -56,20 +56,20 @@ func TestDescriptorLibrary(t *testing.T) {
 	}
 }
 
-func TestDescriptorTargets(t *testing.T) {
-	if !checks.SupportsTarget(checks.CheckFilesystemNameCase, checks.TargetCollection) {
+func TestDescriptorConfigurableIn(t *testing.T) {
+	if !checks.SupportsConfiguration(checks.CheckFilesystemNameCase, checks.ConfigCollection) {
 		t.Fatalf("filesystem_name_case should support collection checks")
 	}
-	if !checks.SupportsTarget(checks.CheckFilesystemNameCase, checks.TargetFilesystem) {
+	if !checks.SupportsConfiguration(checks.CheckFilesystemNameCase, checks.ConfigFilesystem) {
 		t.Fatalf("filesystem_name_case should support filesystem checks")
 	}
-	if checks.SupportsTarget(checks.CheckMarkdownRequiresH1, checks.TargetFilesystem) {
+	if checks.SupportsConfiguration(checks.CheckMarkdownRequiresH1, checks.ConfigFilesystem) {
 		t.Fatalf("markdown_requires_h1 should remain collection-only")
 	}
-	if !checks.SupportsTarget(checks.CheckFilesystemUnmatchedFiles, checks.TargetFilesystem) {
+	if !checks.SupportsConfiguration(checks.CheckFilesystemUnmatchedFiles, checks.ConfigFilesystem) {
 		t.Fatalf("filesystem_unmatched_files should support filesystem checks")
 	}
-	if checks.SupportsTarget(checks.CheckFilesystemUnmatchedFiles, checks.TargetCollection) {
+	if checks.SupportsConfiguration(checks.CheckFilesystemUnmatchedFiles, checks.ConfigCollection) {
 		t.Fatalf("filesystem_unmatched_files should not support collection checks")
 	}
 }

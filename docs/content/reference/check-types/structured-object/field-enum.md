@@ -10,8 +10,6 @@ aliases = ["/reference/rules/structured-object/field-enum/"]
 
 `kind: object_field_enum`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require that a field is one of a fixed set of values.

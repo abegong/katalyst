@@ -64,21 +64,21 @@ This spec separates those axes.
 
 ## Design
 
-### Attachment Targets
+### Configuration Sites
 
-Add an attachment-target axis to check descriptors:
+Add a configuration-site axis to check descriptors:
 
 ```go
 type Descriptor struct {
     // existing fields...
-    Targets []string // "collection", "filesystem"
+    ConfigurableIn []string // "collection", "filesystem"
 }
 ```
 
 `Family` keeps its current meaning: the source data the check reads.
-`Targets` says where a check instance may be configured.
+`ConfigurableIn` says where a check instance may be configured.
 
-During migration, an empty `Targets` means `["collection"]`. That keeps every
+During migration, an empty `ConfigurableIn` means `["collection"]`. That keeps every
 existing check valid until each descriptor opts into filesystem attachment.
 
 Use these concepts in product language:
@@ -108,7 +108,7 @@ collections:
 ```
 
 Do not rename collection `checks:` to `collectionChecks:`. Inside a collection,
-the attachment target is already clear. A rename adds migration cost without
+the configuration site is already clear. A rename adds migration cost without
 making the config easier to write.
 
 Add `filesystemChecks` to filesystem storage instances:
@@ -164,7 +164,7 @@ expectations. Set it to `warning` for onboarding a messy tree while still
 surfacing skipped document-aware checks.
 
 The same check type can appear in both attachment sites when its descriptor
-supports both targets:
+supports both configuration sites:
 
 ```yaml
 type: filesystem
@@ -322,7 +322,7 @@ filesystem posts: content/posts/broken.md: warning: /: cannot parse document: in
 The runner always reports parse failures. A passing run proves that every
 selected file needed by a document-aware check was inspected.
 
-This lets almost every current filesystem-related check run under both targets:
+This lets almost every current filesystem-related check run under both configuration sites:
 
 | Check type | CollectionChecks | FilesystemChecks |
 |---|---:|---:|
@@ -402,7 +402,7 @@ main onboarding and CI cases.
 
 ### Diagnostics
 
-Diagnostics name the attachment target:
+Diagnostics name the configuration site:
 
 ```text
 filesystem docs: docs/content/Old Note.md: /path: filename is not kebab-case
@@ -428,12 +428,12 @@ Existing configs keep working:
 
 Implementation is additive:
 
-1. Add descriptor target metadata, defaulting to `collection`.
+1. Add descriptor configurableIn metadata, defaulting to `collection`.
 2. Add file and file-set runtime contexts without changing behavior.
 3. Add `filesystemChecks` parsing to filesystem storage instances.
 4. Run path-only FilesystemChecks.
 5. Add lazy document parsing and opt metadata-aware check types into the
-   filesystem target.
+   filesystem configuration site.
 6. Rename internal set-level interfaces away from `CollectionCheck`.
 
 ## Open Questions
@@ -442,24 +442,24 @@ _None._
 
 ## Documentation Updates
 
-- `docs/content/deep-dives/checks.md`: split data family, library,
-  attachment target, and runtime granularity.
-- `docs/content/reference/configuration.md`: document storage-level
+- `docs/content/deep-dives/domain-model/checks.md`: split data family,
+  library, configuration site, and runtime granularity.
+- `docs/content/reference/configs/bases.md`: document storage-level
   `filesystemChecks`.
 - `docs/content/reference/glossary.md`: add CollectionCheck, FilesystemCheck,
-  FileCheck, FileSetCheck, and attachment target. Update Check instance and
+  FileCheck, FileSetCheck, and configuration site. Update Check instance and
   Collection-scoped check.
 - `docs/content/how-to/configure-rules.md`: add a pre-collection filesystem
   check workflow.
-- Generated check-type reference: render supported targets and file vs.
+- Generated check-type reference: render supported configuration sites and file vs.
   file-set granularity from descriptors. Run `make docs-gen`.
-- `internal/checks/AGENTS.md`: document descriptor target metadata and the
+- `internal/checks/AGENTS.md`: document descriptor configurableIn metadata and the
   runtime naming distinction.
 - `internal/storage/collection/AGENTS.md`: document that collection `checks:`
   remain collection-attached and filesystem checks live on filesystem storage
   instances.
 - `.cursor/skills/add-katalyst-check-type/SKILL.md`: update the checklist so a
-  new check type declares supported attachment targets.
+  new check type declares supported configuration sites.
 
 ## Rejected Alternatives
 

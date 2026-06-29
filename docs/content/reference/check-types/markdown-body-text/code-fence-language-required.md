@@ -10,8 +10,6 @@ aliases = ["/reference/rules/markdown-body-text/code-fence-language-required/"]
 
 `kind: markdown_code_fence_language_required`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require that opening fenced code blocks include a language tag.

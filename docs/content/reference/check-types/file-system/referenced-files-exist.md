@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/referenced-files-exist/"]
 
 `kind: filesystem_referenced_files_exist`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

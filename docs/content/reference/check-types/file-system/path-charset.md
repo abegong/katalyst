@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/path-charset/"]
 
 `kind: filesystem_path_charset`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

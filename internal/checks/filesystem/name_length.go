@@ -45,12 +45,12 @@ type nameLengthArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemNameLength,
-		Family:    "fileSystem",
-		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
-		Slug:      "name-length",
-		Title:     "Name length",
-		Summary:   "Bound the character length of a name.",
+		CheckType:      checks.CheckFilesystemNameLength,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "name-length",
+		Title:          "Name length",
+		Summary:        "Bound the character length of a name.",
 		Fields: []checks.Field{
 			{Name: "min", Required: false, Desc: "Minimum length (at least one of min/max)."},
 			{Name: "max", Required: false, Desc: "Maximum length (at least one of min/max)."},

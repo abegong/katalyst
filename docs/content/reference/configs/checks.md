@@ -23,7 +23,7 @@ checks:
   - kind: filesystem_name_matches_field
 ```
 
-## Attachment targets
+## Configuration Sites
 
 Collection-attached checks run after a file belongs to a collection. They can
 use collection schemas, variants, item selectors, and collection-wide sibling
@@ -58,7 +58,7 @@ filesystemChecks:
 `katalyst check` with no selector runs filesystem scopes first, then collection
 checks. `katalyst check <collection>` and `katalyst check <collection>/<item>`
 run collection checks only. Filesystem scopes reject check types that do not
-list `filesystem` in their supported targets.
+list `filesystem` in `configurableIn`.
 
 Document-aware filesystem checks parse selected files only when needed.
 `parseFailures: error` is the default and fails the run on parse errors.

@@ -185,10 +185,10 @@ func TestCheckTypesList_jsonArrayShape(t *testing.T) {
 	}
 
 	var got []struct {
-		CheckType string   `json:"check_type"`
-		Family    string   `json:"family"`
-		Targets   []string `json:"targets"`
-		Fields    []struct {
+		CheckType      string   `json:"check_type"`
+		Family         string   `json:"family"`
+		ConfigurableIn []string `json:"configurableIn"`
+		Fields         []struct {
 			Name string `json:"name"`
 		} `json:"fields"`
 		ConfigExample string `json:"config_example"`
@@ -200,10 +200,10 @@ func TestCheckTypesList_jsonArrayShape(t *testing.T) {
 		t.Fatal("expected at least one descriptor")
 	}
 	seen := map[string]bool{}
-	targets := map[string][]string{}
+	configurableIn := map[string][]string{}
 	for i, d := range got {
 		seen[d.CheckType] = true
-		targets[d.CheckType] = d.Targets
+		configurableIn[d.CheckType] = d.ConfigurableIn
 		if got[i].ConfigExample == "" {
 			t.Errorf("entry %d (%s): empty config_example", i, d.CheckType)
 		}
@@ -230,11 +230,11 @@ func TestCheckTypesList_jsonArrayShape(t *testing.T) {
 	if strings.Contains(stdout, `"default": ""`) {
 		t.Errorf("empty default should be omitted, not emitted")
 	}
-	if strings.Join(targets["filesystem_name_case"], ",") != "collection,filesystem" {
-		t.Errorf("filesystem_name_case targets = %v, want collection+filesystem", targets["filesystem_name_case"])
+	if strings.Join(configurableIn["filesystem_name_case"], ",") != "collection,filesystem" {
+		t.Errorf("filesystem_name_case configurableIn = %v, want collection+filesystem", configurableIn["filesystem_name_case"])
 	}
-	if strings.Join(targets["markdown_requires_h1"], ",") != "collection" {
-		t.Errorf("markdown_requires_h1 targets = %v, want collection", targets["markdown_requires_h1"])
+	if strings.Join(configurableIn["markdown_requires_h1"], ",") != "collection" {
+		t.Errorf("markdown_requires_h1 configurableIn = %v, want collection", configurableIn["markdown_requires_h1"])
 	}
 }
 
@@ -246,9 +246,9 @@ func TestCheckTypesShow_jsonObject(t *testing.T) {
 	}
 
 	var got struct {
-		CheckType string   `json:"check_type"`
-		Targets   []string `json:"targets"`
-		Fields    []struct {
+		CheckType      string   `json:"check_type"`
+		ConfigurableIn []string `json:"configurableIn"`
+		Fields         []struct {
 			Name     string `json:"name"`
 			Required bool   `json:"required"`
 		} `json:"fields"`
@@ -259,8 +259,8 @@ func TestCheckTypesShow_jsonObject(t *testing.T) {
 	if got.CheckType != "object_number_range" {
 		t.Errorf("got check type %q, want object_number_range", got.CheckType)
 	}
-	if strings.Join(got.Targets, ",") != "collection" {
-		t.Errorf("targets = %v, want collection", got.Targets)
+	if strings.Join(got.ConfigurableIn, ",") != "collection" {
+		t.Errorf("configurableIn = %v, want collection", got.ConfigurableIn)
 	}
 	if len(got.Fields) != 3 {
 		t.Fatalf("got %d fields, want 3", len(got.Fields))

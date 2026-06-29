@@ -10,8 +10,6 @@ aliases = ["/reference/rules/markdown-body-text/required-section/"]
 
 `kind: markdown_required_section`
 
-**Targets:** collection.
-
 ## Purpose
 
 Require that a heading with specific text exists somewhere in the body.

@@ -31,13 +31,13 @@ func patternList(patterns []string) string {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemUnmatchedFiles,
-		Family:    "fileSystem",
-		Targets:   []string{checks.TargetFilesystem},
-		Slug:      "unmatched-files",
-		Title:     "Unmatched files",
-		Summary:   "Report regular files under a filesystem scope that match neither include nor exclude patterns.",
-		Scope:     "collection",
+		CheckType:      checks.CheckFilesystemUnmatchedFiles,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigFilesystem},
+		Slug:           "unmatched-files",
+		Title:          "Unmatched files",
+		Summary:        "Report regular files under a filesystem scope that match neither include nor exclude patterns.",
+		Scope:          "collection",
 		ConfigExample: `filesystemChecks:
   - path: docs
     include: ["**/*.md"]

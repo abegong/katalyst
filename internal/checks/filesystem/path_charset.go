@@ -61,12 +61,12 @@ type pathCharsetArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemPathCharset,
-		Family:    "fileSystem",
-		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
-		Slug:      "path-charset",
-		Title:     "Path charset",
-		Summary:   "Constrain the characters allowed in the item's path.",
+		CheckType:      checks.CheckFilesystemPathCharset,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "path-charset",
+		Title:          "Path charset",
+		Summary:        "Constrain the characters allowed in the item's path.",
 		Fields: []checks.Field{
 			{Name: "deny", Required: false, Desc: "Forbidden substrings (e.g. a space). Use `deny` or `allow`, not both."},
 			{Name: "allow", Required: false, Desc: "The only permitted characters; the path separator is always allowed."},

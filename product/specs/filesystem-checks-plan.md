@@ -20,7 +20,7 @@
   family checks.
 - `internal/checks/registry.go` records each check type's `Descriptor`, parser,
   per-item builder, and collection-scoped builder. `Descriptor.Scope` names
-  collection-scoped runtime behavior. It has no attachment-target metadata.
+  collection-scoped runtime behavior. It has no attachment-configurableIn metadata.
 - `internal/checks/checks.go` defines per-item `Context` and `Check`.
   `internal/checks/collection.go` defines `CollectionContext` and
   `CollectionCheck`. Those names mix runtime granularity with the future
@@ -40,11 +40,11 @@
 | Phase | Focus | Scope |
 |---|---|---|
 | 1 | Failing contracts | loader tests, check CLI tests, registry tests, snapshots |
-| 2 | Shared check metadata and config parsing | descriptor targets, document needs, reusable raw check parsing |
+| 2 | Shared check metadata and config parsing | descriptor configuration sites, document needs, reusable raw check parsing |
 | 3 | Filesystem scope config and expansion | base-level `filesystemChecks`, include/exclude matching, unmatched set |
 | 4 | File and file-set runtime contexts | shared per-file context, set-level interface, collection compatibility |
 | 5 | Filesystem check execution | no-selector execution, lazy parsing, parse-failure severity, diagnostics |
-| 6 | Dual-target check types | target metadata, document-aware file-system checks, `filesystem_unmatched_files` |
+| 6 | Shared check types | configurableIn metadata, document-aware file-system checks, `filesystem_unmatched_files` |
 | 7 | Documentation and verification | user docs, generated reference, developer docs, focused test suite |
 
 The order keeps the suite honest. First pin the behavior, then add registry and
@@ -64,7 +64,7 @@ exists.
    nested `checks`.
 2. **File:** `internal/project/loader_test.go`.
    Add rejection tests for missing `include`, unknown `parseFailures`, unknown
-   check kind, a check kind that does not support the `filesystem` target, and
+   check kind, a check kind that cannot be configured in `filesystem`, and
    `filesystemChecks` on a SQLite base.
 3. **File:** `cmd/check_test.go`.
    Add a no-selector CLI test where a project has no collections, a filesystem
@@ -85,7 +85,7 @@ exists.
    Add snapshots for filesystem diagnostics: path-rule failure, parse warning,
    and filesystem unmatched file.
 8. **File:** `internal/checks/registry_test.go`.
-   Add descriptor tests for supported targets and document-needs metadata.
+   Add descriptor tests for supported configuration sites and document-needs metadata.
 
 ### Phase 2 - Shared check metadata and config parsing
 
@@ -93,9 +93,10 @@ exists.
 collection and filesystem config.
 
 1. **File:** `internal/checks/registry.go`.
-   Add target constants, `Descriptor.Targets []string`, and helpers such as
-   `SupportsTarget(kind, target)` and `DescriptorTargets(d)`. Treat an empty
-   target list as `collection` during migration.
+   Add configuration-site constants, `Descriptor.ConfigurableIn []string`, and
+   helpers such as `SupportsConfiguration(kind, site)` and
+   `DescriptorConfigurableIn(d)`. Treat an empty list as `collection` during
+   migration.
 2. **File:** `internal/checks/registry.go`.
    Add document-needs metadata to `Descriptor`, for example
    `NeedsDocument bool`, plus `NeedsDocument(kind)`. Filesystem scopes use this
@@ -113,10 +114,10 @@ collection and filesystem config.
    Keep SQLite collection rejection based on descriptor family or target support
    so existing behavior stays stable.
 6. **File:** `cmd/check_types.go`.
-   Include supported targets in `check-types show` and JSON output through the
+   Include supported configuration sites in `check-types show` and JSON output through the
    descriptor. Keep existing scope and severity output.
 7. **File:** `cmd/gendocs/main.go`.
-   Render supported targets on generated check-type pages. Keep generated docs
+   Render supported configuration sites on generated check-type pages. Keep generated docs
    deterministic.
 
 ### Phase 3 - Filesystem scope config and expansion
@@ -223,7 +224,7 @@ the new unmatched-files check ships.
    `FileSetContext.Unmatched`. It emits one violation per unmatched file and
    includes include/exclude patterns in the message.
 3. **File:** `internal/checks/filesystem/*.go`.
-   Add `Targets: []string{"collection", "filesystem"}` to file-system check
+   Add `ConfigurableIn: []string{"collection", "filesystem"}` to file-system check
    descriptors that work under both attachment points.
 4. **File:** `internal/checks/filesystem/name_matches_field.go`,
    `parent_dir_matches_field.go`, and `referenced_files.go`.
@@ -246,22 +247,22 @@ the new unmatched-files check ships.
 model.
 
 1. **File:** `docs/content/deep-dives/domain-model/checks.md`.
-   Split data family, library, attachment target, and runtime granularity.
+   Split data family, library, configuration site, and runtime granularity.
 2. **File:** `docs/content/reference/configuration.md`.
    Document `filesystemChecks` under filesystem bases. Note the legacy
    `.katalyst/storage/` reader only if that page still documents legacy config.
 3. **File:** `docs/content/reference/glossary.md`.
    Add CollectionCheck, FilesystemCheck, FileCheck, FileSetCheck, and
-   attachment target. Update Check instance and Collection-scoped check.
+   configuration site. Update Check instance and Collection-scoped check.
 4. **File:** `docs/content/how-to/configure-rules.md`.
    Add a pre-collection filesystem check workflow.
 5. **File:** `internal/checks/AGENTS.md`.
-   Document descriptor target metadata and the runtime naming distinction.
+   Document descriptor configurableIn metadata and the runtime naming distinction.
 6. **File:** `internal/storage/collection/AGENTS.md`.
    Document that collection `checks:` remain collection-attached and filesystem
    checks live on filesystem bases.
 7. **File:** `.cursor/skills/add-katalyst-check-type/SKILL.md`.
-   Update the checklist so new check types declare supported attachment targets
+   Update the checklist so new check types declare supported configuration sites
    and document needs.
 8. **File:** `docs/content/reference/check-types/`.
    Run `make docs-gen` after descriptor rendering changes.
@@ -289,18 +290,18 @@ model.
 | `internal/storage/filesystemcheck/scope_test.go` | filesystem scope matching tests |
 | `internal/storage/collection/parse.go` | consumes shared check config helper for collection checks |
 | `internal/storage/collection/filesystem/collection.go` | reference for deterministic filesystem traversal and matching |
-| `internal/checks/registry.go` | descriptor targets, document needs, and registry helpers |
+| `internal/checks/registry.go` | descriptor configuration sites, document needs, and registry helpers |
 | `internal/checks/config.go` | shared raw check config parser for both attachment points |
 | `internal/checks/checks.go` | per-file context compatibility layer |
 | `internal/checks/collection.go` | file-set context and compatibility wrappers |
 | `internal/checks/kinds.go` | new `filesystem_unmatched_files` kind constant |
 | `internal/checks/filesystem/unmatched_files.go` | new unmatched-files check |
-| `internal/checks/filesystem/*.go` | target metadata and document-needs metadata for file-system checks |
-| `internal/checks/structuredobject/unique_field.go` | dual-target metadata-aware set-level check |
-| `cmd/check_types.go` | CLI descriptor rendering for supported targets |
-| `cmd/gendocs/main.go` | generated check-type page rendering for supported targets |
-| `docs/content/deep-dives/domain-model/checks.md` | durable explanation of target vs family vs granularity |
-| `docs/content/reference/configuration.md` | user-facing filesystemChecks config reference |
+| `internal/checks/filesystem/*.go` | configurableIn metadata and document-needs metadata for file-system checks |
+| `internal/checks/structuredobject/unique_field.go` | metadata-aware set-level check configurable in both sites |
+| `cmd/check_types.go` | CLI descriptor rendering for supported configuration sites |
+| `cmd/gendocs/main.go` | generated check-type page rendering for supported configuration sites |
+| `docs/content/deep-dives/domain-model/checks.md` | durable explanation of configurableIn vs family vs granularity |
+| `docs/content/reference/configs/bases.md` | user-facing filesystemChecks config reference |
 | `docs/content/reference/glossary.md` | new vocabulary |
 | `docs/content/how-to/configure-rules.md` | pre-collection filesystem check workflow |
 | `internal/checks/AGENTS.md` | developer convention for check descriptors |
@@ -313,9 +314,9 @@ model.
 |---|---|---|
 | Config home | base-level `filesystemChecks` | the current code's configured backend instance is a base, and the base owns root path resolution |
 | Legacy storage config | parse the same field when legacy `.katalyst/storage/` is used | keeps legacy storage files aligned with base config behavior |
-| Collection config key | keep collection `checks:` | the collection block already supplies the attachment target and existing configs keep working |
+| Collection config key | keep collection `checks:` | the collection block already supplies the configuration site and existing configs keep working |
 | Shared check parsing | move raw check parsing into `internal/checks` | collection and filesystem attachments need the same `kind` and args parser without duplicating `RawCheck` |
-| Target metadata | descriptor-level `Targets` with empty meaning collection | existing descriptors migrate incrementally and docs can render one source of truth |
+| ConfigurableIn metadata | descriptor-level `ConfigurableIn` with empty meaning collection | existing descriptors migrate incrementally and docs can render one source of truth |
 | Document parsing | descriptor-level document-needs metadata | filesystem scopes parse lazily and path-only checks stay path-only |
 | Parse failure policy | scope-level `parseFailures`, default `error` | CI stays strict by default while onboarding can opt into warnings |
 | Runtime contexts | add file and file-set contexts with compatibility wrappers | the implementation can share checks without renaming every interface in one step |
@@ -325,7 +326,7 @@ model.
 ## Documentation updates
 
 - **Phase 7, File:** `docs/content/deep-dives/domain-model/checks.md`.
-  Explain data family, library, attachment target, and runtime granularity.
+  Explain data family, library, configuration site, and runtime granularity.
 - **Phase 7, File:** `docs/content/reference/configuration.md`.
   Add `filesystemChecks` keys, defaults, examples, parse-failure severity, and
   unmatched-files check usage.

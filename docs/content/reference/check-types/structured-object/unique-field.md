@@ -12,7 +12,7 @@ aliases = ["/reference/rules/structured-object/unique-field/"]
 
 **Scope:** collection, runs once per collection over all its items.
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

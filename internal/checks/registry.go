@@ -59,9 +59,10 @@ type Descriptor struct {
 	// Scope is "collection" for checks that run once per collection over all
 	// its items; empty means an ordinary per-item check.
 	Scope string `json:"scope,omitempty"`
-	// Targets names the config attachment points that accept this check type:
-	// "collection", "filesystem". Empty means collection during migration.
-	Targets []string `json:"targets,omitempty"`
+	// ConfigurableIn names the config attachment points that accept this check
+	// type: "collection", "filesystem". Empty means collection during
+	// migration.
+	ConfigurableIn []string `json:"configurableIn,omitempty"`
 	// NeedsDocument reports whether this check needs parsed document metadata
 	// or body text. Filesystem scopes use it to avoid parsing for path-only
 	// checks.
@@ -72,8 +73,8 @@ type Descriptor struct {
 }
 
 const (
-	TargetCollection = "collection"
-	TargetFilesystem = "filesystem"
+	ConfigCollection = "collection"
+	ConfigFilesystem = "filesystem"
 )
 
 // Family identifies a check-type family: its id (used in Descriptor.Family and
@@ -234,25 +235,26 @@ func DescriptorFor(kind CheckType) (Descriptor, bool) {
 	return registrations[i].desc, true
 }
 
-// DescriptorTargets returns the explicit or migration-default attachment
-// targets for d.
-func DescriptorTargets(d Descriptor) []string {
-	if len(d.Targets) == 0 {
-		return []string{TargetCollection}
+// DescriptorConfigurableIn returns the explicit or migration-default
+// configuration sites for d.
+func DescriptorConfigurableIn(d Descriptor) []string {
+	if len(d.ConfigurableIn) == 0 {
+		return []string{ConfigCollection}
 	}
-	out := make([]string, len(d.Targets))
-	copy(out, d.Targets)
+	out := make([]string, len(d.ConfigurableIn))
+	copy(out, d.ConfigurableIn)
 	return out
 }
 
-// SupportsTarget reports whether kind accepts the named attachment target.
-func SupportsTarget(kind CheckType, target string) bool {
+// SupportsConfiguration reports whether kind accepts the named configuration
+// site.
+func SupportsConfiguration(kind CheckType, site string) bool {
 	desc, ok := DescriptorFor(kind)
 	if !ok {
 		return false
 	}
-	for _, t := range DescriptorTargets(desc) {
-		if t == target {
+	for _, t := range DescriptorConfigurableIn(desc) {
+		if t == site {
 			return true
 		}
 	}

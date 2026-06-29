@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/name-regex/"]
 
 `kind: filesystem_name_regex`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

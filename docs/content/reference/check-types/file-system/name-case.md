@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/name-case/"]
 
 `kind: filesystem_name_case`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

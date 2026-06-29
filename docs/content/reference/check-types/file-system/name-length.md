@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/name-length/"]
 
 `kind: filesystem_name_length`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

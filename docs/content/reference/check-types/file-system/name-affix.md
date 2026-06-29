@@ -10,7 +10,7 @@ aliases = ["/reference/rules/file-system/name-affix/"]
 
 `kind: filesystem_name_affix`
 
-**Targets:** collection, filesystem.
+**Can be configured in:** collection checks, filesystem checks.
 
 ## Purpose
 

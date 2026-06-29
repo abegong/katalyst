@@ -74,25 +74,25 @@ func (rc *RawCheck) UnmarshalYAML(value *yaml.Node) error {
 // BuildConfiguredInput carries the shared pieces needed to turn raw config
 // into validated configured checks.
 type BuildConfiguredInput struct {
-	ErrorContext string
-	Schema       string
-	Raw          []RawCheck
-	SchemaKnown  func(string) bool
-	Target       string
-	AllowObject  bool
+	ErrorContext   string
+	Schema         string
+	Raw            []RawCheck
+	SchemaKnown    func(string) bool
+	ConfigurableIn string
+	AllowObject    bool
 }
 
 // BuildConfigured folds an optional schema name into a leading object check
 // and parses all raw checks through the registry.
 func BuildConfigured(in BuildConfiguredInput) ([]ConfiguredCheck, error) {
-	target := in.Target
-	if target == "" {
-		target = TargetCollection
+	configurableIn := in.ConfigurableIn
+	if configurableIn == "" {
+		configurableIn = ConfigCollection
 	}
 	out := make([]ConfiguredCheck, 0, len(in.Raw)+1)
 	if in.Schema != "" {
 		if !in.AllowObject {
-			return nil, fmt.Errorf("%s: schema is not supported for %s checks", in.ErrorContext, target)
+			return nil, fmt.Errorf("%s: schema is not supported for %s checks", in.ErrorContext, configurableIn)
 		}
 		if in.SchemaKnown != nil && !in.SchemaKnown(in.Schema) {
 			return nil, fmt.Errorf("%s: unknown schema %q", in.ErrorContext, in.Schema)
@@ -103,7 +103,7 @@ func BuildConfigured(in BuildConfiguredInput) ([]ConfiguredCheck, error) {
 		kind := CheckType(strings.TrimSpace(raw.Kind))
 		if kind == CheckObject {
 			if !in.AllowObject {
-				return nil, fmt.Errorf("%s: checks[%d]: object check is not supported for %s checks", in.ErrorContext, j, target)
+				return nil, fmt.Errorf("%s: checks[%d]: object check is not supported for %s checks", in.ErrorContext, j, configurableIn)
 			}
 			if raw.Schema == "" {
 				return nil, fmt.Errorf("%s: checks[%d]: object check requires \"schema\"", in.ErrorContext, j)
@@ -121,8 +121,8 @@ func BuildConfigured(in BuildConfiguredInput) ([]ConfiguredCheck, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: checks[%d]: %w", in.ErrorContext, j, err)
 		}
-		if !SupportsTarget(kind, target) {
-			return nil, fmt.Errorf("%s: checks[%d]: check type %q does not support %s checks", in.ErrorContext, j, kind, target)
+		if !SupportsConfiguration(kind, configurableIn) {
+			return nil, fmt.Errorf("%s: checks[%d]: check type %q does not support %s checks", in.ErrorContext, j, kind, configurableIn)
 		}
 		out = append(out, ConfiguredCheck{Kind: kind, Args: args})
 	}
