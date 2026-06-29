@@ -87,35 +87,5 @@ It will be useful to have a name for an information system that satisfies all th
 
 > A **knowledge base** is a body of information curated so that it is internally consistent, complete within a useful domain, and up to date.
 
-As we'll see, this definition imposes enough structure to sketch useful technical requirements for AI knowledge bases. Let's take them one at a time.
+As we will see, this definition imposes enough structure to sketch useful technical requirements for AI knowledge bases. The following pages take each property in turn.
 
-## Internal consistency
-
-<!-- Introduce the definition -->
-
-Internal consistency means being free from internal contradiction. On its surface, this seems simple: the knowledge base can't say "A is true" in once place and "A is false" in another.
-
-<!-- Distinguish between content claims and structural claims -->
-
-However, there's some subtlety here. Imagine a folder containing customer feedback interviews. In one transcript, customer A says, "this product is amazing!" In another, customer B says "the product is terrible." Those statements are in direct contradiction, but is the knowledge base inconsistent?
-
-I'd argue no. The knowledge base isn't claiming that both customer opinions are true descriptions of the product. It is claiming that both interviews happened and that both customers said what the transcripts record. Imagine adding a README in the folder: "This folder contains interview transcripts from many customers. Customers may disagree among themselves."
-
-The README is amking *structural claims* about 
-
-<!-- Explain the need for a content interpreter -->
-
-A knowledge base needs a *content interpreter*: some set of rules, conventions, or schemas that tells a reader how to distinguish structural claims from ordinary content, and therefore which contradictions count.
-
-In the customer feedback example,  That rule changes how the content should be read. Disagreement between transcripts is allowed, but a transcript with the wrong customer ID, source date, or interview format may still violate the structure of the collection.
-
-
-## Completeness
-
-## Up-to-dateness
-
-Up-to-dateness is the guarantee of external consistency: the state of the content accurately reflects the state of the real world at some point in time. A knowledge base can be internally consistent and complete within its stated scope while still being wrong, because the world changed since the content was last updated.
-
-That makes up-to-dateness different from the other two criteria. It cannot be guaranteed from inside the content alone. It requires contact with an external source of truth: an event stream, a periodic refresh, a source-system query, a human review, or some other verification process. A curated system can record timestamps, sources, freshness windows, and update rules, but the guarantee comes from the process that reconnects the content to the world.
-
-Because curation takes work, there's always some lag between {...}. As a general rule, less lag is better. Information doesn't need to be perfectly up-to-date in order to be valuable. The important questions are whether the content makes a truthful claim about when it corresponded to the world, and whether the content is updated quickly enough to support valuable decisions.
