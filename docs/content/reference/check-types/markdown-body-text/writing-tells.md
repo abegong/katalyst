@@ -10,6 +10,8 @@ aliases = ["/reference/rules/markdown-body-text/writing-tells/"]
 
 `kind: markdown_writing_tells`
 
+**Targets:** collection.
+
 **Severity:** warning, reported for review; never fails a run.
 
 ## Purpose

@@ -60,6 +60,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemPathDepth,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "path-depth",
 		Title:     "Path depth",
 		Summary:   "Bound directory nesting relative to the collection root.",

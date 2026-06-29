@@ -67,11 +67,13 @@ type nameMatchesFieldArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemNameMatchesField,
-		Family:    "fileSystem",
-		Slug:      "name-matches-field",
-		Title:     "Name matches field",
-		Summary:   "Require a name to equal a frontmatter field, optionally slugified.",
+		CheckType:     checks.CheckFilesystemNameMatchesField,
+		Family:        "fileSystem",
+		Targets:       []string{checks.TargetCollection, checks.TargetFilesystem},
+		NeedsDocument: true,
+		Slug:          "name-matches-field",
+		Title:         "Name matches field",
+		Summary:       "Require a name to equal a frontmatter field, optionally slugified.",
 		Fields: []checks.Field{
 			{Name: "field", Required: false, Default: "slug", Desc: "Frontmatter key compared to the name."},
 			{Name: "transform", Required: false, Default: "none", Desc: "`none` or `slugify` (applied to the field value before comparison)."},

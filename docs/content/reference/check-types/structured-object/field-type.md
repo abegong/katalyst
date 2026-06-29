@@ -10,6 +10,8 @@ aliases = ["/reference/rules/structured-object/field-type/"]
 
 `kind: object_field_type`
 
+**Targets:** collection.
+
 ## Purpose
 
 Require that a frontmatter field has a specific type.

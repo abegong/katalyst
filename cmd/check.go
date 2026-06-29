@@ -47,13 +47,22 @@ reported as unmatched references (errors).`,
 			if err != nil {
 				return err
 			}
+			anyInvalid := false
+			out, errOut := cmd.OutOrStdout(), cmd.ErrOrStderr()
+
+			if len(args) == 0 {
+				bad, err := runFilesystemChecks(errOut, e)
+				if err != nil {
+					return err
+				}
+				if bad {
+					anyInvalid = true
+				}
+			}
 			res, err := resolveSelectors(e.proj, args)
 			if err != nil {
 				return err
 			}
-
-			anyInvalid := false
-			out, errOut := cmd.OutOrStdout(), cmd.ErrOrStderr()
 
 			for _, item := range res.Items {
 				ok, err := checkItem(out, errOut, e, item)

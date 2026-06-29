@@ -10,6 +10,8 @@ aliases = ["/reference/rules/markdown-body-text/requires-h1/"]
 
 `kind: markdown_requires_h1`
 
+**Targets:** collection.
+
 ## Purpose
 
 Require at least one H1 heading in the markdown body.

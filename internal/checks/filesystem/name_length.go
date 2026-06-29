@@ -47,6 +47,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemNameLength,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "name-length",
 		Title:     "Name length",
 		Summary:   "Bound the character length of a name.",

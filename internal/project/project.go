@@ -16,6 +16,7 @@ import (
 	"github.com/abegong/katalyst/internal/storage/collection"
 	"github.com/abegong/katalyst/internal/storage/collection/filesystem"
 	sqlitestore "github.com/abegong/katalyst/internal/storage/collection/sqlite"
+	"github.com/abegong/katalyst/internal/storage/filesystemcheck"
 )
 
 // Project is a loaded configuration plus the operations the CLI needs to
@@ -66,6 +67,11 @@ func (p *Project) def(c Collection) (collection.CollectionDefinition, error) {
 
 // Collections returns all collections in name order.
 func (p *Project) Collections() []Collection { return p.cfg.Collections }
+
+// FilesystemCheckScopes returns all filesystem-attached check scopes.
+func (p *Project) FilesystemCheckScopes() []filesystemcheck.Scope {
+	return p.cfg.FilesystemCheckScopes()
+}
 
 // Collection looks up one collection by name.
 func (p *Project) Collection(name string) (Collection, bool) {

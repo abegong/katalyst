@@ -143,7 +143,7 @@ type RawCollection struct {
 	Content               ContentConfig               `yaml:"content"`
 	Body                  string                      `yaml:"body"`
 	Schema                string                      `yaml:"schema"`
-	Checks                []RawCheck                  `yaml:"checks"`
+	Checks                []checks.RawCheck           `yaml:"checks"`
 	Listing               *RawListingDefaults         `yaml:"listing"`
 	Query                 *RawListingDefaults         `yaml:"query"`
 	Variants              []RawVariant                `yaml:"variants"`
@@ -160,9 +160,9 @@ type RawListingDefaults struct {
 // RawVariant mirrors one entry of a collection's `variants:` list: a `when`
 // discriminator plus the schema/checks to add for matching items.
 type RawVariant struct {
-	When   RawWhen    `yaml:"when"`
-	Schema string     `yaml:"schema"`
-	Checks []RawCheck `yaml:"checks"`
+	When   RawWhen           `yaml:"when"`
+	Schema string            `yaml:"schema"`
+	Checks []checks.RawCheck `yaml:"checks"`
 }
 
 // RawWhen is a variant discriminator: a list of `item list --filter` predicate
@@ -199,72 +199,6 @@ func (w *RawWhen) UnmarshalYAML(value *yaml.Node) error {
 	default:
 		return fmt.Errorf("invalid when: expected a string, a list, or {where: [...]}")
 	}
-	return nil
-}
-
-// RawCheck mirrors one `checks:` entry. The struct fields exist so a misspelled
-// key fails YAML's known-field validation; the retained node is what a check
-// type's own parser decodes for its real args.
-type RawCheck struct {
-	Kind      string   `yaml:"kind"`
-	Schema    string   `yaml:"schema"`
-	Field     string   `yaml:"field"`
-	Type      string   `yaml:"type"`
-	Value     string   `yaml:"value"`
-	Values    []string `yaml:"values"`
-	Min       *float64 `yaml:"min"`
-	Max       *float64 `yaml:"max"`
-	MinLength int      `yaml:"min_length"`
-	MaxLength int      `yaml:"max_length"`
-	Heading   string   `yaml:"heading"`
-	Style     string   `yaml:"style"`
-	Target    string   `yaml:"target"`
-	Transform string   `yaml:"transform"`
-	Prefix    string   `yaml:"prefix"`
-	Suffix    string   `yaml:"suffix"`
-	Allow     []string `yaml:"allow"`
-	Deny      []string `yaml:"deny"`
-	Pattern   string   `yaml:"pattern"`
-	Fields    []string `yaml:"fields"`
-	Name      string   `yaml:"name"`
-	Match     string   `yaml:"match"`
-	Select    string   `yaml:"select"`
-	Fix       string   `yaml:"fix"`
-
-	// node is the raw YAML node for this entry, retained so a distributed check
-	// parser can decode its own args. Captured in UnmarshalYAML.
-	node *yaml.Node
-}
-
-var rawCheckKeys = map[string]bool{
-	"kind": true, "schema": true, "field": true, "type": true,
-	"value": true, "values": true, "min": true, "max": true,
-	"min_length": true, "max_length": true, "heading": true,
-	"style": true, "target": true, "transform": true,
-	"prefix": true, "suffix": true, "allow": true, "deny": true,
-	"pattern": true, "fields": true, "name": true, "match": true,
-	"select": true, "fix": true,
-}
-
-// UnmarshalYAML decodes the entry's fields and stashes the raw node, so the
-// node can travel to a check type's own parser (checks.RegisterParsed).
-func (rc *RawCheck) UnmarshalYAML(value *yaml.Node) error {
-	if value.Kind != yaml.MappingNode {
-		return fmt.Errorf("invalid check: expected a mapping")
-	}
-	for i := 0; i < len(value.Content); i += 2 {
-		key := value.Content[i].Value
-		if !rawCheckKeys[key] {
-			return fmt.Errorf("unknown check key %q", key)
-		}
-	}
-	type plain RawCheck
-	var p plain
-	if err := value.Decode(&p); err != nil {
-		return err
-	}
-	*rc = RawCheck(p)
-	rc.node = value
 	return nil
 }
 
@@ -440,38 +374,15 @@ func rejectUnsupportedSQLiteChecks(name string, base []checks.ConfiguredCheck, v
 // buildChecks folds an optional schema name into a leading object check and
 // normalizes the remaining raw checks. errCtx prefixes any error (e.g.
 // `collection "books"` or `collection "books": variants[0]`).
-func buildChecks(errCtx, schema string, raws []RawCheck, schemaKnown func(string) bool) ([]checks.ConfiguredCheck, error) {
-	out := make([]checks.ConfiguredCheck, 0, len(raws)+1)
-	if schema != "" {
-		if !schemaKnown(schema) {
-			return nil, fmt.Errorf("%s: unknown schema %q", errCtx, schema)
-		}
-		out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: schema})
-	}
-	for j, raw := range raws {
-		kind := checks.CheckType(strings.TrimSpace(raw.Kind))
-		if kind == checks.CheckObject {
-			// An explicit `kind: object` names a schema, validated here because
-			// the loader owns schema resolution; the engine builds it.
-			if raw.Schema == "" {
-				return nil, fmt.Errorf("%s: checks[%d]: object check requires \"schema\"", errCtx, j)
-			}
-			if !schemaKnown(raw.Schema) {
-				return nil, fmt.Errorf("%s: checks[%d]: unknown schema %q", errCtx, j, raw.Schema)
-			}
-			if raw.Field != "" {
-				return nil, fmt.Errorf("%s: checks[%d]: object check does not support \"field\"", errCtx, j)
-			}
-			out = append(out, checks.ConfiguredCheck{Kind: checks.CheckObject, Schema: raw.Schema})
-			continue
-		}
-		args, err := checks.Parse(kind, raw.node)
-		if err != nil {
-			return nil, fmt.Errorf("%s: checks[%d]: %w", errCtx, j, err)
-		}
-		out = append(out, checks.ConfiguredCheck{Kind: kind, Args: args})
-	}
-	return out, nil
+func buildChecks(errCtx, schema string, raws []checks.RawCheck, schemaKnown func(string) bool) ([]checks.ConfiguredCheck, error) {
+	return checks.BuildConfigured(checks.BuildConfiguredInput{
+		ErrorContext: errCtx,
+		Schema:       schema,
+		Raw:          raws,
+		SchemaKnown:  schemaKnown,
+		Target:       checks.TargetCollection,
+		AllowObject:  true,
+	})
 }
 
 // buildVariants parses and validates a collection's variants: each `when`

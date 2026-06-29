@@ -59,10 +59,22 @@ type Descriptor struct {
 	// Scope is "collection" for checks that run once per collection over all
 	// its items; empty means an ordinary per-item check.
 	Scope string `json:"scope,omitempty"`
+	// Targets names the config attachment points that accept this check type:
+	// "collection", "filesystem". Empty means collection during migration.
+	Targets []string `json:"targets,omitempty"`
+	// NeedsDocument reports whether this check needs parsed document metadata
+	// or body text. Filesystem scopes use it to avoid parsing for path-only
+	// checks.
+	NeedsDocument bool `json:"needs_document,omitempty"`
 	// Severity is "warning" for checks that emit advisory findings (never
 	// failing the run); empty means the default, "error".
 	Severity string `json:"severity,omitempty"`
 }
+
+const (
+	TargetCollection = "collection"
+	TargetFilesystem = "filesystem"
+)
 
 // Family identifies a check-type family: its id (used in Descriptor.Family and
 // `--family`), its docs-directory slug, and its intro copy.
@@ -220,6 +232,37 @@ func DescriptorFor(kind CheckType) (Descriptor, bool) {
 		return Descriptor{}, false
 	}
 	return registrations[i].desc, true
+}
+
+// DescriptorTargets returns the explicit or migration-default attachment
+// targets for d.
+func DescriptorTargets(d Descriptor) []string {
+	if len(d.Targets) == 0 {
+		return []string{TargetCollection}
+	}
+	out := make([]string, len(d.Targets))
+	copy(out, d.Targets)
+	return out
+}
+
+// SupportsTarget reports whether kind accepts the named attachment target.
+func SupportsTarget(kind CheckType, target string) bool {
+	desc, ok := DescriptorFor(kind)
+	if !ok {
+		return false
+	}
+	for _, t := range DescriptorTargets(desc) {
+		if t == target {
+			return true
+		}
+	}
+	return false
+}
+
+// NeedsDocument reports whether a check needs parsed document data.
+func NeedsDocument(kind CheckType) bool {
+	desc, ok := DescriptorFor(kind)
+	return ok && desc.NeedsDocument
 }
 
 // CollectionScoped reports whether kind runs once per collection (vs. per item).

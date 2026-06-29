@@ -21,23 +21,47 @@ model]({{< relref "_index.md" >}}).
 |---|---|
 | **Check** | Shorthand for a check instance when context is unambiguous. A check asserts one condition and reports a violation when the condition fails. |
 | **Check type** | The reusable definition of a constraint: `object_required_field`, `markdown_single_h1`, and so on. A check type is selected by its `kind:` id and appears in the generated check types reference. |
-| **Check instance** | One configured check attached to a collection: a check type plus its arguments, written as one YAML object under `checks:`. The type is the rule; the instance is the rule applied here. |
+| **Check instance** | One configured check attached to a collection or filesystem scope: a check type plus its arguments, written as one YAML object under `checks:`. The type is the rule; the instance is the rule applied here. |
 | **Family** | The kind of source data a check type reads: `structuredObject` (frontmatter), `markdownBodyText` (the body), `fileSystem` (names and paths), or `plainText` (raw body text). |
+| **Attachment target** | The config site where a check instance is valid: `collection` for collection `checks:`, or `filesystem` for base-level `filesystemChecks`. |
 | **Check library** | The provider that supplies and runs a check type. Native libraries wrap hand-written checks; schema-backed libraries delegate to an external validation engine. |
-| **Scope** | The level where a check runs. Most checks are item-scoped; a few are collection-scoped and reason across every item in the collection. |
+| **Runtime granularity** | The level where a check runs. Most checks are file-scoped; a few are file-set-scoped and reason across every selected file. |
 | **Severity** | The consequence of a violation. `error` fails the run; `warning` is advisory and does not change the exit code. |
 | **Violation** | One failed check result, with a message, source location, JSON pointer when applicable, severity, and sometimes a sibling file for collection-scoped findings. |
 
-Family and library are separate axes. Family answers *what data does this check
-read?* Library answers *who runs it?* A single family can span libraries:
+Family, library, attachment target, and runtime granularity are separate axes.
+Family answers *what data does this check read?* Library answers *who runs it?*
+Attachment target answers *where can a user configure it?* Runtime granularity
+answers *does it run once per file or once per selected file set?* A single
+family can span libraries:
 `structuredObject` includes both `object` from the JSON Schema library and
 `object_required_field` from the native structured-object library.
 
 The registry is the single source of truth for check types. Each check type
-self-registers a `Descriptor` (its id, family, docs metadata) and a constructor.
-`cmd/engine` builds the runnable list by registry lookup; the docs generator and
-`katalyst check-types list` read the same descriptors. A parity test fails if a
-configured kind has no descriptor, so a check type cannot ship undocumented.
+self-registers a `Descriptor` (its id, family, targets, docs metadata) and a
+constructor. `cmd/engine` builds the runnable list by registry lookup; the docs
+generator and `katalyst check-types list` read the same descriptors. A parity
+test fails if a configured kind has no descriptor, so a check type cannot ship
+undocumented.
+
+## Attachment targets
+
+Collection-attached checks live under a collection's `checks:` list. They run
+after selector resolution and can use schema precedence, variants, and the
+collection's full sibling set. This is the historical model and remains the
+right place for rules that depend on collection identity.
+
+Filesystem-attached checks live under a filesystem base's `filesystemChecks`
+list. Each scope selects raw files with `include` and `exclude` globs. A
+no-selector `katalyst check` runs filesystem scopes before collection checks,
+so a project can enforce path policy before any collection exists. Explicit
+collection selectors stay collection-only.
+
+The descriptor's `Targets` list controls where a check type may be configured.
+During migration, an empty list means `collection`. File-system-family checks
+that only read paths can usually support both targets. Checks that read
+frontmatter or body text declare that they need a parsed document so filesystem
+scopes parse lazily and path-only scopes avoid unnecessary document work.
 
 ## Check libraries
 
@@ -97,11 +121,13 @@ model]({{< relref "_index.md" >}}) for the precedence table and the
 full per-item lifecycle. Before any schema compiles, the engine confirms the
 owning libraries are available.
 
-Running is uniform: every per-item check returns a list of violations, which the
-engine concatenates; collection-scoped checks run in a second pass over the
-whole collection. A violation carries a JSON-pointer `Path`, a `Message`, a
-source `Line`, an optional `File` (for collection-scoped findings that name a
-sibling), and a `Severity`. An item with no violations prints `path: OK`.
+Running is uniform: every file check returns a list of violations, which the
+engine concatenates; file-set checks run in a second pass over the selected
+files. For collections, that file set is the whole collection. For filesystem
+checks, it is the scope's selected file set plus its unmatched files. A
+violation carries a JSON-pointer `Path`, a `Message`, a source `Line`, an
+optional `File` (for file-set findings that name a sibling), and a `Severity`.
+An item with no violations prints `path: OK`.
 
 ## Design rationale
 
@@ -126,7 +152,7 @@ gives every library the same shape, so the engine compiles, caches, and gates
 them identically regardless of whether the work happens in-process or in a
 subprocess.
 
-**Collection-scoped checks re-scan the whole collection.** A uniqueness or
+**File-set checks re-scan the whole collection when attached to a collection.** A uniqueness or
 required-index verdict is only correct against every item, so these checks run a
 second pass over the full collection even under a single-item selector. The
 trade is that `katalyst check notes/one.md` does more work than its name
@@ -156,8 +182,9 @@ real out-of-process library exists.
    descriptor, and generated docs read the same registry as the engine.
 2. **Family and library stay separate.** Family describes the data a check
    reads; library describes the provider that runs it.
-3. **Collection-scoped checks see the whole collection.** A selector may narrow
-   output, but a collection-level verdict still needs the full sibling set.
+3. **Collection-attached file-set checks see the whole collection.** A selector
+   may narrow output, but a collection-level verdict still needs the full
+   sibling set.
 
 ## See also
 

@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/name-regex/"]
 
 `kind: filesystem_name_regex`
 
+**Targets:** collection, filesystem.
+
 ## Purpose
 
 Require a name to match a regular expression (anchored).

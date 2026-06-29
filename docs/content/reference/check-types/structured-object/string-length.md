@@ -10,6 +10,8 @@ aliases = ["/reference/rules/structured-object/string-length/"]
 
 `kind: object_string_length`
 
+**Targets:** collection.
+
 ## Purpose
 
 Constrain the minimum and/or maximum length of a string field.

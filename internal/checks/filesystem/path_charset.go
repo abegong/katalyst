@@ -63,6 +63,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemPathCharset,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "path-charset",
 		Title:     "Path charset",
 		Summary:   "Constrain the characters allowed in the item's path.",

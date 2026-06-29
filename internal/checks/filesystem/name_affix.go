@@ -44,6 +44,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemNameAffix,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "name-affix",
 		Title:     "Name affix",
 		Summary:   "Require a name to start with a prefix and/or end with a suffix.",

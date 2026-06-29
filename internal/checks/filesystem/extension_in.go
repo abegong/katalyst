@@ -39,6 +39,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemExtensionIn,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "extension-in",
 		Title:     "Extension in",
 		Summary:   "Allow only specific file extensions.",

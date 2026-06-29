@@ -41,6 +41,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemNameRegex,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "name-regex",
 		Title:     "Name regex",
 		Summary:   "Require a name to match a regular expression (anchored).",

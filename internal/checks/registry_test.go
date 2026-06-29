@@ -55,3 +55,33 @@ func TestDescriptorLibrary(t *testing.T) {
 		}
 	}
 }
+
+func TestDescriptorTargets(t *testing.T) {
+	if !checks.SupportsTarget(checks.CheckFilesystemNameCase, checks.TargetCollection) {
+		t.Fatalf("filesystem_name_case should support collection checks")
+	}
+	if !checks.SupportsTarget(checks.CheckFilesystemNameCase, checks.TargetFilesystem) {
+		t.Fatalf("filesystem_name_case should support filesystem checks")
+	}
+	if checks.SupportsTarget(checks.CheckMarkdownRequiresH1, checks.TargetFilesystem) {
+		t.Fatalf("markdown_requires_h1 should remain collection-only")
+	}
+	if !checks.SupportsTarget(checks.CheckFilesystemUnmatchedFiles, checks.TargetFilesystem) {
+		t.Fatalf("filesystem_unmatched_files should support filesystem checks")
+	}
+	if checks.SupportsTarget(checks.CheckFilesystemUnmatchedFiles, checks.TargetCollection) {
+		t.Fatalf("filesystem_unmatched_files should not support collection checks")
+	}
+}
+
+func TestDescriptorNeedsDocument(t *testing.T) {
+	if checks.NeedsDocument(checks.CheckFilesystemNameCase) {
+		t.Fatalf("filesystem_name_case should stay path-only")
+	}
+	if !checks.NeedsDocument(checks.CheckFilesystemNameMatchesField) {
+		t.Fatalf("filesystem_name_matches_field should need document metadata")
+	}
+	if !checks.NeedsDocument(checks.CheckFilesystemUniqueField) {
+		t.Fatalf("filesystem_unique_field should need document metadata")
+	}
+}

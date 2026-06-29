@@ -4,8 +4,8 @@ The check engine: the check types Katalyst ships, the libraries that run them,
 and the violations they produce.
 
 **Architecture and design rationale** - the model (check type vs. instance,
-family vs. library, scope), check libraries, how a check runs, and the
-trade-offs - live in the
+family vs. library vs. attachment target vs. runtime granularity), check
+libraries, how a check runs, and the trade-offs - live in the
 [How checks work](../../docs/content/deep-dives/domain-model/checks.md) deep-dive, which is
 the source of truth. The per-type catalog is the generated
 [check-types reference](../../docs/content/reference/check-types/), and the
@@ -18,6 +18,13 @@ local code conventions.
   it through the package's `register` helper (in `library.go`). To add one, see
   the [add-katalyst-check-type](../../.cursor/skills/add-katalyst-check-type/SKILL.md)
   skill.
+- Set descriptor `Targets` for every check that can attach outside a
+  collection. Empty targets mean collection-only during migration. Use
+  `checks.TargetCollection` and `checks.TargetFilesystem` rather than string
+  literals.
+- Set descriptor `NeedsDocument` when a check reads frontmatter, markdown body
+  text, or source line maps. Filesystem-attached checks use it to parse lazily
+  and to apply `parseFailures`.
 - Family packages (`structuredobject/`, `markdownbodytext/`, `filesystem/`,
   `plaintext/`) import the core `checks` package, never the reverse. Callers
   wire every family in by blank-importing `internal/checks/all`.

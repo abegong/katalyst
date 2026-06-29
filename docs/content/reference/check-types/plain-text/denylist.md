@@ -10,6 +10,8 @@ aliases = ["/reference/rules/plain-text/denylist/"]
 
 `kind: text_denylist`
 
+**Targets:** collection.
+
 ## Purpose
 
 Forbid any of a list of literal substrings in the body text.

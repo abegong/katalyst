@@ -10,6 +10,8 @@ aliases = ["/reference/rules/structured-object/sentence-case/"]
 
 `kind: object_sentence_case`
 
+**Targets:** collection.
+
 ## Purpose
 
 Require a string field to read as sentence case, not Title Case.

@@ -12,6 +12,8 @@ aliases = ["/reference/rules/structured-object/unique-field/"]
 
 **Scope:** collection, runs once per collection over all its items.
 
+**Targets:** collection, filesystem.
+
 ## Purpose
 
 Require that no two items share a value for a frontmatter field.

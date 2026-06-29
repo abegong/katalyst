@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/parent-dir-in/"]
 
 `kind: filesystem_parent_dir_in`
 
+**Targets:** collection, filesystem.
+
 ## Purpose
 
 Require that the file's parent directory name is in an allowed set.

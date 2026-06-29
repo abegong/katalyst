@@ -33,7 +33,7 @@ Copy this checklist and keep it updated:
 ```text
 Check Type Task Progress:
 - [ ] 1) Kind constant added (internal/checks/kinds.go)
-- [ ] 2) Check file added (struct + Run + args + Descriptor + registerParsed)
+- [ ] 2) Check file added (struct + Run + args + Descriptor targets/document-needs + registerParsed)
 - [ ] 3) Tests added/updated
 - [ ] 4) Fixtures/readmes updated
 - [ ] 5) Reference regenerated
@@ -62,6 +62,11 @@ Add one file in the check type's family package — `internal/checks/structuredo
   the family's `common.go`) rather than re-deriving.
 - An `init()` calling the family's `registerParsed(descriptor, parse, build,
   buildColl)`:
+  - Set `descriptor.Targets`. Use `checks.TargetCollection` for collection
+    `checks:` and add `checks.TargetFilesystem` only when the same
+    implementation works under `filesystemChecks`.
+  - Set `descriptor.NeedsDocument` when the check reads frontmatter, markdown
+    body text, or source line maps. Path-only checks leave it false.
   - `parse func(*yaml.Node) (any, error)` decodes the node into the args struct
     and validates it. Use `internal/checks/argcheck` helpers (`RequireString`,
     `OneOf`, …) for uniform, test-stable error phrasing, plus any family-local

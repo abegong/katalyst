@@ -26,6 +26,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemUniqueFilename,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "unique-filename",
 		Title:     "Unique filename",
 		Summary:   "Require that no two items in the collection share a basename.",

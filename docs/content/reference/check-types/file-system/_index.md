@@ -24,3 +24,4 @@ Check types in this family:
 - [Path depth]({{< relref "path-depth.md" >}}): Bound directory nesting relative to the collection root.
 - [Referenced files exist]({{< relref "referenced-files-exist.md" >}}): Require path-valued frontmatter fields to resolve to real files.
 - [Unique filename]({{< relref "unique-filename.md" >}}): Require that no two items in the collection share a basename.
+- [Unmatched files]({{< relref "unmatched-files.md" >}}): Report regular files under a filesystem scope that match neither include nor exclude patterns.

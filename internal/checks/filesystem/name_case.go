@@ -61,6 +61,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemNameCase,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "name-case",
 		Title:     "Name case",
 		Summary:   "Require a name (or path segments) to follow a case style.",

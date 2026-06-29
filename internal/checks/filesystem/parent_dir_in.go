@@ -34,6 +34,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemParentDirIn,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "parent-dir-in",
 		Title:     "Parent directory in",
 		Summary:   "Require that the file's parent directory name is in an allowed set.",

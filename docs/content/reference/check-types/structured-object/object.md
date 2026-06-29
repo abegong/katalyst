@@ -10,6 +10,8 @@ aliases = ["/reference/rules/structured-object/object/"]
 
 `kind: object`
 
+**Targets:** collection.
+
 ## Purpose
 
 Validate frontmatter metadata against a named JSON Schema from `schemas:`.

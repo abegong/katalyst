@@ -10,6 +10,8 @@ aliases = ["/reference/rules/markdown-body-text/title-matches-h1/"]
 
 `kind: markdown_title_matches_h1`
 
+**Targets:** collection.
+
 ## Purpose
 
 Require a frontmatter field to match the first H1 heading in the body.

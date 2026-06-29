@@ -34,6 +34,7 @@ const (
 	CheckFilesystemUniqueFilename      CheckType = "filesystem_unique_filename"
 	CheckFilesystemUniqueField         CheckType = "filesystem_unique_field"
 	CheckFilesystemIndexFileRequired   CheckType = "filesystem_index_file_required"
+	CheckFilesystemUnmatchedFiles      CheckType = "filesystem_unmatched_files"
 	CheckTextRequires                  CheckType = "text_requires"
 	CheckTextForbids                   CheckType = "text_forbids"
 	CheckTextDenylist                  CheckType = "text_denylist"

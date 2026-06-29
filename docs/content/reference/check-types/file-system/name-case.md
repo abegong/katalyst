@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/name-case/"]
 
 `kind: filesystem_name_case`
 
+**Targets:** collection, filesystem.
+
 ## Purpose
 
 Require a name (or path segments) to follow a case style.

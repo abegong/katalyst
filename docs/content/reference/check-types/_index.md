@@ -53,6 +53,7 @@ File-system check types validate filename and path conventions for items.
 - [Path depth]({{< relref "file-system/path-depth.md" >}}): Bound directory nesting relative to the collection root.
 - [Referenced files exist]({{< relref "file-system/referenced-files-exist.md" >}}): Require path-valued frontmatter fields to resolve to real files.
 - [Unique filename]({{< relref "file-system/unique-filename.md" >}}): Require that no two items in the collection share a basename.
+- [Unmatched files]({{< relref "file-system/unmatched-files.md" >}}): Report regular files under a filesystem scope that match neither include nor exclude patterns.
 
 ## Plain text
 

@@ -25,6 +25,7 @@ import (
 
 	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection"
+	"github.com/abegong/katalyst/internal/storage/filesystemcheck"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,6 +87,9 @@ type BaseInstance struct {
 	Root string
 	// Collections this base declares, in name order.
 	Collections []Collection
+	// FilesystemChecks are raw filesystem policy scopes attached to this
+	// filesystem base.
+	FilesystemChecks []filesystemcheck.Scope
 }
 
 // Collection, CollectionVariant, and ListingDefaults live in
@@ -130,10 +134,11 @@ type rawBaseKind struct {
 // collections it declares (name → definition). The collection mirror lives with
 // the Collection type in internal/storage/collection.
 type rawBaseInstance struct {
-	Type        string                              `yaml:"type"`
-	Root        string                              `yaml:"root"`
-	Path        string                              `yaml:"path"`
-	Collections map[string]collection.RawCollection `yaml:"collections"`
+	Type             string                              `yaml:"type"`
+	Root             string                              `yaml:"root"`
+	Path             string                              `yaml:"path"`
+	FilesystemChecks []filesystemcheck.RawScope          `yaml:"filesystemChecks"`
+	Collections      map[string]collection.RawCollection `yaml:"collections"`
 }
 
 // Load finds the project root (nearest ancestor with a .katalyst/ dir),
@@ -353,6 +358,24 @@ func (c *Config) buildInstance(name string, ri rawBaseInstance, exts []string, p
 		rootRel = "."
 	}
 	instRoot := resolve(c.Root, rootRel)
+	var filesystemChecks []filesystemcheck.Scope
+	if len(ri.FilesystemChecks) > 0 {
+		if storage.BaseType(typ) != storage.Filesystem {
+			return BaseInstance{}, fmt.Errorf("%s %q: filesystemChecks requires type %q", label, name, storage.Filesystem)
+		}
+		filesystemChecks = make([]filesystemcheck.Scope, 0, len(ri.FilesystemChecks))
+		for i, raw := range ri.FilesystemChecks {
+			scope, err := filesystemcheck.Build(filesystemcheck.BuildInput{
+				ErrorContext: fmt.Sprintf("%s %q: filesystemChecks[%d]", label, name, i),
+				Raw:          raw,
+				BaseRoot:     instRoot,
+			})
+			if err != nil {
+				return BaseInstance{}, err
+			}
+			filesystemChecks = append(filesystemChecks, scope)
+		}
+	}
 
 	// Start with the inline collections, then fold in any per-collection files.
 	raws := make(map[string]collection.RawCollection, len(ri.Collections))
@@ -401,7 +424,7 @@ func (c *Config) buildInstance(name string, ri rawBaseInstance, exts []string, p
 		}
 		cols = append(cols, col)
 	}
-	return BaseInstance{Name: name, Type: typ, Root: instRoot, Collections: cols}, nil
+	return BaseInstance{Name: name, Type: typ, Root: instRoot, Collections: cols, FilesystemChecks: filesystemChecks}, nil
 }
 
 func dirExists(dir string) (bool, error) {
@@ -522,6 +545,16 @@ func (c *Config) CollectionNames() []string {
 		names = append(names, col.Name)
 	}
 	return names
+}
+
+// FilesystemCheckScopes returns every filesystem check scope in deterministic
+// base order.
+func (c *Config) FilesystemCheckScopes() []filesystemcheck.Scope {
+	var out []filesystemcheck.Scope
+	for _, base := range c.Bases {
+		out = append(out, base.FilesystemChecks...)
+	}
+	return out
 }
 
 // find walks from start upward until it locates a directory containing a

@@ -51,6 +51,7 @@ func init() {
 	registerParsed(checks.Descriptor{
 		CheckType: checks.CheckFilesystemIndexFileRequired,
 		Family:    "fileSystem",
+		Targets:   []string{checks.TargetCollection, checks.TargetFilesystem},
 		Slug:      "index-file-required",
 		Title:     "Index file required",
 		Summary:   "Require that every directory containing items has an index file.",

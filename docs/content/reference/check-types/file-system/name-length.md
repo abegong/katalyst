@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/name-length/"]
 
 `kind: filesystem_name_length`
 
+**Targets:** collection, filesystem.
+
 ## Purpose
 
 Bound the character length of a name.

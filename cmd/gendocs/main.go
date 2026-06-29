@@ -314,6 +314,7 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 	if d.Scope == "collection" {
 		fmt.Fprint(&b, "**Scope:** collection, runs once per collection over all its items.\n\n")
 	}
+	fmt.Fprintf(&b, "**Targets:** %s.\n\n", strings.Join(checks.DescriptorTargets(d), ", "))
 	if d.Severity == "warning" {
 		fmt.Fprint(&b, "**Severity:** warning, reported for review; never fails a run.\n\n")
 	}
