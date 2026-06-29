@@ -13,7 +13,7 @@ registry validates a declared `type`, and a collection parses its own block in
 `check` lifecycle is driven from here.
 
 This page is the model and the *why*; for the key-by-key surface see the
-[configuration reference]({{< relref "../../reference/configuration.md" >}}).
+[configs reference]({{< relref "../../reference/configs/_index.md" >}}).
 
 Collections are declared *inside* a [base]({{< relref "base.md" >}}), which owns
 the base-to-collection mapping. This page covers the collection model and
@@ -120,7 +120,7 @@ until real usage shows the need. The base page frames the same decision as
 
 ## See also
 
-- The [configuration reference]({{< relref "../../reference/configuration.md" >}})
+- The [configs reference]({{< relref "../../reference/configs/_index.md" >}})
   for the precise `.katalyst/` surface.
 - The [base]({{< relref "base.md" >}}) for how a backend source maps onto
   collections, and the base model.

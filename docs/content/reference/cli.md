@@ -71,7 +71,7 @@ Shared across the validating commands (`check`, `fix --check`):
 ## Filter predicates
 
 The `--filter` flag of `katalyst item list` and the `when:` clause of a
-[collection variant]({{< relref "configuration.md#variants" >}}) share one
+[collection variant]({{< relref "configs/variants.md" >}}) share one
 predicate language, so it is documented here once. A predicate is
 `field OP value`; the operator is the first one found scanning left to right:
 
@@ -97,6 +97,6 @@ the listing pipeline (`--grep`, `--sort`, `--skip`/`--limit`) is documented in
 
 ## See also
 
-- [Configuration reference]({{< relref "configuration.md" >}})
+- [Configs reference]({{< relref "configs/_index.md" >}})
 - [Check types reference]({{< relref "check-types/_index.md" >}})
 - [Inspectors reference]({{< relref "inspectors/_index.md" >}})

@@ -70,7 +70,7 @@ The same evidence can power a future `doctor` / `explain` command: list the coll
 ## Variants route checks, not membership
 
 A collection may run different checks on different items via
-[variants]({{< relref "../../reference/configuration.md" >}}#variants), but that is
+[variants]({{< relref "../../reference/configs/variants.md" >}}), but that is
 a *check-engine* concern, not a base one. A variant's discriminator is a
 predicate over an item's **metadata**: portable across every base type, since
 each yields a metadata map (frontmatter for a file, columns for a row). It never
@@ -125,6 +125,6 @@ the definition's pattern are two views of the same thing.
 - [Domain model]({{< relref "_index.md" >}}) for the cross-subsystem entity map.
 - [Collections]({{< relref "collections.md" >}}) for the collection and item
   hierarchy bases expose.
-- [Configuration]({{< relref "../../reference/configuration.md" >}}) for the
+- [Configs]({{< relref "../../reference/configs/_index.md" >}}) for the
   precise `.katalyst/bases/` surface.
 - `go doc ./internal/storage` for the code-level base contracts.
