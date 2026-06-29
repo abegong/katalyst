@@ -24,12 +24,13 @@ func (UniqueFilename) RunCollection(ctx checks.CollectionContext) []checks.Viola
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemUniqueFilename,
-		Family:    "fileSystem",
-		Slug:      "unique-filename",
-		Title:     "Unique filename",
-		Summary:   "Require that no two items in the collection share a basename.",
-		Scope:     "collection",
+		CheckType:      checks.CheckFilesystemUniqueFilename,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "unique-filename",
+		Title:          "Unique filename",
+		Summary:        "Require that no two items in the collection share a basename.",
+		Scope:          "collection",
 		ConfigExample: `collections:
   notes:
     path: notes

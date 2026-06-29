@@ -5,8 +5,11 @@ weight = 50
 
 # Checks
 
-Each entry in a collection's `checks:` list has a `kind` and the keys that
-check type requires. Every check type is documented one per page in the
+Each check instance has a `kind` and the keys that check type requires. A check
+instance can be attached to a collection under `collections.<name>.checks`, or
+to a raw filesystem scope under `filesystemChecks[].checks` when the check
+type supports the `filesystem` target. Every check type is documented one per
+page in the
 [check types reference]({{< relref "../check-types/_index.md" >}}):
 
 ```yaml
@@ -19,6 +22,48 @@ checks:
   - kind: markdown_title_matches_h1
   - kind: filesystem_name_matches_field
 ```
+
+## Configuration Sites
+
+Collection-attached checks run after a file belongs to a collection. They can
+use collection schemas, variants, item selectors, and collection-wide sibling
+sets:
+
+```yaml
+collections:
+  posts:
+    path: content/posts
+    checks:
+      - kind: markdown_requires_h1
+      - kind: filesystem_name_case
+        style: kebab
+```
+
+Filesystem-attached checks run from filesystem base config. They select files
+with `include` and `exclude` globs and do not require collections to exist:
+
+```yaml
+filesystemChecks:
+  - name: docs
+    path: docs/content
+    include: ["**/*.md"]
+    parseFailures: warning
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+      - kind: filesystem_name_matches_field
+        field: title
+```
+
+`katalyst check` with no selector runs filesystem scopes first, then collection
+checks. `katalyst check <collection>` and `katalyst check <collection>/<item>`
+run collection checks only. Filesystem scopes reject check types that do not
+list `filesystem` in `configurableIn`.
+
+Document-aware filesystem checks parse selected files only when needed.
+`parseFailures: error` is the default and fails the run on parse errors.
+`parseFailures: warning` reports the parse error as advisory and skips
+document-aware checks for that file.
 
 ## Text rules
 

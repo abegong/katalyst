@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/path-charset/"]
 
 `kind: filesystem_path_charset`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Constrain the characters allowed in the item's path.

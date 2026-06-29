@@ -39,11 +39,12 @@ type nameRegexArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemNameRegex,
-		Family:    "fileSystem",
-		Slug:      "name-regex",
-		Title:     "Name regex",
-		Summary:   "Require a name to match a regular expression (anchored).",
+		CheckType:      checks.CheckFilesystemNameRegex,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "name-regex",
+		Title:          "Name regex",
+		Summary:        "Require a name to match a regular expression (anchored).",
 		Fields: []checks.Field{
 			{Name: "pattern", Required: true, Desc: "Regular expression; matched anchored (`^pattern$`)."},
 			{Name: "target", Required: false, Default: "filename", Desc: "What to test: `filename`, `filename-ext`, `parent-dir`, or `path-segments`."},

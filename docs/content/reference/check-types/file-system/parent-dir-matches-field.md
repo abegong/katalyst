@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/parent-dir-matches-field/"]
 
 `kind: filesystem_parent_dir_matches_field`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require the parent directory name to equal a frontmatter field.

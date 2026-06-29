@@ -58,11 +58,12 @@ type pathDepthArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemPathDepth,
-		Family:    "fileSystem",
-		Slug:      "path-depth",
-		Title:     "Path depth",
-		Summary:   "Bound directory nesting relative to the collection root.",
+		CheckType:      checks.CheckFilesystemPathDepth,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "path-depth",
+		Title:          "Path depth",
+		Summary:        "Bound directory nesting relative to the collection root.",
 		Fields: []checks.Field{
 			{Name: "min", Required: false, Desc: "Minimum depth (at least one of min/max)."},
 			{Name: "max", Required: false, Desc: "Maximum depth; `0` means a flat collection (at least one of min/max)."},

@@ -25,9 +25,12 @@ and how a backend attaches — live in the
   checks can decode without pulling in a backend.
 - `collection` owns the `Collection` type, so the project loader imports
   `collection`, not the reverse. Keep the edge pointing that way: `collection`
-  imports `checks` (to parse a check's args) and the sibling `predicate`
+  imports `checks` (to parse collection-attached check args) and the sibling `predicate`
   grammar, but never the loader. `Build` takes schema validation as an injected
   `SchemaKnown func(string) bool` rather than reaching back into the loader.
+- Collection `checks:` stay collection-attached. Filesystem-attached checks live
+  on filesystem bases under `filesystemChecks`, and their scope building lives
+  in `internal/storage/filesystemcheck`.
 - Read and write are duals: the backend reader locates and
   `markdownbodytext.Parse` decodes; `fix` computes the new bytes and the backend
   persists them (`filesystem.Write`). Backend-specific IO stays in the backend

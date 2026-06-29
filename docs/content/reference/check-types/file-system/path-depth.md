@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/path-depth/"]
 
 `kind: filesystem_path_depth`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Bound directory nesting relative to the collection root.

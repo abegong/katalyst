@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/referenced-files-exist/"]
 
 `kind: filesystem_referenced_files_exist`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require path-valued frontmatter fields to resolve to real files.

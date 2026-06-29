@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/name-matches-field/"]
 
 `kind: filesystem_name_matches_field`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require a name to equal a frontmatter field, optionally slugified.

@@ -37,11 +37,12 @@ func (f FilesystemExtensionIn) Run(ctx checks.Context) []checks.Violation {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemExtensionIn,
-		Family:    "fileSystem",
-		Slug:      "extension-in",
-		Title:     "Extension in",
-		Summary:   "Allow only specific file extensions.",
+		CheckType:      checks.CheckFilesystemExtensionIn,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "extension-in",
+		Title:          "Extension in",
+		Summary:        "Allow only specific file extensions.",
 		Fields: []checks.Field{
 			{Name: "values", Required: true, Desc: "Allowed extensions, including the leading dot."},
 		},

@@ -59,13 +59,13 @@ katalyst check
 
 - `.katalyst/config.yaml`, commented project settings
 - `.katalyst/schemas/`, one schema per file (empty to start)
-- `.katalyst/bases/local.yaml`, the default base (the local
-  filesystem), where you declare collections
+- `.katalyst/bases/local.yaml`, the default filesystem base, where you declare
+  collections
 
 It writes no example content. Add a schema under `.katalyst/schemas/` and
 declare a collection inside `.katalyst/bases/local.yaml`, then run
 `katalyst check`.
 
 Next:
-- [Configs]({{< relref "reference/configs/_index.md" >}})
+- [Configuration]({{< relref "reference/configs/_index.md" >}})
 - [Check types reference]({{< relref "reference/check-types/_index.md" >}})

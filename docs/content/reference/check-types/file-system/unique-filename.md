@@ -12,6 +12,8 @@ aliases = ["/reference/rules/file-system/unique-filename/"]
 
 **Scope:** collection, runs once per collection over all its items.
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require that no two items in the collection share a basename.

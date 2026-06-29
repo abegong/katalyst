@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/name-affix/"]
 
 `kind: filesystem_name_affix`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require a name to start with a prefix and/or end with a suffix.

@@ -11,8 +11,8 @@ package checks
 
 import "github.com/abegong/katalyst/internal/codec/markdownbodytext"
 
-// Context carries all data a check may need.
-type Context struct {
+// FileContext carries all data a file check may need.
+type FileContext struct {
 	FilePath string
 	// CollectionRoot is the absolute directory of the item's collection.
 	// Path/filename targets that span directories (path-segments, path
@@ -22,6 +22,9 @@ type Context struct {
 	Doc            *markdownbodytext.Document
 	Meta           map[string]any
 }
+
+// Context is the historical name for FileContext.
+type Context = FileContext
 
 // Severity classifies how serious a violation is. The zero value is
 // SeverityError, so any check that does not set it keeps failing the run;

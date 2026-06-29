@@ -2,6 +2,7 @@ Structured object › Required field
 ------------------------------------
 - kind: object_required_field
 - family: structuredObject
+- configurableIn: collection
 - scope: item
 - severity: error
 - purpose: Require that a frontmatter field exists.

@@ -134,10 +134,6 @@ func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.
 		effective = append(effective, matched.Checks...)
 	}
 
-	if err := ensureLibrariesAvailable(effective); err != nil {
-		return nil, err
-	}
-
 	checkList := make([]checks.Check, 0, len(effective))
 
 	inlineSchema := ""
@@ -168,14 +164,11 @@ func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.
 	// Every non-object, per-item check is built from its registry entry. The
 	// object check is handled above (it needs a compiled schema); collection-
 	// scoped checks have no per-item builder, so Build skips them here.
-	for _, cc := range effective {
-		if cc.Kind == checks.CheckObject {
-			continue
-		}
-		if chk, ok := checks.Build(cc.Kind, cc.Args); ok {
-			checkList = append(checkList, chk)
-		}
+	fileChecks, err := e.fileChecksFor(effective)
+	if err != nil {
+		return nil, err
 	}
+	checkList = append(checkList, fileChecks...)
 
 	// An item that matched no variant under useExhaustiveVariants fails. The
 	// verdict rides through RunAll like any other check (so `check` and
@@ -228,8 +221,31 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 // collectionChecksFor builds the collection-scoped checks configured for a
 // collection. These run once per collection, after the per-item pass.
 func (e *engine) collectionChecksFor(c project.Collection) ([]checks.CollectionCheck, error) {
+	return e.fileSetChecksFor(c.Checks)
+}
+
+func (e *engine) fileChecksFor(configured []checks.ConfiguredCheck) ([]checks.Check, error) {
+	if err := ensureLibrariesAvailable(configured); err != nil {
+		return nil, err
+	}
+	var out []checks.Check
+	for _, cc := range configured {
+		if cc.Kind == checks.CheckObject {
+			continue
+		}
+		if chk, ok := checks.Build(cc.Kind, cc.Args); ok {
+			out = append(out, chk)
+		}
+	}
+	return out, nil
+}
+
+func (e *engine) fileSetChecksFor(configured []checks.ConfiguredCheck) ([]checks.CollectionCheck, error) {
+	if err := ensureLibrariesAvailable(configured); err != nil {
+		return nil, err
+	}
 	var out []checks.CollectionCheck
-	for _, cc := range c.Checks {
+	for _, cc := range configured {
 		if col, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
 			out = append(out, col)
 		}

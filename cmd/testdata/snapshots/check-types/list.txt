@@ -64,7 +64,7 @@ Markdown body text (7)
   required: -
   optional: -
 
-File system (13)
+File system (14)
 ----------------
 - filesystem_extension_in
   purpose: Allow only specific file extensions.
@@ -116,6 +116,10 @@ File system (13)
   optional: -
 - filesystem_unique_filename
   purpose: Require that no two items in the collection share a basename.
+  required: -
+  optional: -
+- filesystem_unmatched_files
+  purpose: Report regular files under a filesystem scope that match neither include nor exclude patterns.
   required: -
   optional: -
 

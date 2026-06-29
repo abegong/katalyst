@@ -59,10 +59,23 @@ type Descriptor struct {
 	// Scope is "collection" for checks that run once per collection over all
 	// its items; empty means an ordinary per-item check.
 	Scope string `json:"scope,omitempty"`
+	// ConfigurableIn names the config attachment points that accept this check
+	// type: "collection", "filesystem". Empty means collection during
+	// migration.
+	ConfigurableIn []string `json:"configurableIn,omitempty"`
+	// NeedsDocument reports whether this check needs parsed document metadata
+	// or body text. Filesystem scopes use it to avoid parsing for path-only
+	// checks.
+	NeedsDocument bool `json:"needs_document,omitempty"`
 	// Severity is "warning" for checks that emit advisory findings (never
 	// failing the run); empty means the default, "error".
 	Severity string `json:"severity,omitempty"`
 }
+
+const (
+	ConfigCollection = "collection"
+	ConfigFilesystem = "filesystem"
+)
 
 // Family identifies a check-type family: its id (used in Descriptor.Family and
 // `--family`), its docs-directory slug, and its intro copy.
@@ -220,6 +233,38 @@ func DescriptorFor(kind CheckType) (Descriptor, bool) {
 		return Descriptor{}, false
 	}
 	return registrations[i].desc, true
+}
+
+// DescriptorConfigurableIn returns the explicit or migration-default
+// configuration sites for d.
+func DescriptorConfigurableIn(d Descriptor) []string {
+	if len(d.ConfigurableIn) == 0 {
+		return []string{ConfigCollection}
+	}
+	out := make([]string, len(d.ConfigurableIn))
+	copy(out, d.ConfigurableIn)
+	return out
+}
+
+// SupportsConfiguration reports whether kind accepts the named configuration
+// site.
+func SupportsConfiguration(kind CheckType, site string) bool {
+	desc, ok := DescriptorFor(kind)
+	if !ok {
+		return false
+	}
+	for _, t := range DescriptorConfigurableIn(desc) {
+		if t == site {
+			return true
+		}
+	}
+	return false
+}
+
+// NeedsDocument reports whether a check needs parsed document data.
+func NeedsDocument(kind CheckType) bool {
+	desc, ok := DescriptorFor(kind)
+	return ok && desc.NeedsDocument
 }
 
 // CollectionScoped reports whether kind runs once per collection (vs. per item).

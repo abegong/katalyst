@@ -12,6 +12,8 @@ aliases = ["/reference/rules/file-system/index-file-required/"]
 
 **Scope:** collection, runs once per collection over all its items.
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Require that every directory containing items has an index file.

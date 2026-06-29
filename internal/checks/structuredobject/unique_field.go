@@ -38,12 +38,14 @@ func (c UniqueField) RunCollection(ctx checks.CollectionContext) []checks.Violat
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemUniqueField,
-		Family:    "structuredObject",
-		Slug:      "unique-field",
-		Title:     "Unique field",
-		Summary:   "Require that no two items share a value for a frontmatter field.",
-		Scope:     "collection",
+		CheckType:      checks.CheckFilesystemUniqueField,
+		Family:         "structuredObject",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		NeedsDocument:  true,
+		Slug:           "unique-field",
+		Title:          "Unique field",
+		Summary:        "Require that no two items share a value for a frontmatter field.",
+		Scope:          "collection",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key whose value must be unique across the collection."},
 		},

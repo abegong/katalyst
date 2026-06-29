@@ -49,11 +49,13 @@ type parentDirMatchesArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemParentDirMatchesFld,
-		Family:    "fileSystem",
-		Slug:      "parent-dir-matches-field",
-		Title:     "Parent directory matches field",
-		Summary:   "Require the parent directory name to equal a frontmatter field.",
+		CheckType:      checks.CheckFilesystemParentDirMatchesFld,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		NeedsDocument:  true,
+		Slug:           "parent-dir-matches-field",
+		Title:          "Parent directory matches field",
+		Summary:        "Require the parent directory name to equal a frontmatter field.",
 		Fields: []checks.Field{
 			{Name: "field", Required: true, Desc: "Frontmatter key compared to the parent directory name."},
 		},

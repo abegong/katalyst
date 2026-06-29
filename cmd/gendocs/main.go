@@ -314,6 +314,9 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 	if d.Scope == "collection" {
 		fmt.Fprint(&b, "**Scope:** collection, runs once per collection over all its items.\n\n")
 	}
+	if sites := checks.DescriptorConfigurableIn(d); !collectionOnly(sites) {
+		fmt.Fprintf(&b, "**Can be configured in:** %s.\n\n", configurationSites(sites))
+	}
 	if d.Severity == "warning" {
 		fmt.Fprint(&b, "**Severity:** warning, reported for review; never fails a run.\n\n")
 	}
@@ -339,6 +342,25 @@ func checkTypePage(d checks.Descriptor, fam checks.Family, weight int) string {
 	fmt.Fprintf(&b, "## Example\n\n```yaml\n%s\n```\n", d.ConfigExample)
 	b.WriteString(workedExample("checktype:" + fam.Slug + "/" + d.Slug))
 	return b.String()
+}
+
+func collectionOnly(sites []string) bool {
+	return len(sites) == 1 && sites[0] == checks.ConfigCollection
+}
+
+func configurationSites(sites []string) string {
+	labels := make([]string, len(sites))
+	for i, site := range sites {
+		switch site {
+		case checks.ConfigCollection:
+			labels[i] = "collection checks"
+		case checks.ConfigFilesystem:
+			labels[i] = "filesystem checks"
+		default:
+			labels[i] = site
+		}
+	}
+	return strings.Join(labels, ", ")
 }
 
 // plain strips inline-code backticks from a summary so it reads cleanly in a

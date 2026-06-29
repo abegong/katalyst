@@ -8,6 +8,32 @@ weight = 10
 You have a directory of markdown files and want Katalyst to enforce checks on
 them. This guide adds a collection and attaches checks to it.
 
+## Start before collections exist
+
+For early cleanup, attach checks directly to a filesystem base. These checks
+run with `katalyst check` even when `collections: {}` is still empty:
+
+```yaml
+# .katalyst/bases/local.yaml
+type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs/content
+    include: ["**/*.md"]
+    parseFailures: warning
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+      - kind: filesystem_unmatched_files
+collections: {}
+```
+
+Use `parseFailures: warning` while onboarding a messy tree. Switch back to the
+default `error` once malformed frontmatter should fail CI. Filesystem checks are
+project-wide for now: no-selector `katalyst check` runs them, while
+`katalyst check posts` runs only collection-attached checks.
+
 ## 1. Point a collection at the directory
 
 Collections are declared inside a base. In a fresh project that is

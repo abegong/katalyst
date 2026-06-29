@@ -42,11 +42,12 @@ type nameAffixArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemNameAffix,
-		Family:    "fileSystem",
-		Slug:      "name-affix",
-		Title:     "Name affix",
-		Summary:   "Require a name to start with a prefix and/or end with a suffix.",
+		CheckType:      checks.CheckFilesystemNameAffix,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "name-affix",
+		Title:          "Name affix",
+		Summary:        "Require a name to start with a prefix and/or end with a suffix.",
 		Fields: []checks.Field{
 			{Name: "prefix", Required: false, Desc: "Required name prefix (at least one of prefix/suffix)."},
 			{Name: "suffix", Required: false, Desc: "Required name suffix (at least one of prefix/suffix)."},

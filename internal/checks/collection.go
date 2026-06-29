@@ -12,18 +12,27 @@ type ItemContext struct {
 	Meta     map[string]any
 }
 
-// CollectionContext carries every item in a collection, for checks that
-// reason across siblings (uniqueness, required index files).
-type CollectionContext struct {
-	Root  string
-	Items []ItemContext
+// FileSetContext carries every selected file in a set, for checks that reason
+// across siblings (uniqueness, required index files, unmatched files).
+type FileSetContext struct {
+	Root      string
+	Items     []ItemContext
+	Unmatched []string
+	Include   []string
+	Exclude   []string
 }
+
+// CollectionContext is the historical name for FileSetContext.
+type CollectionContext = FileSetContext
 
 // CollectionCheck validates a concern across all items in a collection. It
 // runs once per collection, after the per-item pass.
 type CollectionCheck interface {
 	RunCollection(ctx CollectionContext) []Violation
 }
+
+// FileSetCheck is the product-facing name for a set-level runtime check.
+type FileSetCheck = CollectionCheck
 
 // CollisionViolations emits one violation per group of two or more paths,
 // naming all colliding files. Groups and paths are sorted for determinism. It
@@ -57,4 +66,9 @@ func RunCollectionAll(ctx CollectionContext, list []CollectionCheck) []Violation
 		out = append(out, c.RunCollection(ctx)...)
 	}
 	return out
+}
+
+// RunFileSetAll runs every file-set check and flattens the violations.
+func RunFileSetAll(ctx FileSetContext, list []FileSetCheck) []Violation {
+	return RunCollectionAll(ctx, list)
 }

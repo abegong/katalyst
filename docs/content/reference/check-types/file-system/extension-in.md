@@ -10,6 +10,8 @@ aliases = ["/reference/rules/file-system/extension-in/"]
 
 `kind: filesystem_extension_in`
 
+**Can be configured in:** collection checks, filesystem checks.
+
 ## Purpose
 
 Allow only specific file extensions.

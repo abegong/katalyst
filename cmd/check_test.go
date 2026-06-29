@@ -116,6 +116,159 @@ func TestCheck_wholeProjectWhenNoSelector(t *testing.T) {
 	}
 }
 
+func TestCheck_filesystemChecks_runWithoutCollections(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/BadName.md"), "---\ntitle: Bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected filesystem check failure")
+	}
+	if !strings.Contains(stderr, "filesystem docs: BadName.md") || !strings.Contains(stderr, "must be kebab-case") {
+		t.Errorf("expected filesystem name-case diagnostic, got: %q", stderr)
+	}
+}
+
+func TestCheck_selectorDoesNotRunFilesystemChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections:
+  notes:
+    path: notes
+    checks:
+      - kind: markdown_requires_h1
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/BadName.md"), "---\ntitle: Bad\n---\n# Bad\n")
+	mustWrite(t, filepath.Join(dir, "notes/good.md"), "---\ntitle: Good\n---\n# Good\n")
+
+	stdout, stderr, err := runRoot(t, "check", "notes")
+	if err != nil {
+		t.Fatalf("selector check should ignore filesystem scopes: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "good.md: OK") {
+		t.Errorf("expected collection item OK, got: %q", stdout)
+	}
+	if strings.Contains(stderr, "BadName") {
+		t.Errorf("selector run should not report filesystem scope diagnostics, got: %q", stderr)
+	}
+}
+
+func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_matches_field
+        field: title
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/bad.md"), "---\n: bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected parse failure to fail by default")
+	}
+	var coded interface{ Code() int }
+	if !errors.As(err, &coded) || coded.Code() != 1 {
+		t.Errorf("expected exit code 1, got: %v", err)
+	}
+	if !strings.Contains(stderr, "filesystem docs: bad.md") || !strings.Contains(stderr, "parse document") {
+		t.Errorf("expected parse diagnostic, got: %q", stderr)
+	}
+}
+
+func TestCheck_filesystemParseFailuresCanWarn(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    parseFailures: warning
+    checks:
+      - kind: filesystem_name_matches_field
+        field: title
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/bad.md"), "---\n: bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("warning parse failure should not fail the run: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stderr, "warning: /: parse document") {
+		t.Errorf("expected warning parse diagnostic, got: %q", stderr)
+	}
+}
+
+func TestCheck_filesystemUnmatchedFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    exclude: ["ignored/**"]
+    checks:
+      - kind: filesystem_unmatched_files
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/page.md"), "---\ntitle: Page\n---\n# Page\n")
+	mustWrite(t, filepath.Join(dir, "docs/raw.txt"), "raw\n")
+	mustWrite(t, filepath.Join(dir, "docs/ignored/raw.txt"), "ignored\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected unmatched filesystem file failure")
+	}
+	if !strings.Contains(stderr, "filesystem docs: raw.txt") || !strings.Contains(stderr, "unmatched file") {
+		t.Errorf("expected unmatched-file diagnostic, got: %q", stderr)
+	}
+	if strings.Contains(stderr, "ignored/raw.txt") {
+		t.Errorf("excluded files should not be reported, got: %q", stderr)
+	}
+}
+
 func TestCheck_unmatchedFileInCollectionDir_isError(t *testing.T) {
 	dir := setupNotesRepo(t, objectNotesConfig)
 	mustWrite(t, filepath.Join(dir, "notes/ok.md"), "---\ntitle: Ok\nyear: 1\n---\n# Ok\n")

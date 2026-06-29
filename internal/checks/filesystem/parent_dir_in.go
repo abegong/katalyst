@@ -32,11 +32,12 @@ type parentDirInArgs struct {
 
 func init() {
 	registerParsed(checks.Descriptor{
-		CheckType: checks.CheckFilesystemParentDirIn,
-		Family:    "fileSystem",
-		Slug:      "parent-dir-in",
-		Title:     "Parent directory in",
-		Summary:   "Require that the file's parent directory name is in an allowed set.",
+		CheckType:      checks.CheckFilesystemParentDirIn,
+		Family:         "fileSystem",
+		ConfigurableIn: []string{checks.ConfigCollection, checks.ConfigFilesystem},
+		Slug:           "parent-dir-in",
+		Title:          "Parent directory in",
+		Summary:        "Require that the file's parent directory name is in an allowed set.",
 		Fields: []checks.Field{
 			{Name: "values", Required: true, Desc: "Allowed parent directory names."},
 		},

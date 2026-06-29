@@ -125,6 +125,143 @@ func TestLoad_instanceRoot_resolvesCollectionDirs(t *testing.T) {
 	}
 }
 
+func TestLoad_filesystemChecks_loadsScopes(t *testing.T) {
+	dir := t.TempDir()
+	projecttest.WriteProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: content
+filesystemChecks:
+  - name: docs
+    include: ["**/*.md"]
+    exclude: ["drafts/**"]
+    parseFailures: warning
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+	})
+	cfg, err := project.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	scopes := cfg.FilesystemCheckScopes()
+	if len(scopes) != 1 {
+		t.Fatalf("expected one filesystem check scope, got %d", len(scopes))
+	}
+	scope := scopes[0]
+	if scope.Name != "docs" {
+		t.Errorf("scope.Name = %q, want docs", scope.Name)
+	}
+	if scope.Path != "." {
+		t.Errorf("scope.Path = %q, want default .", scope.Path)
+	}
+	if want := filepath.Join(projecttest.RealPath(t, dir), "content"); scope.Root != want {
+		t.Errorf("scope.Root = %q, want %q", scope.Root, want)
+	}
+	if scope.ParseFailures != "warning" {
+		t.Errorf("ParseFailures = %q, want warning", scope.ParseFailures)
+	}
+	if len(scope.Checks) != 1 || scope.Checks[0].Kind != checks.CheckFilesystemNameCase {
+		t.Fatalf("unexpected checks: %+v", scope.Checks)
+	}
+	assertConfiguredCheckBuilds(t, scope.Checks[0])
+}
+
+func TestLoad_filesystemChecks_defaultsNameAndParseFailures(t *testing.T) {
+	dir := t.TempDir()
+	projecttest.WriteProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - path: docs/content
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+	})
+	cfg, err := project.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	scope := cfg.FilesystemCheckScopes()[0]
+	if scope.Name != "docs/content" {
+		t.Errorf("scope.Name = %q, want docs/content", scope.Name)
+	}
+	if scope.ParseFailures != "error" {
+		t.Errorf("ParseFailures = %q, want error", scope.ParseFailures)
+	}
+}
+
+func TestLoad_filesystemChecks_rejectsInvalidConfig(t *testing.T) {
+	tests := []struct {
+		name string
+		base string
+		want string
+	}{
+		{
+			name: "missing include",
+			base: `type: filesystem
+filesystemChecks:
+  - checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+			want: "include is required",
+		},
+		{
+			name: "bad parseFailures",
+			base: `type: filesystem
+filesystemChecks:
+  - include: ["**/*.md"]
+    parseFailures: notice
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+			want: "unknown parseFailures",
+		},
+		{
+			name: "collection-only check",
+			base: `type: filesystem
+filesystemChecks:
+  - include: ["**/*.md"]
+    checks:
+      - kind: markdown_requires_h1
+collections: {}
+`,
+			want: "does not support filesystem checks",
+		},
+		{
+			name: "sqlite base",
+			base: `type: sqlite
+root: data.db
+filesystemChecks:
+  - include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+			want: "filesystemChecks requires type",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			projecttest.WriteProject(t, dir, map[string]string{"bases/local.yaml": tt.base})
+			_, err := project.Load(dir)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %q error, got: %v", tt.want, err)
+			}
+		})
+	}
+}
+
 func TestLoad_perCollectionFiles_inInstanceDir(t *testing.T) {
 	// A collection may live in its own file under bases/<base>/, the escape
 	// hatch for bases that outgrow an inline block.
