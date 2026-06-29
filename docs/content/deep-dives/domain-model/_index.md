@@ -15,7 +15,7 @@ The most central concept in Katalyst is a **base**: a storage system that holds 
 An **operation** is something a base lets you do with data: read, list,
 aggregate, write, and eventually query. Which operations a base supports,
 and what structural commitments those operations require, is the subject of
-[progressive operations]({{< relref "../progressive-operations.md" >}}).
+[progressive operations]({{< relref "../why-katalyst/progressive-operations.md" >}}).
 
 In addition to natively-supported operations for various backends, Katalyst provides two very useful kinds of operation.
 
