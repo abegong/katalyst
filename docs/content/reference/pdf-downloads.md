@@ -1,6 +1,6 @@
 +++
 title = "PDF downloads"
-weight = 50
+weight = 60
 +++
 
 # PDF downloads
