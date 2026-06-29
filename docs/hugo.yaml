@@ -4,6 +4,16 @@ title: Katalyst Documentation
 theme: github.com/alex-shpak/hugo-book
 cleanDestinationDir: true
 enableGitInfo: true
+outputFormats:
+  print:
+    mediaType: text/html
+    baseName: print/index
+    isHTML: true
+    notAlternative: true
+outputs:
+  home:
+    - html
+    - print
 module:
   imports:
     - path: github.com/alex-shpak/hugo-book

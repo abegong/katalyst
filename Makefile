@@ -1,7 +1,11 @@
-.PHONY: all build test vet fmt tidy run clean skills skill skills-link docs-deps docs-serve docs-build docs-gen docs-gen-check
+.PHONY: all build test vet fmt tidy run clean skills skill skills-link docs-deps docs-serve docs-build docs-pdf docs-gen docs-gen-check
 
 BINARY := katalyst
 DOCS_DIR := docs
+DOCS_PDF_EXCLUDE ?=
+DOCS_PDF_TONER_FRIENDLY ?= 0
+DOCS_PDF_STANDARD := $(CURDIR)/$(DOCS_DIR)/public/katalyst-docs.pdf
+DOCS_PDF_TONER := $(CURDIR)/$(DOCS_DIR)/public/katalyst-docs-toner-friendly.pdf
 HUGO_BOOK_MODULE := github.com/alex-shpak/hugo-book
 HUGO_LOCAL := $(shell command -v hugo 2>/dev/null)
 HUGO_LOCAL_EXTENDED := $(shell hugo version 2>/dev/null | grep -q extended && echo 1 || echo 0)
@@ -82,4 +86,16 @@ docs-serve: docs-deps
 	$(HUGO) server -s $(DOCS_DIR) --buildDrafts --disableFastRender
 
 docs-build: docs-deps
-	$(HUGO) -s $(DOCS_DIR) --minify
+	HUGO_DOCS_PDF_EXCLUDE="" HUGO_DOCS_PDF_TONER_FRIENDLY=0 $(HUGO) -s $(DOCS_DIR) --minify
+	DOCS_PDF_OUTPUT="$(DOCS_PDF_STANDARD)" ./scripts/docs-pdf.sh
+	HUGO_DOCS_PDF_EXCLUDE="" HUGO_DOCS_PDF_TONER_FRIENDLY=1 $(HUGO) -s $(DOCS_DIR) --minify --cleanDestinationDir=false
+	DOCS_PDF_OUTPUT="$(DOCS_PDF_TONER)" ./scripts/docs-pdf.sh
+
+# Export the whole docs site to PDF. DOCS_PDF_EXCLUDE is a comma-separated list
+# of URL prefixes to omit. DOCS_PDF_TONER_FRIENDLY=1 prints code blocks with a
+# white background instead of the theme's syntax-highlighted dark background.
+# Example:
+# make docs-pdf DOCS_PDF_EXCLUDE=/contributing/,/deep-dives/ DOCS_PDF_TONER_FRIENDLY=1
+docs-pdf: docs-deps
+	HUGO_DOCS_PDF_EXCLUDE="$(DOCS_PDF_EXCLUDE)" HUGO_DOCS_PDF_TONER_FRIENDLY="$(DOCS_PDF_TONER_FRIENDLY)" $(HUGO) -s $(DOCS_DIR) --baseURL / --minify
+	./scripts/docs-pdf.sh
