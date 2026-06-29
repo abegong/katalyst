@@ -9,9 +9,9 @@
 # with GitHub Pages and can be ignored (or disabled in the Netlify UI).
 
 [build]
-  base = "docs"            # Hugo site lives in docs/ (hugo.yaml, content/)
-  publish = "public"       # relative to base -> docs/public
-  command = "hugo --gc --minify"
+  base = "."               # build from repo root so the shared Makefile runs
+  publish = "docs/public"
+  command = "make docs-build"
 
 [build.environment]
   HUGO_VERSION = "0.163.3" # match the version CI builds with
@@ -20,7 +20,7 @@
 # Set baseURL to the deploy's own URL so links resolve in previews. For Deploy
 # Previews this is the stable per-PR URL; for branch deploys, the branch URL.
 [context.deploy-preview]
-  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
+  command = "DOCS_HUGO_FLAGS=\"-b $DEPLOY_PRIME_URL\" make docs-build"
 
 [context.branch-deploy]
-  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL"
+  command = "DOCS_HUGO_FLAGS=\"-b $DEPLOY_PRIME_URL\" make docs-build"
