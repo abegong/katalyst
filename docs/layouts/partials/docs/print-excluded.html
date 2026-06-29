@@ -1,0 +1,17 @@
+{{- $page := .Page -}}
+{{- $excluded := false -}}
+{{- range .Exclude -}}
+  {{- $rule := trim . " \t\r\n" -}}
+  {{- if $rule -}}
+    {{- if not (hasPrefix $rule "/") -}}
+      {{- $rule = printf "/%s" $rule -}}
+    {{- end -}}
+    {{- if not (hasSuffix $rule "/") -}}
+      {{- $rule = printf "%s/" $rule -}}
+    {{- end -}}
+    {{- if or (eq $page.RelPermalink $rule) (hasPrefix $page.RelPermalink $rule) -}}
+      {{- $excluded = true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $excluded -}}

@@ -1,0 +1,12 @@
+{{- $exclude := .Exclude -}}
+{{- range .Pages.ByWeight -}}
+  {{- if and (not .Draft) (not (partial "docs/print-excluded.html" (dict "Page" . "Exclude" $exclude))) -}}
+    <article class="doc-page" id="page-{{ md5 .RelPermalink }}">
+      <div class="doc-page-path">{{ .RelPermalink }}</div>
+      {{ .Content }}
+    </article>
+    {{- with .Pages -}}
+      {{ partial "docs/print-pages.html" (dict "Pages" . "Exclude" $exclude) }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

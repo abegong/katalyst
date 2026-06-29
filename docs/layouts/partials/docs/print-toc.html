@@ -1,0 +1,12 @@
+{{- $depth := .Depth -}}
+{{- $exclude := .Exclude -}}
+{{- range .Pages.ByWeight -}}
+  {{- if and (not .Draft) (not (partial "docs/print-excluded.html" (dict "Page" . "Exclude" $exclude))) -}}
+    <li class="depth-{{ $depth }}">
+      <a href="#page-{{ md5 .RelPermalink }}">{{ .Title }}</a>
+    </li>
+    {{- with .Pages -}}
+      {{ partial "docs/print-toc.html" (dict "Pages" . "Depth" (add $depth 1) "Exclude" $exclude) }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="{{ .Site.Language.Lang | default "en" }}">
+  {{- $exclude := slice -}}
+  {{- with os.Getenv "HUGO_DOCS_PDF_EXCLUDE" -}}
+    {{- $exclude = split . "," -}}
+  {{- end -}}
+  {{- $tonerFriendly := false -}}
+  {{- with os.Getenv "HUGO_DOCS_PDF_TONER_FRIENDLY" -}}
+    {{- $value := lower (trim . " \t\r\n") -}}
+    {{- $tonerFriendly = or (eq $value "1") (eq $value "true") (eq $value "yes") (eq $value "on") -}}
+  {{- end -}}
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .Site.Title }} PDF</title>
+    <style>
+      @page {
+        margin: 0.75in;
+      }
+
+      :root {
+        color: #15171a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 12pt;
+        line-height: 1.45;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      a {
+        color: #1457a8;
+        text-decoration: none;
+      }
+
+      img {
+        height: auto;
+        max-width: 100%;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border: 1px solid #d7dce2;
+        padding: 0.35rem 0.45rem;
+        vertical-align: top;
+      }
+
+      pre {
+        background: #f5f7fa;
+        border: 1px solid #d7dce2;
+        border-radius: 4px;
+        overflow-wrap: anywhere;
+        padding: 0.75rem;
+        white-space: pre-wrap;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      {{- if $tonerFriendly }}
+      pre {
+        background: #fff !important;
+        border-left: 3px solid #9aa6b2;
+        color: #15171a !important;
+        padding: 0.65rem 0.75rem;
+      }
+
+      pre code,
+      pre code span,
+      .highlight,
+      .highlight pre,
+      .highlight code,
+      .highlight span {
+        background: transparent !important;
+        color: #15171a !important;
+      }
+      {{- end }}
+
+      .print-cover {
+        align-content: center;
+        break-after: page;
+        min-height: 9in;
+      }
+
+      .print-cover h1 {
+        font-size: 2.6rem;
+        line-height: 1.1;
+        margin: 0 0 1rem;
+      }
+
+      .print-cover p {
+        color: #4c5967;
+        font-size: 1rem;
+        margin: 0.3rem 0;
+      }
+
+      .print-toc {
+        break-after: page;
+      }
+
+      .print-toc h1 {
+        font-size: 1.8rem;
+      }
+
+      .print-toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .print-toc li {
+        margin: 0.22rem 0;
+      }
+
+      .print-toc .depth-1 {
+        font-weight: 700;
+        margin-top: 0.75rem;
+      }
+
+      .print-toc .depth-2 {
+        margin-left: 1rem;
+      }
+
+      .print-toc .depth-3 {
+        margin-left: 2rem;
+      }
+
+      .print-toc .depth-4,
+      .print-toc .depth-5 {
+        margin-left: 3rem;
+      }
+
+      .doc-page {
+        break-before: page;
+      }
+
+      .doc-page:first-of-type {
+        break-before: auto;
+      }
+
+      .doc-page-path {
+        color: #6b7480;
+        font-size: 0.78rem;
+        margin-bottom: 1rem;
+      }
+
+      .doc-page h1 {
+        font-size: 1.9rem;
+        line-height: 1.15;
+      }
+
+      .doc-page h2 {
+        font-size: 1.35rem;
+        margin-top: 1.5rem;
+      }
+
+      .doc-page h3 {
+        font-size: 1.1rem;
+      }
+
+      blockquote {
+        border-left: 4px solid #b7c3d0;
+        color: #3f4c5a;
+        margin-left: 0;
+        padding-left: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="print-cover">
+      <h1>{{ .Site.Title }}</h1>
+      <p>Full documentation export</p>
+      <p>Generated from the Hugo docs source.</p>
+    </section>
+
+    <nav class="print-toc" aria-label="Table of contents">
+      <h1>Contents</h1>
+      <ol>
+        {{ partial "docs/print-toc.html" (dict "Pages" .Site.Home.Pages "Depth" 1 "Exclude" $exclude) }}
+      </ol>
+    </nav>
+
+    <main>
+      {{ partial "docs/print-pages.html" (dict "Pages" .Site.Home.Pages "Exclude" $exclude) }}
+    </main>
+  </body>
+</html>
