@@ -20,6 +20,7 @@ type FileSetContext struct {
 	Unmatched []string
 	Include   []string
 	Exclude   []string
+	Verbose   bool
 }
 
 // CollectionContext is the historical name for FileSetContext.

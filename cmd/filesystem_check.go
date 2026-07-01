@@ -16,10 +16,10 @@ type runtimeFileCheck struct {
 	needsDoc bool
 }
 
-func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
+func runFilesystemChecks(errOut io.Writer, e *engine, verbose bool) (bool, error) {
 	bad := false
 	for _, scope := range e.proj.FilesystemCheckScopes() {
-		scopeBad, err := runFilesystemScope(errOut, e, scope)
+		scopeBad, err := runFilesystemScope(errOut, e, scope, verbose)
 		if err != nil {
 			return false, err
 		}
@@ -30,7 +30,7 @@ func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
 	return bad, nil
 }
 
-func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope) (bool, error) {
+func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope, verbose bool) (bool, error) {
 	expanded, err := filesystemcheck.Expand(scope)
 	if err != nil {
 		return false, asUsageErr(err)
@@ -52,6 +52,7 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 		Unmatched: rels(expanded.Unmatched),
 		Include:   scope.Include,
 		Exclude:   scope.Exclude,
+		Verbose:   verbose,
 	}
 	for _, file := range expanded.Selected {
 		var doc *markdownbodytext.Document

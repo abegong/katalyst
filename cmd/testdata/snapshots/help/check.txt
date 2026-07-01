@@ -22,3 +22,4 @@ Usage:
 Flags:
   -h, --help            help for check
   -s, --schema string   Path to a JSON Schema file. Overrides config-based resolution for every selected item.
+  -v, --verbose         Show every unmatched filesystem file instead of grouped directory summaries.

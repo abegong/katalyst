@@ -269,6 +269,72 @@ collections: {}
 	}
 }
 
+func TestCheck_filesystemUnmatchedFilesGroupsDisallowedSubtrees(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["README.md", "ongoing/*.md", "episodic/**"]
+    checks:
+      - kind: filesystem_unmatched_files
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/ongoing/page.md"), "---\ntitle: Page\n---\n# Page\n")
+	mustWrite(t, filepath.Join(dir, "docs/ongoing/stray.tmp"), "stray\n")
+	mustWrite(t, filepath.Join(dir, "docs/one-time/a.md"), "# A\n")
+	mustWrite(t, filepath.Join(dir, "docs/one-time/deep/b.md"), "# B\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected unmatched filesystem file failure")
+	}
+	if !strings.Contains(stderr, "filesystem docs: one-time/: /: unmatched files (2 files;") {
+		t.Errorf("expected grouped subtree diagnostic, got: %q", stderr)
+	}
+	if strings.Contains(stderr, "one-time/a.md") || strings.Contains(stderr, "one-time/deep/b.md") {
+		t.Errorf("grouped subtree should hide per-file diagnostics, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "filesystem docs: ongoing/stray.tmp: /: unmatched file") {
+		t.Errorf("expected allowed-directory stray file diagnostic, got: %q", stderr)
+	}
+}
+
+func TestCheck_filesystemUnmatchedFilesVerboseReportsEachFile(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["README.md"]
+    checks:
+      - kind: filesystem_unmatched_files
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(dir, "docs/one-time/a.md"), "# A\n")
+	mustWrite(t, filepath.Join(dir, "docs/one-time/deep/b.md"), "# B\n")
+
+	_, stderr, err := runRoot(t, "check", "--verbose")
+	if err == nil {
+		t.Fatalf("expected unmatched filesystem file failure")
+	}
+	if strings.Contains(stderr, "filesystem docs: one-time/: /: unmatched files") {
+		t.Errorf("verbose output should not group subtree diagnostics, got: %q", stderr)
+	}
+	if !strings.Contains(stderr, "filesystem docs: one-time/a.md: /: unmatched file") ||
+		!strings.Contains(stderr, "filesystem docs: one-time/deep/b.md: /: unmatched file") {
+		t.Errorf("verbose output should include individual files, got: %q", stderr)
+	}
+}
+
 func TestCheck_unmatchedFileInCollectionDir_isError(t *testing.T) {
 	dir := setupNotesRepo(t, objectNotesConfig)
 	mustWrite(t, filepath.Join(dir, "notes/ok.md"), "---\ntitle: Ok\nyear: 1\n---\n# Ok\n")
