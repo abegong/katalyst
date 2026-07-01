@@ -255,6 +255,57 @@ func TestUniqueFilename_flagsCollision(t *testing.T) {
 	}
 }
 
+func TestUnmatchedFilesRunCollection_groupsDisallowedSubtrees(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "docs")
+	violations := filesystem.UnmatchedFiles{}.RunCollection(checks.CollectionContext{
+		Root: root,
+		Items: []checks.ItemContext{
+			{FilePath: filepath.Join(root, "ongoing/page.md")},
+		},
+		Unmatched: []string{
+			"one-time/a.md",
+			"one-time/deep/b.md",
+			"ongoing/stray.tmp",
+			"sunday-school/a.md",
+			"sunday-school/b.md",
+		},
+		Include: []string{"README.md", "ongoing/*.md", "episodic/**"},
+	})
+	if len(violations) != 3 {
+		t.Fatalf("expected 3 violations, got %d: %v", len(violations), violations)
+	}
+	wantFiles := []string{"one-time/", "ongoing/stray.tmp", "sunday-school/"}
+	for i, want := range wantFiles {
+		if violations[i].File != want {
+			t.Errorf("violation %d file = %q, want %q", i, violations[i].File, want)
+		}
+	}
+	for _, i := range []int{0, 2} {
+		if !strings.Contains(violations[i].Message, "2 files") {
+			t.Errorf("grouped violation %d should include file count, got %q", i, violations[i].Message)
+		}
+	}
+	if strings.Contains(violations[1].Message, "files") {
+		t.Errorf("single unmatched file should keep singular message, got %q", violations[1].Message)
+	}
+}
+
+func TestUnmatchedFilesRunCollection_verboseReportsEachFile(t *testing.T) {
+	violations := filesystem.UnmatchedFiles{}.RunCollection(checks.CollectionContext{
+		Unmatched: []string{
+			"one-time/a.md",
+			"one-time/deep/b.md",
+		},
+		Verbose: true,
+	})
+	if len(violations) != 2 {
+		t.Fatalf("expected 2 violations, got %d: %v", len(violations), violations)
+	}
+	if violations[0].File != "one-time/a.md" || violations[1].File != "one-time/deep/b.md" {
+		t.Fatalf("verbose output should keep individual files, got %v", violations)
+	}
+}
+
 func TestIndexFileRequired_flagsMissing(t *testing.T) {
 	root := t.TempDir()
 	withIndex := filepath.Join(root, "has")

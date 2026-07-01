@@ -20,6 +20,7 @@ const (
 
 func newCheckCmd() *cobra.Command {
 	var schemaFlag string
+	var verbose bool
 
 	c := &cobra.Command{
 		Use:   "check [selector ...]",
@@ -51,7 +52,7 @@ reported as unmatched references (errors).`,
 			out, errOut := cmd.OutOrStdout(), cmd.ErrOrStderr()
 
 			if len(args) == 0 {
-				bad, err := runFilesystemChecks(errOut, e)
+				bad, err := runFilesystemChecks(errOut, e, verbose)
 				if err != nil {
 					return err
 				}
@@ -108,6 +109,8 @@ reported as unmatched references (errors).`,
 
 	c.Flags().StringVarP(&schemaFlag, "schema", "s", "",
 		"Path to a JSON Schema file. Overrides config-based resolution for every selected item.")
+	c.Flags().BoolVarP(&verbose, "verbose", "v", false,
+		"Show every unmatched filesystem file instead of grouped directory summaries.")
 	return c
 }
 
