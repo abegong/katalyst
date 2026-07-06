@@ -27,12 +27,17 @@ type PlanDelegate struct {
 	Active   bool
 }
 
+type planRoot struct {
+	Root      string
+	ConfigDir string
+}
+
 func BuildPlan(opts PlanOptions) (*Plan, error) {
-	root, err := rootForPlan(opts)
+	selected, err := rootForPlan(opts)
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := LoadRoot(root)
+	cfg, err := LoadRootWithConfigDir(selected.Root, selected.ConfigDir)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +58,11 @@ func BuildPlan(opts PlanOptions) (*Plan, error) {
 		active := delegateHasActiveAuthority(cfg.NestedConfigs, delegate)
 		pd := PlanDelegate{Delegate: delegate, Active: active}
 		if active {
-			child, err := LoadRoot(filepath.Join(cfg.Root, filepath.FromSlash(delegate.Path)))
+			childRoot := filepath.Join(cfg.Root, filepath.FromSlash(delegate.Path))
+			childConfigDir := filepath.Join(childRoot, filepath.FromSlash(delegate.Config))
+			child, err := LoadRootWithConfigDir(childRoot, childConfigDir)
 			if err != nil {
-				return nil, fmt.Errorf("nested config %s: %w", delegate.Path, err)
+				return nil, fmt.Errorf("nested config %s/%s: %w", delegate.Path, delegate.Config, err)
 			}
 			pd.Config = child
 		}
@@ -64,43 +71,74 @@ func BuildPlan(opts PlanOptions) (*Plan, error) {
 	return plan, nil
 }
 
-func rootForPlan(opts PlanOptions) (string, error) {
+func rootForPlan(opts PlanOptions) (planRoot, error) {
 	if opts.ConfigPath != "" {
 		return rootFromConfigPath(opts.ConfigPath)
 	}
 	if opts.ProjectDir != "" {
-		return FindRoot(opts.ProjectDir)
+		root, err := FindRoot(opts.ProjectDir)
+		return planRoot{Root: root}, err
 	}
 	start := opts.Start
 	if start == "" {
 		var err error
 		start, err = os.Getwd()
 		if err != nil {
-			return "", err
+			return planRoot{}, err
 		}
 	}
-	return FindRoot(start)
+	root, err := FindRoot(start)
+	return planRoot{Root: root}, err
 }
 
-func rootFromConfigPath(path string) (string, error) {
+func rootFromConfigPath(path string) (planRoot, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return "", fmt.Errorf("resolve config path: %w", err)
+		return planRoot{}, fmt.Errorf("resolve config path: %w", err)
 	}
 	info, err := os.Stat(abs)
 	if err != nil {
-		return "", fmt.Errorf("--config: %w", err)
+		return planRoot{}, fmt.Errorf("--config: %w", err)
 	}
 	if info.IsDir() {
 		if filepath.Base(abs) == Dir {
-			return filepath.Dir(abs), nil
+			return planRoot{Root: filepath.Dir(abs), ConfigDir: abs}, nil
 		}
-		return abs, nil
+		if ok, err := dirExists(filepath.Join(abs, Dir)); err != nil {
+			return planRoot{}, fmt.Errorf("--config: %w", err)
+		} else if ok {
+			return planRoot{Root: abs, ConfigDir: filepath.Join(abs, Dir)}, nil
+		}
+		if looksLikeConfigDir(abs) {
+			return planRoot{Root: filepath.Dir(abs), ConfigDir: abs}, nil
+		}
+		return planRoot{}, errors.New("--config: expected a project root, config directory, or config.yaml file")
 	}
-	if filepath.Base(abs) == configFile && filepath.Base(filepath.Dir(abs)) == Dir {
-		return filepath.Dir(filepath.Dir(abs)), nil
+	if filepath.Base(abs) == configFile {
+		configDir := filepath.Dir(abs)
+		return planRoot{Root: filepath.Dir(configDir), ConfigDir: configDir}, nil
 	}
-	return "", errors.New("--config: expected a project root, .katalyst directory, or .katalyst/config.yaml")
+	return planRoot{}, errors.New("--config: expected a project root, config directory, or config.yaml file")
+}
+
+func looksLikeConfigDir(dir string) bool {
+	for _, name := range []string{configFile, schemasSubdir, basesSubdir, storageSubdir} {
+		if ok, err := pathExists(filepath.Join(dir, name)); err == nil && ok {
+			return true
+		}
+	}
+	return false
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func walkDelegates(root string) ([]NestedDelegate, error) {

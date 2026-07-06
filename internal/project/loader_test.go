@@ -256,6 +256,29 @@ func TestLoad_nestedConfigs_rejectsInvalidAuthority(t *testing.T) {
 	}
 }
 
+func TestLoad_nestedConfigs_rejectsInvalidConfigPath(t *testing.T) {
+	tests := []string{".", "..", "../katalyst", "/tmp/katalyst"}
+	for _, config := range tests {
+		t.Run(config, func(t *testing.T) {
+			dir := t.TempDir()
+			projecttest.WriteProject(t, dir, map[string]string{
+				"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      config: ` + config + `
+      authority:
+        collections: file_nearest
+`,
+				"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+			})
+			_, err := project.Load(dir)
+			if err == nil || !strings.Contains(err.Error(), "config must be") {
+				t.Fatalf("expected config path validation error, got %v", err)
+			}
+		})
+	}
+}
+
 func TestLoad_filesystemChecks_rejectsInvalidConfig(t *testing.T) {
 	tests := []struct {
 		name string

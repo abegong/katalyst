@@ -144,6 +144,9 @@ func buildNestedDelegate(raw rawNestedDelegate) (NestedDelegate, error) {
 		return NestedDelegate{}, fmt.Errorf("config must be relative to path")
 	}
 	config = filepath.ToSlash(filepath.Clean(config))
+	if config == "." || config == ".." || startsWithDotDot(config) {
+		return NestedDelegate{}, fmt.Errorf("config must be a relative directory under path")
+	}
 	authority := map[AuthoritySubsystem]AuthorityRule{}
 	for key, rawRule := range raw.Authority {
 		subsystem, err := normAuthoritySubsystem(key)

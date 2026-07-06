@@ -37,7 +37,7 @@ Commands that load configured project behavior accept these flags:
 
 | Flag | Meaning |
 |---|---|
-| `--config <path>` | Load exactly this project root, `.katalyst/` directory, or `.katalyst/config.yaml`. Nested config discovery is disabled. |
+| `--config <path>` | Load exactly this project root, config directory, or `config.yaml` file. Nested config discovery is disabled. |
 | `--project <dir>` | Select the active project from this directory. |
 | `--disable-nested-config` | Load the active root and ignore `nestedConfigs`. |
 

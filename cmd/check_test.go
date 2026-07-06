@@ -381,6 +381,30 @@ func TestCheck_configFlagLoadsExactProject(t *testing.T) {
 	}
 }
 
+func TestCheck_configFlagLoadsNonDefaultConfigDir(t *testing.T) {
+	dir := t.TempDir()
+	child := filepath.Join(dir, "packages", "site")
+	configDir := filepath.Join(child, "katalyst")
+	mustWrite(t, filepath.Join(configDir, "bases", "local.yaml"), baseLocal(map[string]string{
+		"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+	}))
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "bad.md"), "---\ntitle: Bad\n---\nNo heading\n")
+
+	for _, configPath := range []string{configDir, filepath.Join(configDir, "config.yaml")} {
+		if strings.HasSuffix(configPath, "config.yaml") {
+			mustWrite(t, configPath, "")
+		}
+		_, stderr, err := runRoot(t, "check", "--config", configPath)
+		if err == nil {
+			t.Fatalf("expected check failure for --config %s", configPath)
+		}
+		if !strings.Contains(stderr, "missing H1 heading") {
+			t.Errorf("expected child config to resolve paths from project root for --config %s, got:\n%s", configPath, stderr)
+		}
+	}
+}
+
 func TestCheck_delegatedPerKindAuthoritySuppressesChildCheck(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

@@ -5,8 +5,9 @@ weight = 75
 
 # Nested Configs
 
-Nested configs let a root Katalyst project delegate authority to `.katalyst/`
-directories inside its tree.
+Nested configs let a root Katalyst project delegate authority to config
+directories inside its tree. The default child config directory is `.katalyst/`,
+but an explicit delegate can name a different directory.
 
 They are inactive unless the root config delegates to them. A child config can
 define local rules, but it does not affect a root run until the root config
@@ -118,6 +119,26 @@ authoritative until its config delegates authority to the child.
 | `config` | no | `.katalyst` | Config directory relative to `path`. |
 | `authority` | yes | - | Subsystem authority policies for this nested config. |
 
+`config` is a directory, not a file. It resolves relative to the delegate
+`path`, while paths inside the child config still resolve relative to the child
+project root.
+
+```yaml
+nestedConfigs:
+  delegates:
+    - path: packages/site
+      config: katalyst
+      authority:
+        collections: file_nearest
+```
+
+This loads `packages/site/katalyst/` as the config directory and treats
+`packages/site/` as the child project root. A child base with `root: .` points at
+`packages/site/`, not `packages/site/katalyst/`.
+
+Direct discovery still walks for `.katalyst/`. To run a non-default config
+directory directly, pass it with `--config`.
+
 The root config owns delegation. A nested config cannot opt out of root
 authority during a root run, and it cannot make itself active without a root
 delegate.
@@ -135,6 +156,10 @@ An authority policy decides which config supplies rules for a delegated subtree.
 `root_nearest` is the default. Use `file_nearest` when the child owns the local
 content model. Use `compose` when the root and child both need to validate the
 same subtree, such as broad container rules plus local folder rules.
+
+`fix` does not support `compose`. Fix composition would mean two configs can
+rewrite the same file, which needs an ordering and idempotence contract. Use
+`root_nearest` or `file_nearest` for `fix`.
 
 ## Subsystems
 
@@ -187,6 +212,16 @@ config, loads the delegated child configs, resolves the authority plan, and runs
 the checks in that plan for whole-project runs. Root-level selectors still use
 the active root's flat collection namespace.
 
+When you run `katalyst fix` or `katalyst fix --check` from the active root with
+no selectors, `fix: file_nearest` skips root rewrites inside that delegated
+subtree and runs fix against the child project's collections. With
+`fix: root_nearest`, root behavior is preserved and the child config does not
+participate in the parent-root fix run.
+
+Selector-taking parent-root fix runs stay in the root namespace. For example,
+`katalyst fix notes/draft` resolves `notes/draft` against the active root's
+collections.
+
 When you run `katalyst check` inside a child project and that child is the active
 root, the child config behaves like any other root config. Parent delegation only
 matters when the parent is the active root.
@@ -198,7 +233,7 @@ Use these flags to make config selection explicit:
 
 | Flag | Behavior |
 |---|---|
-| `--config <path>` | Load exactly that config and disable nested config discovery. |
+| `--config <path>` | Load exactly that project root, config directory, or `config.yaml` file and disable nested config discovery. |
 | `--disable-nested-config` | Load the active root only, ignoring `nestedConfigs`. |
 | `--project <dir>` | Select the active root explicitly. |
 
@@ -247,6 +282,41 @@ nestedConfigs:
 ```
 
 The child config is known to the root but contributes no rules to root runs.
+
+### Child Owns Fixes
+
+```yaml
+nestedConfigs:
+  discovery: explicit
+  delegates:
+    - path: ongoing/creative-surface-area
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+        fix: file_nearest
+```
+
+A root hook can run `katalyst fix --check` once and still catch dirty files
+owned by the child config. A root `katalyst fix` run lets the child rewrite
+those files instead of applying root collection rules to them.
+
+### Child Uses A Custom Config Directory
+
+```yaml
+nestedConfigs:
+  discovery: explicit
+  delegates:
+    - path: packages/site
+      config: katalyst
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+```
+
+The child config lives at `packages/site/katalyst/`. Commands run directly
+against it can use `katalyst check --config packages/site/katalyst`.
 
 ## See Also
 
