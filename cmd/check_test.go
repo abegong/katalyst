@@ -283,6 +283,48 @@ collections: {}
 	}
 }
 
+func TestCheck_delegatedPerKindAuthoritySuppressesRootFilesystemCheck(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        filesystemChecks:
+          default: root_nearest
+          kinds:
+            filesystem_name_case: file_nearest
+`,
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: ongoing/blog/docs
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+      - kind: filesystem_name_affix
+        prefix: Bad
+collections: {}
+`,
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "docs", "BadName.md"), "---\ntitle: Bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected root filesystem per-kind suppression to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if strings.Contains(stderr, "expected kebab-case") {
+		t.Errorf("kind-suppressed root filesystem check still ran, stderr:\n%s", stderr)
+	}
+}
+
 func TestCheck_disableNestedConfigIgnoresDelegatedChildChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
@@ -372,6 +414,41 @@ func TestCheck_delegatedPerKindAuthoritySuppressesChildCheck(t *testing.T) {
 	}
 	if strings.Contains(stderr, "does not match first H1") {
 		t.Errorf("suppressed child check still ran, stderr:\n%s", stderr)
+	}
+}
+
+func TestCheck_delegatedPerKindAuthoritySuppressesRootItemCheck(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collectionChecks:
+          default: root_nearest
+          kinds:
+            markdown_title_matches_h1: file_nearest
+`,
+		"bases/local.yaml": baseLocal(map[string]string{
+			"all": "path: ongoing/blog/notes\nchecks:\n  - kind: markdown_requires_h1\n  - kind: markdown_title_matches_h1\n    field: title\n",
+		}),
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "mismatch.md"), "---\ntitle: Title\n---\n# Different\n")
+
+	stdout, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected root per-kind suppression to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "mismatch.md: OK") {
+		t.Errorf("expected remaining root check to pass, got stdout:\n%s", stdout)
+	}
+	if strings.Contains(stderr, "does not match first H1") {
+		t.Errorf("kind-suppressed root check still ran, stderr:\n%s", stderr)
 	}
 }
 
@@ -474,6 +551,39 @@ func TestCheck_fileNearestSuppressesRootCollectionScopedChecksInDelegatedSubtree
 	}
 	if strings.Contains(stderr, "same") {
 		t.Errorf("root collection-scoped check ran inside delegated subtree, stderr:\n%s", stderr)
+	}
+}
+
+func TestCheck_delegatedPerKindAuthoritySuppressesRootCollectionScopedCheck(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collectionChecks:
+          default: root_nearest
+          kinds:
+            filesystem_unique_field: file_nearest
+`,
+		"bases/local.yaml": baseLocal(map[string]string{
+			"all": "path: ongoing/blog/notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n",
+		}),
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "a.md"), "---\nslug: same\n---\n# A\n")
+	mustWrite(t, filepath.Join(child, "notes", "b.md"), "---\nslug: same\n---\n# B\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected root collection-scoped per-kind suppression to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if strings.Contains(stderr, "same") {
+		t.Errorf("kind-suppressed root collection-scoped check still ran, stderr:\n%s", stderr)
 	}
 }
 

@@ -85,7 +85,11 @@ reported as unmatched references (errors).`,
 			}
 
 			for _, item := range res.Items {
-				ok, err := checkItem(out, errOut, e, item)
+				include := rootCollectionCheckFilterForPath(plan, item.Path)
+				if include != nil && !collectionHasApplicableConfiguredChecks(item.Collection, include) {
+					continue
+				}
+				ok, err := checkItemWithConfigAndFilter(out, errOut, e, item, "", include)
 				if err != nil {
 					fmt.Fprintf(errOut, "%s: %v\n", item.Path, err)
 					anyInvalid = true
@@ -222,12 +226,60 @@ func rootItemDelegated(plan *project.Plan, path string) bool {
 			continue
 		}
 		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollections) == project.AuthorityRootNearest &&
-			plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollectionChecks) == project.AuthorityRootNearest &&
 			plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthoritySchemas) == project.AuthorityRootNearest {
 			continue
 		}
 		if project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
 			return true
+		}
+	}
+	return false
+}
+
+func rootCollectionCheckFilterForPath(plan *project.Plan, path string) checkFilter {
+	if !pathInActiveDelegate(plan, path) {
+		return nil
+	}
+	return func(cc checks.ConfiguredCheck) bool {
+		return rootCollectionCheckApplies(plan, path, cc)
+	}
+}
+
+func pathInActiveDelegate(plan *project.Plan, path string) bool {
+	for _, delegate := range plan.Delegates {
+		if delegate.Active && project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
+			return true
+		}
+	}
+	return false
+}
+
+func rootCollectionCheckApplies(plan *project.Plan, path string, cc checks.ConfiguredCheck) bool {
+	for _, delegate := range plan.Delegates {
+		if !delegate.Active || !project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
+			continue
+		}
+		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollections) != project.AuthorityRootNearest {
+			return false
+		}
+		if rootAuthorityForConfiguredCheck(plan.Root.NestedConfigs, delegate.Delegate, project.AuthorityCollectionChecks, cc) == project.AuthorityFileNearest {
+			return false
+		}
+	}
+	return true
+}
+
+func collectionHasApplicableConfiguredChecks(c project.Collection, include checkFilter) bool {
+	for _, cc := range c.Checks {
+		if include(cc) {
+			return true
+		}
+	}
+	for _, variant := range c.Variants {
+		for _, cc := range variant.Checks {
+			if include(cc) {
+				return true
+			}
 		}
 	}
 	return false
@@ -249,13 +301,17 @@ func rootUnmatchedDelegated(plan *project.Plan, c project.Collection, rel string
 	return false
 }
 
+func rootAuthorityForConfiguredCheck(settings project.NestedConfigSettings, delegate project.NestedDelegate, subsystem project.AuthoritySubsystem, cc checks.ConfiguredCheck) project.AuthorityPolicy {
+	family := ""
+	if desc, ok := checks.DescriptorFor(cc.Kind); ok {
+		family = desc.Family
+	}
+	return settings.AuthorityForCheck(delegate, subsystem, string(cc.Kind), family)
+}
+
 func delegatedCheckFilter(settings project.NestedConfigSettings, delegate project.NestedDelegate, subsystem project.AuthoritySubsystem) checkFilter {
 	return func(cc checks.ConfiguredCheck) bool {
-		family := ""
-		if desc, ok := checks.DescriptorFor(cc.Kind); ok {
-			family = desc.Family
-		}
-		return settings.AuthorityForCheck(delegate, subsystem, string(cc.Kind), family) != project.AuthorityRootNearest
+		return rootAuthorityForConfiguredCheck(settings, delegate, subsystem, cc) != project.AuthorityRootNearest
 	}
 }
 
@@ -284,6 +340,9 @@ func checkItemWithConfigAndFilter(out, errOut io.Writer, e *engine, item project
 	checkList, err := e.checksForFiltered(item.Collection, doc.Meta, include)
 	if err != nil {
 		return false, err
+	}
+	if include != nil && len(checkList) == 0 {
+		return true, nil
 	}
 
 	// The "schema" key is a katalyst directive, not user data. Strip it
@@ -398,17 +457,29 @@ func runCollectionChecksWithConfigAndFilter(errOut io.Writer, e *engine, collect
 }
 
 func runRootCollectionChecks(errOut io.Writer, e *engine, collections []project.Collection, plan *project.Plan) (bool, error) {
-	return runCollectionChecksFiltered(errOut, e, collections, "", nil, func(path string) bool {
-		return !rootItemDelegated(plan, path)
+	return runCollectionChecksFiltered(errOut, e, collections, "", nil, func(cc checks.ConfiguredCheck, path string) bool {
+		return rootCollectionCheckApplies(plan, path, cc)
 	})
 }
 
-func runCollectionChecksFiltered(errOut io.Writer, e *engine, collections []project.Collection, configPath string, include checkFilter, includeItem func(string) bool) (bool, error) {
+func runCollectionChecksFiltered(errOut io.Writer, e *engine, collections []project.Collection, configPath string, include checkFilter, includeItem func(checks.ConfiguredCheck, string) bool) (bool, error) {
 	bad := false
 	for _, c := range collections {
-		collChecks, err := e.collectionChecksForFiltered(c, include)
-		if err != nil {
+		configured := filterConfiguredChecks(c.Checks, include)
+		if err := ensureLibrariesAvailable(configured); err != nil {
 			return false, err
+		}
+		collChecks := make([]struct {
+			configured checks.ConfiguredCheck
+			check      checks.CollectionCheck
+		}, 0, len(configured))
+		for _, cc := range configured {
+			if col, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
+				collChecks = append(collChecks, struct {
+					configured checks.ConfiguredCheck
+					check      checks.CollectionCheck
+				}{configured: cc, check: col})
+			}
 		}
 		if len(collChecks) == 0 {
 			continue
@@ -417,9 +488,9 @@ func runCollectionChecksFiltered(errOut io.Writer, e *engine, collections []proj
 		if err != nil {
 			return false, asUsageErr(err)
 		}
-		ctx := checks.CollectionContext{Root: c.Dir, Items: make([]checks.ItemContext, 0, len(items))}
+		itemCtxs := make([]checks.ItemContext, 0, len(items))
 		for _, it := range items {
-			if includeItem != nil && !includeItem(it.Path) {
+			if includeItem != nil && !anyCollectionCheckApplies(collChecks, includeItem, it.Path) {
 				continue
 			}
 			content, err := e.proj.ReadItem(it)
@@ -429,26 +500,47 @@ func runCollectionChecksFiltered(errOut io.Writer, e *engine, collections []proj
 				continue
 			}
 			doc := content.Doc
-			ctx.Items = append(ctx.Items, checks.ItemContext{
+			itemCtxs = append(itemCtxs, checks.ItemContext{
 				FilePath: it.Path,
 				Meta:     dropKey(doc.Meta, "schema"),
 			})
 		}
-		for _, v := range checks.RunCollectionAll(ctx, collChecks) {
-			marker := ""
-			if v.Severity == checks.SeverityWarning {
-				marker = "warning: "
+		for _, collCheck := range collChecks {
+			ctx := checks.CollectionContext{Root: c.Dir, Items: make([]checks.ItemContext, 0, len(itemCtxs))}
+			for _, itemCtx := range itemCtxs {
+				if includeItem != nil && !includeItem(collCheck.configured, itemCtx.FilePath) {
+					continue
+				}
+				ctx.Items = append(ctx.Items, itemCtx)
 			}
-			fmt.Fprintf(errOut, "%s: %s%s\n", v.File, marker, v.Message)
-			if configPath != "" {
-				fmt.Fprintf(errOut, "  config: %s\n", configPath)
-			}
-			if v.Severity != checks.SeverityWarning {
-				bad = true
+			for _, v := range checks.RunCollectionAll(ctx, []checks.CollectionCheck{collCheck.check}) {
+				marker := ""
+				if v.Severity == checks.SeverityWarning {
+					marker = "warning: "
+				}
+				fmt.Fprintf(errOut, "%s: %s%s\n", v.File, marker, v.Message)
+				if configPath != "" {
+					fmt.Fprintf(errOut, "  config: %s\n", configPath)
+				}
+				if v.Severity != checks.SeverityWarning {
+					bad = true
+				}
 			}
 		}
 	}
 	return bad, nil
+}
+
+func anyCollectionCheckApplies(collChecks []struct {
+	configured checks.ConfiguredCheck
+	check      checks.CollectionCheck
+}, includeItem func(checks.ConfiguredCheck, string) bool, path string) bool {
+	for _, collCheck := range collChecks {
+		if includeItem(collCheck.configured, path) {
+			return true
+		}
+	}
+	return false
 }
 
 // usageErr wraps a message so main exits with code 2 (usage error).
