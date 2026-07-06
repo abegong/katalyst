@@ -185,7 +185,8 @@ family, or subsystem.
 
 When you run `katalyst check` from the active root, Katalyst loads the root
 config, loads the delegated child configs, resolves the authority plan, and runs
-the checks in that plan.
+the checks in that plan for whole-project runs. Root-level selectors still use
+the active root's flat collection namespace.
 
 When you run `katalyst check` inside a child project and that child is the active
 root, the child config behaves like any other root config. Parent delegation only

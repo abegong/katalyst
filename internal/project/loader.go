@@ -62,6 +62,9 @@ var ErrNotFound = errors.New("config: .katalyst/ not found")
 type Config struct {
 	// Root is the absolute directory containing the .katalyst/ dir.
 	Root string
+	// NestedConfigs declares root-owned delegation to child .katalyst/
+	// directories.
+	NestedConfigs NestedConfigSettings
 	// Schemas is name → absolute path.
 	Schemas map[string]string
 	// Bases holds the configured bases, in name order. Each base declares its
@@ -112,6 +115,7 @@ type rawConfig struct {
 	Storage *rawBaseKind                   `yaml:"storage"`
 	Listing *collection.RawListingDefaults `yaml:"listing"`
 	Query   *collection.RawListingDefaults `yaml:"query"`
+	Nested  rawNestedConfigSettings        `yaml:"nestedConfigs"`
 }
 
 // rawSchemaKind configures how schemas are discovered. Defs is consulted
@@ -148,20 +152,43 @@ type rawBaseInstance struct {
 // consistency (every referenced schema exists, every collection has at
 // least one check).
 func Load(start string) (*Config, error) {
-	root, err := find(start)
+	root, err := FindRoot(start)
 	if err != nil {
 		return nil, err
 	}
+	return LoadRoot(root)
+}
+
+// LoadRoot reads the project at root without walking upward first.
+func LoadRoot(root string) (*Config, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve root dir: %w", err)
+	}
+	if ok, err := dirExists(filepath.Join(abs, Dir)); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrNotFound
+	}
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		abs = resolved
+	}
+	root = abs
 
 	raw, err := readConfigFile(root)
 	if err != nil {
 		return nil, err
 	}
+	nested, err := buildNestedSettings(raw.Nested)
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &Config{
-		Root:        root,
-		Schemas:     make(map[string]string),
-		Collections: make([]Collection, 0),
+		Root:          root,
+		NestedConfigs: nested,
+		Schemas:       make(map[string]string),
+		Collections:   make([]Collection, 0),
 	}
 	if err := cfg.loadSchemas(raw.Schemas); err != nil {
 		return nil, err
@@ -563,7 +590,7 @@ func (c *Config) FilesystemCheckScopes() []filesystemcheck.Scope {
 //
 // Symlink resolution matters on macOS where temp dirs (and sometimes
 // user home dirs) live behind /var -> /private/var.
-func find(start string) (string, error) {
+func FindRoot(start string) (string, error) {
 	abs, err := filepath.Abs(start)
 	if err != nil {
 		return "", fmt.Errorf("resolve start dir: %w", err)
@@ -584,6 +611,15 @@ func find(start string) (string, error) {
 		}
 		dir = parent
 	}
+}
+
+// FindParentRoot finds the nearest ancestor project above target.
+func FindParentRoot(target string) (string, error) {
+	abs, err := filepath.Abs(target)
+	if err != nil {
+		return "", fmt.Errorf("resolve target dir: %w", err)
+	}
+	return FindRoot(filepath.Dir(abs))
 }
 
 // resolve turns a config-relative path into an absolute one. Absolute

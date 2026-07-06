@@ -72,6 +72,11 @@ imports the sibling `predicate` grammar intra-subtree). The loader depends on
 the collection layer, not the reverse; the old cross-tree config edge is gone
 (config-distribution spec).
 
+Nested config authority is part of the project vocabulary. Parse
+`nestedConfigs`, delegate paths, authority policies, and active-root selection
+in `internal/project`; keep executable check planning in `cmd`, where engines,
+selectors, and diagnostics already live.
+
 Per-item check *routing* (collection variants) lives in the check engine
 (`engine.checksFor`), keyed on the item's parsed metadata via
 `predicate.Predicate.Matches`, never on its path. Keep it that way:

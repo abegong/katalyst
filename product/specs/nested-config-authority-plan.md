@@ -1,6 +1,6 @@
 # Plan - nested config authority
 > Spec: [Nested config authority](./nested-config-authority-spec.md)
-> **Status: planning.**
+> **Status: implementing.**
 
 ## Current State
 

@@ -61,6 +61,22 @@ Implication: **item and collection are roles, not file counts.** A base that pac
 - **Raw base:** Katalyst can connect to the source and reference base-native content.
 - **Collectionized base:** a raw base plus collection definitions that map base-native references into domain collections and items.
 
+## Nested configs split container and content authority
+
+A parent project may validate the container that holds a child project, while
+the child validates its local content model. For example, the parent can enforce
+which project directories belong under `projects/`, and the child can enforce
+which files belong inside each post folder.
+
+Katalyst treats that as explicit authority, not implicit ancestry. The active
+root governs by default. A child `.katalyst/` contributes rules to a parent-root
+run only when the parent config delegates authority through `nestedConfigs`.
+
+Filesystem checks are the main place composition matters. A root filesystem
+scope can validate broad container shape, while a child filesystem scope
+validates local folder shape. Use composed authority when both checks should run
+against the same subtree.
+
 ## Unmatched references are first-class
 
 Katalyst treats unmatched references as errors rather than silently dropping them. A file inside a configured collection's scope that matches no pattern is usually a signal of config drift: the pattern is wrong, the file is misplaced, or the project has gained a new shape that has not been modeled yet.

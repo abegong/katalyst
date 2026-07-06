@@ -1,0 +1,12 @@
+Commands to inspect the active project
+
+Usage:
+  katalyst project [command]
+
+Available Commands:
+  plan        Print the resolved project authority plan
+
+Flags:
+  -h, --help   help for project
+
+Use "katalyst project [command] --help" for more information about a command.

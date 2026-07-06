@@ -178,6 +178,104 @@ collections:
 	}
 }
 
+func TestCheck_rootRunUsesDelegatedChildCollectionChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "bad.md"), "---\ntitle: Bad\n---\nNo heading\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected delegated child check failure")
+	}
+	if !strings.Contains(stderr, "missing H1 heading") || !strings.Contains(stderr, "config: ongoing/blog/.katalyst") {
+		t.Errorf("expected child check diagnostic with config provenance, got:\n%s", stderr)
+	}
+}
+
+func TestCheck_rootRunComposesDelegatedFilesystemChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        filesystemChecks: compose
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: docs
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "docs", "BadName.md"), "---\ntitle: Bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected delegated filesystem check failure")
+	}
+	if !strings.Contains(stderr, "filesystem docs: BadName.md") || !strings.Contains(stderr, "config: ongoing/blog/.katalyst") {
+		t.Errorf("expected child filesystem diagnostic with config provenance, got:\n%s", stderr)
+	}
+}
+
+func TestCheck_disableNestedConfigIgnoresDelegatedChildChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "bad.md"), "---\ntitle: Bad\n---\nNo heading\n")
+
+	_, stderr, err := runRoot(t, "check", "--disable-nested-config")
+	if err != nil {
+		t.Fatalf("expected disabled nested config to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if strings.Contains(stderr, "config: ongoing/blog/.katalyst") {
+		t.Errorf("disabled nested config should not report child diagnostics, got:\n%s", stderr)
+	}
+}
+
 func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

@@ -1,6 +1,6 @@
 # Spec - nested config authority
 
-> **Status: planning.** Resolves issue #127 by making nested `.katalyst/`
+> **Status: implementing.** Resolves issue #127 by making nested `.katalyst/`
 > behavior explicit. Default authority is `root_nearest`; delegation to child
 > configs is opt-in and declared by the root config.
 

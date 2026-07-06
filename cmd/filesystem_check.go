@@ -17,9 +17,13 @@ type runtimeFileCheck struct {
 }
 
 func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
+	return runFilesystemChecksWithConfig(errOut, e, "")
+}
+
+func runFilesystemChecksWithConfig(errOut io.Writer, e *engine, configPath string) (bool, error) {
 	bad := false
 	for _, scope := range e.proj.FilesystemCheckScopes() {
-		scopeBad, err := runFilesystemScope(errOut, e, scope)
+		scopeBad, err := runFilesystemScopeWithConfig(errOut, e, scope, configPath)
 		if err != nil {
 			return false, err
 		}
@@ -31,6 +35,10 @@ func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
 }
 
 func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope) (bool, error) {
+	return runFilesystemScopeWithConfig(errOut, e, scope, "")
+}
+
+func runFilesystemScopeWithConfig(errOut io.Writer, e *engine, scope filesystemcheck.Scope, configPath string) (bool, error) {
 	expanded, err := filesystemcheck.Expand(scope)
 	if err != nil {
 		return false, asUsageErr(err)
@@ -74,6 +82,9 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 					Message:  fmt.Sprintf("parse document: %v", err),
 					Severity: severity,
 				})
+				if configPath != "" {
+					fmt.Fprintf(errOut, "  config: %s\n", configPath)
+				}
 				if severity != checks.SeverityWarning {
 					bad = true
 				}
@@ -94,6 +105,9 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 			}
 			for _, v := range rc.check.Run(ctx) {
 				printFilesystemViolation(errOut, scope, file.Rel, v)
+				if configPath != "" {
+					fmt.Fprintf(errOut, "  config: %s\n", configPath)
+				}
 				if v.Severity != checks.SeverityWarning {
 					bad = true
 				}
@@ -106,6 +120,9 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 			path = scope.Name
 		}
 		printFilesystemViolation(errOut, scope, path, v)
+		if configPath != "" {
+			fmt.Fprintf(errOut, "  config: %s\n", configPath)
+		}
 		if v.Severity != checks.SeverityWarning {
 			bad = true
 		}

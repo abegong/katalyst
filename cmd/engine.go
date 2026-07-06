@@ -44,6 +44,17 @@ func newEngine(schemaFlag string) (*engine, error) {
 	if err != nil {
 		return nil, err
 	}
+	return newEngineForConfig(cfg, schemaFlag, e.forcedPath)
+}
+
+func newEngineForConfig(cfg *project.Config, schemaFlag, forcedPath string) (*engine, error) {
+	e := &engine{cache: map[libPathKey]checks.Schema{}, forcedPath: forcedPath}
+	if forcedPath == "" && schemaFlag != "" {
+		if _, err := os.Stat(schemaFlag); err != nil {
+			return nil, usageErr(fmt.Sprintf("--schema: %v", err))
+		}
+		e.forcedPath = schemaFlag
+	}
 	e.proj = project.New(cfg)
 	return e, nil
 }

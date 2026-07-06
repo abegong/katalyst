@@ -59,6 +59,8 @@ Project links:
 	fixCmd := newFixCmd()
 	fixCmd.Short = "Apply deterministic, safe fixes"
 
+	projectCmd := newProjectCmd()
+
 	collectionCmd := newCollectionCmd()
 	collectionCmd.Short = "Commands to inspect and modify collections in this project"
 
@@ -86,6 +88,7 @@ Project links:
 		fixCmd,
 	)
 	addGrouped(root, "resources",
+		projectCmd,
 		collectionCmd,
 		itemCmd,
 		schemaCmd,

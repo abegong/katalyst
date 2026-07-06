@@ -87,3 +87,54 @@ func TestInit_freshProjectIsClean(t *testing.T) {
 		t.Fatalf("check on a fresh project failed: %v\nstderr: %s", err, stderr)
 	}
 }
+
+func TestInit_refusesImplicitNestedProject(t *testing.T) {
+	dir := t.TempDir()
+	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
+		t.Fatalf("parent init: %v", err)
+	}
+	child := filepath.Join(dir, "ongoing", "blog")
+	if err := os.MkdirAll(child, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err := runRoot(t, "init", "--dir", child)
+	if err == nil {
+		t.Fatalf("expected nested init refusal")
+	}
+	if got := exitCode(err); got != 2 {
+		t.Fatalf("exit code = %d, want 2 (err: %v)", got, err)
+	}
+	if _, statErr := os.Stat(filepath.Join(child, ".katalyst")); !os.IsNotExist(statErr) {
+		t.Fatalf("plain init wrote child config, stat err: %v", statErr)
+	}
+}
+
+func TestInit_nestedCreatesChildAndPrintsDelegationSnippet(t *testing.T) {
+	dir := t.TempDir()
+	if _, _, err := runRoot(t, "init", "--dir", dir); err != nil {
+		t.Fatalf("parent init: %v", err)
+	}
+	child := filepath.Join(dir, "ongoing", "blog")
+	if err := os.MkdirAll(child, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout, _, err := runRoot(t, "init", "--nested", "--dir", child)
+	if err != nil {
+		t.Fatalf("nested init: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(child, ".katalyst", "config.yaml")); err != nil {
+		t.Fatalf("expected child config: %v", err)
+	}
+	for _, want := range []string{
+		"nested project created",
+		"path: ongoing/blog",
+		"collections: file_nearest",
+		"collectionChecks: file_nearest",
+	} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected stdout to contain %q, got:\n%s", want, stdout)
+		}
+	}
+}

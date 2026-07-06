@@ -27,8 +27,22 @@ groups in `katalyst --help`:
 - **Other verbs** (`inspect`, `init`) do not use selectors: `inspect` takes one
   path or configured collection name and infers the inspector layer from that
   argument; `init` prepares a project directory.
-- **Resource nouns** (`collection`, `item`, `schema`, `check-types`,
-  `inspectors`) carry CRUD-style sub-verbs (`list`, `get`, ...).
+- **Resource nouns** (`project`, `collection`, `item`, `schema`,
+  `check-types`, `inspectors`) carry sub-verbs (`plan`, `list`, `get`, ...).
+  `project` is a singleton resource for the active project.
+
+## Project selection flags
+
+Commands that load configured project behavior accept these flags:
+
+| Flag | Meaning |
+|---|---|
+| `--config <path>` | Load exactly this project root, `.katalyst/` directory, or `.katalyst/config.yaml`. Nested config discovery is disabled. |
+| `--project <dir>` | Select the active project from this directory. |
+| `--disable-nested-config` | Load the active root and ignore `nestedConfigs`. |
+
+Run `katalyst project plan` to inspect the resolved authority plan before
+running checks.
 
 ## Human-readable output layout
 

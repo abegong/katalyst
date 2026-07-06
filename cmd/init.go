@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -46,6 +48,7 @@ collections: {}
 
 func newInitCmd() *cobra.Command {
 	var dir string
+	var nested bool
 
 	c := &cobra.Command{
 		Use:   "init",
@@ -66,6 +69,18 @@ func newInitCmd() *cobra.Command {
 			katalystDir := filepath.Join(target, project.Dir)
 			if _, err := os.Stat(katalystDir); err == nil {
 				return usageErr(fmt.Sprintf("%s already exists; refusing to overwrite", katalystDir))
+			}
+			parentRoot, parentErr := project.FindParentRoot(target)
+			hasParent := parentErr == nil
+			if parentErr != nil && !errors.Is(parentErr, project.ErrNotFound) {
+				return parentErr
+			}
+			if hasParent && !nested {
+				parentConfig, err := filepath.Rel(target, filepath.Join(parentRoot, project.Dir))
+				if err != nil {
+					parentConfig = filepath.Join(parentRoot, project.Dir)
+				}
+				return usageErr(fmt.Sprintf("found parent Katalyst project at %s; refusing to create an implicit nested project (rerun with: katalyst init --nested)", filepath.ToSlash(parentConfig)))
 			}
 
 			for _, sub := range []string{"schemas", "bases"} {
@@ -89,10 +104,42 @@ func newInitCmd() *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "created %s\n", cfgRel)
+			if hasParent {
+				printNestedInitSnippet(cmd.OutOrStdout(), parentRoot, target)
+			}
 			return nil
 		},
 	}
 
 	c.Flags().StringVar(&dir, "dir", "", "Directory to prepare (default: current directory)")
+	c.Flags().BoolVar(&nested, "nested", false, "Create a nested project inside an existing Katalyst project")
 	return c
+}
+
+func printNestedInitSnippet(out io.Writer, parentRoot, target string) {
+	if resolved, err := filepath.EvalSymlinks(target); err == nil {
+		target = resolved
+	}
+	rel, err := filepath.Rel(parentRoot, target)
+	if err != nil {
+		rel = target
+	}
+	rel = filepath.ToSlash(rel)
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "nested project created")
+	fmt.Fprintln(out, "- commands run from this subtree use the child config")
+	fmt.Fprintln(out, "- commands run from the parent root keep using the parent config")
+	fmt.Fprintln(out, "- parent-root runs ignore the child config until the parent delegates to it")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "add this to the parent config to delegate authority:")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "nestedConfigs:")
+	fmt.Fprintln(out, "  discovery: explicit")
+	fmt.Fprintln(out, "  delegates:")
+	fmt.Fprintf(out, "    - path: %s\n", rel)
+	fmt.Fprintln(out, "      config: .katalyst")
+	fmt.Fprintln(out, "      authority:")
+	fmt.Fprintln(out, "        collections: file_nearest")
+	fmt.Fprintln(out, "        collectionChecks: file_nearest")
+	fmt.Fprintln(out, "        schemas: file_nearest")
 }

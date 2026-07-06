@@ -27,6 +27,9 @@ When adding a top-level command, decide which family it joins:
 - **Resource noun:** `katalyst <noun> <verb> <selector>`, a group whose
   CRUD-shaped sub-verbs act on one resource at a fixed depth (`collection`,
   `item`, `schema`, `check-types`, `inspectors`).
+  `project` is the singleton resource noun: a command invocation has one active
+  project, so `project plan` reads that singleton and the noun has no `list`
+  subcommand.
 
 The rule, concretely:
 
@@ -34,8 +37,9 @@ The rule, concretely:
 - No cross-cutting verb under a noun: `check` stays a blessed verb, never
   `item check`.
 - A resource noun is built with no `RunE`, so invoking it bare prints help
-  rather than running a default action. See `schema.go` / `collection.go` for
-  the pattern: a parent command that only `AddCommand`s its sub-verbs.
+  rather than running a default action. See `schema.go`, `collection.go`, and
+  `project.go` for the pattern: a parent command that only `AddCommand`s its
+  sub-verbs.
 
 When you change the no-args help surface (a new command, a renamed group, a
 changed `Short`), update the golden snapshot under

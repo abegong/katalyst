@@ -12,8 +12,11 @@ local code conventions.
 ## Conventions
 
 - The loader owns the `.katalyst/` vocabulary: discovery mode, config format,
-  schema names, base names, collection uniqueness, and selector
-  parsing. Do not duplicate that parsing in `cmd/`.
+  schema names, base names, collection uniqueness, nested config authority, and
+  selector parsing. Do not duplicate that parsing in `cmd/`.
+- Delegated child configs stay outside the active root's flattened
+  `Config.Collections`. Root-level selectors remain flat until the project API
+  grows path-qualified selectors or root-defined aliases.
 - Base and collection details stay below the storage boundary. This package
   assembles `storage/collection.Collection` values and calls a
   `CollectionDefinition`; it should not inline globbing, path joins, or
