@@ -106,6 +106,53 @@ func TestProjectPlan_inactiveDelegateDoesNotRequireChildConfig(t *testing.T) {
 	}
 }
 
+func TestProjectPlan_walkDiscoveryFindsInactiveChildByDefault(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  discovery: walk
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+
+	stdout, stderr, err := runRoot(t, "project", "plan")
+	if err != nil {
+		t.Fatalf("project plan: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "ongoing/blog/.katalyst") || !strings.Contains(stdout, "status: inactive") {
+		t.Fatalf("expected walked inactive child, got:\n%s", stdout)
+	}
+}
+
+func TestProjectPlan_walkDiscoveryUsesDefaultAuthority(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  discovery: walk
+  defaultAuthority: file_nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+
+	stdout, stderr, err := runRoot(t, "project", "plan")
+	if err != nil {
+		t.Fatalf("project plan: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "status: active") || !strings.Contains(stdout, "collections: file_nearest") {
+		t.Fatalf("expected walked active child using default authority, got:\n%s", stdout)
+	}
+}
+
 func TestProjectPlan_disableNestedConfigHidesDelegates(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
