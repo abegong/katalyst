@@ -418,6 +418,39 @@ func TestCheck_fileNearestSuppressesRootItemChecksInDelegatedSubtree(t *testing.
 	}
 }
 
+func TestCheck_fileNearestSuppressesRootCollectionScopedChecksInDelegatedSubtree(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+`,
+		"bases/local.yaml": baseLocal(map[string]string{
+			"all": "path: ongoing/blog/notes\nchecks:\n  - kind: filesystem_unique_field\n    field: slug\n",
+		}),
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "a.md"), "---\nslug: same\n---\n# A\n")
+	mustWrite(t, filepath.Join(child, "notes", "b.md"), "---\nslug: same\n---\n# B\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected root collection-scoped check suppression to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if strings.Contains(stderr, "same") {
+		t.Errorf("root collection-scoped check ran inside delegated subtree, stderr:\n%s", stderr)
+	}
+}
+
 func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

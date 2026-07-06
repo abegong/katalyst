@@ -111,7 +111,7 @@ reported as unmatched references (errors).`,
 			// Collection-scoped checks run once per collection over its FULL
 			// item set, independent of how the selector narrowed the per-item
 			// pass (a uniqueness verdict is only correct against every item).
-			bad, err := runCollectionChecks(errOut, e, selectedCollections(res))
+			bad, err := runRootCollectionChecks(errOut, e, selectedCollections(res), plan)
 			if err != nil {
 				return err
 			}
@@ -375,6 +375,16 @@ func runCollectionChecksWithConfig(errOut io.Writer, e *engine, collections []pr
 }
 
 func runCollectionChecksWithConfigAndFilter(errOut io.Writer, e *engine, collections []project.Collection, configPath string, include checkFilter) (bool, error) {
+	return runCollectionChecksFiltered(errOut, e, collections, configPath, include, nil)
+}
+
+func runRootCollectionChecks(errOut io.Writer, e *engine, collections []project.Collection, plan *project.Plan) (bool, error) {
+	return runCollectionChecksFiltered(errOut, e, collections, "", nil, func(path string) bool {
+		return !rootItemDelegated(plan, path)
+	})
+}
+
+func runCollectionChecksFiltered(errOut io.Writer, e *engine, collections []project.Collection, configPath string, include checkFilter, includeItem func(string) bool) (bool, error) {
 	bad := false
 	for _, c := range collections {
 		collChecks, err := e.collectionChecksForFiltered(c, include)
@@ -390,6 +400,9 @@ func runCollectionChecksWithConfigAndFilter(errOut io.Writer, e *engine, collect
 		}
 		ctx := checks.CollectionContext{Root: c.Dir, Items: make([]checks.ItemContext, 0, len(items))}
 		for _, it := range items {
+			if includeItem != nil && !includeItem(it.Path) {
+				continue
+			}
 			content, err := e.proj.ReadItem(it)
 			if err != nil {
 				fmt.Fprintf(errOut, "%s: %v\n", it.Path, err)
