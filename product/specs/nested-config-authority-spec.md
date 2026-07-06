@@ -149,6 +149,33 @@ Delegate fields:
 | `config` | no | `.katalyst` | Config directory relative to `path`. |
 | `authority` | yes | - | Subsystem -> authority policy, or subsystem -> authority rule. |
 
+`config` is a directory, not a file. It is resolved relative to the delegate
+`path`, not relative to the active root. For the default case:
+
+```yaml
+path: ongoing/creative-surface-area
+config: .katalyst
+```
+
+the child project root is `ongoing/creative-surface-area/`, and its config
+directory is `ongoing/creative-surface-area/.katalyst/`.
+
+Non-default config directory names are allowed for root-delegated runs:
+
+```yaml
+path: packages/site
+config: katalyst
+```
+
+This loads `packages/site/katalyst/` while treating `packages/site/` as the
+child project root for relative paths inside that config. Direct discovery still
+uses `.katalyst/`; a child using a non-default config directory is only selected
+directly when a command uses `--config packages/site/katalyst`.
+
+The `config` path must be relative, must name a directory below `path`, and must
+not contain `..` segments after cleaning. Invalid `config` values are config
+errors, not silent fallbacks to `.katalyst/`.
+
 A non-empty `delegates` block implies explicit discovery. A later
 `discovery: walk` can scan for child `.katalyst/` directories, but the authority
 rules still come from the root config. Walked children with only the default
@@ -208,7 +235,7 @@ Initial subsystem keys:
 | `collections` | Collection definitions: membership, patterns, item identity, and collection selectors. |
 | `collectionChecks` | Checks attached to collections, including schemas folded through `schema:`. |
 | `schemas` | Named schema resolution for delegated collection checks. |
-| `fix` | Canonicalization rules used by `katalyst fix` and `fix --check`. |
+| `fix` | Which config supplies item canonicalization for whole-project `katalyst fix` and `fix --check` runs. |
 
 Each subsystem may be configured with a scalar policy:
 
@@ -243,6 +270,10 @@ No check type gets special behavior unless the root config names its kind,
 family, or subsystem. That is the design point: conditional behavior is allowed,
 but it is conditional because config says so.
 
+`fix` is not check-bearing. It accepts only scalar `root_nearest` or
+`file_nearest` in this implementation. `compose` for `fix` is rejected because
+write composition needs a separately designed order and idempotence contract.
+
 ### Command behavior
 
 Running from the active root:
@@ -258,6 +289,27 @@ Running from the active root:
    - expanded authority rules resolve per check kind/family before deciding
      which specific check instances to keep, replace, or compose.
 5. Run the resulting plan and report which config produced each violation.
+
+`katalyst fix` uses the same active-root and delegation model for whole-project
+runs, but only for the `fix` subsystem:
+
+- `fix: root_nearest` keeps today's behavior for that subtree. The parent root
+  may fix files selected by parent collections, and the child config does not
+  participate in a parent-root run.
+- `fix: file_nearest` makes the child config responsible for fixing its own
+  subtree during a parent-root whole-project run. Parent-root fix execution
+  skips root-selected files under the delegated subtree; child fix execution
+  runs over the child project's collections.
+- `fix: compose` is a configuration error for now.
+
+`fix --check` follows the same plan without writing. It exits 1 if either the
+root-owned portion or a delegated child-owned portion would change.
+
+Selector-taking runs remain root-namespace only in this first cut. For example,
+`katalyst fix notes/draft` from the parent root resolves `notes/draft` against
+the parent root's flat collection namespace. Root-level selectors for delegated
+child collections are deferred with path-qualified selectors and root-defined
+aliases.
 
 Running inside a child project directly:
 
@@ -275,8 +327,10 @@ Explicit flags:
 | `--project <dir>` | Select the active root explicitly. |
 
 `--config` is the escape hatch for tools that need one stable config regardless
-of the current directory. `--disable-nested-config` is the debugging escape
-hatch for root configs that normally delegate.
+of the current directory. It accepts a project root, a config directory, or a
+config file. When the config directory is not named `.katalyst`, its parent is
+the project root. `--disable-nested-config` is the debugging escape hatch for
+root configs that normally delegate.
 
 ### Diagnostics
 
@@ -357,6 +411,47 @@ This records that the child config exists but does not activate it during root
 runs. The plan-visibility surface should show the child as discovered and
 inactive.
 
+### Child owns fix canonicalization
+
+```yaml
+nestedConfigs:
+  discovery: explicit
+  delegates:
+    - path: ongoing/creative-surface-area
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+        fix: file_nearest
+```
+
+`katalyst check` from the root validates the delegated subtree with the child
+collections and checks. `katalyst fix --check` from the root also examines child
+items with the child config. A dirty child file is reported even if the parent
+root has no collection that names that file.
+
+If the parent root has a broad collection that also matches child files,
+`fix: file_nearest` prevents the parent from rewriting those files during a
+whole-project parent run.
+
+### Custom child config directory
+
+```yaml
+nestedConfigs:
+  discovery: explicit
+  delegates:
+    - path: packages/site
+      config: katalyst
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+```
+
+The parent-root plan loads `packages/site/katalyst/` and resolves paths inside
+that child config against `packages/site/`. Diagnostics and `project plan`
+display `packages/site/katalyst`, not `packages/site/.katalyst`.
+
 ## Rejected Alternatives
 
 ### Auto-merge every discovered child config
@@ -383,6 +478,13 @@ Rejected for root runs. A child project may define local rules, but it should
 not be able to unilaterally stop the parent from governing a parent-initiated
 run. Delegation is owned by the active root.
 
+### Compose fix writes now
+
+Rejected for this implementation. Check composition is just double evaluation,
+but fix composition writes content. If root and child transforms both apply to
+the same file, Katalyst needs an explicit order and an idempotence guarantee.
+Until that is designed, `fix: compose` is a usage/config error.
+
 ## Test Checklist
 
 - Root with no `nestedConfigs` behaves exactly as today.
@@ -403,10 +505,22 @@ run. Delegation is owned by the active root.
 - `katalyst init --nested` inside an existing project creates the child config
   and prints the parent delegation snippet.
 - `--config` disables nested discovery.
+- `--config` can load a non-`.katalyst` config directory and use its parent as
+  the project root.
 - `--disable-nested-config` ignores configured delegates.
 - Diagnostics identify the config root that produced each violation.
 - The plan-visibility surface prints root, child, subsystem, and authority
   decisions.
+- A delegated child with `config: katalyst` is loaded from
+  `<path>/katalyst/`, not `<path>/.katalyst/`.
+- Invalid delegate `config` values that are absolute or escape the delegate
+  path are rejected.
+- Whole-project `fix --check` reports dirty child-owned files when
+  `fix: file_nearest`.
+- Whole-project `fix` skips parent-root rewrites inside a child-owned subtree
+  when `fix: file_nearest`.
+- Direct `fix` inside a child active root behaves like an ordinary root run.
+- `fix: compose` is rejected until ordered write composition is specified.
 
 ## Documentation Updates
 
