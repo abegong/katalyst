@@ -20,6 +20,7 @@ The config reference is organized by concept:
 - [Checks]({{< relref "checks.md" >}}): `schema:` shorthand, `checks:` entries, text rules, and object-schema precedence.
 - [Variants]({{< relref "variants.md" >}}): conditional check routing with `when`.
 - [Listing]({{< relref "listing.md" >}}): default behavior for `katalyst item list`.
+- [Nested configs]({{< relref "nested-configs.md" >}}): root-owned delegation to child `.katalyst/` directories.
 
 For *why* the config is shaped this way, see [How collections
 work]({{< relref "../../deep-dives/domain-model/collections.md" >}}). To set one up step by
