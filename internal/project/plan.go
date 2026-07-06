@@ -52,7 +52,7 @@ func BuildPlan(opts PlanOptions) (*Plan, error) {
 	for _, delegate := range delegates {
 		active := delegateHasActiveAuthority(cfg.NestedConfigs, delegate)
 		pd := PlanDelegate{Delegate: delegate, Active: active}
-		if active || cfg.NestedConfigs.Discovery != NestedDiscoveryNone {
+		if active {
 			child, err := LoadRoot(filepath.Join(cfg.Root, filepath.FromSlash(delegate.Path)))
 			if err != nil {
 				return nil, fmt.Errorf("nested config %s: %w", delegate.Path, err)

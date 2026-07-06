@@ -85,6 +85,27 @@ func TestProjectPlan_marksRootNearestDelegateInactive(t *testing.T) {
 	}
 }
 
+func TestProjectPlan_inactiveDelegateDoesNotRequireChildConfig(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority: {}
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+
+	stdout, stderr, err := runRoot(t, "project", "plan")
+	if err != nil {
+		t.Fatalf("project plan: %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "status: inactive") {
+		t.Fatalf("expected inactive child plan, got:\n%s", stdout)
+	}
+}
+
 func TestProjectPlan_disableNestedConfigHidesDelegates(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
