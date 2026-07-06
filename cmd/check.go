@@ -80,6 +80,9 @@ reported as unmatched references (errors).`,
 			if err != nil {
 				return err
 			}
+			if len(args) == 0 {
+				res = filterRootResolutionForDelegates(plan, res)
+			}
 
 			for _, item := range res.Items {
 				ok, err := checkItem(out, errOut, e, item)
@@ -191,6 +194,40 @@ func runDelegatedChecks(out, errOut io.Writer, plan *project.Plan, schemaFlag st
 		}
 	}
 	return bad, nil
+}
+
+func filterRootResolutionForDelegates(plan *project.Plan, res *project.Resolution) *project.Resolution {
+	if len(plan.Delegates) == 0 {
+		return res
+	}
+	filtered := &project.Resolution{
+		Items: make([]project.Item, 0, len(res.Items)),
+		Scan:  res.Scan,
+	}
+	for _, item := range res.Items {
+		if rootItemDelegated(plan, item.Path) {
+			continue
+		}
+		filtered.Items = append(filtered.Items, item)
+	}
+	return filtered
+}
+
+func rootItemDelegated(plan *project.Plan, path string) bool {
+	for _, delegate := range plan.Delegates {
+		if !delegate.Active {
+			continue
+		}
+		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollections) == project.AuthorityRootNearest &&
+			plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollectionChecks) == project.AuthorityRootNearest &&
+			plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthoritySchemas) == project.AuthorityRootNearest {
+			continue
+		}
+		if project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
+			return true
+		}
+	}
+	return false
 }
 
 func delegatedCheckFilter(settings project.NestedConfigSettings, delegate project.NestedDelegate, subsystem project.AuthoritySubsystem) checkFilter {

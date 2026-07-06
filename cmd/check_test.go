@@ -345,6 +345,42 @@ func TestCheck_delegatedPerFamilyAuthorityRunsChildChecks(t *testing.T) {
 	}
 }
 
+func TestCheck_fileNearestSuppressesRootItemChecksInDelegatedSubtree(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+        schemas: file_nearest
+`,
+		"bases/local.yaml": baseLocal(map[string]string{
+			"all": "path: ongoing/blog/notes\nchecks:\n  - kind: markdown_title_matches_h1\n    field: title\n",
+		}),
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "mismatch.md"), "---\ntitle: Title\n---\n# Different\n")
+
+	stdout, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected child nearest authority to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "mismatch.md: OK") {
+		t.Errorf("expected child item OK, got stdout:\n%s", stdout)
+	}
+	if strings.Contains(stderr, "does not match first H1") {
+		t.Errorf("root item check ran inside delegated subtree, stderr:\n%s", stderr)
+	}
+}
+
 func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
