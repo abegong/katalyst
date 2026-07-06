@@ -1,7 +1,6 @@
 +++
 title = "Nested configs"
 weight = 75
-draft = true
 +++
 
 # Nested Configs
