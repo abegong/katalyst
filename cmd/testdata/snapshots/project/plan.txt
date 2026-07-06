@@ -1,0 +1,13 @@
+Project plan
+------------
+- root: .katalyst
+- nested configs: 1
+
+ongoing/blog/.katalyst
+----
+- status: active
+- collectionChecks: file_nearest
+- collections: file_nearest
+- filesystemChecks: compose
+- fix: root_nearest
+- schemas: file_nearest
