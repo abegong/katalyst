@@ -287,11 +287,15 @@ ongoing/creative-surface-area/posts/foo/draft.md:1: markdown_requires_h1: missin
   config: ongoing/creative-surface-area/.katalyst
 ```
 
-Katalyst needs a plan-visibility surface for the resolved authority plan. The
-exact command surface is still open. The output should show the resolved plan
-without requiring users to infer it from violations:
+Katalyst exposes the resolved authority plan through `katalyst project plan`.
+The command loads project configuration and prints the plan without running
+checks. That keeps "which config governs this subtree?" with project
+introspection instead of overloading `katalyst check` or introducing an
+ambiguous dry-run mode for a command that already does not write.
 
 ```text
+$ katalyst project plan
+
 root: .katalyst
 nested:
   ongoing/creative-surface-area/.katalyst
@@ -302,8 +306,7 @@ nested:
 ```
 
 An explicit plan view is part of the feature, not a nicety. The whole point is
-to avoid invisible precedence. See [Open Questions](#open-questions) for the
-remaining naming question.
+to avoid invisible precedence.
 
 ## Examples
 
@@ -379,31 +382,6 @@ belongs in config.
 Rejected for root runs. A child project may define local rules, but it should
 not be able to unilaterally stop the parent from governing a parent-initiated
 run. Delegation is owned by the active root.
-
-## Open Questions
-
-1. **Plan explanation surface.**
-
-   **Context.** The feature exists to remove hidden precedence. Users need a way
-   to inspect the resolved authority plan without reverse-engineering it from
-   violations. "Explain plan" and "dry run" overlap, but they are not obviously
-   identical for `katalyst check`: `check` is already read-only, so "dry run"
-   could mean either "resolve the plan but do not run checks" or "run the checks
-   without writing," which is just the normal command.
-
-   **Choices & tradeoffs.**
-
-   | Choice | What it buys | Cost |
-   |---|---|---|
-   | `katalyst check --explain-plan` | Names exactly what users get: the resolved authority plan. Easy to compare with a check run. | `check` gains a non-checking mode. |
-   | `katalyst check --dry-run` | Familiar flag name. Leaves room for future commands that would otherwise write. | Ambiguous for a command that already does not write. Users may expect it to run validations. |
-   | `katalyst project explain` | A general home for future project diagnostics. | Requires a new command group before the rest of that group exists. |
-   | `katalyst inspect --plan` | Reuses an existing exploratory command. | Mixes descriptive inspection with configured execution planning. |
-
-   **Recommendation.** Discuss further before naming this surface. If the output
-   only resolves and prints the plan, prefer "explain plan" over "dry run." If
-   the command also runs validations while guaranteeing no writes, "dry run" is
-   a better fit.
 
 ## Test Checklist
 

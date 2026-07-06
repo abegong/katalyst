@@ -191,6 +191,9 @@ When you run `katalyst check` inside a child project and that child is the activ
 root, the child config behaves like any other root config. Parent delegation only
 matters when the parent is the active root.
 
+Run `katalyst project plan` to inspect the resolved authority plan without
+running checks.
+
 Use these flags to make config selection explicit:
 
 | Flag | Behavior |
