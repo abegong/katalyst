@@ -20,5 +20,8 @@ Usage:
   katalyst check [selector ...] [flags]
 
 Flags:
-  -h, --help            help for check
-  -s, --schema string   Path to a JSON Schema file. Overrides config-based resolution for every selected item.
+      --config string           Project root, .katalyst directory, or .katalyst/config.yaml to load
+      --disable-nested-config   Ignore nestedConfigs in the active root
+  -h, --help                    help for check
+      --project string          Directory used to select the active project
+  -s, --schema string           Path to a JSON Schema file. Overrides config-based resolution for every selected item.

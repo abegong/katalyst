@@ -13,8 +13,10 @@ how each term maps onto today's code is documented in the per-package
 
 | Term | Meaning |
 |---|---|
+| **Active root** | The Katalyst project selected by a command invocation. By default, Katalyst finds it by walking upward to the nearest `.katalyst/` directory. |
 | **Aggregate** | The descriptive operation an inspector realizes: measuring a distribution across a collection's items rather than fetching or asserting. See **Inspector**. |
 | **Attribute** | A named characteristic of an item: a column, a frontmatter key, a response field, its filename, its path, or another backend-derived property. A key in a structured object specifically is a **Field**. |
+| **Authority policy** | A nested-config rule that decides which config supplies rules for a subtree and subsystem: `root_nearest`, `file_nearest`, or `compose`. |
 | **Base** | One configured backend source plus the operations Katalyst can perform on its content. A raw base gives Katalyst base-native access; a collectionized base adds collection mappings. See [Bases]({{< relref "../deep-dives/domain-model/base.md" >}}). |
 | **BaseInstance** | A configured instance of a BaseType plus how to reach it (for `filesystem`, a root directory). Declared under `.katalyst/bases/`; it embeds the collections it maps. |
 | **BaseType** | A known backend kind capable of holding content Katalyst can operate on (`filesystem` and `sqlite` today; `postgresql`, `mongodb`, and others later). |
@@ -28,11 +30,13 @@ how each term maps onto today's code is documented in the per-package
 | **Collection layer** | Inspectors that profile a configured collection's items, addressed by domain identity (collection + item id) and probing through the same substrate the checks use. |
 | **Collection-scoped check** | A check type that runs once per collection over all its items (e.g. `filesystem_unique_filename`), rather than per item. It re-scans the full collection even under a single-item selector. |
 | **Collection mapping** | The two-way mapping from a base instance's contents to collections and items. Yields one or more collections; filesystem and SQLite mappings are implemented today. Implemented by `CollectionDefinition` in code. |
+| **Composed authority** | The authority policy where root and nested configs both contribute rules for the matched subtree and subsystem. |
 | **Config** | A **Project**'s configuration: the schemas, bases, and collection mappings that declare what the project contains and how its items are checked. Katalyst's config is the `.katalyst/` directory; it is loaded by the `project` package's loader (`internal/project/loader.go`). Each object type owns the parse of its own config: the base registry validates a declared `type`, and a collection parses its own block in `storage/collection`. |
 | **Discriminator** | The `when` predicate that selects a variant: a list of `item list --filter` expressions over an item's metadata, ANDed together. |
 | **Document** | The markdown file-form of an **Item**: a parsed markdown file (frontmatter metadata + body + a line map). Use it where parsing or the on-disk file is the subject; elsewhere prefer **Item**. |
 | **Evidence** | The structured result of one inspector: counts and distributions with the unit count `n` as denominator. Never a recommendation or verdict. |
 | **Field** | A key in an item's structured object (its frontmatter map). A field is an **Attribute**; a filename is an attribute but not a field. The term used wherever object or frontmatter keys are meant (`object_field_type`, `name_matches_field`). |
+| **File-nearest authority** | The authority policy where the nearest delegated nested config supplies rules for the matched subtree and subsystem. |
 | **FileCheck** | A runtime check that runs once per file. Collection-attached item checks and filesystem-attached per-file checks both use this shape. |
 | **FileSetCheck** | A runtime check that runs once over a selected set of files, such as unique filename or unmatched-file checks. |
 | **FilesystemCheck** | A check instance attached to a filesystem scope under a filesystem base's `filesystemChecks` list. It can run before collections exist. |
@@ -42,12 +46,14 @@ how each term maps onto today's code is documented in the per-package
 | **Data surface** | A representation Katalyst exposes for checks, inspectors, or `fix` to read from content: markdown body text, plain text, structured object, or file metadata. See [Data surfaces]({{< relref "data-surfaces/_index.md" >}}). |
 | **Measurement primitive** | A reusable building block the inspectors are built from: `object_fields` (a data dictionary over object maps), `markdown_body` (body structure), and file-metadata. |
 | **Metadata** | The parsed, in-memory structure of the frontmatter (a `map[string]any`). |
+| **Nested config** | A `.katalyst/` directory below the active root. It affects parent-root runs only when the active root delegates authority to it through `nestedConfigs`. |
 | **Operation** | Something a base lets you do with its data: read, list, query, aggregate, write. Each has a scope (item, collection, across collections) and structural requirements the backend must satisfy. See [progressive operations]({{< relref "../deep-dives/why-katalyst/progressive-operations.md" >}}). |
 | **Profile class** | A group of near-identical profiles the summarizer collapses together, so output is proportional to the number of distinct profiles, not directories. |
 | **Project** | The whole katalyst workspace: a repo root with a `.katalyst/` **Config** that declares the bases, collections, and checks katalyst operates over. The top-level scope an empty selector addresses, and what `katalyst init` creates. Collections live within a project; the `project` package (`internal/project`) is its code home, holding the `.katalyst/` loader while the collection implementation lives under `storage/`. |
 | **Raw base layer** | Inspectors that profile a base directly, before any collection configuration, addressed by base-native reference (a path today). The onboarding case: "what's in this base?" |
 | **Repo root** | The directory containing the `.katalyst/` config directory; the base for all path resolution. |
 | **Resolver** | The runtime object that decides which object schema applies to an item and caches compiled schemas per `(library, path)`. |
+| **Root-nearest authority** | The authority policy where the active root config supplies rules and nested configs contribute no rules for the matched subsystem. |
 | **Schema** | The definition of a collection's shape, expressed in a CheckLibrary's format (JSON Schema today; a Vale style config later). Named in `schemas:`; located by path. The katalyst concept, not the JSON Schema document specifically. |
 | **Schema directive** | The inline `schema:` key inside a document's frontmatter, opting it into a named schema. |
 | **Selector** | How a command names what to operate on: nothing (whole project), `<collection>`, or `<collection>/<item>`. |

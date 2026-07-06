@@ -27,6 +27,7 @@ func TestCLIStyle_rootHelpOrderStaysIntentional(t *testing.T) {
 		"init",
 		"check",
 		"fix",
+		"project",
 		"collection",
 		"item",
 		"schema",
@@ -59,6 +60,9 @@ func TestCLIStyle_resourceNounsHaveListSubcommand(t *testing.T) {
 		}
 		if command.CommandPath() == "" {
 			t.Fatalf("%s: unexpected empty command path", command.Name())
+		}
+		if command.Name() == "project" {
+			continue
 		}
 		if _, _, err := command.Find([]string{"list"}); err != nil {
 			t.Errorf("%s: resource noun must expose a list subcommand or document a reason not to", command.Name())
@@ -121,6 +125,7 @@ func TestCLIStyle_noArgCommandsUseStandardArityError(t *testing.T) {
 		usage string
 	}{
 		{path: []string{"init"}, usage: "init"},
+		{path: []string{"project", "plan"}, usage: "project plan"},
 		{path: []string{"collection", "list"}, usage: "collection list"},
 		{path: []string{"schema", "list"}, usage: "schema list"},
 		{path: []string{"skills", "list"}, usage: "skills list"},

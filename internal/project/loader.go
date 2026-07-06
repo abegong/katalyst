@@ -1,18 +1,19 @@
-// loader.go holds the project loader: it reads a project's .katalyst/ directory
+// loader.go holds the project loader: it reads a project's config directory
 // and answers two questions:
 //
 //  1. Which schemas exist (by name → absolute file path)?
 //  2. Which bases exist, what collections does each declare, and
 //     what checks does each collection run?
 //
-// A project is the nearest ancestor directory that contains a .katalyst/
-// subdirectory. Schemas are defined one named file per definition under
-// .katalyst/schemas/; bases are defined one named file per definition under
-// .katalyst/bases/ (discovery: convention, the default), or listed explicitly
-// in .katalyst/config.yaml (discovery: explicit). A base embeds the collections
-// it maps. Legacy projects may still use storage: and .katalyst/storage/. The
-// file format (yaml, json, or both) is set per kind in config.yaml. See
-// docs/content/reference/configuration.md.
+// By default, a project is the nearest ancestor directory that contains a
+// .katalyst/ subdirectory. Delegated and explicitly selected projects may use a
+// different config directory, while data paths still resolve against the project
+// root. Schemas are defined one named file per definition under schemas/; bases
+// are defined one named file per definition under bases/ (discovery:
+// convention, the default), or listed explicitly in config.yaml (discovery:
+// explicit). A base embeds the collections it maps. Legacy projects may still
+// use storage: and storage/. The file format (yaml, json, or both) is set per
+// kind in config.yaml. See docs/content/reference/configuration.md.
 package project
 
 import (
@@ -60,8 +61,14 @@ var ErrNotFound = errors.New("config: .katalyst/ not found")
 //
 // Collections are sorted by name for deterministic output.
 type Config struct {
-	// Root is the absolute directory containing the .katalyst/ dir.
+	// Root is the absolute project directory. Data paths in config resolve
+	// against this directory.
 	Root string
+	// ConfigDir is the absolute directory containing config.yaml, schemas/,
+	// bases/, and legacy storage/.
+	ConfigDir string
+	// NestedConfigs declares root-owned delegation to child config directories.
+	NestedConfigs NestedConfigSettings
 	// Schemas is name → absolute path.
 	Schemas map[string]string
 	// Bases holds the configured bases, in name order. Each base declares its
@@ -112,6 +119,7 @@ type rawConfig struct {
 	Storage *rawBaseKind                   `yaml:"storage"`
 	Listing *collection.RawListingDefaults `yaml:"listing"`
 	Query   *collection.RawListingDefaults `yaml:"query"`
+	Nested  rawNestedConfigSettings        `yaml:"nestedConfigs"`
 }
 
 // rawSchemaKind configures how schemas are discovered. Defs is consulted
@@ -148,20 +156,68 @@ type rawBaseInstance struct {
 // consistency (every referenced schema exists, every collection has at
 // least one check).
 func Load(start string) (*Config, error) {
-	root, err := find(start)
+	root, err := FindRoot(start)
 	if err != nil {
 		return nil, err
 	}
+	return LoadRoot(root)
+}
 
-	raw, err := readConfigFile(root)
+// LoadRoot reads the project at root without walking upward first.
+func LoadRoot(root string) (*Config, error) {
+	return LoadRootWithConfigDir(root, "")
+}
+
+// LoadRootWithConfigDir reads the project at root using configDir as the
+// directory that holds config.yaml, schemas/, and bases/. An empty configDir
+// uses the default <root>/.katalyst directory. Relative configDir values resolve
+// against root.
+func LoadRootWithConfigDir(root, configDir string) (*Config, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve root dir: %w", err)
+	}
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		abs = resolved
+	}
+	root = abs
+
+	if configDir == "" {
+		configDir = filepath.Join(root, Dir)
+	} else if !filepath.IsAbs(configDir) {
+		configDir = filepath.Join(root, configDir)
+	}
+	configDir, err = filepath.Abs(configDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve config dir: %w", err)
+	}
+	if ok, err := dirExists(configDir); err != nil {
+		return nil, err
+	} else if !ok {
+		if filepath.Base(configDir) == Dir {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("config: %s/ not found", filepath.ToSlash(configDir))
+	}
+	if resolved, err := filepath.EvalSymlinks(configDir); err == nil {
+		configDir = resolved
+	}
+
+	raw, err := readConfigFile(configDir)
+	if err != nil {
+		return nil, err
+	}
+	nested, err := buildNestedSettings(raw.Nested)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &Config{
-		Root:        root,
-		Schemas:     make(map[string]string),
-		Collections: make([]Collection, 0),
+		Root:          root,
+		ConfigDir:     configDir,
+		NestedConfigs: nested,
+		Schemas:       make(map[string]string),
+		Collections:   make([]Collection, 0),
 	}
 	if err := cfg.loadSchemas(raw.Schemas); err != nil {
 		return nil, err
@@ -175,12 +231,11 @@ func Load(start string) (*Config, error) {
 	return cfg, nil
 }
 
-// readConfigFile parses .katalyst/config.yaml if it exists. A missing
-// file yields a zero rawConfig (all defaults).
-func readConfigFile(root string) (rawConfig, error) {
+// readConfigFile parses config.yaml from configDir if it exists. A missing file
+// yields a zero rawConfig (all defaults).
+func readConfigFile(configDir string) (rawConfig, error) {
 	var raw rawConfig
-	rel := filepath.Join(Dir, configFile)
-	src, err := os.ReadFile(filepath.Join(root, rel))
+	src, err := os.ReadFile(filepath.Join(configDir, configFile))
 	if errors.Is(err, os.ErrNotExist) {
 		return raw, nil
 	}
@@ -188,7 +243,7 @@ func readConfigFile(root string) (rawConfig, error) {
 		return raw, fmt.Errorf("read config: %w", err)
 	}
 	if err := yaml.Unmarshal(src, &raw); err != nil {
-		return raw, fmt.Errorf("parse %s: %w", rel, err)
+		return raw, fmt.Errorf("parse %s: %w", configFile, err)
 	}
 	return raw, nil
 }
@@ -213,7 +268,7 @@ func (c *Config) loadSchemas(k rawSchemaKind) error {
 	if err != nil {
 		return fmt.Errorf("schemas: %w", err)
 	}
-	found, err := scanKindDir(filepath.Join(c.Root, Dir, schemasSubdir), exts)
+	found, err := scanKindDir(filepath.Join(c.ConfigDir, schemasSubdir), exts)
 	if err != nil {
 		return fmt.Errorf("schemas: %w", err)
 	}
@@ -262,7 +317,7 @@ func (c *Config) loadBases(bases, legacy *rawBaseKind, projectListing *collectio
 		}
 		defs = k.Defs
 	} else {
-		found, err := scanKindDir(filepath.Join(c.Root, Dir, baseSubdir), exts)
+		found, err := scanKindDir(filepath.Join(c.ConfigDir, baseSubdir), exts)
 		if err != nil {
 			return fmt.Errorf("%s: %w", label, err)
 		}
@@ -312,11 +367,11 @@ func (c *Config) loadBases(bases, legacy *rawBaseKind, projectListing *collectio
 // uses .katalyst/bases/. Legacy .katalyst/storage/ remains readable, but the
 // two directories cannot be mixed.
 func (c *Config) baseSubdir(label string) (string, error) {
-	hasBases, err := dirExists(filepath.Join(c.Root, Dir, basesSubdir))
+	hasBases, err := dirExists(filepath.Join(c.ConfigDir, basesSubdir))
 	if err != nil {
 		return "", fmt.Errorf("bases: %w", err)
 	}
-	hasStorage, err := dirExists(filepath.Join(c.Root, Dir, storageSubdir))
+	hasStorage, err := dirExists(filepath.Join(c.ConfigDir, storageSubdir))
 	if err != nil {
 		return "", fmt.Errorf("storage: %w", err)
 	}
@@ -382,7 +437,7 @@ func (c *Config) buildInstance(name string, ri rawBaseInstance, exts []string, p
 	for cn, rc := range ri.Collections {
 		raws[cn] = rc
 	}
-	instDir := filepath.Join(c.Root, Dir, baseSubdir, name)
+	instDir := filepath.Join(c.ConfigDir, baseSubdir, name)
 	found, err := scanKindDir(instDir, exts)
 	if err != nil {
 		return BaseInstance{}, fmt.Errorf("%s %q: %w", label, name, err)
@@ -563,7 +618,7 @@ func (c *Config) FilesystemCheckScopes() []filesystemcheck.Scope {
 //
 // Symlink resolution matters on macOS where temp dirs (and sometimes
 // user home dirs) live behind /var -> /private/var.
-func find(start string) (string, error) {
+func FindRoot(start string) (string, error) {
 	abs, err := filepath.Abs(start)
 	if err != nil {
 		return "", fmt.Errorf("resolve start dir: %w", err)
@@ -584,6 +639,15 @@ func find(start string) (string, error) {
 		}
 		dir = parent
 	}
+}
+
+// FindParentRoot finds the nearest ancestor project above target.
+func FindParentRoot(target string) (string, error) {
+	abs, err := filepath.Abs(target)
+	if err != nil {
+		return "", fmt.Errorf("resolve target dir: %w", err)
+	}
+	return FindRoot(filepath.Dir(abs))
 }
 
 // resolve turns a config-relative path into an absolute one. Absolute

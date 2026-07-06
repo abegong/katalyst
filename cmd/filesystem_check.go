@@ -7,19 +7,31 @@ import (
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/filesystemcheck"
 )
 
 type runtimeFileCheck struct {
-	kind     checks.CheckType
-	check    checks.Check
-	needsDoc bool
+	configured checks.ConfiguredCheck
+	check      checks.Check
+	needsDoc   bool
+}
+
+type runtimeFileSetCheck struct {
+	configured checks.ConfiguredCheck
+	check      checks.CollectionCheck
 }
 
 func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
+	return runFilesystemChecksWithConfig(errOut, e, "")
+}
+
+func runRootFilesystemChecks(errOut io.Writer, e *engine, plan *project.Plan) (bool, error) {
 	bad := false
 	for _, scope := range e.proj.FilesystemCheckScopes() {
-		scopeBad, err := runFilesystemScope(errOut, e, scope)
+		scopeBad, err := runFilesystemScopeFiltered(errOut, e, scope, "", func(cc checks.ConfiguredCheck, path string) bool {
+			return rootFilesystemCheckApplies(plan, path, cc)
+		})
 		if err != nil {
 			return false, err
 		}
@@ -30,7 +42,49 @@ func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
 	return bad, nil
 }
 
+func runFilesystemChecksWithConfig(errOut io.Writer, e *engine, configPath string) (bool, error) {
+	return runFilesystemChecksWithConfigAndFilter(errOut, e, configPath, nil)
+}
+
+func runFilesystemChecksWithConfigAndFilter(errOut io.Writer, e *engine, configPath string, include checkFilter) (bool, error) {
+	bad := false
+	for _, scope := range e.proj.FilesystemCheckScopes() {
+		scope.Checks = filterConfiguredChecks(scope.Checks, include)
+		if len(scope.Checks) == 0 {
+			continue
+		}
+		scopeBad, err := runFilesystemScopeWithConfig(errOut, e, scope, configPath)
+		if err != nil {
+			return false, err
+		}
+		if scopeBad {
+			bad = true
+		}
+	}
+	return bad, nil
+}
+
+func rootFilesystemCheckApplies(plan *project.Plan, path string, cc checks.ConfiguredCheck) bool {
+	for _, delegate := range plan.Delegates {
+		if !delegate.Active || !project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
+			continue
+		}
+		if rootAuthorityForConfiguredCheck(plan.Root.NestedConfigs, delegate.Delegate, project.AuthorityFilesystemChecks, cc) == project.AuthorityFileNearest {
+			return false
+		}
+	}
+	return true
+}
+
 func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope) (bool, error) {
+	return runFilesystemScopeWithConfig(errOut, e, scope, "")
+}
+
+func runFilesystemScopeWithConfig(errOut io.Writer, e *engine, scope filesystemcheck.Scope, configPath string) (bool, error) {
+	return runFilesystemScopeFiltered(errOut, e, scope, configPath, nil)
+}
+
+func runFilesystemScopeFiltered(errOut io.Writer, e *engine, scope filesystemcheck.Scope, configPath string, includeFile func(checks.ConfiguredCheck, string) bool) (bool, error) {
 	expanded, err := filesystemcheck.Expand(scope)
 	if err != nil {
 		return false, asUsageErr(err)
@@ -39,24 +93,18 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 	if err != nil {
 		return false, err
 	}
-	setChecks, err := e.fileSetChecksFor(scope.Checks)
+	setChecks, err := runtimeFileSetChecks(scope.Checks)
 	if err != nil {
 		return false, err
 	}
 
-	needsDoc := scopeNeedsDocument(scope.Checks)
 	bad := false
-	setCtx := checks.FileSetContext{
-		Root:      scope.Root,
-		Items:     make([]checks.ItemContext, 0, len(expanded.Selected)),
-		Unmatched: rels(expanded.Unmatched),
-		Include:   scope.Include,
-		Exclude:   scope.Exclude,
-	}
+	itemCtxs := make([]checks.ItemContext, 0, len(expanded.Selected))
 	for _, file := range expanded.Selected {
 		var doc *markdownbodytext.Document
 		meta := map[string]any{}
 		parseOK := true
+		needsDoc := scopeNeedsDocumentForFile(scope.Checks, includeFile, file.Path)
 		if needsDoc {
 			src, err := os.ReadFile(file.Path)
 			if err != nil {
@@ -74,6 +122,9 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 					Message:  fmt.Sprintf("parse document: %v", err),
 					Severity: severity,
 				})
+				if configPath != "" {
+					fmt.Fprintf(errOut, "  config: %s\n", configPath)
+				}
 				if severity != checks.SeverityWarning {
 					bad = true
 				}
@@ -81,7 +132,7 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 				meta = dropKey(doc.Meta, "schema")
 			}
 		}
-		setCtx.Items = append(setCtx.Items, checks.ItemContext{FilePath: file.Path, Meta: meta})
+		itemCtxs = append(itemCtxs, checks.ItemContext{FilePath: file.Path, Meta: meta})
 		ctx := checks.FileContext{
 			FilePath:       file.Path,
 			CollectionRoot: scope.Root,
@@ -89,25 +140,53 @@ func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope
 			Meta:           meta,
 		}
 		for _, rc := range fileChecks {
+			if includeFile != nil && !includeFile(rc.configured, file.Path) {
+				continue
+			}
 			if rc.needsDoc && !parseOK {
 				continue
 			}
 			for _, v := range rc.check.Run(ctx) {
 				printFilesystemViolation(errOut, scope, file.Rel, v)
+				if configPath != "" {
+					fmt.Fprintf(errOut, "  config: %s\n", configPath)
+				}
 				if v.Severity != checks.SeverityWarning {
 					bad = true
 				}
 			}
 		}
 	}
-	for _, v := range checks.RunFileSetAll(setCtx, setChecks) {
-		path := v.File
-		if path == "" {
-			path = scope.Name
+	for _, setCheck := range setChecks {
+		setCtx := checks.FileSetContext{
+			Root:    scope.Root,
+			Include: scope.Include,
+			Exclude: scope.Exclude,
 		}
-		printFilesystemViolation(errOut, scope, path, v)
-		if v.Severity != checks.SeverityWarning {
-			bad = true
+		for _, itemCtx := range itemCtxs {
+			if includeFile != nil && !includeFile(setCheck.configured, itemCtx.FilePath) {
+				continue
+			}
+			setCtx.Items = append(setCtx.Items, itemCtx)
+		}
+		for _, file := range expanded.Unmatched {
+			if includeFile != nil && !includeFile(setCheck.configured, file.Path) {
+				continue
+			}
+			setCtx.Unmatched = append(setCtx.Unmatched, file.Rel)
+		}
+		for _, v := range checks.RunFileSetAll(setCtx, []checks.CollectionCheck{setCheck.check}) {
+			path := v.File
+			if path == "" {
+				path = scope.Name
+			}
+			printFilesystemViolation(errOut, scope, path, v)
+			if configPath != "" {
+				fmt.Fprintf(errOut, "  config: %s\n", configPath)
+			}
+			if v.Severity != checks.SeverityWarning {
+				bad = true
+			}
 		}
 	}
 	return bad, nil
@@ -121,30 +200,38 @@ func runtimeFileChecks(configured []checks.ConfiguredCheck) ([]runtimeFileCheck,
 	for _, cc := range configured {
 		if chk, ok := checks.Build(cc.Kind, cc.Args); ok {
 			out = append(out, runtimeFileCheck{
-				kind:     cc.Kind,
-				check:    chk,
-				needsDoc: checks.NeedsDocument(cc.Kind),
+				configured: cc,
+				check:      chk,
+				needsDoc:   checks.NeedsDocument(cc.Kind),
 			})
 		}
 	}
 	return out, nil
 }
 
-func scopeNeedsDocument(configured []checks.ConfiguredCheck) bool {
+func runtimeFileSetChecks(configured []checks.ConfiguredCheck) ([]runtimeFileSetCheck, error) {
+	if err := ensureLibrariesAvailable(configured); err != nil {
+		return nil, err
+	}
+	var out []runtimeFileSetCheck
 	for _, cc := range configured {
+		if chk, ok := checks.BuildCollection(cc.Kind, cc.Args); ok {
+			out = append(out, runtimeFileSetCheck{configured: cc, check: chk})
+		}
+	}
+	return out, nil
+}
+
+func scopeNeedsDocumentForFile(configured []checks.ConfiguredCheck, includeFile func(checks.ConfiguredCheck, string) bool, path string) bool {
+	for _, cc := range configured {
+		if includeFile != nil && !includeFile(cc, path) {
+			continue
+		}
 		if checks.NeedsDocument(cc.Kind) {
 			return true
 		}
 	}
 	return false
-}
-
-func rels(files []filesystemcheck.File) []string {
-	out := make([]string, len(files))
-	for i, file := range files {
-		out[i] = file.Rel
-	}
-	return out
 }
 
 func printFilesystemViolation(w io.Writer, scope filesystemcheck.Scope, path string, v checks.Violation) {

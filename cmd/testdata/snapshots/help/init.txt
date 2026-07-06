@@ -6,3 +6,4 @@ Usage:
 Flags:
       --dir string   Directory to prepare (default: current directory)
   -h, --help         help for init
+      --nested       Create a nested project inside an existing Katalyst project

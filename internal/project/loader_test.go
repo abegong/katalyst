@@ -195,6 +195,90 @@ collections: {}
 	}
 }
 
+func TestLoad_nestedConfigs_parsesDelegatesAndAuthority(t *testing.T) {
+	dir := t.TempDir()
+	projecttest.WriteProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  defaultAuthority: root_nearest
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks:
+          default: file_nearest
+          families:
+            fileSystem: root_nearest
+          kinds:
+            markdown_writing_tells: compose
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	cfg, err := project.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	nested := cfg.NestedConfigs
+	if nested.Discovery != project.NestedDiscoveryExplicit {
+		t.Fatalf("Discovery = %q, want explicit", nested.Discovery)
+	}
+	if len(nested.Delegates) != 1 {
+		t.Fatalf("expected one delegate, got %d", len(nested.Delegates))
+	}
+	delegate := nested.Delegates[0]
+	if delegate.Path != "ongoing/blog" || delegate.Config != ".katalyst" {
+		t.Fatalf("delegate = %+v", delegate)
+	}
+	if got := nested.AuthorityFor(delegate, project.AuthorityCollections); got != project.AuthorityFileNearest {
+		t.Errorf("collections authority = %q, want file_nearest", got)
+	}
+	if got := nested.AuthorityForCheck(delegate, project.AuthorityCollectionChecks, "markdown_writing_tells", "markdownBodyText"); got != project.AuthorityCompose {
+		t.Errorf("kind authority = %q, want compose", got)
+	}
+	if got := nested.AuthorityForCheck(delegate, project.AuthorityCollectionChecks, "filesystem_unique_filename", "fileSystem"); got != project.AuthorityRootNearest {
+		t.Errorf("family authority = %q, want root_nearest", got)
+	}
+}
+
+func TestLoad_nestedConfigs_rejectsInvalidAuthority(t *testing.T) {
+	dir := t.TempDir()
+	projecttest.WriteProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	_, err := project.Load(dir)
+	if err == nil || !strings.Contains(err.Error(), "unknown authority policy") {
+		t.Fatalf("expected authority policy error, got %v", err)
+	}
+}
+
+func TestLoad_nestedConfigs_rejectsInvalidConfigPath(t *testing.T) {
+	tests := []string{".", "..", "../katalyst", "/tmp/katalyst"}
+	for _, config := range tests {
+		t.Run(config, func(t *testing.T) {
+			dir := t.TempDir()
+			projecttest.WriteProject(t, dir, map[string]string{
+				"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      config: ` + config + `
+      authority:
+        collections: file_nearest
+`,
+				"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+			})
+			_, err := project.Load(dir)
+			if err == nil || !strings.Contains(err.Error(), "config must be") {
+				t.Fatalf("expected config path validation error, got %v", err)
+			}
+		})
+	}
+}
+
 func TestLoad_filesystemChecks_rejectsInvalidConfig(t *testing.T) {
 	tests := []struct {
 		name string

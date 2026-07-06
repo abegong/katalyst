@@ -16,6 +16,7 @@ Verbs:
   fix         Apply deterministic, safe fixes
 
 Resources:
+  project     Commands to inspect the active project
   collection  Commands to inspect and modify collections in this project
   item        Commands to inspect and modify individual items in collections within this project
   schema      Commands to inspect and modify schemas defined in this project

@@ -12,6 +12,7 @@ func TestTopLevelHelpSnapshots(t *testing.T) {
 		{name: "init help", fixture: "help/init.txt", args: []string{"init", "--help"}},
 		{name: "check help", fixture: "help/check.txt", args: []string{"check", "--help"}},
 		{name: "fix help", fixture: "help/fix.txt", args: []string{"fix", "--help"}},
+		{name: "project help", fixture: "help/project.txt", args: []string{"project", "--help"}},
 		{name: "collection help", fixture: "help/collection.txt", args: []string{"collection", "--help"}},
 		{name: "item help", fixture: "help/item.txt", args: []string{"item", "--help"}},
 		{name: "schema help", fixture: "help/schema.txt", args: []string{"schema", "--help"}},
