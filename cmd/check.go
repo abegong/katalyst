@@ -61,7 +61,7 @@ reported as unmatched references (errors).`,
 			out, errOut := cmd.OutOrStdout(), cmd.ErrOrStderr()
 
 			if len(args) == 0 {
-				bad, err := runFilesystemChecks(errOut, e)
+				bad, err := runRootFilesystemChecks(errOut, e, plan)
 				if err != nil {
 					return err
 				}

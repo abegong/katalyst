@@ -246,6 +246,43 @@ collections: {}
 	}
 }
 
+func TestCheck_fileNearestSuppressesRootFilesystemChecksInDelegatedSubtree(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        filesystemChecks: file_nearest
+`,
+		"bases/local.yaml": `type: filesystem
+root: .
+filesystemChecks:
+  - name: docs
+    path: .
+    include: ["**/*.md"]
+    checks:
+      - kind: filesystem_name_case
+        style: kebab
+collections: {}
+`,
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "docs", "BadName.md"), "---\ntitle: Bad\n---\n# Bad\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected file-nearest filesystem authority to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if strings.Contains(stderr, "BadName.md") {
+		t.Errorf("root filesystem check ran inside delegated subtree, stderr:\n%s", stderr)
+	}
+}
+
 func TestCheck_disableNestedConfigIgnoresDelegatedChildChecks(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

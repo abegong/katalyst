@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/abegong/katalyst/internal/checks"
 	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
+	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage/filesystemcheck"
 )
 
@@ -18,6 +20,21 @@ type runtimeFileCheck struct {
 
 func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
 	return runFilesystemChecksWithConfig(errOut, e, "")
+}
+
+func runRootFilesystemChecks(errOut io.Writer, e *engine, plan *project.Plan) (bool, error) {
+	bad := false
+	for _, scope := range e.proj.FilesystemCheckScopes() {
+		scope = excludeFileNearestDelegates(scope, plan)
+		scopeBad, err := runFilesystemScopeWithConfig(errOut, e, scope, "")
+		if err != nil {
+			return false, err
+		}
+		if scopeBad {
+			bad = true
+		}
+	}
+	return bad, nil
 }
 
 func runFilesystemChecksWithConfig(errOut io.Writer, e *engine, configPath string) (bool, error) {
@@ -40,6 +57,37 @@ func runFilesystemChecksWithConfigAndFilter(errOut io.Writer, e *engine, configP
 		}
 	}
 	return bad, nil
+}
+
+func excludeFileNearestDelegates(scope filesystemcheck.Scope, plan *project.Plan) filesystemcheck.Scope {
+	if plan == nil {
+		return scope
+	}
+	exclude := append([]string(nil), scope.Exclude...)
+	for _, delegate := range plan.Delegates {
+		if !delegate.Active {
+			continue
+		}
+		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityFilesystemChecks) != project.AuthorityFileNearest {
+			continue
+		}
+		delegateRoot := filepath.Join(plan.Root.Root, filepath.FromSlash(delegate.Delegate.Path))
+		rel, err := filepath.Rel(scope.Root, delegateRoot)
+		if err != nil || rel == ".." || rel == "" {
+			continue
+		}
+		if rel == "." {
+			exclude = append(exclude, "**")
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		if rel == ".." || len(rel) > 3 && rel[:3] == "../" {
+			continue
+		}
+		exclude = append(exclude, rel, rel+"/**")
+	}
+	scope.Exclude = exclude
+	return scope
 }
 
 func runFilesystemScope(errOut io.Writer, e *engine, scope filesystemcheck.Scope) (bool, error) {
