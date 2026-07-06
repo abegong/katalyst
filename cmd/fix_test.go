@@ -154,6 +154,26 @@ func TestFix_checkFlag_reportsWithoutWriting(t *testing.T) {
 	}
 }
 
+func TestFix_projectFlagSelectsProject(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{"notes": fixNotesConfig}),
+	})
+	outside := t.TempDir()
+	chdir(t, outside)
+	p := filepath.Join(dir, "notes", "doc.md")
+	mustWrite(t, p, "---\nzebra: 1\napple: 2\n---\n# Body\n")
+
+	if _, _, err := runRoot(t, "fix", "--project", dir, "notes/doc"); err != nil {
+		t.Fatalf("fix --project: %v", err)
+	}
+	got, _ := os.ReadFile(p)
+	want := "---\napple: 2\nzebra: 1\n---\n# Body\n"
+	if string(got) != want {
+		t.Errorf("after fix --project:\n got: %q\nwant: %q", got, want)
+	}
+}
+
 func TestFix_checkFlag_cleanExitsZero(t *testing.T) {
 	dir := setupFixRepo(t)
 	p := filepath.Join(dir, "notes/doc.md")

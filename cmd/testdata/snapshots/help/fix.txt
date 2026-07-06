@@ -15,5 +15,8 @@ Usage:
   katalyst fix [selector ...] [flags]
 
 Flags:
-      --check   Don't write; exit 1 if any item would change (for CI).
-  -h, --help    help for fix
+      --check                   Don't write; exit 1 if any item would change (for CI).
+      --config string           Project root, .katalyst directory, or .katalyst/config.yaml to load
+      --disable-nested-config   Ignore nestedConfigs in the active root
+  -h, --help                    help for fix
+      --project string          Directory used to select the active project

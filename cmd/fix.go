@@ -14,6 +14,7 @@ import (
 
 func newFixCmd() *cobra.Command {
 	var checkOnly bool
+	var planFlags projectPlanFlags
 
 	c := &cobra.Command{
 		Use:   "fix [selector ...]",
@@ -32,11 +33,15 @@ With --check, no files are modified; instead, items that would change are
 printed and the command exits with status 1. Use this in CI.`,
 		Args: cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := loadConfigFromCWD()
+			plan, err := project.BuildPlan(project.PlanOptions{
+				ConfigPath:          planFlags.configPath,
+				ProjectDir:          planFlags.projectDir,
+				DisableNestedConfig: planFlags.disableNestedConfig,
+			})
 			if err != nil {
-				return err
+				return asUsageErr(err)
 			}
-			res, err := resolveSelectors(projectFor(cfg), args)
+			res, err := resolveSelectors(projectFor(plan.Root), args)
 			if err != nil {
 				return err
 			}
@@ -62,6 +67,7 @@ printed and the command exits with status 1. Use this in CI.`,
 
 	c.Flags().BoolVar(&checkOnly, "check", false,
 		"Don't write; exit 1 if any item would change (for CI).")
+	addProjectPlanFlags(c, &planFlags)
 	return c
 }
 
