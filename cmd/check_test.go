@@ -313,6 +313,32 @@ func TestCheck_disableNestedConfigIgnoresDelegatedChildChecks(t *testing.T) {
 	}
 }
 
+func TestCheck_configFlagLoadsExactProject(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "bad.md"), "---\ntitle: Bad\n---\nNo heading\n")
+
+	_, stderr, err := runRoot(t, "check", "--config", filepath.Join(child, ".katalyst"))
+	if err == nil {
+		t.Fatalf("expected child check failure")
+	}
+	if !strings.Contains(stderr, "missing H1 heading") {
+		t.Errorf("expected exact child config to run, got:\n%s", stderr)
+	}
+	if strings.Contains(stderr, "config: ongoing/blog/.katalyst") {
+		t.Errorf("--config should load exact config without nested provenance, got:\n%s", stderr)
+	}
+}
+
 func TestCheck_delegatedPerKindAuthoritySuppressesChildCheck(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
