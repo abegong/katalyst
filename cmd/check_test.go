@@ -477,6 +477,41 @@ func TestCheck_fileNearestSuppressesRootCollectionScopedChecksInDelegatedSubtree
 	}
 }
 
+func TestCheck_fileNearestSuppressesRootUnmatchedFilesInDelegatedSubtree(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks: file_nearest
+`,
+		"bases/local.yaml": baseLocal(map[string]string{
+			"all": "path: ongoing/blog\npattern: \"*.md\"\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\npattern: \"*.txt\"\nchecks:\n  - kind: text_forbids\n    pattern: NEVER_MATCH\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "draft.txt"), "plain child text\n")
+
+	stdout, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected child-owned unmatched file to be suppressed, got %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "draft.txt: OK") {
+		t.Errorf("expected child check to run, got stdout:\n%s", stdout)
+	}
+	if strings.Contains(stderr, "unmatched file") {
+		t.Errorf("root unmatched diagnostic ran inside delegated subtree, stderr:\n%s", stderr)
+	}
+}
+
 func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{

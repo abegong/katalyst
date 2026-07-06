@@ -103,6 +103,9 @@ reported as unmatched references (errors).`,
 					return asUsageErr(err)
 				}
 				for _, rel := range unmatched {
+					if rootUnmatchedDelegated(plan, c, rel) {
+						continue
+					}
 					fmt.Fprintf(errOut, "%s/%s: unmatched file (does not match pattern %q)\n", c.Path, rel, c.Pattern)
 					anyInvalid = true
 				}
@@ -223,6 +226,22 @@ func rootItemDelegated(plan *project.Plan, path string) bool {
 			plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthoritySchemas) == project.AuthorityRootNearest {
 			continue
 		}
+		if project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
+			return true
+		}
+	}
+	return false
+}
+
+func rootUnmatchedDelegated(plan *project.Plan, c project.Collection, rel string) bool {
+	for _, delegate := range plan.Delegates {
+		if !delegate.Active {
+			continue
+		}
+		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityCollections) == project.AuthorityRootNearest {
+			continue
+		}
+		path := filepath.Join(c.Dir, filepath.FromSlash(rel))
 		if project.DelegateContains(delegate.Delegate, plan.Root.Root, path) {
 			return true
 		}
