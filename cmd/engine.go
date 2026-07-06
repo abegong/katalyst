@@ -30,6 +30,8 @@ type engine struct {
 	cache      map[libPathKey]checks.Schema
 }
 
+type checkFilter func(checks.ConfiguredCheck) bool
+
 // newEngine loads the config from the working directory and validates the
 // optional --schema override. A missing config is a usage error.
 func newEngine(schemaFlag string) (*engine, error) {
@@ -132,17 +134,23 @@ func (e *engine) objectLibrary() (checks.SchemaLibrary, error) {
 // no variant runs the base only, or, under useExhaustiveVariants, fails with
 // "matches no variant".
 func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.Check, error) {
+	return e.checksForFiltered(c, meta, nil)
+}
+
+func (e *engine) checksForFiltered(c project.Collection, meta map[string]any, include checkFilter) ([]checks.Check, error) {
 	cfg := e.proj.Config()
 
 	matched, routed, err := matchVariant(c, meta)
 	if err != nil {
 		return nil, err
 	}
-	effective := c.Checks
+	baseChecks := filterConfiguredChecks(c.Checks, include)
+	effective := baseChecks
 	if routed {
-		effective = make([]checks.ConfiguredCheck, 0, len(c.Checks)+len(matched.Checks))
-		effective = append(effective, c.Checks...)
-		effective = append(effective, matched.Checks...)
+		variantChecks := filterConfiguredChecks(matched.Checks, include)
+		effective = make([]checks.ConfiguredCheck, 0, len(baseChecks)+len(variantChecks))
+		effective = append(effective, baseChecks...)
+		effective = append(effective, variantChecks...)
 	}
 
 	checkList := make([]checks.Check, 0, len(effective))
@@ -186,6 +194,9 @@ func (e *engine) checksFor(c project.Collection, meta map[string]any) ([]checks.
 	// `item list` report it identically).
 	if !routed && c.UseExhaustiveVariants && len(c.Variants) > 0 {
 		checkList = append(checkList, unroutedCheck{})
+	}
+	if include != nil && len(checkList) == 0 {
+		return nil, nil
 	}
 
 	// A collection with variants is validated to carry some check config, and
@@ -233,6 +244,23 @@ func (unroutedCheck) Run(checks.Context) []checks.Violation {
 // collection. These run once per collection, after the per-item pass.
 func (e *engine) collectionChecksFor(c project.Collection) ([]checks.CollectionCheck, error) {
 	return e.fileSetChecksFor(c.Checks)
+}
+
+func (e *engine) collectionChecksForFiltered(c project.Collection, include checkFilter) ([]checks.CollectionCheck, error) {
+	return e.fileSetChecksFor(filterConfiguredChecks(c.Checks, include))
+}
+
+func filterConfiguredChecks(configured []checks.ConfiguredCheck, include checkFilter) []checks.ConfiguredCheck {
+	if include == nil {
+		return configured
+	}
+	out := make([]checks.ConfiguredCheck, 0, len(configured))
+	for _, cc := range configured {
+		if include(cc) {
+			out = append(out, cc)
+		}
+	}
+	return out
 }
 
 func (e *engine) fileChecksFor(configured []checks.ConfiguredCheck) ([]checks.Check, error) {

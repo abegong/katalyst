@@ -21,8 +21,16 @@ func runFilesystemChecks(errOut io.Writer, e *engine) (bool, error) {
 }
 
 func runFilesystemChecksWithConfig(errOut io.Writer, e *engine, configPath string) (bool, error) {
+	return runFilesystemChecksWithConfigAndFilter(errOut, e, configPath, nil)
+}
+
+func runFilesystemChecksWithConfigAndFilter(errOut io.Writer, e *engine, configPath string, include checkFilter) (bool, error) {
 	bad := false
 	for _, scope := range e.proj.FilesystemCheckScopes() {
+		scope.Checks = filterConfiguredChecks(scope.Checks, include)
+		if len(scope.Checks) == 0 {
+			continue
+		}
 		scopeBad, err := runFilesystemScopeWithConfig(errOut, e, scope, configPath)
 		if err != nil {
 			return false, err

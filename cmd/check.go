@@ -139,9 +139,11 @@ func runDelegatedChecks(out, errOut io.Writer, plan *project.Plan, schemaFlag st
 		if err != nil {
 			return false, err
 		}
+		includeCollectionCheck := delegatedCheckFilter(plan.Root.NestedConfigs, delegate.Delegate, project.AuthorityCollectionChecks)
+		includeFilesystemCheck := delegatedCheckFilter(plan.Root.NestedConfigs, delegate.Delegate, project.AuthorityFilesystemChecks)
 		configPath := filepath.ToSlash(filepath.Join(delegate.Delegate.Path, delegate.Delegate.Config))
 		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityFilesystemChecks) != project.AuthorityRootNearest {
-			scopeBad, err := runFilesystemChecksWithConfig(errOut, e, configPath)
+			scopeBad, err := runFilesystemChecksWithConfigAndFilter(errOut, e, configPath, includeFilesystemCheck)
 			if err != nil {
 				return false, err
 			}
@@ -159,7 +161,7 @@ func runDelegatedChecks(out, errOut io.Writer, plan *project.Plan, schemaFlag st
 			return false, err
 		}
 		for _, item := range res.Items {
-			ok, err := checkItemWithConfig(out, errOut, e, item, configPath)
+			ok, err := checkItemWithConfigAndFilter(out, errOut, e, item, configPath, includeCollectionCheck)
 			if err != nil {
 				fmt.Fprintf(errOut, "%s: %v\n", item.Path, err)
 				bad = true
@@ -180,7 +182,7 @@ func runDelegatedChecks(out, errOut io.Writer, plan *project.Plan, schemaFlag st
 				bad = true
 			}
 		}
-		collBad, err := runCollectionChecksWithConfig(errOut, e, selectedCollections(res), configPath)
+		collBad, err := runCollectionChecksWithConfigAndFilter(errOut, e, selectedCollections(res), configPath, includeCollectionCheck)
 		if err != nil {
 			return false, err
 		}
@@ -191,6 +193,16 @@ func runDelegatedChecks(out, errOut io.Writer, plan *project.Plan, schemaFlag st
 	return bad, nil
 }
 
+func delegatedCheckFilter(settings project.NestedConfigSettings, delegate project.NestedDelegate, subsystem project.AuthoritySubsystem) checkFilter {
+	return func(cc checks.ConfiguredCheck) bool {
+		family := ""
+		if desc, ok := checks.DescriptorFor(cc.Kind); ok {
+			family = desc.Family
+		}
+		return settings.AuthorityForCheck(delegate, subsystem, string(cc.Kind), family) != project.AuthorityRootNearest
+	}
+}
+
 // checkItem reads one item, resolves its checks, runs them, and writes
 // results. Returns (true, nil) if valid, (false, nil) on validation
 // errors, or (_, err) if the file couldn't be read/parsed.
@@ -199,6 +211,10 @@ func checkItem(out, errOut io.Writer, e *engine, item project.Item) (bool, error
 }
 
 func checkItemWithConfig(out, errOut io.Writer, e *engine, item project.Item, configPath string) (bool, error) {
+	return checkItemWithConfigAndFilter(out, errOut, e, item, configPath, nil)
+}
+
+func checkItemWithConfigAndFilter(out, errOut io.Writer, e *engine, item project.Item, configPath string, include checkFilter) (bool, error) {
 	content, err := e.proj.ReadItem(item)
 	if err != nil {
 		return false, err
@@ -209,7 +225,7 @@ func checkItemWithConfig(out, errOut io.Writer, e *engine, item project.Item, co
 	// run against it (text/filesystem rules lint the body and path; object
 	// checks surface their own "missing field" violations against the nil
 	// metadata).
-	checkList, err := e.checksFor(item.Collection, doc.Meta)
+	checkList, err := e.checksForFiltered(item.Collection, doc.Meta, include)
 	if err != nil {
 		return false, err
 	}
@@ -318,9 +334,13 @@ func runCollectionChecks(errOut io.Writer, e *engine, collections []project.Coll
 }
 
 func runCollectionChecksWithConfig(errOut io.Writer, e *engine, collections []project.Collection, configPath string) (bool, error) {
+	return runCollectionChecksWithConfigAndFilter(errOut, e, collections, configPath, nil)
+}
+
+func runCollectionChecksWithConfigAndFilter(errOut io.Writer, e *engine, collections []project.Collection, configPath string, include checkFilter) (bool, error) {
 	bad := false
 	for _, c := range collections {
-		collChecks, err := e.collectionChecksFor(c)
+		collChecks, err := e.collectionChecksForFiltered(c, include)
 		if err != nil {
 			return false, err
 		}

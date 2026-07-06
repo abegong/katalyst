@@ -276,6 +276,75 @@ func TestCheck_disableNestedConfigIgnoresDelegatedChildChecks(t *testing.T) {
 	}
 }
 
+func TestCheck_delegatedPerKindAuthoritySuppressesChildCheck(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks:
+          default: file_nearest
+          kinds:
+            markdown_title_matches_h1: root_nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n  - kind: markdown_title_matches_h1\n    field: title\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "mismatch.md"), "---\ntitle: Title\n---\n# Different\n")
+
+	stdout, stderr, err := runRoot(t, "check")
+	if err != nil {
+		t.Fatalf("expected per-kind suppression to pass, got %v\nstderr: %s", err, stderr)
+	}
+	if !strings.Contains(stdout, "mismatch.md: OK") {
+		t.Errorf("expected child item OK, got stdout:\n%s", stdout)
+	}
+	if strings.Contains(stderr, "does not match first H1") {
+		t.Errorf("suppressed child check still ran, stderr:\n%s", stderr)
+	}
+}
+
+func TestCheck_delegatedPerFamilyAuthorityRunsChildChecks(t *testing.T) {
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{
+		"config.yaml": `nestedConfigs:
+  delegates:
+    - path: ongoing/blog
+      authority:
+        collections: file_nearest
+        collectionChecks:
+          default: root_nearest
+          families:
+            markdownBodyText: file_nearest
+`,
+		"bases/local.yaml": "type: filesystem\nroot: .\ncollections: {}\n",
+	})
+	child := filepath.Join(dir, "ongoing", "blog")
+	writeProject(t, child, map[string]string{
+		"bases/local.yaml": baseLocal(map[string]string{
+			"notes": "path: notes\nchecks:\n  - kind: markdown_requires_h1\n",
+		}),
+	})
+	chdir(t, dir)
+	mustWrite(t, filepath.Join(child, "notes", "bad.md"), "---\ntitle: Bad\n---\nNo heading\n")
+
+	_, stderr, err := runRoot(t, "check")
+	if err == nil {
+		t.Fatalf("expected per-family child check failure")
+	}
+	if !strings.Contains(stderr, "missing H1 heading") || !strings.Contains(stderr, "config: ongoing/blog/.katalyst") {
+		t.Errorf("expected family-enabled child diagnostic, got:\n%s", stderr)
+	}
+}
+
 func TestCheck_filesystemParseFailuresDefaultToError(t *testing.T) {
 	dir := t.TempDir()
 	writeProject(t, dir, map[string]string{
