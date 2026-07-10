@@ -44,7 +44,11 @@ public/
 # macOS
 .DS_Store
 
-# Generated agent-link mirrors (source of truth: .cursor/skills + AGENTS.md)
-.claude/
+# Generated agent-link mirrors (source of truth: .cursor/skills + AGENTS.md).
+# The Claude Code SessionStart hook and settings under .claude/ are real
+# sources, not mirrors, so they stay tracked.
+.claude/*
+!.claude/hooks
+!.claude/settings.json
 .codex/
 **/CLAUDE.md
