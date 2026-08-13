@@ -7,9 +7,9 @@ weight = 62
 
 Why [`katalyst fix`]({{< relref "../../reference/cli.md" >}}) rewrites
 frontmatter the opinionated way it does. The parser and encoder live in
-`internal/codec/markdownbodytext`; the transform that drives the canonical
-form, and the backend write that persists it, live in `internal/fix` and
-`internal/storage/collection/filesystem` respectively.
+`internal/codec/markdownbodytext`, and the transform that drives the canonical
+form lives in `internal/fix`, which does no IO. Reading and persisting go
+through the item's base, so `fix` never assumes its content came from a file.
 
 ## Terms
 
@@ -19,6 +19,7 @@ form, and the backend write that persists it, live in `internal/fix` and
 | **Canonical form** | The deterministic output format `fix` writes: preserved frontmatter syntax, sorted top-level keys, native encoder style, preserved body bytes, and one trailing newline. |
 | **Report-only check** | A check that can report violations but cannot safely rewrite content. |
 | **Check mode** | The `--check` form of `fix`: print what would change, write nothing, and exit 1 if any item is non-canonical. |
+| **Text content** | The body an item exposes for `fix` to rewrite. Every filesystem item has one; a SQLite item has one when its collection maps a content column. |
 
 ## Design rationale
 
@@ -53,6 +54,30 @@ if it hurts in practice.
 `--check` makes `fix` non-destructive: it writes nothing, prints the items that
 *would* change, and exits 1. That is the CI form.
 
+**Fix is a text-form verb.**
+
+`fix` operates on an item's serialized text, so it needs a collection that
+exposes one. Every filesystem collection does, because the file *is* the text. A
+SQLite collection does when it maps a content column. A collection of attributes
+alone has no serialized form to canonicalize, and `fix` says so rather than
+guessing:
+
+```
+fix requires a text content mapping; collection "notes" maps only attributes
+```
+
+The gate is that capability, not the backend's name. Naming the backend would be
+the wrong test twice over: it would refuse a SQLite collection that does have a
+body, and it would need a new branch for every base type added later.
+
+The two halves of `fix` divide unevenly across backends, which is what makes the
+capability the right question. Configured text fixes rewrite the body, and a
+content column is a body like any other. Frontmatter canonicalization, though,
+cannot change a row: a SQLite item's frontmatter is synthesized from its
+attributes when the item is read, so it arrives sorted and canonically styled
+already. Nothing is left for the canonical pass to do, which is why `fix` writes
+the content column and leaves the attribute columns untouched.
+
 **Fix never injects missing values.**
 
 An earlier idea had a mode that would add "sentinel" placeholder values for
@@ -75,7 +100,9 @@ frontmatter-less file is returned untouched).
 
 For each item:
 
-1. Read bytes.
+1. Read the item's bytes through its base. A file is read as it sits on disk; a
+   SQLite row is assembled into a document from its attributes and content
+   column.
 2. Parse to `Document`.
 3. If no frontmatter, return verbatim, `fix` never invents structure.
 4. Marshal `Meta` with top-level keys sorted alphabetically, in
@@ -83,8 +110,9 @@ For each item:
 5. Re-assemble in the same format: `---\n<yaml>\n---\n<body>`,
    `+++\n<toml>\n+++\n<body>`, or `{...}\n<body>` for JSON. Body bytes are
    preserved verbatim; one trailing newline is enforced on the file.
-6. Compare against the original. If unchanged, do nothing. Otherwise atomically
-   rewrite (temp file + rename), or, with `--check`, print the path and
+6. Compare against the original. If unchanged, do nothing. Otherwise write it
+   back through the base, a file by atomic replace (temp file + rename) and a
+   row by updating its content column, or, with `--check`, print the item and
    accumulate exit-1 status.
 
 ## Invariants

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/abegong/katalyst/internal/checks"
+	"github.com/abegong/katalyst/internal/storage"
 	"github.com/abegong/katalyst/internal/storage/collection/predicate"
 	"gopkg.in/yaml.v3"
 )
@@ -52,6 +53,21 @@ type Collection struct {
 	// failure ("matches no variant") instead of running the base checks
 	// alone. Default false.
 	UseExhaustiveVariants bool
+}
+
+// HasTextContent reports whether the collection exposes a text body that an
+// operation like fix can rewrite. A filesystem item is text by construction; a
+// SQLite collection has a body only when it maps a content column, since a
+// collection of attributes alone is columns with no serialized form.
+//
+// This is the one place the backend conditional lives. Callers gate on the
+// capability rather than on the backend name, so a future base type that maps
+// content answers correctly without a new branch at every call site.
+func (c Collection) HasTextContent() bool {
+	if c.StorageType == string(storage.SQLite) {
+		return c.ContentColumn != ""
+	}
+	return true
 }
 
 // CollectionVariant is one discriminated check group inside a collection. An

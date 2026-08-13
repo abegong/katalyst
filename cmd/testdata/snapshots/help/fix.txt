@@ -2,6 +2,10 @@ fix rewrites each selected item's frontmatter in a canonical form:
 top-level keys sorted alphabetically, yaml.v3 default block style, and
 exactly one trailing newline. The body is preserved verbatim.
 
+fix works on an item's text form, so its collection must expose a text body.
+Every filesystem collection does; a sqlite collection does when it maps a
+content column. A collection of attributes alone has nothing for fix to rewrite.
+
 fix never invents semantic values: it will not inject placeholders for
 missing required keys. See docs/content/deep-dives/domain-model/fix.md for why.
 

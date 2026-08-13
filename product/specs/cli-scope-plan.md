@@ -1,8 +1,8 @@
 # Plan - CLI scope
 > Spec: [CLI scope](./cli-scope-spec.md)
-> **Status: planning.** Decisions 1 to 5 shipped as prose. This plan implements
-> decision 6: `fix` gates on whether a collection exposes a text body, not on
-> the backend name.
+> **Status: done.** Decisions 1 to 5 shipped as prose. Decision 6 is
+> implemented: `fix` gates on whether a collection exposes a text body, not on
+> the backend name. `make all` green; docs dogfood passes.
 
 ## Current State
 

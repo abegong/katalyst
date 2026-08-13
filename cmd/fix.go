@@ -3,8 +3,8 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 
+	"github.com/abegong/katalyst/internal/codec/markdownbodytext"
 	"github.com/abegong/katalyst/internal/fix"
 	"github.com/abegong/katalyst/internal/project"
 	"github.com/abegong/katalyst/internal/storage"
@@ -22,6 +22,10 @@ func newFixCmd() *cobra.Command {
 		Long: `fix rewrites each selected item's frontmatter in a canonical form:
 top-level keys sorted alphabetically, yaml.v3 default block style, and
 exactly one trailing newline. The body is preserved verbatim.
+
+fix works on an item's text form, so its collection must expose a text body.
+Every filesystem collection does; a sqlite collection does when it maps a
+content column. A collection of attributes alone has nothing for fix to rewrite.
 
 fix never invents semantic values: it will not inject placeholders for
 missing required keys. See docs/content/deep-dives/domain-model/fix.md for why.
@@ -44,7 +48,8 @@ printed and the command exits with status 1. Use this in CI.`,
 			if err := validateFixAuthority(plan); err != nil {
 				return asUsageErr(err)
 			}
-			res, err := resolveSelectors(projectFor(plan.Root), args)
+			root := projectFor(plan.Root)
+			res, err := resolveSelectors(root, args)
 			if err != nil {
 				return err
 			}
@@ -53,7 +58,7 @@ printed and the command exits with status 1. Use this in CI.`,
 			}
 
 			changed := false
-			didChange, err := fixResolution(cmd, res, checkOnly)
+			didChange, err := fixResolution(cmd, root, res, checkOnly)
 			if err != nil {
 				return err
 			}
@@ -132,11 +137,12 @@ func fixDelegates(cmd *cobra.Command, plan *project.Plan, checkOnly bool) (bool,
 		if plan.Root.NestedConfigs.AuthorityFor(delegate.Delegate, project.AuthorityFix) != project.AuthorityFileNearest {
 			continue
 		}
-		res, err := resolveSelectors(projectFor(delegate.Config), nil)
+		child := projectFor(delegate.Config)
+		res, err := resolveSelectors(child, nil)
 		if err != nil {
 			return false, err
 		}
-		didChange, err := fixResolution(cmd, res, checkOnly)
+		didChange, err := fixResolution(cmd, child, res, checkOnly)
 		if err != nil {
 			return false, err
 		}
@@ -147,10 +153,10 @@ func fixDelegates(cmd *cobra.Command, plan *project.Plan, checkOnly bool) (bool,
 	return changed, nil
 }
 
-func fixResolution(cmd *cobra.Command, res *project.Resolution, checkOnly bool) (bool, error) {
+func fixResolution(cmd *cobra.Command, p *project.Project, res *project.Resolution, checkOnly bool) (bool, error) {
 	changed := false
 	for _, item := range res.Items {
-		didChange, err := fixOne(item.Path, item.Collection, checkOnly)
+		didChange, err := fixOne(p, item, checkOnly)
 		if err != nil {
 			fmt.Fprintf(cmd.ErrOrStderr(), "%s: %v\n", item.Path, err)
 			return false, &exitError{code: exitValidationFail}
@@ -163,30 +169,54 @@ func fixResolution(cmd *cobra.Command, res *project.Resolution, checkOnly bool) 
 	return changed, nil
 }
 
-// fixOne reports whether path's content would change. It computes the fixed
-// content with the backend-agnostic fix engine and, unless check is set,
-// persists it through the filesystem backend (an atomic replace). The split is
-// deliberate: deciding what to write is fix's, writing it is the backend's.
-func fixOne(path string, c project.Collection, check bool) (changed bool, err error) {
-	if c.StorageType == string(storage.SQLite) {
-		return false, fmt.Errorf("fix is not supported for sqlite collections yet")
+// fixOne reports whether item's content would change. It reads through the
+// project (so each backend decodes its own storage), computes the fixed content
+// with the backend-agnostic fix engine, and unless check is set persists it. The
+// split is deliberate: deciding what to write is fix's, writing it is the
+// backend's.
+//
+// The gate is a capability, not a backend name: fix operates on an item's text
+// form, so a collection that maps no text body has nothing for it to rewrite.
+func fixOne(p *project.Project, item project.Item, check bool) (changed bool, err error) {
+	c := item.Collection
+	if !c.HasTextContent() {
+		return false, fmt.Errorf("fix requires a text content mapping; collection %q maps only attributes", c.Name)
 	}
-	src, err := os.ReadFile(path)
+	content, err := p.ReadItem(item)
 	if err != nil {
 		return false, err
 	}
-	result, err := fix.Apply(src, c)
+	result, err := fix.Apply(content.Raw, c)
 	if err != nil {
 		return false, err
 	}
-	if bytes.Equal(src, result) {
+	if bytes.Equal(content.Raw, result) {
 		return false, nil
 	}
 	if check {
 		return true, nil
 	}
-	if err := filesystem.Write(path, result); err != nil {
+	if err := persistFix(p, item, result); err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// persistFix writes the fixed bytes back through the item's backend.
+//
+// A filesystem item is stored as the document, so the bytes go down verbatim in
+// an atomic replace. A SQLite item is stored as columns, and only its body can
+// have changed: the frontmatter fix.Apply canonicalized was synthesized from the
+// row's attributes moments earlier by the SQLite reader, so it is canonical
+// already. Passing nil metadata keeps the UPDATE on the content column and
+// leaves the attribute columns untouched.
+func persistFix(p *project.Project, item project.Item, result []byte) error {
+	if storage.BaseType(item.Collection.StorageType) != storage.SQLite {
+		return filesystem.Write(item.Path, result)
+	}
+	doc, err := markdownbodytext.Parse(result)
+	if err != nil {
+		return err
+	}
+	return p.UpdateItem(item.Collection, item.ID, nil, doc.Body)
 }

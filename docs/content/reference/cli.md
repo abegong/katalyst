@@ -82,6 +82,14 @@ Shared across the validating commands (`check`, `fix --check`):
 | `1` | One or more items failed |
 | `2` | Usage error |
 
+## Text content and `fix`
+
+`fix` rewrites an item's text form, so it needs a collection that exposes one.
+Every filesystem collection does; a SQLite collection does when it maps a
+content column. Running `fix` against a collection of attributes alone reports
+the item and exits `1`. See the
+[fix deep dive]({{< relref "../deep-dives/domain-model/fix.md" >}}).
+
 ## Filter predicates
 
 The `--filter` flag of `katalyst item list` and the `when:` clause of a

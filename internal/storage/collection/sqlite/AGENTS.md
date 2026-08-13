@@ -15,5 +15,8 @@ markdown content.
   make check families backend-aware to compensate.
 - Prefer `attributes` and `content` terminology in new SQLite work. `body:` is a
   compatibility alias, not the model.
-- `fix` is not part of the first SQLite cut. `item add`, `item update`, and
-  `item delete` own the write-path coverage for now.
+- `fix` reaches a collection that maps a content column, gated on
+  `Collection.HasTextContent()` rather than on the backend name. It writes the
+  content column alone: the frontmatter it canonicalizes was synthesized from the
+  row by `rawDocument`, so it is canonical already and the attribute columns have
+  no reason to move.

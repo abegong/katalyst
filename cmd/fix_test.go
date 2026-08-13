@@ -1,11 +1,14 @@
 package cmd_test
 
 import (
+	"database/sql"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	_ "modernc.org/sqlite"
 )
 
 const fixNotesConfig = `path: notes
@@ -455,5 +458,176 @@ func TestFix_rejectsComposeAuthority(t *testing.T) {
 	var coded interface{ Code() int }
 	if !errors.As(err, &coded) || coded.Code() != 2 {
 		t.Fatalf("expected usage exit for fix: compose, got %v", err)
+	}
+}
+
+// --- SQLite content-column coverage -----------------------------------------
+//
+// fix gates on whether a collection exposes a text body, not on the backend
+// name: a sqlite collection that maps a content column has one, a collection
+// of attributes alone does not.
+
+const sqliteFixBase = `type: sqlite
+path: content.sqlite
+collections:
+  notes:
+    table: notes
+    id: slug
+    attributes:
+      title: title
+    content:
+      kind: markdown
+      column: body
+    checks:
+      - kind: text_forbids
+        target: first-line
+        pattern: '\.(\s*)$'
+        fix: '$1'
+`
+
+const sqliteFixBaseBadTemplate = `type: sqlite
+path: content.sqlite
+collections:
+  notes:
+    table: notes
+    id: slug
+    attributes:
+      title: title
+    content:
+      kind: markdown
+      column: body
+    checks:
+      - kind: text_forbids
+        pattern: TODO
+        fix: TODO-DONE
+`
+
+const sqliteFixBaseNoContent = `type: sqlite
+path: content.sqlite
+collections:
+  notes:
+    table: notes
+    id: slug
+    attributes:
+      title: title
+    checks:
+      - kind: object_required_field
+        field: title
+`
+
+// setupSQLiteFixRepo scaffolds a one-row sqlite project whose notes collection
+// is declared by baseYAML, seeding the body column with body.
+func setupSQLiteFixRepo(t *testing.T, baseYAML, body string) string {
+	t.Helper()
+	dir := t.TempDir()
+	writeProject(t, dir, map[string]string{"bases/db.yaml": baseYAML})
+
+	db, err := sql.Open("sqlite", filepath.Join(dir, "content.sqlite"))
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	defer db.Close()
+	if _, err := db.Exec(`CREATE TABLE notes (slug TEXT PRIMARY KEY, title TEXT, body TEXT)`); err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO notes (slug, title, body) VALUES ('dune', 'Dune', ?)`, body); err != nil {
+		t.Fatalf("seed row: %v", err)
+	}
+	chdir(t, dir)
+	return dir
+}
+
+func TestFix_sqliteContentColumn_appliesTextFix(t *testing.T) {
+	dir := setupSQLiteFixRepo(t, sqliteFixBase, "# Dune.\nkeep this.\n")
+
+	if _, _, err := runRoot(t, "fix", "notes/dune"); err != nil {
+		t.Fatalf("fix: %v", err)
+	}
+	got := sqliteScalar(t, dir, `SELECT body FROM notes WHERE slug = 'dune'`)
+	// The first line loses its period; the later "keep this." line is untouched.
+	if want := "# Dune\nkeep this.\n"; got != want {
+		t.Errorf("body after fix = %#v, want %q", got, want)
+	}
+}
+
+func TestFix_sqliteContentColumn_leavesAttributesAlone(t *testing.T) {
+	dir := setupSQLiteFixRepo(t, sqliteFixBase, "# Dune.\n")
+
+	if _, _, err := runRoot(t, "fix", "notes/dune"); err != nil {
+		t.Fatalf("fix: %v", err)
+	}
+	if got := sqliteScalar(t, dir, `SELECT title FROM notes WHERE slug = 'dune'`); got != "Dune" {
+		t.Errorf("fix must not rewrite attribute columns, title = %#v", got)
+	}
+}
+
+func TestFix_sqliteCheckFlag_reportsWithoutWriting(t *testing.T) {
+	dir := setupSQLiteFixRepo(t, sqliteFixBase, "# Dune.\n")
+
+	stdout, _, err := runRoot(t, "fix", "--check", "notes/dune")
+	if err == nil {
+		t.Fatal("expected --check to exit non-zero when an item would change")
+	}
+	if !strings.Contains(stdout, "notes/dune") {
+		t.Errorf("expected the changed item reported, got stdout %q", stdout)
+	}
+	if got := sqliteScalar(t, dir, `SELECT body FROM notes WHERE slug = 'dune'`); got != "# Dune.\n" {
+		t.Errorf("--check must not write, body = %#v", got)
+	}
+}
+
+func TestFix_sqliteWithoutContentColumn_requiresTextContent(t *testing.T) {
+	setupSQLiteFixRepo(t, sqliteFixBaseNoContent, "")
+
+	_, stderr, err := runRoot(t, "fix", "notes/dune")
+	if err == nil {
+		t.Fatal("expected fix to refuse a collection that maps no text content")
+	}
+	if !strings.Contains(stderr, "requires a text content mapping") {
+		t.Errorf("expected the capability message, got stderr %q", stderr)
+	}
+	// The item label embeds the db filename, so assert on the old message
+	// rather than the bare word: the gate is a capability, not a backend name.
+	if strings.Contains(stderr, "not supported for sqlite") {
+		t.Errorf("the message must name the missing capability, not the backend: %q", stderr)
+	}
+}
+
+func TestFix_sqliteBadTemplateFails(t *testing.T) {
+	dir := setupSQLiteFixRepo(t, sqliteFixBaseBadTemplate, "has TODO here\n")
+
+	_, stderr, err := runRoot(t, "fix", "notes/dune")
+	if err == nil {
+		t.Fatal("expected fix to fail on a template that does not resolve the violation")
+	}
+	if !strings.Contains(stderr, "fix did not resolve the violation") {
+		t.Errorf("expected re-check failure message, got stderr %q", stderr)
+	}
+	if got := sqliteScalar(t, dir, `SELECT body FROM notes WHERE slug = 'dune'`); got != "has TODO here\n" {
+		t.Errorf("row must be untouched on failure, body = %#v", got)
+	}
+}
+
+// TestFix_filesystemOutput_unchangedByBackendRouting pins the filesystem result
+// byte-for-byte across both halves of fix (a text fix and a frontmatter
+// reorder), so routing fix through the project layer cannot silently change it.
+func TestFix_filesystemOutput_unchangedByBackendRouting(t *testing.T) {
+	dir := setupFixRepoWith(t, `path: notes
+checks:
+  - kind: text_forbids
+    target: first-line
+    pattern: '\.(\s*)$'
+    fix: '$1'
+`)
+	p := filepath.Join(dir, "notes/doc.md")
+	mustWrite(t, p, "---\nzeta: 1\nalpha: 2\n---\n# Title.\nkeep this.\n")
+
+	if _, _, err := runRoot(t, "fix", "notes/doc"); err != nil {
+		t.Fatalf("fix: %v", err)
+	}
+	got, _ := os.ReadFile(p)
+	want := "---\nalpha: 2\nzeta: 1\n---\n# Title\nkeep this.\n"
+	if string(got) != want {
+		t.Errorf("filesystem fix output changed:\n got: %q\nwant: %q", got, want)
 	}
 }

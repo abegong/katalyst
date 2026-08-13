@@ -1,8 +1,9 @@
 # Spec - CLI scope
 
-> **Status: planning.** Scopes Katalyst to a strictly local CLI tool: bases must
-> be local and in-process, and the docs stop promising a server form factor or
-> networked backends. Six decisions are locked; Open Questions is empty.
+> **Status: done.** Scopes Katalyst to a strictly local CLI tool: bases must be
+> local and in-process, and the docs stop promising a server form factor or
+> networked backends. All six decisions are locked and shipped; Open Questions
+> is empty. See [the plan](./cli-scope-plan.md) for decision 6's implementation.
 
 ## Overview
 
