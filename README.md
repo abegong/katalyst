@@ -55,7 +55,7 @@ As your content evolves, Katalyst gives you tools to navigate change.
 
 ### Lightweight, deployable anywhere
 
-You can run Katalyst as a linter, a CLI, or a server. Use only the infrastructure that you need for your particular use case.
+Katalyst is a single binary with no service to stand up. Run it by hand, wire it into a pre-commit hook, or gate writes in CI. Use only the infrastructure that you need for your particular use case.
 
 ### Model- and backend-agnostic
 

@@ -23,7 +23,7 @@ Katalyst is designed to provide the right content primitives and large fraction 
 
 ## How this section is organized
 
-This section contains the first-principles reasoning underlying Katalyst's primitives. This isn't necessary if you just want to use the library. It will mostly be useful for those who want a solid, well-grounded perspective on how to build AI knowledge bases.
+This section contains the first-principles reasoning underlying Katalyst's primitives. This isn't necessary if you just want to use the tool. It will mostly be useful for those who want a solid, well-grounded perspective on how to build AI knowledge bases.
 
 - [What is curation?]({{< relref "what-is-curation.md" >}}) defines curation and the criteria that make curated information useful.
 - [Internal consistency]({{< relref "internal-consistency.md" >}}) explains how a knowledge base decides which contradictions count.
