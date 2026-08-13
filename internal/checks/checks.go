@@ -7,6 +7,19 @@
 // holding its struct, Run, Descriptor, and an init() that calls Register. The
 // subpackages import this core; this core imports none of them. Callers wire
 // every family in by blank-importing internal/checks/all.
+//
+// # No context.Context
+//
+// No function on the data path takes a context.Context, deliberately. Bases are
+// local and in-process (see internal/storage), so nothing a check reads can
+// block indefinitely, and Context here is FileContext: content is already
+// materialized before any Run, making checks pure CPU over memory. Adding a
+// cancellation context would also collide with that name.
+//
+// A CheckLibrary that shells out to a binary (SchemaLibrary.Available exists for
+// exactly that case) owns its timeout internally, via exec.CommandContext with a
+// context it creates. A subprocess that can hang is a local problem; keep the
+// fix local rather than threading a parameter through every Run.
 package checks
 
 import "github.com/abegong/katalyst/internal/codec/markdownbodytext"

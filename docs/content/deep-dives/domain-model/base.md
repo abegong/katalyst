@@ -11,7 +11,9 @@ Every base must include configuration for **raw** access. Raw access gives Katal
 
 A **collectionized** base keeps that raw access and adds collection definitions. Those definitions map base-native references into named collections and item identities that Katalyst commands can address directly. This is where two-way mapping applies.
 
-Katalyst's base model covers filesystem and SQLite backends today and is designed to extend to backends such as Postgres, S3, and hosted APIs.
+Katalyst's base model covers filesystem and SQLite backends.
+
+**A base must be local and in-process: no network, no credentials, no daemon.** That rule is the criterion for every new base type. It keeps Katalyst a CLI you can run on every write: a store that can block indefinitely would need timeouts and cancellation threaded through the whole data path, and a store that needs credentials would need somewhere to keep them. Local stores such as DuckDB or a git object store satisfy the rule. Postgres, S3, and hosted APIs do not.
 
 ## Terms
 
@@ -19,10 +21,10 @@ The base model uses several named pieces:
 
 | Term | Meaning |
 |---|---|
-| **Base type** | A known backend source kind capable of holding collections and items: `filesystem` and `sqlite` today; `postgresql`, `mongodb`, and others later. |
+| **Base type** | A known backend source kind capable of holding collections and items: `filesystem` and `sqlite`. A new type must be local and in-process. |
 | **Base instance** | A specific, connectable instance of a base type, plus the information needed to reach it. |
 | **Collection mapping** | The two-way mapping from a base instance's contents to collections and items. One mapping may yield more than one collection. |
-| **Base reference** | A base-native locator: a file path, S3 key, table name, or similar backend address. |
+| **Base reference** | A base-native locator: a file path or a table name. Kept opaque rather than path-shaped, so a base that addresses its content some other way fits without changing the model. |
 | **Coordinates** | The captured fields that identify a unit within its collection. |
 | **Scope** | The domain level, item or collection, at which a base type attaches a base's units to the model. |
 

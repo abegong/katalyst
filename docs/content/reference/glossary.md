@@ -19,7 +19,7 @@ how each term maps onto today's code is documented in the per-package
 | **Authority policy** | A nested-config rule that decides which config supplies rules for a subtree and subsystem: `root_nearest`, `file_nearest`, or `compose`. |
 | **Base** | One configured backend source plus the operations Katalyst can perform on its content. A raw base gives Katalyst base-native access; a collectionized base adds collection mappings. See [Bases]({{< relref "../deep-dives/domain-model/base.md" >}}). |
 | **BaseInstance** | A configured instance of a BaseType plus how to reach it (for `filesystem`, a root directory). Declared under `.katalyst/bases/`; it embeds the collections it maps. |
-| **BaseType** | A known backend kind capable of holding content Katalyst can operate on (`filesystem` and `sqlite` today; `postgresql`, `mongodb`, and others later). |
+| **BaseType** | A known backend kind capable of holding content Katalyst can operate on (`filesystem` and `sqlite`). A base must be local and in-process: no network, no credentials, no daemon. |
 | **Body** | Everything after the closing frontmatter fence. Preserved verbatim except by `fix`. |
 | **Check** | Shorthand for a check instance when context is unambiguous. |
 | **Check instance** | One configured check: a check type plus its arguments. It is attached either to a collection under `checks:` or to a filesystem scope under `filesystemChecks[].checks`. |

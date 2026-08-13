@@ -117,9 +117,10 @@ doc.
 
 - `docs/reference/glossary.md`: the canonical katalyst vocabulary:
   bold-term-colon definitions used across code, docs, and copy.
-- `docs/deep-dives/core-concepts.md` — the abstract, cross-system model (data
-  interface, item, collection, attribute, operation, check), with an examples
-  table mapping it onto Postgres, MongoDB, CSVs, and more.
+- `docs/deep-dives/domain-model/collections.md` — the collection and item
+  hierarchy, with an examples table mapping it onto Postgres, MongoDB, CSVs, and
+  more. Those rows show the vocabulary is not tied to one storage shape; they
+  are not a backend roadmap. Katalyst operates on local, in-process bases only.
 
 ## Anti-patterns
 

@@ -43,6 +43,11 @@ The collection model is intentionally broader than "a directory of markdown
 files." A collection is the named group Katalyst can list, select, inspect, and
 check, even when the backing base has a different native vocabulary.
 
+The table below shows that the vocabulary is not tied to one storage shape. It
+is not a backend roadmap: Katalyst operates on [local, in-process
+bases]({{< relref "base.md" >}}) only, which today means the filesystem and
+SQLite.
+
 | System               | Base          | Collection      | Item       | Attribute        |
 |----------------------|---------------|-----------------|------------|------------------|
 | Postgres             | The database  | A table         | A row      | A column         |

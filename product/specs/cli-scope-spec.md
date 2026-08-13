@@ -112,9 +112,19 @@ the argument is weaker without the contrast. The table stays verbatim, prefixed
 with a scope note: Katalyst operates on local bases, and these rows show the
 model is not tied to one storage shape.
 
-The `base.md:25` base-reference gloss keeps "S3 key" for the same reason: it
-illustrates that a reference is opaque, which is a property of the model, not a
-shipping claim.
+The base-reference gloss is the one place this does not extend. It read "a file
+path, S3 key, table name, or similar backend address," one line below the new
+rule naming S3 as excluded, and a definition cannot cite as an example the thing
+the paragraph above it rules out. The gloss keeps the opacity point without the
+example: a reference is a file path or a table name, kept opaque rather than
+path-shaped so a base that addresses its content some other way fits without
+changing the model. `storage.Reference`'s doc comment loses "or object key
+later" for the same reason.
+
+The distinction that makes this consistent: the `collections.md` table maps
+Katalyst's *vocabulary* onto systems the reader already knows, so naming
+Postgres there teaches. A term definition naming S3 reads as a claim about what
+Katalyst addresses, so it misleads.
 
 ### 4. Progressive operations describes the destination, not the host
 
@@ -221,8 +231,8 @@ _None._
 **User docs:**
 
 - `docs/content/deep-dives/domain-model/base.md`: rewrite line 14 to the base
-  rule; update the BaseType row (line 22); keep the S3-key gloss (line 25) as an
-  opacity illustration.
+  rule; update the BaseType row; drop the S3-key example from the base-reference
+  gloss while keeping its opacity point.
 - `docs/content/reference/glossary.md:22`: BaseType row matches `base.md`.
 - `docs/content/deep-dives/domain-model/collections.md`: add the scope note above
   the mapping table; table rows unchanged.

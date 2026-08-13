@@ -9,6 +9,14 @@ _How storage backends evolve as query complexity grows. Each tier unlocks new op
 
 Structuredness comes down to which operations a backend supports, and schemas and checks are the means: enforcing checks is what makes new operations available. The core thesis follows: many knowledge systems start as filesystems and progressively acquire database-like structure. The progression isn't arbitrary, each tier is driven by a class of operations that can't be satisfied at the previous level.
 
+## Where Katalyst sits
+
+The tiers describe what a knowledge base grows into, not what Katalyst hosts. Katalyst operates on [local, in-process bases]({{< relref "../domain-model/base.md" >}}): the filesystem and SQLite today. It does not run your relational store, and it never will.
+
+Its job is the part that makes the next tier reachable. Every tier below asks for a structural commitment before it will give up its operations, and those commitments are exactly what checks enforce: consistent field names and types, referential integrity, an id that is actually unique. A corpus that passes its checks is a corpus that can move up a tier without a migration that discovers, halfway through, that a third of the rows were never going to fit.
+
+So read the tiers as a destination, and Katalyst as what gets your content ready to arrive.
+
 ---
 
 ## Tier 1, Filesystem

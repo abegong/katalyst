@@ -37,8 +37,8 @@ const (
 	UnitIsCollection
 )
 
-// Reference is a backend-native locator: a file path today, a table name or
-// object key later. Kept opaque so non-filesystem backends are not forced into
-// path semantics. The CollectionDefinition contract that produces and consumes
-// it lives in internal/storage/collection.
+// Reference is a backend-native locator: a file path or a table name. Kept
+// opaque so non-filesystem backends are not forced into path semantics. The
+// CollectionDefinition contract that produces and consumes it lives in
+// internal/storage/collection.
 type Reference string

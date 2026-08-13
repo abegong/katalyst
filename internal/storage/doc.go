@@ -3,8 +3,9 @@
 //
 // # Three concepts
 //
-//   - BaseType: a known backend kind (filesystem and sqlite today; postgresql,
-//     mongodb later). The registry here is the extension point.
+//   - BaseType: a known backend kind (filesystem and sqlite). A base must be
+//     local and in-process: no network, no credentials, no daemon. The registry
+//     here is the extension point, and that rule is the bar for entering it.
 //   - BaseInstance (assembled by the internal/project loader): one configured
 //     store of a type plus how to reach it, embedding the collections it maps.
 //   - CollectionDefinition: the two-way mapping from a store's contents to

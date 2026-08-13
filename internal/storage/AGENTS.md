@@ -11,6 +11,11 @@ read stack has its own local guide in
 
 ## Conventions
 
+- **A base must be local and in-process: no network, no credentials, no
+  daemon.** That is the bar for a new backend kind, and it is what keeps
+  Katalyst a CLI: a store that can block indefinitely would need timeouts and
+  cancellation plumbed through the whole data path. Local stores (DuckDB, a git
+  object store) qualify; Postgres, S3, and hosted APIs do not.
 - Add a backend kind here only when its `CollectionDefinition` implementation
   exists. `Known` is the source of truth the project loader uses to validate
   configured base types. `filesystem` and `sqlite` are implemented.
